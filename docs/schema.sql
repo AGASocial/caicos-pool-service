@@ -1,6 +1,7 @@
 -- ============================================
 -- Pool Service Pro - Supabase Schema
 -- Multi-tenant SaaS with Row Level Security
+-- Generated from Supabase schema export (Digital Asset Files Retrieval)
 -- ============================================
 
 -- Enable required extensions
@@ -36,6 +37,17 @@ CREATE TABLE caicos_profiles (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Invite codes (for inviting technicians/admins to a company)
+CREATE TABLE caicos_invite_codes (
+  code TEXT PRIMARY KEY,
+  company_id UUID NOT NULL REFERENCES caicos_companies(id) ON DELETE CASCADE,
+  role TEXT NOT NULL DEFAULT 'technician' CHECK (role IN ('owner', 'admin', 'technician')),
+  created_by UUID REFERENCES caicos_profiles(id) ON DELETE SET NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Properties (customer pools)
 CREATE TABLE caicos_properties (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -64,7 +76,7 @@ CREATE TABLE caicos_service_jobs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id UUID NOT NULL REFERENCES caicos_companies(id) ON DELETE CASCADE,
   property_id UUID NOT NULL REFERENCES caicos_properties(id) ON DELETE CASCADE,
-  technician_id UUID REFERENCES caicos_profiles(id),
+  technician_id UUID REFERENCES caicos_profiles(id) ON DELETE SET NULL,
   scheduled_date DATE NOT NULL,
   scheduled_time TIME,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'skipped', 'cancelled')),
@@ -80,10 +92,9 @@ CREATE TABLE caicos_service_reports (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   job_id UUID NOT NULL REFERENCES caicos_service_jobs(id) ON DELETE CASCADE,
   company_id UUID NOT NULL REFERENCES caicos_companies(id) ON DELETE CASCADE,
-  technician_id UUID NOT NULL REFERENCES caicos_profiles(id),
+  technician_id UUID NOT NULL REFERENCES caicos_profiles(id) ON DELETE CASCADE,
   arrival_time TIMESTAMPTZ,
   departure_time TIMESTAMPTZ,
-  -- Chemical readings
   ph_level NUMERIC(4,2),
   chlorine_level NUMERIC(5,2),
   alkalinity NUMERIC(6,2),
@@ -91,23 +102,19 @@ CREATE TABLE caicos_service_reports (
   cyanuric_acid NUMERIC(6,2),
   salt_level NUMERIC(7,2),
   water_temp_f NUMERIC(5,1),
-  -- Chemicals added
   chlorine_added TEXT,
   acid_added TEXT,
   other_chemicals TEXT,
-  -- Equipment checks
   pump_ok BOOLEAN,
   filter_ok BOOLEAN,
   heater_ok BOOLEAN,
   cleaner_ok BOOLEAN,
-  -- Tasks
   skimmed BOOLEAN DEFAULT FALSE,
   vacuumed BOOLEAN DEFAULT FALSE,
   brushed BOOLEAN DEFAULT FALSE,
   emptied_baskets BOOLEAN DEFAULT FALSE,
   backwashed BOOLEAN DEFAULT FALSE,
   cleaned_filter BOOLEAN DEFAULT FALSE,
-  -- Notes
   notes TEXT,
   follow_up_needed BOOLEAN DEFAULT FALSE,
   follow_up_notes TEXT,
@@ -131,6 +138,8 @@ CREATE TABLE caicos_report_photos (
 -- ============================================
 
 CREATE INDEX idx_caicos_profiles_company ON caicos_profiles(company_id);
+CREATE INDEX idx_caicos_invite_codes_company ON caicos_invite_codes(company_id);
+CREATE INDEX idx_caicos_invite_codes_expires ON caicos_invite_codes(expires_at) WHERE used_at IS NULL;
 CREATE INDEX idx_caicos_properties_company ON caicos_properties(company_id);
 CREATE INDEX idx_caicos_service_jobs_company ON caicos_service_jobs(company_id);
 CREATE INDEX idx_caicos_service_jobs_date ON caicos_service_jobs(scheduled_date);
@@ -145,6 +154,7 @@ CREATE INDEX idx_caicos_report_photos_report ON caicos_report_photos(report_id);
 
 ALTER TABLE caicos_companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE caicos_invite_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_service_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_service_reports ENABLE ROW LEVEL SECURITY;
@@ -236,6 +246,19 @@ CREATE POLICY "Techs can upload photos"
   ON caicos_report_photos FOR INSERT
   WITH CHECK (company_id = get_my_company_id());
 
+-- Invite codes: admins create and view; used_at updated when code is consumed
+CREATE POLICY "Admins can view company invite codes"
+  ON caicos_invite_codes FOR SELECT
+  USING (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin'));
+
+CREATE POLICY "Admins can create invite codes"
+  ON caicos_invite_codes FOR INSERT
+  WITH CHECK (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin'));
+
+CREATE POLICY "Admins can update invite codes"
+  ON caicos_invite_codes FOR UPDATE
+  USING (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin'));
+
 -- ============================================
 -- STORAGE BUCKET
 -- ============================================
@@ -262,7 +285,6 @@ RETURNS TRIGGER AS $$
 DECLARE
   new_company_id UUID;
 BEGIN
-  -- If company_name is provided in metadata, create a new company
   IF NEW.raw_user_meta_data->>'company_name' IS NOT NULL THEN
     INSERT INTO caicos_companies (name)
     VALUES (NEW.raw_user_meta_data->>'company_name')
@@ -275,7 +297,6 @@ BEGIN
       'owner',
       COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email)
     );
-  -- If company_id is provided (invite flow), join existing company
   ELSIF NEW.raw_user_meta_data->>'company_id' IS NOT NULL THEN
     INSERT INTO caicos_profiles (id, company_id, role, full_name)
     VALUES (
@@ -290,7 +311,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Trigger on auth.users insert
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();

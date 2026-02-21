@@ -36,7 +36,7 @@ Use these agents to structure development work on the Caicos pool service platfo
 - Implement admin pages (dashboard, jobs, properties, team, reports, settings)
 - Use Next.js 14+ App Router, TypeScript (strict), Tailwind, Shadcn/ui
 - Integrate Supabase with RLS; never bypass company_id / multi-tenant rules
-- Follow patterns in `docs/example-app` and feature spec FEATURE-ADMIN-PORTAL.md
+- Always check `docs/example-app` for patterns, code and UI when building the admin portal; follow FEATURE-ADMIN-PORTAL.md
 
 **How to invoke:** Work in admin/Next.js code or ask for web feature implementation. Example: *"Build the jobs management page"* or *"Add an API route for creating service jobs"*.
 

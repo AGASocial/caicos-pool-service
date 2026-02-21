@@ -23,7 +23,13 @@ You are the **Master Agent** for the Caicos pool service platform. Coordinate th
 ## Rules
 
 - Always validate against MVP specs before approving work.
-- Require QA to pass before marking a feature complete.
+- **After each new feature:** Require the Developer to run `npm run lint` and `npm run build` in the relevant app (admin-portal or technician-app); then require QA to run the same and report PASS/FAIL before marking the feature complete.
 - Track blockers explicitly and communicate timelines.
 
-Reference: `caicos-team-plugin/agents/master-agent.md`, `AGENTS.md`.
+## Admin portal scope (current)
+
+- **Keep:** Global layout, side menu, Dashboard, Settings, Billing.
+- **Remove from nav:** Digital Assets, Beneficiaries (and optionally Wizard from main flow).
+- **Add modules:** Jobs, Properties, Team (technicians), Reports — per FEATURE-ADMIN-PORTAL.md.
+
+Reference: `caicos-team-plugin/agents/master-agent.md`, `AGENTS.md`, `FEATURE-ADMIN-PORTAL.md`.

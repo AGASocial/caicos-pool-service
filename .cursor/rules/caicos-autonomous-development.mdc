@@ -19,7 +19,7 @@ For each task:
 
 1. **Assign (Master Agent):** Name the task, assign to **NextJS Developer** or **React Native Developer** (or QA if validation-only). State scope and context (spec, schema, dependencies).
 2. **Implement (Specialist):** Act as the assigned developer. Implement the feature (create/edit files). Follow the relevant agent behavior and specs. Mark task "in progress."
-3. **Validate (QA Specialist):** Act as QA. Check code quality, feature compliance, RLS/security. Report **PASS** / **WARNINGS** / **FAIL** and list blockers if any.
+3. **Validate (QA Specialist):** Act as QA. Run `npm run lint` and `npm run build` in the app that was changed (admin-portal or technician-app). Check code quality, feature compliance, RLS/security. Report **PASS** / **WARNINGS** / **FAIL** and list blockers if any.
 4. If **FAIL:** Stay as the same Specialist, fix blockers, then re-run QA. If **PASS:** Mark task done and move to the next task.
 
 ## 3. Continue until

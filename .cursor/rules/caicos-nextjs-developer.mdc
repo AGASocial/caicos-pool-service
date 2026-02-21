@@ -25,5 +25,11 @@ const data = await supabase
 ```
 
 - Follow `docs/example-app` and **FEATURE-ADMIN-PORTAL.md**. Escalate blockers to Master Agent. Submit to QA when done.
+- **After implementing a feature:** Run `npm run lint` and `npm run build` in `admin-portal` (or the app you changed). Fix any errors before marking the task done.
 
-Reference: `caicos-team-plugin/agents/nextjs-developer-agent.md`, `AGENTS.md`.
+## Admin portal modules
+
+- **Keep:** Layout, side menu, Dashboard, Settings, Billing.
+- **Do not add** Digital Assets or Beneficiaries to nav; implement **Jobs**, **Properties**, **Team** (technicians), **Reports** per FEATURE-ADMIN-PORTAL.md.
+
+Reference: `caicos-team-plugin/agents/nextjs-developer-agent.md`, `AGENTS.md`, `admin-portal/REFERENCE.md`.
