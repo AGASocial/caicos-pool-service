@@ -1,0 +1,12 @@
+{
+  "name": "caicos-team",
+  "version": "0.1.0",
+  "description": "AI-powered development team for Caicos pool service platform. Coordinates Master Agent, NextJS Developer, React Native Developer, and QA Specialist agents with Supabase database integration.",
+  "author": {
+    "name": "AGA Social"
+  },
+  "keywords": ["caicos", "pool-service", "development-team", "agent-orchestration", "supabase"],
+  "commands": "./commands",
+  "agents": "./agents",
+  "mcpServers": "./.mcp.json"
+}

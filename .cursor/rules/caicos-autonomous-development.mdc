@@ -1,0 +1,37 @@
+---
+description: Caicos autonomous development – when user gives open card or says "start development", run the full MVP development loop (Master assigns → Specialist implements → QA validates) until done or blocked.
+alwaysApply: false
+---
+
+# Autonomous development (open card)
+
+When the user says they give **open card**, **start development by itself**, or **run development autonomously**, you run the Caicos MVP development loop. You are the orchestrator: you switch between Master Agent, Specialist (NextJS or React Native Developer), and QA Specialist as needed.
+
+## 1. Bootstrap (as Master Agent)
+
+- Read **SOLUTION.md**, **FEATURE-ADMIN-PORTAL.md**, **FEATURE-TECHNICIAN-APP.md**.
+- Build an **ordered task list** of MVP features. Respect dependencies (e.g. auth & schema first, then admin/mobile flows).
+- Create a **todo list** and use it for the whole run (pending → in progress → QA → done).
+
+## 2. Per-task loop
+
+For each task:
+
+1. **Assign (Master Agent):** Name the task, assign to **NextJS Developer** or **React Native Developer** (or QA if validation-only). State scope and context (spec, schema, dependencies).
+2. **Implement (Specialist):** Act as the assigned developer. Implement the feature (create/edit files). Follow the relevant agent behavior and specs. Mark task "in progress."
+3. **Validate (QA Specialist):** Act as QA. Check code quality, feature compliance, RLS/security. Report **PASS** / **WARNINGS** / **FAIL** and list blockers if any.
+4. If **FAIL:** Stay as the same Specialist, fix blockers, then re-run QA. If **PASS:** Mark task done and move to the next task.
+
+## 3. Continue until
+
+- **MVP list done** → Report summary and suggest next steps (e.g. deploy).
+- **Blocked** (missing env, schema decision, or user-only decision) → Pause and report what is needed.
+- **User says stop** → Stop and report status.
+
+## 4. While running
+
+- Periodically report progress (e.g. "Task 3/12 done, next: …").
+- Call out blockers as soon as they appear.
+- Do not ask for permission between tasks unless blocked; keep going until done or blocked.
+
+Reference: **AGENTS.md** (Autonomous development section), **SOLUTION.md**, **FEATURE-*.md**.

@@ -1,0 +1,43 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "/sessions/compassionate-modest-pascal/mnt/.local-plugins/cache/knowledge-work-plugins/cowork-plugin-management/0.2.1/mcp-servers/supabase-mcp.js"
+      ],
+      "env": {
+        "SUPABASE_URL": "${SUPABASE_URL}",
+        "SUPABASE_API_KEY": "${SUPABASE_API_KEY}"
+      },
+      "description": "Supabase database access for Caicos team collaboration. Provides schema inspection, SQL query execution, RLS policy viewing, and data validation.",
+      "tools": [
+        {
+          "name": "query_schema",
+          "description": "Inspect database schema - view tables, columns, types, constraints. Essential for code generation.",
+          "category": "inspection"
+        },
+        {
+          "name": "execute_sql",
+          "description": "Execute SQL queries against database. Used for testing and validation.",
+          "category": "data"
+        },
+        {
+          "name": "view_rls_policies",
+          "description": "Read Row Level Security policies. Review security rules before coding.",
+          "category": "security"
+        },
+        {
+          "name": "validate_query",
+          "description": "Validate SQL query syntax without executing.",
+          "category": "validation"
+        },
+        {
+          "name": "get_table_info",
+          "description": "Get detailed information about a specific table.",
+          "category": "inspection"
+        }
+      ]
+    }
+  }
+}
