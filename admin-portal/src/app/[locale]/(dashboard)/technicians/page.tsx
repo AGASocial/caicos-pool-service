@@ -1,40 +1,16 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 import { UserPlus, Users } from 'lucide-react';
-
-type Technician = { id: string; full_name: string; role?: string; is_active?: boolean };
+import { useTechnicians } from '@/lib/technicians';
 
 export default function TechniciansPage() {
   const t = useTranslations();
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/technicians');
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          setError(data.error || res.statusText);
-          return;
-        }
-        const data = await res.json();
-        if (!cancelled) setTechnicians(Array.isArray(data) ? data : []);
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  const { data: technicians = [], isLoading: loading, error: queryError } = useTechnicians();
+  const error = queryError ? (queryError as Error).message : null;
 
   return (
     <div className="space-y-6">

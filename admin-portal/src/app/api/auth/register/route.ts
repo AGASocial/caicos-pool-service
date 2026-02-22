@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const emailRedirectTo = `${origin}/api/auth/callback?next=${encodeURIComponent(`/${safeLocale}`)}`;
 
     const userMetadata: Record<string, string> = {
-      full_name: fullName ?? '',
+      full_name: typeof fullName === 'string' ? fullName : '',
     };
 
     if (inviteCode && typeof inviteCode === 'string' && inviteCode.trim()) {
@@ -74,8 +74,8 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createRouteClient();
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
+      email: String(email),
+      password: String(password),
       options: {
         data: userMetadata,
         emailRedirectTo,

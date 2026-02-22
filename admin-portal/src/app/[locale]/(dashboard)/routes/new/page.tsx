@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,32 +9,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
 import { ArrowLeft } from 'lucide-react';
-
-type Technician = { id: string; full_name: string; role?: string };
+import { useTechnicians } from '@/lib/technicians';
 
 export default function NewRoutePage() {
   const t = useTranslations();
   const router = useRouter();
   const [name, setName] = useState('');
   const [technicianId, setTechnicianId] = useState('');
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/technicians');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!cancelled) setTechnicians(Array.isArray(data) ? data : []);
-      } catch {
-        // ignore
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  const { data: technicians = [] } = useTechnicians();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
