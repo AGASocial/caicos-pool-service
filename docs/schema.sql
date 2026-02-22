@@ -48,7 +48,7 @@ CREATE TABLE caicos_invite_codes (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Properties (customer pools)
+-- Properties (customer pools / houses)
 CREATE TABLE caicos_properties (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id UUID NOT NULL REFERENCES caicos_companies(id) ON DELETE CASCADE,
@@ -71,12 +71,36 @@ CREATE TABLE caicos_properties (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Service jobs (scheduled visits)
+-- Routes: same technician, same set of houses week after week. Add/remove houses on the route over time.
+-- "Cancel this week for one house" = create the job as usual and set status to 'cancelled' for that visit.
+CREATE TABLE caicos_routes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES caicos_companies(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  technician_id UUID NOT NULL REFERENCES caicos_profiles(id) ON DELETE CASCADE,
+  day_of_week SMALLINT CHECK (day_of_week IS NULL OR (day_of_week >= 0 AND day_of_week <= 6)),
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Route stops: which houses are on the route, and in what order. Add/remove houses = add/remove rows here.
+CREATE TABLE caicos_route_stops (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  route_id UUID NOT NULL REFERENCES caicos_routes(id) ON DELETE CASCADE,
+  property_id UUID NOT NULL REFERENCES caicos_properties(id) ON DELETE CASCADE,
+  stop_order INTEGER NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(route_id, property_id)
+);
+
+-- Service jobs (scheduled visits). Optional route_id when job was generated from a route.
 CREATE TABLE caicos_service_jobs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id UUID NOT NULL REFERENCES caicos_companies(id) ON DELETE CASCADE,
   property_id UUID NOT NULL REFERENCES caicos_properties(id) ON DELETE CASCADE,
   technician_id UUID REFERENCES caicos_profiles(id) ON DELETE SET NULL,
+  route_id UUID REFERENCES caicos_routes(id) ON DELETE SET NULL,
   scheduled_date DATE NOT NULL,
   scheduled_time TIME,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'skipped', 'cancelled')),
@@ -141,7 +165,11 @@ CREATE INDEX idx_caicos_profiles_company ON caicos_profiles(company_id);
 CREATE INDEX idx_caicos_invite_codes_company ON caicos_invite_codes(company_id);
 CREATE INDEX idx_caicos_invite_codes_expires ON caicos_invite_codes(expires_at) WHERE used_at IS NULL;
 CREATE INDEX idx_caicos_properties_company ON caicos_properties(company_id);
+CREATE INDEX idx_caicos_routes_company ON caicos_routes(company_id);
+CREATE INDEX idx_caicos_routes_technician ON caicos_routes(technician_id);
+CREATE INDEX idx_caicos_route_stops_route ON caicos_route_stops(route_id);
 CREATE INDEX idx_caicos_service_jobs_company ON caicos_service_jobs(company_id);
+CREATE INDEX idx_caicos_service_jobs_route ON caicos_service_jobs(route_id);
 CREATE INDEX idx_caicos_service_jobs_date ON caicos_service_jobs(scheduled_date);
 CREATE INDEX idx_caicos_service_jobs_tech_date ON caicos_service_jobs(technician_id, scheduled_date);
 CREATE INDEX idx_caicos_service_jobs_property ON caicos_service_jobs(property_id);
@@ -156,6 +184,8 @@ ALTER TABLE caicos_companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_invite_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_properties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE caicos_routes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE caicos_route_stops ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_service_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_service_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_report_photos ENABLE ROW LEVEL SECURITY;
@@ -206,6 +236,26 @@ CREATE POLICY "Admins can manage properties"
 CREATE POLICY "Admins can update properties"
   ON caicos_properties FOR UPDATE
   USING (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin'));
+
+-- Routes: company-scoped, admins manage
+CREATE POLICY "Users can view company routes"
+  ON caicos_routes FOR SELECT
+  USING (company_id = get_my_company_id());
+
+CREATE POLICY "Admins can manage routes"
+  ON caicos_routes FOR ALL
+  USING (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin'))
+  WITH CHECK (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin'));
+
+-- Route stops: via route's company
+CREATE POLICY "Users can view company route stops"
+  ON caicos_route_stops FOR SELECT
+  USING (EXISTS (SELECT 1 FROM caicos_routes r WHERE r.id = route_id AND r.company_id = get_my_company_id()));
+
+CREATE POLICY "Admins can manage route stops"
+  ON caicos_route_stops FOR ALL
+  USING (EXISTS (SELECT 1 FROM caicos_routes r WHERE r.id = route_id AND r.company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin')))
+  WITH CHECK (EXISTS (SELECT 1 FROM caicos_routes r WHERE r.id = route_id AND r.company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin')));
 
 -- Service jobs: company-scoped, techs see their own
 CREATE POLICY "Users can view company jobs"
@@ -327,5 +377,6 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON caicos_companies FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON caicos_profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON caicos_properties FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON caicos_routes FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON caicos_service_jobs FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON caicos_service_reports FOR EACH ROW EXECUTE FUNCTION update_updated_at();

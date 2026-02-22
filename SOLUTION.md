@@ -272,6 +272,13 @@ technician-app/
 └── package.json
 ```
 
+### Routes (recurring schedule)
+
+- **Route** = one technician + a fixed ordered list of houses (properties). Same route week after week; houses can be added or removed from the route over time.
+- **Route stops** = which properties are on the route and in what order (CRUD: add/remove houses, reorder).
+- **Jobs** are created from routes (e.g. "Generate jobs for Route 5 for week of Feb 22" → one job per house on that route for that date, same technician, `route_order` from stop order). Optional `route_id` on job links it back to the route.
+- **Skip a visit:** When a house doesn’t need service that week, create the job as usual and set **status = cancelled** (or don’t create that job for that date). No separate "skip" table; cancellation is per job.
+
 ### Admin Portal (NextJS)
 ```
 admin-portal/

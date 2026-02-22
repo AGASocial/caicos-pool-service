@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
-import { LayoutDashboard, Briefcase, Building2, Users, FileText, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Building2, Route, Users, FileText, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Navigation({ closeSidebar, collapsed }: { closeSidebar?: () => void; collapsed?: boolean }) {
@@ -13,6 +13,7 @@ export default function Navigation({ closeSidebar, collapsed }: { closeSidebar?:
   const navItems = [
     { href: '/dashboard', label: t('dashboard'), icon: LayoutDashboard },
     { href: '/jobs', label: t('jobs'), icon: Briefcase },
+    { href: '/routes', label: t('routes'), icon: Route },
     { href: '/properties', label: t('properties'), icon: Building2 },
     { href: '/technicians', label: t('team'), icon: Users },
     { href: '/reports', label: t('reports'), icon: FileText },

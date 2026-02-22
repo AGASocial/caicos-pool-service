@@ -1,0 +1,28 @@
+import { NextResponse } from 'next/server';
+import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
+import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+
+/**
+ * List properties for the current user's company.
+ * Used for route stops and job assignment.
+ */
+export async function GET() {
+  const { supabase, user } = await createAuthenticatedRouteClient();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { data, error } = await (supabase as unknown as CaicosSupabaseClient)
+    .from('caicos_properties')
+    .select('id, customer_name, address, city, is_active')
+    .eq('is_active', true)
+    .order('customer_name', { ascending: true });
+
+  if (error) {
+    console.error('Supabase error fetching properties:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data || []);
+}
