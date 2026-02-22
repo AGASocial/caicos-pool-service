@@ -277,7 +277,7 @@ export default function RouteDetailPage() {
         <CardHeader>
           <CardTitle>{t('generateJobsForDate')}</CardTitle>
           <CardDescription>
-            Create one job per stop for the chosen date. Jobs will be assigned to this route&apos;s technician.
+            {t('generateJobsForDateDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-end gap-2">

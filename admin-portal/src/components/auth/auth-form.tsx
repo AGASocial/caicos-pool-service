@@ -33,9 +33,10 @@ type FormData = z.infer<typeof formSchema>
 
 interface AuthFormProps {
   type: "login" | "register"
+  inviteCode?: string
 }
 
-export function AuthForm({ type }: AuthFormProps) {
+export function AuthForm({ type, inviteCode }: AuthFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = React.useState(false)
   const t = useTranslations()
@@ -62,6 +63,7 @@ export function AuthForm({ type }: AuthFormProps) {
             password: data.password,
             fullName: data.fullName,
             locale,
+            ...(inviteCode ? { invite: inviteCode } : {}),
           }),
         })
         const result = await response.json()

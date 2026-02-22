@@ -329,15 +329,21 @@ CREATE POLICY "Admins can update invite codes"
 -- FUNCTIONS
 -- ============================================
 
--- Auto-create profile + company on signup
+-- Auto-create profile + company on signup (SET search_path and UUID validation avoid "Database error saving new user")
 CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   new_company_id UUID;
+  meta_company_id TEXT;
+  meta_role TEXT;
 BEGIN
-  IF NEW.raw_user_meta_data->>'company_name' IS NOT NULL THEN
+  IF NEW.raw_user_meta_data->>'company_name' IS NOT NULL AND trim(NEW.raw_user_meta_data->>'company_name') != '' THEN
     INSERT INTO caicos_companies (name)
-    VALUES (NEW.raw_user_meta_data->>'company_name')
+    VALUES (trim(NEW.raw_user_meta_data->>'company_name'))
     RETURNING id INTO new_company_id;
 
     INSERT INTO caicos_profiles (id, company_id, role, full_name)
@@ -345,21 +351,30 @@ BEGIN
       NEW.id,
       new_company_id,
       'owner',
-      COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email)
+      COALESCE(NULLIF(trim(NEW.raw_user_meta_data->>'full_name'), ''), NEW.email)
     );
-  ELSIF NEW.raw_user_meta_data->>'company_id' IS NOT NULL THEN
+    RETURN NEW;
+  END IF;
+
+  meta_company_id := NULLIF(trim(NEW.raw_user_meta_data->>'company_id'), '');
+  IF meta_company_id IS NOT NULL AND meta_company_id ~ '^[0-9a-fA-F-]{36}$' THEN
+    meta_role := COALESCE(NULLIF(trim(NEW.raw_user_meta_data->>'role'), ''), 'technician');
+    IF meta_role NOT IN ('owner', 'admin', 'technician') THEN
+      meta_role := 'technician';
+    END IF;
+
     INSERT INTO caicos_profiles (id, company_id, role, full_name)
     VALUES (
       NEW.id,
-      (NEW.raw_user_meta_data->>'company_id')::UUID,
-      COALESCE(NEW.raw_user_meta_data->>'role', 'technician'),
-      COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email)
+      meta_company_id::UUID,
+      meta_role,
+      COALESCE(NULLIF(trim(NEW.raw_user_meta_data->>'full_name'), ''), NEW.email)
     );
   END IF;
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users

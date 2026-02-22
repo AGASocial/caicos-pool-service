@@ -2,9 +2,12 @@
 import { AuthForm } from "@/components/auth/auth-form"
 import { AuthHero } from "@/components/auth/auth-hero"
 import { useTranslations } from "next-intl"
+import { useSearchParams } from "next/navigation"
 
 export default function RegisterPage() {
   const t = useTranslations();
+  const searchParams = useSearchParams();
+  const inviteCode = searchParams.get("invite") ?? undefined;
   return (
     <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
       {/* Full screen background on mobile, left half on desktop */}
@@ -15,7 +18,7 @@ export default function RegisterPage() {
         <div className="mx-auto m-4 flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           {/* Mobile: Card with backdrop blur for better readability */}
           <div className="lg:bg-transparent bg-white/40 dark:bg-background/40 backdrop-blur-md rounded-xl lg:rounded-none p-6 sm:p-8 lg:p-0 shadow-xl lg:shadow-none border border-border/50 lg:border-0">
-            <AuthForm type="register" />
+            <AuthForm type="register" inviteCode={inviteCode} />
           </div>
         </div>
       </div>

@@ -19,11 +19,11 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "iablee - Digital Inheritance Platform",
-  description: "Secure and manage your digital legacy with iablee",
+  title: "PoolDash - Pool Service Management Platform",
+  description: "Manage your pool service business with PoolDash",
   icons: {
-    icon: "/logo-lock.png",
-    apple: "/logo-lock.png",
+    icon: "/logo-primary.png",
+    apple: "/logo-primary.png",
   },
 };
 
