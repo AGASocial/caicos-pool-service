@@ -20,29 +20,30 @@ React Native (Expo) mobile application for field technicians to manage daily poo
 ### Journey 2: Daily Work (Typical Day)
 ```
 1. Open app → Auto-login (cached session)
-2. Dashboard: "Tue, Feb 21 • 3 jobs scheduled"
-3. See job cards:
-   - [1] Residencia Miller - 8:30 AM - 30 min
-   - [2] Henderson Pool - 10:00 AM - 45 min
-   - [3] Riverside Condos - 1:00 PM - 30 min
-4. Tap [1] → Open job detail
-5. "Tap START to begin service"
-6. Tap START → Status: pending → in_progress
-7. Form appears:
+2. Dashboard: "Tue, Feb 21 • Ruta 1 • 22 pools assigned"
+3. Progress: 0 of 22 completed
+4. See house list (same route daily):
+   - House 5461 (Residencia Miller)
+   - House 5492 (Henderson Pool)
+   - House 720 (Riverside Condos)
+   - ... (19 more)
+5. Tap House 5461 → Open service form
+6. "Tap START to begin service"
+7. Tap START → Status: pending → in_progress
+8. Form appears:
    - Property header (customer, address, gate code)
-   - Chemical readings section
-   - Equipment checks
-   - Tasks completed
-   - Photos section
-   - Notes
-8. Fill out service data
-9. Take 2-3 photos (before, after, issue)
-10. Tap "COMPLETE & SAVE REPORT"
-11. Photos + report synced to Supabase
-12. Job status: in_progress → completed
-13. Return to dashboard
-14. Repeat for jobs [2] and [3]
-15. End of day: 3 of 3 completed ✓
+   - Photo capture section (GPS + timestamp auto-captured)
+   - Issue category buttons (No Issues, Motor, Filter, Circulation, Timer, Chemistry, Other)
+   - Service notes (free text)
+   - Follow-up notes (optional)
+9. Take photo(s) with app camera
+10. Select issue category (if any issues found)
+11. Add comments/notes
+12. Tap "MARK COMPLETE"
+13. Report synced to Supabase
+14. Return to house list (shows 1 of 22 completed)
+15. Repeat for houses 5492, 720, etc.
+16. End of day: 22 of 22 completed ✓
 ```
 
 ### Journey 3: Offline Service (No WiFi)
@@ -133,7 +134,7 @@ React Native (Expo) mobile application for field technicians to manage daily poo
 
 ---
 
-### 3. Dashboard: Daily Jobs
+### 3. Dashboard: Daily Route
 **Route:** `/(app)/(tabs)/jobs`
 
 ```
@@ -141,32 +142,39 @@ React Native (Expo) mobile application for field technicians to manage daily poo
 │ ⬅ CAICOS     📋 ⚙️   │
 │                      │
 │ Tuesday, Feb 21      │
-│ 3 jobs assigned      │
+│ 🛣️ Ruta 1            │
+│ (Same route daily)   │
 │                      │
-│ PROGRESS: 0 of 3     │
+│ PROGRESS: 0 of 22    │
 │ [████░░░░░░░░░░░░]   │
+│ 0% Complete          │
 │                      │
 │ ┌──────────────────┐ │
-│ │ 1  Residencia    │ │
-│ │ ── Miller        │ │
-│ │ 📍1244 Blue      │ │
-│ │ ⏰ 8:30 AM       │ │
-│ │ ⌚ 30 min        │ │
-│ │ 💧 residential   │ │
-│ │ Status: Pending  │ │
+│ │ 5461             │ │
+│ │ Residencia       │ │
+│ │ Miller           │ │
+│ │ 📍 1244 Blue     │ │
+│ │ Status: ⏳ Pending│ │
+│ │ [Start Service]  │ │
 │ └──────────────────┘ │
 │                      │
 │ ┌──────────────────┐ │
-│ │ 2  Henderson     │ │
-│ │ ── Pool          │ │
-│ │ 📍892 Blue Way   │ │
-│ │ ⏰ 10:00 AM      │ │
-│ │ ⌚ 45 min        │ │
-│ │ 💧 commercial    │ │
-│ │ Status: Pending  │ │
+│ │ 5492             │ │
+│ │ Henderson Pool   │ │
+│ │ 📍 892 Blue Way  │ │
+│ │ Status: ⏳ Pending│ │
+│ │ [Start Service]  │ │
 │ └──────────────────┘ │
 │                      │
-│ [scroll...]          │
+│ ┌──────────────────┐ │
+│ │ 720              │ │
+│ │ Beach House      │ │
+│ │ 📍 1200 Ocean    │ │
+│ │ Status: ⏳ Pending│ │
+│ │ [Start Service]  │ │
+│ └──────────────────┘ │
+│                      │
+│ [scroll to see more] │
 │                      │
 │ Tabs:                │
 │ [Jobs]  [Props] [Me] │
@@ -174,24 +182,31 @@ React Native (Expo) mobile application for field technicians to manage daily poo
 ```
 
 **Components:**
-- **Header:** Company logo, date, total jobs
-- **Progress bar:** X of Y completed
-- **Job cards** (tappable):
-  - Route order number (left badge)
-  - Customer name + property address
-  - Scheduled time + estimated duration
-  - Pool type icon
+- **Header:** Company logo, date, route name ("Ruta 1")
+- **Subtitle:** "(Same route daily)" to indicate consistency
+- **Progress bar:** X of Y completed for the day
+- **House cards** (tappable):
+  - House/pool number (large, prominent)
+  - Customer name
+  - Address
   - Status badge (pending/in_progress/completed)
-- **Pull-to-refresh:** Syncs latest jobs
-- **Empty state:** "No jobs today - Enjoy your day off! 📋"
+  - [Start Service] button
+- **Pull-to-refresh:** Syncs latest status
+- **Empty state:** "No houses assigned today"
 
 **Data Source:**
 ```typescript
-// useJobs hook - realtime subscription
-const { jobs, isLoading, refresh } = useJobs();
-// Returns: ServiceJobWithProperty[]
-// Filters: scheduled_date = today, company_id = user.company_id
+// useRoute hook - realtime subscription
+const { route, houses, isLoading, refresh } = useRoute(technicianId);
+// Returns: Route with assigned houses for today
+// Filters: today's date, technician_id, route.scheduled_date = today
 ```
+
+**Key Difference from Legacy:**
+- Shows house number + customer name (not time-based scheduling)
+- All houses are pre-assigned to the route (technician does same route daily)
+- No time slots - technician works through list at their own pace
+- Progress shown as "X of Y" rather than time-based
 
 ---
 
@@ -256,17 +271,31 @@ const { jobs, isLoading, refresh } = useJobs();
 │ ┌───┐ ┌───┐         │
 │ │   │ │   │ (thumbs)│
 │ └───┘ └───┘         │
+│ (GPS + timestamp)   │
+│ (auto-captured)     │
 │                     │
-│ 📝 NOTES            │
+│ ⚠️ ISSUE CATEGORY    │
+│ ─────────────────   │
+│ [✓ No Issues]       │
+│ [⚠️ Motor]          │
+│ [⚠️ Filter]         │
+│ [⚠️ Circulation]    │
+│ [⚠️ Timer]          │
+│ [⚠️ Chemistry]      │
+│ [📝 Other - Text]   │
+│                     │
+│ 📝 COMMENTS         │
 │ ─────────────────   │
 │ [_________________] │
 │ [_________________] │
+│ (Additional details)│
 │                     │
-│ ⚠️ FOLLOW-UP        │
+│ 📝 FOLLOW-UP NOTES  │
 │ ─────────────────   │
-│ ☐ Needed?           │
+│ [_________________] │
+│ (if follow-up req'd)│
 │                     │
-│ [COMPLETE & SAVE]   │
+│ [MARK COMPLETE]     │
 └─────────────────────┘
 ```
 
@@ -332,43 +361,82 @@ EQUIPMENT_CHECKS = [
 - Other chemicals: Free text
 
 #### Photos
-- **Take Photo:** Launch camera → capture → add to list
-- **From Gallery:** Pick up to 5 photos at once
+- **Take Photo:** Launch camera → capture → auto-embed GPS + timestamp → add to list
+- **From Gallery:** Not recommended (loses GPS data), but can pick 1 photo if needed
+- **GPS Capture:** Auto-enabled, shows user's location
+- **Timestamp:** Auto-embedded in photo metadata (EXIF)
+- **Visual Indicator:** Show "✓ GPS + timestamp captured" below thumbnail
 - **Photo thumbnails:** 90x90px, horizontal scroll
 - **Remove:** Tap X icon on thumbnail
-- **Types:** before | after | issue | equipment | general (dropdown later)
+- **Up to 5 photos per house**
 
-#### Notes (Text Area)
+**Important:** Photos MUST have:
+- GPS coordinates (latitude, longitude)
+- Timestamp (date, time)
+- Both captured automatically by app camera
+
+#### Issue Category (Required if issues found)
+- **Button Set:** Select ONE category
+  - ✓ No Issues (default if all good)
+  - ⚠️ Motor problem
+  - ⚠️ Filter needs change
+  - ⚠️ Circulation issue
+  - ⚠️ Timer issue
+  - ⚠️ Chemistry problem
+  - 📝 Other (shows free-text field)
+- **Behavior:** Tap button → highlights selected, deselects others
+- **If "Other" selected:** Text area appears for issue description
+- **Used for:** Auto-flagging follow-up work in admin portal
+
+#### Comments (Text Area)
 - Free-form text input
 - Min height: 80px
 - Placeholder: "Service notes, observations, issues..."
+- Not required (optional)
 
-#### Follow-up Flag
-- Toggle: "Follow-up needed?"
-- If enabled: Show text area for follow-up notes
+#### Follow-up Notes (Text Area)
+- Only shown if technician needs to flag something for next service
 - E.g., "Check heater tomorrow - parts on order"
+- Optional field
 
-### Start/Save Flow
+### Start/Complete Flow
 
 **START button (when status = pending):**
-1. Disabled form content until START is tapped
-2. Tap START → POST to service_jobs, set status = in_progress
-3. Form becomes editable
-4. Buttons appear: [COMPLETE & SAVE]
+1. Tap START → Form becomes editable
+2. Technician fills form:
+   - Take photos (auto-GPS + timestamp)
+   - Select issue category (if applicable)
+   - Add comments (optional)
+   - Add follow-up notes (if needed)
+3. All data validated client-side
 
-**COMPLETE & SAVE button:**
-1. Validate: At least 1 chemical reading required
-2. Collect form data → build payload
-3. POST service_reports table
-4. Upload photos: FormData → /report-photos bucket
-5. PATCH service_jobs: status = completed
-6. Alert "Success!" → router.back()
-7. Return to dashboard
+**MARK COMPLETE button:**
+1. Validate: At least 1 photo required
+2. Validate: Issue category selected
+3. Collect form data:
+   - House ID
+   - Photos (with GPS + timestamp metadata)
+   - Issue category
+   - Comments
+   - Follow-up notes
+4. POST to service_reports table
+5. Upload photos: FormData → /report-photos bucket (with GPS + timestamp in metadata)
+6. PATCH service_jobs: status = completed
+7. Show "✓ House completed" → Return to dashboard
+8. Dashboard updates: Progress bar increments (e.g., 1 of 22, 2 of 22, etc.)
 
 **Offline Handling:**
-- Use Zustand store to queue pending saves
+- Use Zustand store to queue pending reports
+- Store photos locally until connection
 - On connection restored: Sync queue in order
-- Show "Syncing..." indicator
+- Show "Syncing... X reports pending" indicator
+- Auto-sync when WiFi detected
+
+**Validation Rules:**
+- At least 1 photo required (per house)
+- Issue category required (select one)
+- GPS + timestamp must be present in photo
+- Comments optional, follow-up notes optional
 
 ---
 
@@ -635,6 +703,58 @@ GET /storage/report-photos/{path}  (download)
 - Touch targets: 44x44px minimum
 - Screen reader support (React Native accessibility)
 - Font scaling: Support system text size settings
+
+---
+
+## 14. MVP Features Checklist
+
+### Authentication & Onboarding
+- [ ] Technician invite/registration flow
+- [ ] Email/password authentication
+- [ ] Session persistence (cached login)
+- [ ] Deep link support for invite emails
+
+### Daily Route Management
+- [ ] Display assigned route (same route daily)
+- [ ] Show all assigned houses/pools for the day
+- [ ] Display progress: X of Y completed
+- [ ] Pull-to-refresh to sync status
+
+### Service Completion
+- [ ] **House list view** with addresses
+- [ ] **START service flow** - open service form
+- [ ] **Photo capture** with GPS + timestamp auto-embed
+- [ ] **Issue category buttons** (6 categories + Other)
+- [ ] **Comments field** for free-text notes
+- [ ] **Follow-up notes** (optional)
+- [ ] **MARK COMPLETE** button
+- [ ] Validation: Photo + category required
+- [ ] Success confirmation + return to list
+
+### Offline Support
+- [ ] Cache today's house list
+- [ ] Queue reports for sync (offline mode)
+- [ ] Auto-sync when connection restored
+- [ ] Show sync status indicator
+
+### Properties Directory
+- [ ] Read-only property list
+- [ ] Search by customer name/address
+- [ ] View property details (address, gate code, notes)
+
+### Profile & Settings
+- [ ] View technician profile
+- [ ] Edit phone number
+- [ ] View app version info
+- [ ] Logout button
+
+### Photo Management
+- [ ] Camera integration (take photos)
+- [ ] Auto-embed GPS coordinates (EXIF)
+- [ ] Auto-embed timestamp (EXIF)
+- [ ] Gallery/thumbnail preview
+- [ ] Remove photo option
+- [ ] Up to 5 photos per house
 
 ---
 

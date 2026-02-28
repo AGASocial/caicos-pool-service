@@ -9,8 +9,8 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('reports')}</h1>
-        <p className="text-muted-foreground">{t('reportsDescription')}</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('reports')}</h1>
+        <p className="text-muted-foreground dark:text-gray-700">{t('reportsDescription')}</p>
       </div>
 
       <Card>

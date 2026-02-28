@@ -46,8 +46,8 @@ export default function RoutesPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('routes')}</h1>
-          <p className="text-muted-foreground">{t('routesDescription')}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('routes')}</h1>
+          <p className="text-muted-foreground dark:text-gray-700">{t('routesDescription')}</p>
         </div>
         <Button asChild className="w-fit shrink-0">
           <Link href="/routes/new">

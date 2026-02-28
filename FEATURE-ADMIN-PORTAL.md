@@ -35,44 +35,65 @@ NextJS web application for company owners and admins to manage technicians, prop
 6. Can immediately:
    - Add technicians (invite links)
    - Create first property
-   - Schedule jobs
+   - Create routes (assign pools to routes)
+   - Assign technicians to routes
 ```
 
-### Journey 2: Admin Manage Daily Operations
+### Journey 2: Admin Setup Routes & Assign Work
+```
+1. Login → Dashboard → "Routes" section
+2. Create new route:
+   - Route name: "Ruta 1 - Nicolás"
+   - Select houses to include (18-22 pools)
+   - Assign technician: Nicolás
+3. Route created → Auto-generates daily jobs
+4. Technicians see same route every day
+5. Each morning, dashboard shows:
+   - Today's status: X of 22 completed
+   - Technician: Nicolás (Ruta 1)
+   - Completion %; Active jobs
+```
+
+### Journey 3: Daily Management & Monitoring
 ```
 1. Login → Dashboard
 2. See overview:
-   - 5 jobs scheduled today
-   - 2 completed, 3 pending
-   - 3 active technicians
-3. Tap "Jobs" → See all jobs for today
-4. Can:
-   - Create new job (pick tech + property + date)
-   - Edit pending job (reassign, reschedule)
-   - View completed reports with photos
-5. Tap "Team" → See technicians
-6. Can invite new tech or deactivate inactive ones
-7. Tap "Properties" → Manage customer pools
-8. Can add new property, edit existing info
+   - Ruta 1 (Nicolás): 15 of 22 completed (68%)
+   - Ruta 3 (Luis): 20 of 22 completed (91%)
+3. Click technician row to view:
+   - Real-time job status
+   - Photos from completed pools
+   - Issues flagged for follow-up
+4. Can view detailed report with:
+   - All completed pools
+   - Photos + timestamps
+   - Service notes
+   - Issues requiring action
 ```
 
-### Journey 3: View Service Report
+### Journey 4: Weekly Reporting for Pay
 ```
-1. Navigate to Reports
-2. Filter: Date range, technician, property
-3. See report list with:
-   - Property name
-   - Technician name
-   - Date completed
-   - Status badges
-4. Tap report → See details:
-   - All chemical readings (table)
-   - Equipment checks
-   - Tasks completed
-   - Photos gallery
-   - Notes
-   - Follow-up flag
-5. Can export report (PDF) or download photos
+1. Navigate to "Reports" → "Weekly Completion"
+2. Select: Technician [Nicolás], Week [Feb 24-Mar 2]
+3. View all assigned pools: 77
+4. Completion status: 75 completed, 2 pending
+5. Can filter by completion, view each pool's photos
+6. Click "Approve for Payroll" → Generates pay record
+7. Export report (PDF) for payroll processing
+```
+
+### Journey 5: View Service Report Detail
+```
+1. Navigate to Reports → Select completed service
+2. Tap report → See details:
+   - Pool/house number
+   - Photos gallery (with GPS + timestamp)
+   - Service notes from technician
+   - Issue category selected (if any)
+   - Equipment status checks
+   - Chemical readings (if recorded)
+   - Follow-up notes (if needed)
+3. Can export report (PDF) or download photos
 ```
 
 ---
@@ -188,6 +209,108 @@ NextJS web application for company owners and admins to manage technicians, prop
 - **Recent jobs list:** Latest 5 jobs with status + tech name
 - **Quick action buttons:** Create job, property, invite tech
 - **Navigation sidebar:** Main sections
+
+---
+
+### Routes Management
+
+#### `/routes`
+```
+┌──────────────────────────────────────┐
+│ ☰  CAICOS     Thu, Feb 21      👤    │
+├──────────────────────────────────────┤
+│                                      │
+│  Routes (2 total)                    │
+│                                      │
+│  [+ CREATE ROUTE]                    │
+│                                      │
+│  ┌──────────────────────────────┐    │
+│  │ Ruta 1 - Nicolás             │    │
+│  │ 22 pools assigned            │    │
+│  │ Technician: Nicolás Teuffel  │    │
+│  │ Created: Jan 23, 2026        │    │
+│  │ Status: 🟢 Active            │    │
+│  │ [View] [Edit] [Delete]       │    │
+│  └──────────────────────────────┘    │
+│                                      │
+│  ┌──────────────────────────────┐    │
+│  │ Ruta 3 - Luis Mena           │    │
+│  │ 24 pools assigned            │    │
+│  │ Technician: Luis Mena        │    │
+│  │ Created: Jan 23, 2026        │    │
+│  │ Status: 🟢 Active            │    │
+│  │ [View] [Edit] [Delete]       │    │
+│  └──────────────────────────────┘    │
+│                                      │
+├──────────────────────────────────────┤
+│ Home  Jobs  Properties  Team  Reports│
+│ Routes                               │
+└──────────────────────────────────────┘
+```
+
+**Features:**
+- List all routes with pool count
+- Show assigned technician
+- Status indicator (active/inactive)
+- [Create Route] button
+- Edit/Delete routes
+
+#### `/routes/new` (Modal/Page)
+```
+Create Route
+────────────────────────────
+Route Name: [Ruta 1 - Nicolás ▼]
+Technician: [Nicolás Teuffel ▼]
+
+Assign Pools:
+[Search pools...]
+☑ 5461 - Residencia Smith
+☑ 5492 - Henderson Pool
+☑ 720 - Beach House
+☑ 2235 - Downtown Condo
+... (more pools)
+
+Pool Count: 22 assigned
+
+[SAVE ROUTE]  [CANCEL]
+```
+
+**Data:**
+- Route name: Text (required)
+- Technician: Dropdown (active team members)
+- Pools: Multi-select checkbox list (searchable)
+- Display count of selected pools
+
+#### `/routes/[id]`
+```
+Ruta 1 - Nicolás
+────────────────────────────
+
+Route Details:
+Name: Ruta 1 - Nicolás
+Technician: Nicolás Teuffel
+Status: 🟢 Active
+Created: Jan 23, 2026
+
+Pools (22 total):
+┌──────────────────────┐
+│ Pool #  │ Customer   │
+├──────────────────────┤
+│ 5461    │ Smith      │
+│ 5492    │ Henderson  │
+│ 720     │ Beach House│
+│ ...     │ ...        │
+└──────────────────────┘
+
+[EDIT] [DELETE] [Download List]
+
+────────────────────────────
+
+Recent Daily Activity:
+Today: 15 of 22 completed
+Yesterday: 22 of 22 completed
+This Week: 154 of 154 completed
+```
 
 ---
 
@@ -603,6 +726,66 @@ Change Role:
 #### `/reports/[id]` (Detail View)
 [Already shown in Jobs section above]
 
+#### `/reports/weekly-completion`
+```
+┌──────────────────────────────────────┐
+│ ☰  CAICOS     Thu, Feb 21      👤    │
+├──────────────────────────────────────┤
+│                                      │
+│  Weekly Completion Report            │
+│                                      │
+│  Technician: [Nicolás Teuffel ▼]    │
+│  Week: [Week of Feb 24 - Mar 2 ▼]   │
+│  [EXPORT PDF]  [REFRESH]             │
+│                                      │
+│  ─────────────────────────────────   │
+│                                      │
+│  Ruta 1 (Nicolás)                    │
+│  Route: Ruta 1 - Nicolás             │
+│  Pools: 77 assigned                  │
+│                                      │
+│  Completion: 75 of 77 (97%)          │
+│  [████████████████░░] 97%            │
+│                                      │
+│  ✓ Completed: 75                     │
+│  ⏳ Pending: 2                        │
+│                                      │
+│  Details:                            │
+│  ┌──────────────────────────────┐    │
+│  │ Pool # │ Status │ Issue     │    │
+│  ├──────────────────────────────┤    │
+│  │ 5461   │ ✓      │ -         │    │
+│  │ 5492   │ ✓      │ Motor     │    │
+│  │ 720    │ ✓      │ Filter    │    │
+│  │ 2235   │ ✓      │ -         │    │
+│  │ ...    │ ...    │ ...       │    │
+│  │ 9100   │ ⏳      │ -         │    │
+│  │ 1120   │ ⏳      │ -         │    │
+│  └──────────────────────────────┘    │
+│                                      │
+│  [APPROVE FOR PAYROLL] [HOLD]        │
+│                                      │
+├──────────────────────────────────────┤
+│ Home  Jobs  Properties  Team  Reports│
+└──────────────────────────────────────┘
+```
+
+**Features:**
+- Select technician and week
+- Show all assigned pools for that route
+- Display completion %, count completed vs pending
+- Filter view: [All] [Completed] [Pending]
+- Each pool shows status + issue category
+- Click pool row to view photos + details
+- [Approve for Payroll] button (generates payroll record)
+- Export to PDF for processing
+
+**Data:**
+- Technician: Dropdown (all team)
+- Week: Date range selector
+- Pool rows: Pool #, Status, Issue category, [View Photos]
+- Summary: X of Y completed, percentage, counts
+
 ---
 
 ### Settings
@@ -714,12 +897,15 @@ Backend:
 
 - [ ] Owner registration & company creation
 - [ ] Technician invite system
-- [ ] Dashboard with daily overview
-- [ ] Jobs CRUD (create, edit, delete, view)
+- [ ] Dashboard with daily overview (completion %)
+- [ ] **Routes management** (create, edit, assign pools, assign technician)
+- [ ] Jobs auto-generated from routes (daily)
 - [ ] Properties CRUD
 - [ ] Team member management
-- [ ] Service report viewer
+- [ ] Service report viewer (with photos, GPS, timestamp)
+- [ ] **Issue category tracking** in reports
 - [ ] Photo gallery in reports
+- [ ] **Weekly Completion Report** (for payroll)
 - [ ] Export reports (PDF/CSV)
 - [ ] Company settings
 - [ ] User role-based access control

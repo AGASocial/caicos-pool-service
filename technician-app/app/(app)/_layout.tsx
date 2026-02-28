@@ -14,7 +14,20 @@ export default function AppLayout() {
   }, [router]);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={({ route }) => {
+        const isJobRoute = route.name?.startsWith('job') ?? false;
+        return {
+          headerShown: isJobRoute,
+          headerBackTitle: 'Back',
+          ...(isJobRoute && route.name === 'job/[id]/cant-service'
+            ? { title: "Can't service" }
+            : isJobRoute
+              ? { title: 'Job' }
+              : {}),
+        };
+      }}
+    >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="job/[id]" />
     </Stack>

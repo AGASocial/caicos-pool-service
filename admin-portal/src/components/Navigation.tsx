@@ -12,12 +12,12 @@ export default function Navigation({ closeSidebar, collapsed }: { closeSidebar?:
 
   const navItems = [
     { href: '/dashboard', label: t('dashboard'), icon: LayoutDashboard },
+    { href: '/reports', label: t('reports'), icon: FileText },
     { href: '/jobs', label: t('jobs'), icon: Briefcase },
     { href: '/routes', label: t('routes'), icon: Route },
-    { href: '/properties', label: t('properties'), icon: Building2 },
     { href: '/technicians', label: t('team'), icon: Users },
-    { href: '/reports', label: t('reports'), icon: FileText },
-    { href: '/billing', label: t('billing'), icon: CreditCard },
+    { href: '/properties', label: t('properties'), icon: Building2 },
+    // { href: '/billing', label: t('billing'), icon: CreditCard },
   ];
 
   return (

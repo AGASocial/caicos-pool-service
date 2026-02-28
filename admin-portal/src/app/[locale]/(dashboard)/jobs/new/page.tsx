@@ -95,8 +95,8 @@ export default function NewJobPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('createJob')}</h1>
-          <p className="text-muted-foreground">{t('jobsDescription')}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('createJob')}</h1>
+          <p className="text-muted-foreground dark:text-gray-700">{t('jobsDescription')}</p>
         </div>
       </div>
 

@@ -87,8 +87,8 @@ export default function NewPropertyPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('createProperty')}</h1>
-          <p className="text-muted-foreground">{t('propertiesDescription')}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('createProperty')}</h1>
+          <p className="text-muted-foreground dark:text-gray-700">{t('propertiesDescription')}</p>
         </div>
       </div>
 

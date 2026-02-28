@@ -155,8 +155,8 @@ export default function JobDetailPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('jobDetails')}</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('jobDetails')}</h1>
+          <p className="text-muted-foreground dark:text-gray-700">
             {job.property?.customer_name ?? job.property_id} · {job.scheduled_date}
           </p>
         </div>

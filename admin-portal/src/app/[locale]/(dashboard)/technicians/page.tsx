@@ -16,8 +16,8 @@ export default function TechniciansPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('team')}</h1>
-          <p className="text-muted-foreground">{t('teamDescription')}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('team')}</h1>
+          <p className="text-muted-foreground dark:text-gray-700">{t('teamDescription')}</p>
         </div>
         <Button asChild className="w-fit shrink-0">
           <Link href="/technicians/invite">

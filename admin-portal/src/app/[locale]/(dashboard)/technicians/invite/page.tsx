@@ -72,8 +72,8 @@ export default function InviteTechnicianPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('inviteTechnician')}</h1>
-          <p className="text-muted-foreground">{t('teamDescription')}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('inviteTechnician')}</h1>
+          <p className="text-muted-foreground dark:text-gray-700">{t('teamDescription')}</p>
         </div>
       </div>
 

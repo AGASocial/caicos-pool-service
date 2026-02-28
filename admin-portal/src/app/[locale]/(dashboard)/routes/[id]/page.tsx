@@ -191,8 +191,8 @@ export default function RouteDetailPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{route.name}</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{route.name}</h1>
+            <p className="text-muted-foreground dark:text-gray-700">
               {route.technician?.full_name ?? '—'} · {route.stops?.length ?? 0} {t('routeStops')}
             </p>
           </div>

@@ -20,7 +20,7 @@ import {
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { User, LogOut, Languages, ChevronUp } from "lucide-react";
+import { User, LogOut, Languages, ChevronUp, CreditCard } from "lucide-react";
 import { Link, useRouter, usePathname } from '@/i18n/navigation';
 import SecurityPinModal from './security/SecurityPinModal';
 import { useSecurity } from '@/context/SecurityContext';
@@ -63,10 +63,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         "hidden md:flex flex-col fixed inset-y-0 z-50 transition-all duration-300",
         sidebarCollapsed ? "w-20" : "w-60"
       )}>
-        <div className="relative flex-1 flex flex-col min-h-0 bg-card/75 dark:bg-[#0F172A] border-r border-border dark:border-white/5 shadow-xl transition-all duration-300">
+        <div className="relative flex-1 flex flex-col min-h-0 bg-card/75 dark:bg-sidebar border-r border-border dark:border-sidebar-border shadow-xl transition-all duration-300">
           {/* Logo Area */}
           <div className={cn(
-            "flex items-center h-20 border-b border-border dark:border-white/5 bg-card/50 dark:bg-[#0F172A]/50 backdrop-blur-xl transition-all duration-300 shrink-0",
+            "flex items-center h-20 border-b border-border dark:border-sidebar-border bg-card/50 dark:bg-sidebar/80 backdrop-blur-xl transition-all duration-300 shrink-0",
             sidebarCollapsed ? "justify-center px-0" : "px-6"
           )}>
             <div className={cn(
@@ -118,7 +118,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           </button>
 
           {/* User Profile / Footer Area */}
-          <div className="p-4 border-t border-border dark:border-white/5 bg-muted/20 dark:bg-black/20">
+          <div className="p-4 border-t border-border dark:border-sidebar-border bg-muted/20 dark:bg-sidebar-accent/50">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className={cn("w-full justify-start px-2", sidebarCollapsed ? "justify-center px-0" : "")}>
@@ -144,6 +144,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                     <span>{t('profileSettings')}</span>
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/billing" className="flex w-full cursor-pointer items-center rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                    <CreditCard className="mr-2 h-4 w-4 opacity-70" />
+                    <span>{t('billing')}</span>
+                  </Link></DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="cursor-pointer rounded-md px-2 py-2 text-sm font-medium transition-colors focus:bg-accent focus:text-accent-foreground">
                     <Languages className="mr-2 h-4 w-4 opacity-70" />
@@ -173,8 +177,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
-          <div className="relative flex w-60 flex-col bg-card dark:bg-[#0F172A] shadow-2xl animate-in slide-in-from-left duration-300">
-            <div className="flex items-center justify-between p-4 border-b border-border dark:border-white/10">
+          <div className="relative flex w-60 flex-col bg-card dark:bg-sidebar shadow-2xl animate-in slide-in-from-left duration-300">
+            <div className="flex items-center justify-between p-4 border-b border-border dark:border-sidebar-border">
               <div className="flex items-center gap-3">
                 <div className="relative h-12 w-32 overflow-hidden rounded-lg">
                   <Image
@@ -195,7 +199,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               </div>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="text-muted-foreground hover:text-foreground dark:text-white/70 dark:hover:text-white transition-colors"
+                className="text-muted-foreground hover:text-foreground dark:text-sidebar-foreground/80 dark:hover:text-sidebar-foreground transition-colors"
                 aria-label="Close sidebar"
               >
                 &times;
@@ -205,11 +209,11 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               <Navigation closeSidebar={() => setSidebarOpen(false)} />
             </div>
             {/* Mobile Footer */}
-            <div className="p-4 border-t border-border dark:border-white/5 bg-muted/20 dark:bg-black/20">
+            <div className="p-4 border-t border-border dark:border-sidebar-border bg-muted/20 dark:bg-sidebar-accent/50">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-3 w-full rounded-lg hover:bg-muted dark:hover:bg-white/5 transition-all p-2 text-left">
-                    <div className="relative flex items-center justify-center shrink-0 rounded-full bg-primary/10 dark:bg-white/10 text-primary dark:text-white h-9 w-9">
+                  <button className="flex items-center gap-3 w-full rounded-lg hover:bg-muted dark:hover:bg-sidebar-accent transition-all p-2 text-left">
+                    <div className="relative flex items-center justify-center shrink-0 rounded-full bg-primary/10 dark:bg-sidebar-accent text-primary dark:text-sidebar-accent-foreground h-9 w-9">
                       <User className="h-5 w-5" />
                     </div>
                     <div className="flex-1 overflow-hidden">
@@ -250,8 +254,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <div className="text-xs text-muted-foreground dark:text-white/40 text-center mt-4">
-                © 2026 iablee Inc.
+              <div className="text-xs text-muted-foreground dark:text-sidebar-foreground/60 text-center mt-4">
+                © 2026 PoolDash Inc.
               </div>
             </div>
           </div>
@@ -260,7 +264,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 flex flex-col transition-all duration-300 bg-main-background-dark light:bg-main-background",
+        "flex-1 flex flex-col transition-all duration-300 bg-main-background",
         sidebarCollapsed ? "md:pl-20" : "md:pl-72"
       )}>
         <Navbar onMenuClick={() => setSidebarOpen(true)} />

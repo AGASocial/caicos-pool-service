@@ -8,7 +8,16 @@ export default function TabLayout() {
   const tint = Colors[colorScheme ?? 'light'].tint;
 
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: tint, headerShown: true }}>
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: tint,
+        tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
+        headerShown: true,
+        tabBarStyle: { backgroundColor: Colors[colorScheme ?? 'light'].card },
+        headerStyle: { backgroundColor: Colors[colorScheme ?? 'light'].headerBg },
+        headerTintColor: Colors[colorScheme ?? 'light'].text,
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
