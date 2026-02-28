@@ -71,11 +71,11 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           )}>
             <div className={cn(
               "relative transition-all duration-300",
-              sidebarCollapsed ? "h-16 w-16" : "h-12 w-40"
+              sidebarCollapsed ? "h-16 w-16" : "w-48 h-24"
             )}>
               <Image
                 src={sidebarCollapsed ? "/logo-lock.png" : "/logo-iablee.png"}
-                alt="iablee"
+                alt="PoolDash"
                 fill
                 className="object-contain dark:hidden"
                 priority
@@ -83,7 +83,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               />
               <Image
                 src={sidebarCollapsed ? "/logo-lock-dark.png" : "/logo-iablee-dark.png"}
-                alt="iablee"
+                alt="PoolDash"
                 fill
                 className="object-contain hidden dark:block"
                 priority

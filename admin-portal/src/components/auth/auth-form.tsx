@@ -176,22 +176,25 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
       </div>
 
       <Button
-        type="button"
+        type="button"        
         variant="outline"
         className="w-full max-w-[300px] mx-auto flex items-center justify-center gap-2"
         onClick={handleGoogleSignIn}
-        disabled={isLoading}
+        disabled={isLoading || true}
       >
         <Image src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width={20} height={20} className="w-5 h-5" />
-        {t("signInWithGoogle") || "Sign in with Google"}
+        {"Coming Soon"}
+        {/*{t("signInWithGoogle") || "Sign in with Google"} */}
       </Button>
 
       <button
+      hidden={true}
         type="button"
         className="w-full max-w-[300px] mx-auto"
         onClick={handleAppleSignIn}
-        disabled={isLoading}
+        disabled={isLoading || true}
       >
+        
         <Image
           src={appleButtonUrl}
           alt={t("signInWithApple") || "Sign in with Apple"}
@@ -288,7 +291,7 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
       </p>
 
       <p className="px-8 text-center text-xs text-muted-foreground">
-        {t("version")} 2.2.0
+        {t("version")} 1.0.0
         <br />
         Copyright © 2026
       </p>

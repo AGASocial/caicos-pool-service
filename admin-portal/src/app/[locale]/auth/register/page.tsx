@@ -11,7 +11,7 @@ export default function RegisterPage() {
   return (
     <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
       {/* Full screen background on mobile, left half on desktop */}
-      <AuthHero quote={t('registerQuote')} author="Sofia Davis" />
+      <AuthHero quote={t('registerQuote')} author="PoolDash" />
 
       {/* Form overlay on mobile, right half on desktop */}
       <div className="relative lg:relative z-30 flex items-center justify-center min-h-screen lg:min-h-0 p-4 sm:p-6 lg:p-8">

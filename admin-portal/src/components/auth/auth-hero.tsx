@@ -3,26 +3,26 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
-// Curated collection of inspiring images related to digital legacy, security, family, future
-// Using Unsplash images - beautiful, high-quality photos
+// Curated collection of pool-related images for Caicos pool service platform
+// Using Unsplash images - beautiful, high-quality pool and water photos
 const IMAGE_SOURCES = [
-  // Digital security & legacy themes
-  'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=1600&fit=crop&q=80', // Digital future
-  'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=1200&h=1600&fit=crop&q=80', // Technology
-  'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=1600&fit=crop&q=80', // Security
-  'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&h=1600&fit=crop&q=80', // Data protection
+  // Resort & luxury pools
+  'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=1200&h=1600&fit=crop&q=80', // Blue pool, clear water
+  'https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=1200&h=1600&fit=crop&q=80', // Pool villa
+  'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=1200&h=1600&fit=crop&q=80', // Outdoor pool
+  'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&h=1600&fit=crop&q=80', // Pool resort
 
-  // Family & legacy themes
-  'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=1200&h=1600&fit=crop&q=80', // Family
-  'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=1200&h=1600&fit=crop&q=80', // Generations
-  'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=1200&h=1600&fit=crop&q=80', // Memory keeping
-  'https://images.unsplash.com/photo-1505852679233-d9fd70aff56d?w=1200&h=1600&fit=crop&q=80', // Legacy
+  // Pool views & architecture
+  'https://images.unsplash.com/photo-1572891086295-6c65f5352b0f?w=1200&h=1600&fit=crop&q=80', // Pool deck
+  'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1200&h=1600&fit=crop&q=80', // Beach pool
+  'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&h=1600&fit=crop&q=80', // Resort pool
+  'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=1200&h=1600&fit=crop&q=80', // Pool view
 
-  // Abstract & inspiring
-  'https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=1200&h=1600&fit=crop&q=80', // Abstract
-  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&h=1600&fit=crop&q=80', // Modern tech
-  'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&h=1600&fit=crop&q=80', // Innovation
-  'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1200&h=1600&fit=crop&q=80', // Planning
+  // Water & maintenance vibes
+  'https://images.unsplash.com/photo-1576610616656-d3aa5d1f4534?w=1200&h=1600&fit=crop&q=80', // Pool water
+  'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1200&h=1600&fit=crop&q=80', // Pool summer
+  'https://images.unsplash.com/photo-1580121441575-41bcb5c42b37?w=1200&h=1600&fit=crop&q=80', // Swimming pool
+  'https://images.unsplash.com/photo-1567521464027-f127ff144326?w=1200&h=1600&fit=crop&q=80', // Pool blue water
 ];
 
 // Calculate initial random indices once at module load time
@@ -187,7 +187,7 @@ export function AuthHero({ quote, author, children }: { quote: string; author: s
       </div>
 
       {/* Gradient overlay - Primary color with modern gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/70 via-primary/50 to-primary/70 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/70 via-blue-500/50 to-primary/70 backdrop-blur-[2px]" />
 
       {/* Additional overlay for depth and text readability - lightened */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/30" />
@@ -206,7 +206,7 @@ export function AuthHero({ quote, author, children }: { quote: string; author: s
         {children || (
           <div className="flex items-center group">
             <div className="p-1.5 sm:p-2 rounded-lg transition-colors">
-              <Image src="/logo-iablee-dark.png" alt="Logo" width={200} height={200} />
+              <Image src="/logo-iablee-dark2.png" alt="Logo" width={300} height={200} />
             </div>
           </div>
         )}
