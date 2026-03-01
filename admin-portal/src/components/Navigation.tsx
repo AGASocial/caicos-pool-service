@@ -15,7 +15,7 @@ export default function Navigation({ closeSidebar, collapsed }: { closeSidebar?:
     { href: '/reports', label: t('reports'), icon: FileText },
     { href: '/jobs', label: t('jobs'), icon: Briefcase },
     { href: '/routes', label: t('routes'), icon: Route },
-    { href: '/technicians', label: t('team'), icon: Users },
+    { href: '/team', label: t('team'), icon: Users },
     { href: '/properties', label: t('properties'), icon: Building2 },
     // { href: '/billing', label: t('billing'), icon: CreditCard },
   ];

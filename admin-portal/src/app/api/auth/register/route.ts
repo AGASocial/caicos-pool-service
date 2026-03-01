@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       }
 
       const companyId = invite.company_id != null ? String(invite.company_id) : '';
-      const role = (invite.role === 'admin' ? 'admin' : 'technician') as string;
+      const role = (invite.role === 'admin' || invite.role === 'operations') ? invite.role : 'technician';
       if (companyId && /^[0-9a-f-]{36}$/i.test(companyId)) {
         userMetadata.company_id = companyId;
         userMetadata.role = role;

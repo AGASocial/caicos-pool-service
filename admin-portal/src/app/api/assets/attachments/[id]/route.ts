@@ -41,7 +41,7 @@ export async function GET(
     const assetOwnerId = attachment.digital_assets.user_id;
 
     const { data: userData, error: userError } = await supabaseAdmin
-        .from('users')
+        .from('caicos_profiles')
         .select('encrypted_storage_key')
         .eq('id', assetOwnerId)
         .single();

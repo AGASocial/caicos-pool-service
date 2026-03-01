@@ -28,7 +28,7 @@ export async function POST(request: Request) {
         // --- 1. Get or Create User Key (Atomic-ish) ---
         // Fetch current key
         const { data: userData, error: userError } = await supabaseAdmin
-            .from('users')
+            .from('caicos_profiles')
             .select('encrypted_storage_key')
             .eq('id', user.id)
             .single();
@@ -50,14 +50,14 @@ export async function POST(request: Request) {
 
             // Save to DB (Only if still null - simple race condition check)
             await supabaseAdmin
-                .from('users')
+                .from('caicos_profiles')
                 .update({ encrypted_storage_key: encryptedKey })
                 .eq('id', user.id)
                 .is('encrypted_storage_key', null); // Conditional update
 
             // Fetch again to ensure we use the committed key (ours or someone else's)
             const { data: finalUserData } = await supabaseAdmin
-                .from('users')
+                .from('caicos_profiles')
                 .select('encrypted_storage_key')
                 .eq('id', user.id)
                 .single();

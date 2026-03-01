@@ -325,14 +325,14 @@ You may want to sync this data to your `users` table. Consider adding a database
 // In callback handler or after successful sign in
 if (session?.user) {
   const { data: existingUser } = await supabase
-    .from('users')
+    .from('caicos_profiles')
     .select('id')
     .eq('id', session.user.id)
     .single();
 
   if (!existingUser) {
     // Create user record
-    await supabase.from('users').insert({
+    await supabase.from('caicos_profiles').insert({
       id: session.user.id,
       email: session.user.email,
       full_name: session.user.user_metadata?.full_name || '',
@@ -340,7 +340,7 @@ if (session?.user) {
   } else {
     // Update user record if needed
     await supabase
-      .from('users')
+      .from('caicos_profiles')
       .update({
         email: session.user.email,
         full_name: session.user.user_metadata?.full_name || existingUser.full_name,

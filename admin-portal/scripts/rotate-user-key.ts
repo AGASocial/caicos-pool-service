@@ -137,7 +137,7 @@ async function rotateUserKey() {
     console.log(`Rotating User Key for: ${USER_ID}`);
 
     // 1. Get Old Key
-    const { data: user, error } = await supabaseAdmin.from('users').select('encrypted_storage_key').eq('id', USER_ID).single();
+    const { data: user, error } = await supabaseAdmin.from('caicos_profiles').select('encrypted_storage_key').eq('id', USER_ID).single();
     if (error || !user?.encrypted_storage_key) throw new Error('User not found or has no key');
 
     const oldKey = decryptUserKey(user.encrypted_storage_key);
@@ -223,7 +223,7 @@ async function rotateUserKey() {
 
 async function updateUserKey(newKey: Buffer) {
     const encrypted = encryptUserKey(newKey);
-    await supabaseAdmin.from('users').update({ encrypted_storage_key: encrypted }).eq('id', USER_ID);
+    await supabaseAdmin.from('caicos_profiles').update({ encrypted_storage_key: encrypted }).eq('id', USER_ID);
     console.log('User Key updated in DB.');
 }
 

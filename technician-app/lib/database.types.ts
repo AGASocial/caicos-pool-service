@@ -1,7 +1,7 @@
 export type Profile = {
   id: string;
   company_id: string;
-  role: 'owner' | 'admin' | 'technician';
+  role: 'owner' | 'admin' | 'technician' | 'operations';
   full_name: string;
   phone: string | null;
   avatar_url: string | null;

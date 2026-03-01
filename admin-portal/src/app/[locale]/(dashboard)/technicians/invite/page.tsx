@@ -8,12 +8,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
 import { ArrowLeft, Copy, Check } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
 
 type CreatedInvite = { code: string; role: string; expires_at: string };
+type InviteRole = 'technician' | 'admin' | 'operations';
 
-export default function InviteTechnicianPage() {
+export default function InviteTeamMemberPage() {
   const t = useTranslations();
-  const [role, setRole] = useState<'technician' | 'admin'>('technician');
+  const { user } = useAuth();
+  const isOwner = user?.profile?.role === 'owner';
+  const [role, setRole] = useState<InviteRole>('technician');
   const [expiresInDays, setExpiresInDays] = useState(7);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +76,7 @@ export default function InviteTechnicianPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('inviteTechnician')}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('inviteTeamMember')}</h1>
           <p className="text-muted-foreground dark:text-gray-700">{t('teamDescription')}</p>
         </div>
       </div>
@@ -80,7 +84,7 @@ export default function InviteTechnicianPage() {
       {!created ? (
         <Card className="max-w-md">
           <CardHeader>
-            <CardTitle>{t('inviteTechnician')}</CardTitle>
+            <CardTitle>{t('inviteTeamMember')}</CardTitle>
             <CardDescription>{t('inviteCodeDescription', { defaultValue: 'Create an invite link or code for a new team member.' })}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -89,12 +93,18 @@ export default function InviteTechnicianPage() {
                 <Label>{t('role')}</Label>
                 <select
                   value={role}
-                  onChange={(e) => setRole(e.target.value as 'technician' | 'admin')}
+                  onChange={(e) => setRole(e.target.value as InviteRole)}
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                 >
                   <option value="technician">{t('roleTechnician')}</option>
-                  <option value="admin">{t('roleAdmin')}</option>
+                  <option value="operations">{t('roleOperations')}</option>
+                  {isOwner && <option value="admin">{t('roleAdmin')}</option>}
                 </select>
+                {!isOwner && (
+                  <p className="text-xs text-muted-foreground">
+                    {t('onlyOwnersCanInviteAdmins', { defaultValue: 'Only company owners can invite new admins.' })}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="expires">{t('expiresInDays')}</Label>

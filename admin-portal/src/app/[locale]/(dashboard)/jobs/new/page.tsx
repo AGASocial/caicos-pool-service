@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { useTechnicians } from '@/lib/technicians';
+import { useTeam } from '@/lib/team';
 
 const STATUSES = ['pending', 'in_progress', 'completed', 'skipped', 'cancelled'] as const;
 
@@ -19,10 +19,10 @@ export default function NewJobPage() {
   const [properties, setProperties] = useState<{ id: string; customer_name: string; address?: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { data: technicians = [] } = useTechnicians();
+  const { data: teamMembers = [] } = useTeam();
   const [form, setForm] = useState({
     property_id: '',
-    technician_id: '',
+    team_member_id: '',
     scheduled_date: '',
     scheduled_time: '',
     status: 'pending',
@@ -64,7 +64,7 @@ export default function NewJobPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           property_id: form.property_id,
-          technician_id: form.technician_id || undefined,
+          team_member_id: form.team_member_id || undefined,
           scheduled_date: form.scheduled_date,
           scheduled_time: form.scheduled_time || undefined,
           status: form.status,
@@ -123,16 +123,16 @@ export default function NewJobPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="technician_id">{t('technician')}</Label>
+              <Label htmlFor="team_member_id">{t('teamMember')}</Label>
               <select
-                id="technician_id"
-                value={form.technician_id}
-                onChange={(e) => update('technician_id', e.target.value)}
+                id="team_member_id"
+                value={form.team_member_id}
+                onChange={(e) => update('team_member_id', e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
               >
                 <option value="">—</option>
-                {technicians.map((tech) => (
-                  <option key={tech.id} value={tech.id}>{tech.full_name}</option>
+                {teamMembers.map((member) => (
+                  <option key={member.id} value={member.id}>{member.full_name}</option>
                 ))}
               </select>
             </div>

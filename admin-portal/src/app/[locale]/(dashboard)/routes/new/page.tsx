@@ -9,22 +9,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { useTechnicians } from '@/lib/technicians';
+import { useTeam } from '@/lib/team';
 
 export default function NewRoutePage() {
   const t = useTranslations();
   const router = useRouter();
   const [name, setName] = useState('');
-  const [technicianId, setTechnicianId] = useState('');
+  const [teamMemberId, setTeamMemberId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { data: technicians = [] } = useTechnicians();
+  const { data: teamMembers = [] } = useTeam();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!name.trim() || !technicianId) {
-      setError('Name and technician are required');
+    if (!name.trim() || !teamMemberId) {
+      setError('Name and team member are required');
       return;
     }
     setLoading(true);
@@ -32,7 +32,7 @@ export default function NewRoutePage() {
       const res = await fetch('/api/routes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), technician_id: technicianId }),
+        body: JSON.stringify({ name: name.trim(), team_member_id: teamMemberId }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -80,18 +80,18 @@ export default function NewRoutePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="technician">{t('technician')}</Label>
+              <Label htmlFor="team_member_id">{t('teamMember')}</Label>
               <select
-                id="technician"
-                value={technicianId}
-                onChange={(e) => setTechnicianId(e.target.value)}
+                id="team_member_id"
+                value={teamMemberId}
+                onChange={(e) => setTeamMemberId(e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 required
               >
                 <option value="">—</option>
-                {technicians.map((tech) => (
-                  <option key={tech.id} value={tech.id}>
-                    {tech.full_name}
+                {teamMembers.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.full_name}
                   </option>
                 ))}
               </select>

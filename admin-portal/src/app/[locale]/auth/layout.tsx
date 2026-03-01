@@ -1,3 +1,12 @@
+"use client";
+
+import { Toaster } from "sonner";
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <Toaster richColors closeButton position="top-right" />
+    </>
+  );
 } 

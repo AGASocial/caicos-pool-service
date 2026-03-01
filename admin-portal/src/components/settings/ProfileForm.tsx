@@ -96,7 +96,7 @@ export function ProfileForm() {
                             className="bg-muted"
                         />
                         <p className="text-xs text-muted-foreground">
-                            Emails cannot be changed directly.
+                            {t('settings.emailCannotBeChanged')}
                         </p>
                     </div>
 

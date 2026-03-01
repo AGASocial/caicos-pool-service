@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
 import { Plus, Briefcase, ChevronRight } from 'lucide-react';
-import { useTechnicians } from '@/lib/technicians';
+import { useTeam } from '@/lib/team';
 
 type PropertyRef = { id: string; customer_name: string; address?: string };
 type TechnicianRef = { id: string; full_name: string };
@@ -38,15 +38,15 @@ export default function JobsPage() {
   const [error, setError] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [technicianId, setTechnicianId] = useState('');
+  const [teamMemberId, setTeamMemberId] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const { data: technicians = [] } = useTechnicians();
+  const { data: teamMembers = [] } = useTeam();
 
   const fetchJobs = () => {
     const params = new URLSearchParams();
     if (dateFrom) params.set('date_from', dateFrom);
     if (dateTo) params.set('date_to', dateTo);
-    if (technicianId) params.set('technician_id', technicianId);
+    if (teamMemberId) params.set('team_member_id', teamMemberId);
     if (statusFilter) params.set('status', statusFilter);
     return fetch(`/api/jobs?${params.toString()}`);
   };
@@ -138,15 +138,15 @@ export default function JobsPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{t('filterByTechnician')}</Label>
+              <Label className="text-xs">{t('filterByTeamMember')}</Label>
               <select
-                value={technicianId}
-                onChange={(e) => setTechnicianId(e.target.value)}
+                value={teamMemberId}
+                onChange={(e) => setTeamMemberId(e.target.value)}
                 className="flex h-9 w-full min-w-[140px] rounded-md border border-input bg-transparent px-3 py-1 text-sm"
               >
                 <option value="">{t('all', { defaultValue: 'All' })}</option>
-                {technicians.map((tech) => (
-                  <option key={tech.id} value={tech.id}>{tech.full_name}</option>
+                {teamMembers.map((member) => (
+                  <option key={member.id} value={member.id}>{member.full_name}</option>
                 ))}
               </select>
             </div>

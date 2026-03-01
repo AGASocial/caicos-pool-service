@@ -24,7 +24,29 @@ import { User, LogOut, Languages, ChevronUp, CreditCard } from "lucide-react";
 import { Link, useRouter, usePathname } from '@/i18n/navigation';
 import SecurityPinModal from './security/SecurityPinModal';
 import { useSecurity } from '@/context/SecurityContext';
+import { useAuth } from '@/lib/auth';
 
+function getFirstName(user: {
+  profile?: { full_name?: string } | null;
+  user_metadata?: { full_name?: string };
+  email?: string;
+} | null): string {
+  if (!user) return '';
+  const fromProfile = user.profile?.full_name?.trim();
+  if (fromProfile) {
+    const first = fromProfile.split(/\s+/)[0];
+    if (first) return first;
+  }
+  const full = user.user_metadata?.full_name?.trim();
+  if (full) {
+    const first = full.split(/\s+/)[0];
+    if (first) return first;
+  }
+  const email = user.email ?? '';
+  const local = email.split('@')[0];
+  if (local) return local;
+  return '';
+}
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -36,6 +58,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const router = useRouter();
   const locale = useLocale();
   const securityState = useSecurity();
+  const { user } = useAuth();
+  const firstName = getFirstName(user);
+  const isAdmin = user?.profile?.role === 'admin';
 
   const handleSignOut = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -127,8 +152,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                       <User className="h-4 w-4 text-primary" />
                     </div>
                     <div className={cn("flex flex-col items-start overflow-hidden transition-all duration-300", sidebarCollapsed ? "w-0 opacity-0" : "flex-1 opacity-100")}>
-                      <span className="text-sm font-medium truncate w-full text-left">{t('profile')}</span>
-                      <span className="text-xs text-muted-foreground truncate w-full text-left">My Account</span>
+                      <span className="text-sm font-medium truncate w-full text-left">{firstName || t('profile')}</span>
+                      <span className="text-xs text-muted-foreground truncate w-full text-left">{t('roles.' + user?.profile?.role, { defaultValue: 'My Account' })}</span>
                     </div>
                     {!sidebarCollapsed && <ChevronUp className="h-4 w-4 text-muted-foreground ml-auto" />}
                   </div>
@@ -139,18 +164,20 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   {t('profile')}
                 </DropdownMenuLabel>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings" className="flex w-full cursor-pointer items-center rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                    <User className="mr-2 h-4 w-4 opacity-70" />
+                  <Link href="/settings" className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                    <User className="h-4 w-4 shrink-0 opacity-70" />
                     <span>{t('profileSettings')}</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild><Link href="/billing" className="flex w-full cursor-pointer items-center rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                    <CreditCard className="mr-2 h-4 w-4 opacity-70" />
+                {isAdmin && (
+                  <DropdownMenuItem asChild><Link href="/billing" className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                    <CreditCard className="h-4 w-4 shrink-0 opacity-70" />
                     <span>{t('billing')}</span>
                   </Link></DropdownMenuItem>
+                )}
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="cursor-pointer rounded-md px-2 py-2 text-sm font-medium transition-colors focus:bg-accent focus:text-accent-foreground">
-                    <Languages className="mr-2 h-4 w-4 opacity-70" />
+                  <DropdownMenuSubTrigger className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm font-medium transition-colors focus:bg-accent focus:text-accent-foreground">
+                    <Languages className="h-4 w-4 shrink-0 opacity-70" />
                     <span>{t('language')}</span>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="p-1">
@@ -163,8 +190,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
                 <DropdownMenuSeparator className="my-2 bg-border/50" />
-                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer rounded-md px-2 py-2 text-sm font-medium text-destructive focus:bg-destructive/10 focus:text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-destructive focus:bg-destructive/10 focus:text-destructive">
+                  <LogOut className="h-4 w-4 shrink-0" />
                   <span>{t('signOut')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -217,7 +244,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                       <User className="h-5 w-5" />
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <p className="text-sm font-medium truncate">{t('profile')}</p>
+                      <p className="text-sm font-medium truncate">{firstName || t('profile')}</p>
                       <p className="text-xs text-muted-foreground truncate">{t('profileSettings')}</p>
                     </div>
                   </button>
@@ -227,14 +254,14 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                     {t('profile')}
                   </DropdownMenuLabel>
                   <DropdownMenuItem asChild>
-                    <Link href="/settings" className="cursor-pointer flex w-full items-center rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                      <User className="mr-2 h-4 w-4 opacity-70" />
+                    <Link href="/settings" className="cursor-pointer flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                      <User className="h-4 w-4 shrink-0 opacity-70" />
                       <span>{t('profileSettings')}</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="cursor-pointer rounded-md px-2 py-2 text-sm font-medium transition-colors focus:bg-accent focus:text-accent-foreground">
-                      <Languages className="mr-2 h-4 w-4 opacity-70" />
+                    <DropdownMenuSubTrigger className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm font-medium transition-colors focus:bg-accent focus:text-accent-foreground">
+                      <Languages className="h-4 w-4 shrink-0 opacity-70" />
                       <span>{t('language')}</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent className="p-1">
@@ -247,8 +274,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
                   <DropdownMenuSeparator className="my-2 bg-border/50" />
-                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer rounded-md px-2 py-2 text-sm font-medium text-destructive focus:bg-destructive/10 focus:text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-destructive focus:bg-destructive/10 focus:text-destructive">
+                    <LogOut className="h-4 w-4 shrink-0" />
                     <span>{t('signOut')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>

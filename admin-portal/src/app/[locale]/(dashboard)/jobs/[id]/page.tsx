@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
-import { useTechnicians } from '@/lib/technicians';
+import { useTeam } from '@/lib/team';
 
 const STATUSES = ['pending', 'in_progress', 'completed', 'skipped', 'cancelled'] as const;
 
@@ -38,7 +38,7 @@ export default function JobDetailPage() {
   const [job, setJob] = useState<JobDetail | null>(null);
   const [properties, setProperties] = useState<{ id: string; customer_name: string }[]>([]);
   const [loading, setLoading] = useState(true);
-  const { data: technicians = [] } = useTechnicians();
+  const { data: teamMembers = [] } = useTeam();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [edit, setEdit] = useState({
@@ -189,8 +189,8 @@ export default function JobDetailPage() {
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
             >
               <option value="">—</option>
-              {technicians.map((tech) => (
-                <option key={tech.id} value={tech.id}>{tech.full_name}</option>
+              {teamMembers.map((member) => (
+                <option key={member.id} value={member.id}>{member.full_name}</option>
               ))}
             </select>
           </div>

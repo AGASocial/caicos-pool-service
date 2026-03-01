@@ -11,7 +11,7 @@ export async function GET() {
 
     const hasSecuritySession = await checkSecuritySession();
     if (!hasSecuritySession) {
-        const { data: userData } = await supabase.from('users').select('security_pin_hash').eq('id', user.id).single();
+        const { data: userData } = await supabase.from('caicos_profiles').select('security_pin_hash').eq('id', user.id).single();
         if (userData?.security_pin_hash) {
             return NextResponse.json({ error: 'Security PIN required' }, { status: 403 });
         }
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
     const hasSecuritySession = await checkSecuritySession();
     if (!hasSecuritySession) {
-        const { data: userData } = await supabase.from('users').select('security_pin_hash').eq('id', user.id).single();
+        const { data: userData } = await supabase.from('caicos_profiles').select('security_pin_hash').eq('id', user.id).single();
         if (userData?.security_pin_hash) {
             return NextResponse.json({ error: 'Security PIN required' }, { status: 403 });
         }

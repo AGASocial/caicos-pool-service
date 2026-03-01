@@ -12,7 +12,7 @@ export async function GET() {
         // Fetch additional profile data from public.users table (if needed)
         // Since user metadata might not be fully synced or we want `full_name` from DB
         const { data: userData, error } = await supabase
-            .from('users')
+            .from('caicos_profiles')
             .select('full_name')
             .eq('id', user.id)
             .single();
@@ -68,7 +68,7 @@ export async function PUT(req: NextRequest) {
 
         // 2. Update public.users table
         const { error: dbError } = await supabase
-            .from('users')
+            .from('caicos_profiles')
             .update({ full_name: fullName })
             .eq('id', user.id);
 

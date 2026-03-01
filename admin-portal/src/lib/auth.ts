@@ -7,6 +7,12 @@ interface AuthUser {
     full_name?: string;
     [key: string]: unknown;
   };
+  profile?: {
+    company_id: string;
+    role: string;
+    full_name: string;
+    is_active: boolean;
+  } | null;
 }
 
 interface SessionResponse {

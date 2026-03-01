@@ -3,6 +3,8 @@
   "welcome": "Bienvenido de nuevo",
   "signIn": "Iniciar sesión",
   "or": "o",
+  "myAccount": "Mi cuenta",
+  "myProfile": "Mi perfil",
   "dashboard": "Dashboard",
   "jobs": "Trabajos",
   "properties": "Propiedades",
@@ -53,6 +55,8 @@
   "inviteCodeDescription": "Crea un enlace o código de invitación para un nuevo miembro del equipo.",
   "roleTechnician": "Técnico",
   "roleAdmin": "Administrador",
+  "onlyOwnersCanInviteAdmins": "Solo los propietarios de la empresa pueden invitar a nuevos administradores.",
+  "roleOperations": "Operaciones",
   "generateJobsForDateDescription": "Crea un trabajo por parada para la fecha seleccionada. Los trabajos serán asignados al técnico de esta ruta.",
   "generateInviteCode": "Generar código de invitación",
   "inviteCodeCreated": "Código de invitación creado",
@@ -92,9 +96,14 @@
   "propertiesCardDescription": "Lista de propiedades de clientes.",
   "noPropertiesYet": "Aún no hay propiedades. Añade una propiedad para comenzar.",
   "teamDescription": "Gestiona técnicos e invita nuevos miembros al equipo.",
-  "inviteTechnician": "Invitar técnico",
+  "inviteTeamMember": "Invitar miembro del equipo",
   "teamCardDescription": "Técnicos y administradores de tu empresa.",
   "noTeamYet": "Aún no hay miembros en el equipo. Invita técnicos para comenzar.",
+  "active": "Activo",
+  "inactive": "Inactivo",
+  "you": "tú",
+  "activateUser": "Activar usuario",
+  "deactivateUser": "Desactivar usuario",
   "reportsDescription": "Ver reportes de servicio. Filtra por rango de fechas, técnico y propiedad.",
   "reportsCardDescription": "Reportes de servicio completados con lecturas químicas, revisión de equipo y fotos.",
   "noReportsYet": "Aún no hay reportes. Los reportes aparecen aquí cuando los técnicos completen trabajos.",
@@ -118,7 +127,7 @@
   "beneficiaryDeleted": "Beficiario eliminado exitosamente",
   "profile": "Perfil",
   "removeBeneficiary": "Remover Beneficiario",
-  "profileSettings": "Configuración del Perfil",
+  "profileSettings": "Configuración",
   "createSecurityPin": "Crear PIN de Seguridad",
   "enterSecurityPin": "Ingresar PIN de Seguridad",
   "confirmSecurityPin": "Confirmar PIN de Seguridad",
@@ -284,6 +293,7 @@
     "passwordChangedSuccess": "Contraseña cambiada exitosamente",
     "profileUpdatedSuccess": "Perfil actualizado exitosamente",
     "errorUpdatingProfile": "Error al actualizar el perfil",
+    "emailCannotBeChanged": "El correo no se puede cambiar directamente.",
     "providerGoogle": "Google",
     "providerApple": "Apple",
     "providerEmail": "Email",
@@ -567,5 +577,11 @@
         }
       ]
     }
+  },
+  "roles": {
+    "admin": "Administrador",
+    "owner": "Propietario",
+    "technician": "Técnico",
+    "operations": "Operaciones"
   }
 }

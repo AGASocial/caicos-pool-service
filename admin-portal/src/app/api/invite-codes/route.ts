@@ -38,7 +38,7 @@ export async function GET() {
 }
 
 /**
- * Create an invite code. Role must be 'technician' or 'admin'.
+ * Create an invite code. Role must be 'technician', 'admin', or 'operations'.
  */
 export async function POST(request: NextRequest) {
   const { supabase, user } = await createAuthenticatedRouteClient();
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
   const { data: profile, error: profileError } = await (supabase as unknown as CaicosSupabaseClient)
     .from('caicos_profiles')
-    .select('company_id')
+    .select('company_id, role')
     .eq('id', user.id)
     .single();
 
@@ -62,7 +62,16 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const role = body.role === 'admin' ? 'admin' : 'technician';
+    const roleInput = body.role;
+    const role = (roleInput === 'admin' || roleInput === 'operations') ? roleInput : 'technician';
+
+    // Only owners can create invite codes for new admins; admins cannot create other admins.
+    if (role === 'admin' && profile.role !== 'owner') {
+      return NextResponse.json(
+        { error: 'Only company owners can invite new admins.' },
+        { status: 403 }
+      );
+    }
     const expiresInDays = Math.min(90, Math.max(1, Number(body.expires_in_days) || DEFAULT_EXPIRES_DAYS));
 
   const expiresAt = new Date();

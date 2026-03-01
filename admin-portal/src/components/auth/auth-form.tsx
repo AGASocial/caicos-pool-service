@@ -39,6 +39,7 @@ interface AuthFormProps {
 export function AuthForm({ type, inviteCode }: AuthFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = React.useState(false)
+  const [formError, setFormError] = React.useState<string | null>(null)
   const t = useTranslations()
   const locale = useLocale()
   const form = useForm<FormData>({
@@ -52,6 +53,7 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
 
   async function onSubmit(data: FormData) {
     setIsLoading(true)
+    setFormError(null)
 
     try {
       if (type === "register") {
@@ -67,7 +69,11 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
           }),
         })
         const result = await response.json()
-        if (!response.ok) throw new Error(result.error ?? "Registration failed")
+        if (!response.ok) {
+          const message = result.error ?? "Registration failed"
+          setFormError(message)
+          throw new Error(message)
+        }
 
         toast.success("Registration successful! Please check your email to verify your account.")
         router.push(`/${locale}/auth/login`)
@@ -81,7 +87,11 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
           }),
         })
         const result = await response.json()
-        if (!response.ok) throw new Error(result.error ?? "Login failed")
+        if (!response.ok) {
+          const message = result.error ?? "Login failed"
+          setFormError(message)
+          throw new Error(message)
+        }
 
         window.dispatchEvent(new Event('auth-changed'))
         toast.success("Login successful!")
@@ -92,7 +102,7 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
           if (res.ok) {
             const assets = await res.json();
             if (!assets || assets.length === 0) {
-              router.push(`/${locale}/wizard`);
+              router.push(`/${locale}/dashboard`); /// wizard
             } else {
               router.push(`/${locale}/dashboard`);
             }
@@ -105,7 +115,9 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
       }
     } catch (error) {
       console.error('Auth error:', error)
-      toast.error(error instanceof Error ? error.message : "An error occurred")
+      const message = error instanceof Error ? error.message : "An error occurred"
+      setFormError(message)
+      toast.error(message)
     } finally {
       setIsLoading(false)
     }
@@ -212,6 +224,15 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
           <span className="bg-background px-2 text-muted-foreground">{t("or")}</span>
         </div>
       </div>
+
+      {formError && (
+        <div
+          role="alert"
+          className="rounded-md bg-destructive/15 border border-destructive/30 px-4 py-3 text-sm text-destructive"
+        >
+          {formError}
+        </div>
+      )}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

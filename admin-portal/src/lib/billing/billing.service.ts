@@ -171,7 +171,7 @@ export class BillingService {
 
     // Get user details
     const { data: user, error: userError } = await this.supabase
-      .from('users')
+      .from('caicos_profiles')
       .select('email, full_name')
       .eq('id', userId)
       .single();
@@ -336,7 +336,7 @@ export class BillingService {
 
     // Get user details
     const { data: user, error: userError } = await this.supabase
-      .from('users')
+      .from('caicos_profiles')
       .select('email, full_name')
       .eq('id', userId)
       .single();

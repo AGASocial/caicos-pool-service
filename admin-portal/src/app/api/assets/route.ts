@@ -19,7 +19,7 @@ export async function GET() {
         // Strict mode: If user has a PIN, they NEED session.
         // If user has NO PIN, they technically need to set it up.
         // For now, let's just check the session cookie.
-        const { data: userData } = await supabase.from('users').select('security_pin_hash').eq('id', user.id).single();
+        const { data: userData } = await supabase.from('caicos_profiles').select('security_pin_hash').eq('id', user.id).single();
         if (userData?.security_pin_hash) {
             return NextResponse.json({ error: 'Security PIN required' }, { status: 403 });
         }
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 
     const hasSecuritySession = await checkSecuritySession();
     if (!hasSecuritySession) {
-        const { data: userData } = await supabase.from('users').select('security_pin_hash').eq('id', user.id).single();
+        const { data: userData } = await supabase.from('caicos_profiles').select('security_pin_hash').eq('id', user.id).single();
         if (userData?.security_pin_hash) {
             return NextResponse.json({ error: 'Security PIN required' }, { status: 403 });
         }

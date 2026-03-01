@@ -3,6 +3,8 @@
   "welcome": "Welcome back",
   "signIn": "Sign In",
   "or": "or",
+  "myAccount": "My Account",
+  "myProfile": "My Profile",
   "totalBeneficiaries": "Total Beneficiaries",
   "recentAssets": "Recent Assets",
   "dashboard": "Dashboard",
@@ -55,6 +57,8 @@
   "inviteCodeDescription": "Create an invite link or code for a new team member.",
   "roleTechnician": "Technician",
   "roleAdmin": "Admin",
+  "onlyOwnersCanInviteAdmins": "Only company owners can invite new admins.",
+  "roleOperations": "Operations",
   "generateJobsForDateDescription": "Create one job per stop for the chosen date. Jobs will be assigned to this route's technician.",
   "generateInviteCode": "Generate invite code",
   "inviteCodeCreated": "Invite code created",
@@ -94,9 +98,14 @@
   "propertiesCardDescription": "List of customer properties.",
   "noPropertiesYet": "No properties yet. Add a property to get started.",
   "teamDescription": "Manage technicians and invite new team members.",
-  "inviteTechnician": "Invite technician",
+  "inviteTeamMember": "Invite team member",
   "teamCardDescription": "Technicians and admins in your company.",
   "noTeamYet": "No team members yet. Invite technicians to get started.",
+  "active": "Active",
+  "inactive": "Inactive",
+  "you": "you",
+  "activateUser": "Activate user",
+  "deactivateUser": "Deactivate user",
   "reportsDescription": "View service reports. Filter by date range, technician, and property.",
   "reportsCardDescription": "Completed service reports with chemical readings, equipment checks, and photos.",
   "noReportsYet": "No reports yet. Reports appear here after technicians complete jobs.",
@@ -286,6 +295,7 @@
     "passwordChangedSuccess": "Password changed successfully",
     "profileUpdatedSuccess": "Profile updated successfully",
     "errorUpdatingProfile": "Error updating profile",
+    "emailCannotBeChanged": "Emails cannot be changed directly.",
     "providerGoogle": "Google",
     "providerApple": "Apple",
     "providerEmail": "Email",
@@ -570,5 +580,11 @@
         }
       ]
     }
+  },
+  "roles": {
+    "admin": "Admin",
+    "owner": "Owner",
+    "technician": "Technician",
+    "operations": "Operations"
   }
 }
