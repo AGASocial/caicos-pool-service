@@ -68,7 +68,7 @@ The frontend makes **direct Supabase client calls** using the anon key for:
 - **File**: `src/lib/assetTypes.ts`
   - `supabase.from('asset_types').select()`
   - `supabase.from('asset_type_billing_plans').select()`
-  - `supabase.from('billing_subscriptions').select()`
+  - `supabase.from('caicos_billing_subscriptions').select()`
 
 ### 2. Frontend REST API Calls (No Direct Supabase)
 
@@ -236,7 +236,7 @@ const result = await response.json();
 // src/app/api/billing/plans/route.ts
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 const { data: plans } = await supabase
-  .from('billing_plans')
+  .from('caicos_billing_plans')
   .select('*');
 ```
 

@@ -1,4 +1,4 @@
-create table security_otps (
+create table caicos_security_otps (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users not null,
   code text not null,

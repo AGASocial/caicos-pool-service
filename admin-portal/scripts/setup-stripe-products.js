@@ -5,7 +5,7 @@
  * Run: node scripts/setup-stripe-products.js
  */
 
-require('dotenv').config({ path: '.env' });
+require('dotenv').config({ path: '.env.local' });
 const { createClient } = require('@supabase/supabase-js');
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
@@ -85,8 +85,8 @@ async function main() {
       'Premium Plan',
       'Unlimited features with priority support'
     );
-    const premiumMonthlyPriceId = await createStripePrice(premiumProductId, 1999, 'month');
-    const premiumYearlyPriceId = await createStripePrice(premiumProductId, 19999, 'year');
+    const premiumMonthlyPriceId = await createStripePrice(premiumProductId, 3999, 'month');
+    const premiumYearlyPriceId = await createStripePrice(premiumProductId, 39999, 'year');
     console.log(`✅ Premium Monthly: ${premiumMonthlyPriceId}`);
     console.log(`✅ Premium Yearly: ${premiumYearlyPriceId}\n`);
 
@@ -103,7 +103,7 @@ async function main() {
 
     for (const { id, priceId } of updates) {
       const { data: plan, error: fetchError } = await supabase
-        .from('billing_plans')
+        .from('caicos_billing_plans')
         .select('provider_price_map')
         .eq('id', id)
         .single();
@@ -116,7 +116,7 @@ async function main() {
       const updatedMap = { ...plan.provider_price_map, stripe: priceId };
 
       const { error: updateError } = await supabase
-        .from('billing_plans')
+        .from('caicos_billing_plans')
         .update({ provider_price_map: updatedMap })
         .eq('id', id);
 

@@ -3,18 +3,37 @@
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { FileText, Calendar, AlertCircle, Loader2 } from 'lucide-react';
+import { FileText, Calendar, AlertCircle, Loader2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import PaymentMethodsList from '@/components/billing/PaymentMethodsList';
+import { useTeam } from '@/lib/team';
 
+/** Plan features from caicos_billing_plans (JSONB). -1 = unlimited. */
 interface PlanFeatures {
-  max_assets: number;
-  max_beneficiaries: number;
-  max_storage_mb: number;
-  priority_support: boolean;
+  admin_users_included?: number;
+  max_technicians?: number;
+  max_properties?: number;
+  max_routes?: number;
+  max_service_jobs?: number;
+  max_photos_per_service?: number;
+  storage_gb?: number;
+  photo_retention_days?: number;
+  priority_support?: boolean;
+  advanced_analytics?: boolean;
+  api_access?: boolean;
+  custom_branding?: boolean;
+  automated_scheduling?: boolean;
+  real_time_gps_tracking?: boolean;
+  sso_saml?: boolean;
+  dedicated_account_manager?: boolean;
+  /** Legacy keys (optional) */
+  max_assets?: number;
+  max_beneficiaries?: number;
+  max_storage_mb?: number;
+  [key: string]: number | boolean | undefined;
 }
 
 interface Subscription {
@@ -49,6 +68,8 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [canceling, setCanceling] = useState(false);
   const [provider, setProvider] = useState<string | null>(null);
+  const { data: teamMembers = [] } = useTeam();
+  const userCount = teamMembers.filter(member => member.role === 'technician').length;
 
   const fetchBillingData = async () => {
     try {
@@ -140,6 +161,14 @@ export default function BillingPage() {
     }).format(amountCents / 100);
   };
 
+  const formatFeatureValue = (value: number | boolean | undefined, isStorage = false) => {
+    if (value === undefined) return '-';
+    if (typeof value === 'boolean') return value ? t('yes') : t('no');
+    if (value === -1) return t('unlimited');
+    if (isStorage) return `${value} GB`;
+    return String(value);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'active':
@@ -195,7 +224,7 @@ export default function BillingPage() {
               <p className="text-muted-foreground">
                 {isFreePlan
                   ? t('freeForever')
-                  : `${formatPrice(subscription?.plan?.amountCents || 0, subscription?.plan?.currency || '')} / ${subscription?.plan?.interval === 'month' ? t('perMonth') : t('perYear')}`
+                  : `${formatPrice(subscription?.plan?.amountCents || 0, subscription?.plan?.currency || '')} / ${subscription?.plan?.interval === 'month' ? t('perMonth') : t('perYear')} / ${t('perTechnician')}`
                 }
               </p>
             </div>
@@ -214,6 +243,39 @@ export default function BillingPage() {
                   : subscription?.currentPeriodEnd
                     ? format(new Date(subscription?.currentPeriodEnd || ''), 'PPP')
                     : '-'}
+              </p>
+            </div>
+          </div>
+
+          {/* Users count and next payment */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                {t('currentUsers')}
+              </h3>
+              <p className="text-lg">
+                {t('usersCount', { count: userCount })}
+              </p>
+              {subscription?.plan?.features && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t('admins', { admins: formatFeatureValue(subscription.plan.features.admin_users) })}
+                  {' · '}
+                  {t('maxTechnicians', { maxTechnicians: formatFeatureValue(subscription.plan.features.max_users) })}
+                </p>
+              )}
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">{t('nextPayment')}</h3>
+              <p className="text-lg">
+                {isFreePlan || subscription?.cancelAtPeriodEnd
+                  ? t('noPaymentRequired')
+                  : subscription?.currentPeriodEnd
+                    ? t('nextPaymentOn', {
+                        amount: formatPrice(subscription?.plan?.amountCents * userCount || 0, subscription?.plan?.currency || 'USD'),
+                        date: format(new Date(subscription.currentPeriodEnd), 'PPP'),
+                      })
+                    : formatPrice(subscription?.plan?.amountCents || 0, subscription?.plan?.currency || 'USD')}
               </p>
             </div>
           </div>
@@ -260,31 +322,55 @@ export default function BillingPage() {
             <h3 className="font-semibold mb-3">{t('planFeatures')}</h3>
             <div className="grid md:grid-cols-2 gap-3 text-sm">
               <div className="flex justify-between p-2 bg-muted rounded">
-                <span>{t('maxAssets')}</span>
+                <span>{t('adminsLabel')}</span>
                 <span className="font-semibold">
-                  {subscription?.plan?.features?.max_assets === -1
-                    ? t('unlimited')
-                    : subscription?.plan?.features?.max_assets}
+                  {formatFeatureValue(subscription?.plan?.features?.admin_users)}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted rounded">
-                <span>{t('maxBeneficiaries')}</span>
+                <span>{t('maxTechniciansLabel')}</span>
                 <span className="font-semibold">
-                  {subscription?.plan?.features?.max_beneficiaries === -1
-                    ? t('unlimited')
-                    : subscription?.plan?.features?.max_beneficiaries}
+                  {formatFeatureValue(subscription?.plan?.features?.max_users)}
+                </span>
+              </div>
+              <div className="flex justify-between p-2 bg-muted rounded">
+                <span>{t('maxPropertiesLabel')}</span>
+                <span className="font-semibold">
+                  {formatFeatureValue(subscription?.plan?.features?.max_properties)}
+                </span>
+              </div>
+              <div className="flex justify-between p-2 bg-muted rounded">
+                <span>{t('maxRoutesLabel')}</span>
+                <span className="font-semibold">
+                  {formatFeatureValue(subscription?.plan?.features?.max_routes)}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted rounded">
                 <span>{t('maxStorage')}</span>
                 <span className="font-semibold">
-                  {subscription?.plan?.features?.max_storage_mb} MB
+                  {subscription?.plan?.features?.storage_gb !== undefined
+                    ? formatFeatureValue(subscription.plan.features.storage_gb, true)
+                    : formatFeatureValue(subscription?.plan?.features?.max_storage_mb)}
+                </span>
+              </div>
+              <div className="flex justify-between p-2 bg-muted rounded">
+                <span>{t('photoRetentionDaysLabel')}</span>
+                <span className="font-semibold">
+                  {subscription?.plan?.features?.photo_retention_days !== undefined
+                    ? formatFeatureValue(subscription.plan.features.photo_retention_days)
+                    : '-'}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted rounded">
                 <span>{t('prioritySupport')}</span>
                 <span className="font-semibold">
-                  {subscription?.plan?.features?.priority_support ? t('yes') : t('no')}
+                  {formatFeatureValue(subscription?.plan?.features?.priority_support)}
+                </span>
+              </div>
+              <div className="flex justify-between p-2 bg-muted rounded">
+                <span>{t('advancedAnalytics')}</span>
+                <span className="font-semibold">
+                  {formatFeatureValue(subscription?.plan?.features?.advanced_analytics)}
                 </span>
               </div>
             </div>

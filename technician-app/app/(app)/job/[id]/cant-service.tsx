@@ -74,7 +74,7 @@ export default function CantServiceScreen() {
       Alert.alert('Permission needed', 'Camera permission is required to take photos.');
       return;
     }
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.7, allowsEditing: false });
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.4, allowsEditing: false });
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       const overlay = await getPhotoOverlayInfo();
@@ -91,7 +91,7 @@ export default function CantServiceScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      quality: 0.7,
+      quality: 0.4,
       allowsMultipleSelection: true,
       selectionLimit: 10,
     });

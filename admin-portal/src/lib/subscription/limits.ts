@@ -28,10 +28,10 @@ export async function getSubscriptionLimits(
 ): Promise<SubscriptionLimits> {
   // Get active subscription with plan details
   const { data: subscription } = await supabase
-    .from('billing_subscriptions')
+    .from('caicos_billing_subscriptions')
     .select(`
       *,
-      plan:billing_plans(*)
+      plan:caicos_billing_plans(*)
     `)
     .eq('user_id', userId)
     .eq('status', 'active')
@@ -40,7 +40,7 @@ export async function getSubscriptionLimits(
   // If no active subscription, get the Free plan from database
   if (!subscription || !subscription.plan) {
     const { data: freePlan } = await supabase
-      .from('billing_plans')
+      .from('caicos_billing_plans')
       .select('*')
       .eq('id', 'plan_free')
       .single();
@@ -184,7 +184,7 @@ export async function hasActiveSubscription(
   userId: string
 ): Promise<boolean> {
   const { data: subscription } = await supabase
-    .from('billing_subscriptions')
+    .from('caicos_billing_subscriptions')
     .select('id')
     .eq('user_id', userId)
     .eq('status', 'active')
@@ -207,10 +207,10 @@ export async function getSubscriptionStatus(
   usage: UsageStats;
 }> {
   const { data: subscription } = await supabase
-    .from('billing_subscriptions')
+    .from('caicos_billing_subscriptions')
     .select(`
       *,
-      plan:billing_plans(*)
+      plan:caicos_billing_plans(*)
     `)
     .eq('user_id', userId)
     .eq('status', 'active')

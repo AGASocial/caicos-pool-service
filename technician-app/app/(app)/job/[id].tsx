@@ -332,7 +332,7 @@ export default function JobDetailScreen() {
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
-      quality: 0.7,
+      quality: 0.4,
       allowsEditing: false,
     });
     if (!result.canceled && result.assets[0]) {
@@ -351,7 +351,7 @@ export default function JobDetailScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      quality: 0.7,
+      quality: 0.4,
       allowsMultipleSelection: true,
       selectionLimit: 10,
     });

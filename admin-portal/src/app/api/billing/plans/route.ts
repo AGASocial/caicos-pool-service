@@ -19,7 +19,7 @@ export async function GET() {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { data: plans, error } = await supabase
-      .from('billing_plans')
+      .from('caicos_billing_plans')
       .select('*')
       .order('amount_cents', { ascending: true });
 

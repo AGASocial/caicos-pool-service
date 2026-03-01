@@ -12,12 +12,24 @@ import type { Subscription, PlanDefinition, CheckoutSessionDetails } from '@/lib
 const PAYMENT_GATEWAY = process.env.NEXT_PUBLIC_PAYMENT_GATEWAY || 'payu';
 
 interface PlanFeatures {
-  max_assets: number;
-  max_beneficiaries: number;
+  admin_users: number;
+  max_users: number;
+  max_properties: number;
+  max_routes: number;
+  max_service_jobs: number;
+  max_photos_per_service: number;
   max_file_size_mb: number;
-  max_storage_mb: number;
+  max_storage_gb: number;
+  photo_retention_days: number;
+  trial_days: number;
   priority_support: boolean;
-  advanced_security: boolean;
+  advanced_analytics: boolean;
+  api_access: boolean;
+  custom_branding: boolean;
+  automated_scheduling: boolean;
+  real_time_gps_tracking: boolean;
+  sso_saml: boolean;
+  dedicated_account_manager: boolean;
 }
 
 interface Plan {
@@ -39,6 +51,7 @@ export default function PlansPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState<'month' | 'year'>('month');
+  const [quantity, setQuantity] = useState(1);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [currentSubscription, setCurrentSubscription] = useState<SubscriptionWithPlan | null>(null);
 
@@ -124,7 +137,7 @@ export default function PlansPage() {
           credentials: 'include',
           body: JSON.stringify({
             subscriptionId: currentSubscription.id,
-            planId
+            planId,
           }),
         });
       } else {
@@ -133,7 +146,7 @@ export default function PlansPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ planId }),
+          body: JSON.stringify({ planId, quantity }),
         });
       }
 
@@ -189,6 +202,7 @@ export default function PlansPage() {
   };
 
   const formatFeatureValue = (key: string, value: number | boolean) => {
+    console.log('key', key, value);
     if (typeof value === 'boolean') {
       return value ? t('yes') : t('no');
     }
@@ -198,7 +212,8 @@ export default function PlansPage() {
     if (key.includes('storage') || key.includes('file_size')) {
       return `${value} MB`;
     }
-    return value.toString();
+    
+    return value.toString().replace('-1', t('unlimited'));
   };
 
   const filteredPlans = plans.filter(plan => plan.interval === billingCycle);
@@ -245,12 +260,28 @@ export default function PlansPage() {
             </span>
           </button>
         </div>
+
+        {/* Number of technicians (seats) */}
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <label htmlFor="quantity" className="text-sm font-medium text-muted-foreground">
+            {t('numberOfTechnicians')}:
+          </label>
+          <input
+            id="quantity"
+            type="number"
+            min={1}
+            max={500}
+            value={quantity}
+            onChange={(e) => setQuantity(Math.max(1, Math.min(500, parseInt(e.target.value, 10) || 1)))}
+            className="w-20 rounded-md border border-input bg-background px-3 py-2 text-center text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        </div>
       </div>
 
       {/* Plan Cards */}
       <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4 justify-center items-center">
         {filteredPlans.map((plan) => {
-          const isPremium = plan.name === 'Premium';
+          const isPremium = plan.name === 'Necessary';
           const isCurrentPlan = currentSubscription?.planId === plan.id;
 
           return (
@@ -265,7 +296,6 @@ export default function PlansPage() {
                   {t('popular')}
                 </div>
               )}
-
               <CardHeader>
                 <CardTitle className="text-2xl">{plan.name}</CardTitle>
                 <CardDescription>
@@ -274,12 +304,21 @@ export default function PlansPage() {
                       {formatPrice(plan.amountCents, plan.currency)}
                     </span>
                     <span className="text-muted-foreground">
-                      {' / '}
+                      <br /> <span className="text-xs text-muted-foreground">
                       {plan.interval === 'month' ? t('perMonth') : t('perYear')}
+                        {' / '}
+                        {t('perTechnician')}
+                      </span>
                     </span>
+                    {plan.amountCents > 0 && quantity > 1 && (
+                      <div className="mt-2 text-sm font-semibold text-foreground">
+                        {t('totalPrice')}: {formatPrice(plan.amountCents * quantity, plan.currency)}
+                        /{plan.interval === 'month' ? t('perMonth') : t('perYear')}
+                      </div>
+                    )}
                   </div>
                   <div className="text-xs mt-2">
-                    {plan.interval === 'month' ? t('billedMonthly') : t('billedYearly')}
+                    {/* {plan.interval === 'month' ? t('billedMonthly') : t('billedYearly')} */}
                   </div>
                 </CardDescription>
               </CardHeader>
@@ -289,35 +328,37 @@ export default function PlansPage() {
                   <li className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-primary flex-shrink-0" />
                     <span>
-                      {formatFeatureValue('max_assets', plan.features.max_assets)}{' '}
-                      {t('maxAssets')}
+                      {t('admins', { admins: formatFeatureValue('admin_users', plan.features.admin_users) })}
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-primary flex-shrink-0" />
                     <span>
-                      {formatFeatureValue('max_beneficiaries', plan.features.max_beneficiaries)}{' '}
-                      {t('maxBeneficiaries')}
+                      {t('maxTechnicians', { maxTechnicians: formatFeatureValue('max_users', plan.features.max_users) })}
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-primary flex-shrink-0" />
                     <span>
-                      {formatFeatureValue('max_file_size', plan.features.max_file_size_mb)}{' '}
-                      {t('maxFileSize')}
+                      {t('maxRoutes', { maxRoutes: formatFeatureValue('max_routes', plan.features.max_routes) })}
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                    <span>
-                      {formatFeatureValue('max_storage', plan.features.max_storage_mb)}{' '}
-                      {t('maxStorage')}
+                    <span>                     
+                      {t('maxProperties', { maxProperties: formatFeatureValue('max_properties', plan.features.max_properties) })}
                     </span>
                   </li>
-                  {plan.features.advanced_security && (
+                  <li className="flex items-center gap-2">
+                    <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                    <span>                      
+                      {t('photoRetentionDays', { photoRetentionDays: plan.features.photo_retention_days })}
+                    </span>
+                  </li>
+                  {plan.features.advanced_analytics && (
                     <li className="flex items-center gap-2">
                       <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                      <span>{t('advancedSecurity')}</span>
+                      <span>{t('advancedAnalytics')}</span>
                     </li>
                   )}
                   {plan.features.priority_support && (

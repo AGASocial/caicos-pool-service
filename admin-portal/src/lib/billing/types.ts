@@ -206,6 +206,8 @@ export interface CreateSubscriptionRequest {
   userId: string;
   planId: string;
   paymentMethodToken?: string;
+  /** Number of seats/users to charge. Price is plan amount × quantity. Default 1. */
+  quantity?: number;
 }
 
 export interface CreateSubscriptionResponse {

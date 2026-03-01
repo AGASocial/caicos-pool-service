@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { planId, paymentMethodToken } = body;
+    const { planId, paymentMethodToken, quantity } = body;
 
     if (!planId) {
       return errorResponse('Plan ID is required', 400);
@@ -92,6 +92,7 @@ export async function POST(request: NextRequest) {
       userId,
       planId,
       paymentMethodToken,
+      quantity: quantity != null ? Number(quantity) : undefined,
     };
 
     const result = await billingService.createSubscription(subscriptionRequest);

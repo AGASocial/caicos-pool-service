@@ -153,7 +153,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                     </div>
                     <div className={cn("flex flex-col items-start overflow-hidden transition-all duration-300", sidebarCollapsed ? "w-0 opacity-0" : "flex-1 opacity-100")}>
                       <span className="text-sm font-medium truncate w-full text-left">{firstName || t('profile')}</span>
-                      <span className="text-xs text-muted-foreground truncate w-full text-left">{t('roles.' + user?.profile?.role, { defaultValue: 'My Account' })}</span>
+                      <span className="text-xs text-muted-foreground truncate w-full text-left">{user?.profile?.role ? t('roles.' + user.profile.role, { defaultValue: user.profile.role }) : t('myAccount')}</span>
                     </div>
                     {!sidebarCollapsed && <ChevronUp className="h-4 w-4 text-muted-foreground ml-auto" />}
                   </div>

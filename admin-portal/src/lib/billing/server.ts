@@ -13,7 +13,7 @@ import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
  * Get the configured payment gateway based on environment
  */
 export function getPaymentGateway(): PaymentGateway {
-  const gateway = process.env.PAYMENT_GATEWAY || 'payu';
+  const gateway = process.env.NEXT_PUBLIC_PAYMENT_GATEWAY || "payu";
 
   switch (gateway) {
     case 'stripe': {

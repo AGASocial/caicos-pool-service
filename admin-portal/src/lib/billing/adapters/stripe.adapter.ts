@@ -127,7 +127,7 @@ export class StripeAdapter implements PaymentGateway {
     params: CreateSubscriptionParams
   ): Promise<SubscriptionResult> {
     try {
-      const { customer, plan, paymentMethod, trialDays, metadata } = params;
+      const { customer, plan, paymentMethod, trialDays, quantity = 1, metadata } = params;
 
       // Get price ID from plan's provider price map
       const priceId = plan.providerPriceMap?.stripe;
@@ -137,7 +137,7 @@ export class StripeAdapter implements PaymentGateway {
 
       const subscriptionParams: Stripe.SubscriptionCreateParams = {
         customer: customer.providerCustomerId,
-        items: [{ price: priceId }],
+        items: [{ price: priceId, quantity }],
         metadata: metadata || {},
         // Allow automatic payment with default payment method
         payment_behavior: 'error_if_incomplete',
@@ -157,6 +157,10 @@ export class StripeAdapter implements PaymentGateway {
 
       const subscription = await this.stripe.subscriptions.create(subscriptionParams);
 
+      // Extract current period from subscription (Stripe uses Unix timestamps)
+      const periodStart = (subscription as Stripe.Subscription & { current_period_start?: number }).current_period_start;
+      const periodEnd = this.extractPeriodEnd(subscription);
+
       // Extract client secret for confirmation
       let clientSecret: string | undefined;
       if (subscription.latest_invoice && typeof subscription.latest_invoice !== 'string') {
@@ -166,12 +170,10 @@ export class StripeAdapter implements PaymentGateway {
         }
       }
 
-      // Extract current period end from subscription
-      const periodEnd = this.extractPeriodEnd(subscription);
-
       return {
         providerSubscriptionId: subscription.id,
         status: subscription.status,
+        currentPeriodStart: periodStart ? new Date(periodStart * 1000) : undefined,
         currentPeriodEnd: new Date(periodEnd * 1000),
         clientSecret,
       };
@@ -222,6 +224,7 @@ export class StripeAdapter implements PaymentGateway {
       });
 
       const periodEnd = this.extractPeriodEnd(subscription);
+      const periodStart = (subscription as Stripe.Subscription & { current_period_start?: number }).current_period_start;
 
       console.log('Calculated period end timestamp:', periodEnd);
       console.log('Calculated period end date:', new Date(periodEnd * 1000));
@@ -229,6 +232,7 @@ export class StripeAdapter implements PaymentGateway {
       return {
         providerSubscriptionId: subscription.id,
         status: subscription.status,
+        currentPeriodStart: periodStart ? new Date(periodStart * 1000) : undefined,
         currentPeriodEnd: new Date(periodEnd * 1000),
       };
     } catch (error) {

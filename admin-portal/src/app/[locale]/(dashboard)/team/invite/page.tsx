@@ -8,12 +8,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
 import { ArrowLeft, Copy, Check } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
 
 type CreatedInvite = { code: string; role: string; expires_at: string };
+type InviteRole = 'technician' | 'admin' | 'operations';
 
 export default function InviteTeamMemberPage() {
   const t = useTranslations();
-  const [role, setRole] = useState<'technician' | 'admin' | 'operations'>('technician');
+  const { user } = useAuth();
+  const isOwner = user?.profile?.role === 'owner';
+  const [role, setRole] = useState<InviteRole>('technician');
   const [expiresInDays, setExpiresInDays] = useState(7);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +71,7 @@ export default function InviteTeamMemberPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/technicians">
+          <Link href="/team">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -89,13 +93,18 @@ export default function InviteTeamMemberPage() {
                 <Label>{t('role')}</Label>
                 <select
                   value={role}
-                  onChange={(e) => setRole(e.target.value as 'technician' | 'admin' | 'operations')}
+                  onChange={(e) => setRole(e.target.value as InviteRole)}
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                 >
                   <option value="technician">{t('roleTechnician')}</option>
                   <option value="operations">{t('roleOperations')}</option>
-                  <option value="admin">{t('roleAdmin')}</option>
+                  {isOwner && <option value="admin">{t('roleAdmin')}</option>}
                 </select>
+                {!isOwner && (
+                  <p className="text-xs text-muted-foreground">
+                    {t('onlyOwnersCanInviteAdmins', { defaultValue: 'Only company owners can invite new admins.' })}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="expires">{t('expiresInDays')}</Label>
@@ -114,7 +123,7 @@ export default function InviteTeamMemberPage() {
                   {loading ? t('loading', { defaultValue: 'Loading…' }) : t('generateInviteCode')}
                 </Button>
                 <Button type="button" variant="outline" asChild>
-                  <Link href="/technicians">{t('cancel')}</Link>
+                  <Link href="/team">{t('cancel')}</Link>
                 </Button>
               </div>
             </form>
@@ -155,7 +164,7 @@ export default function InviteTeamMemberPage() {
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => { setCreated(null); }}>{t('createAnother')}</Button>
               <Button asChild>
-                <Link href="/technicians">{t('backToTeam')}</Link>
+                <Link href="/team">{t('backToTeam')}</Link>
               </Button>
             </div>
           </CardContent>

@@ -30,6 +30,8 @@ export interface CreateSubscriptionParams {
   plan: PlanDefinition;
   paymentMethod?: PaymentMethodToken;
   trialDays?: number;
+  /** Number of seats/users. Charge = plan unit price × quantity. Default 1. */
+  quantity?: number;
   metadata?: Record<string, string>;
 }
 
@@ -39,6 +41,7 @@ export interface CreateSubscriptionParams {
 export interface SubscriptionResult {
   providerSubscriptionId: string;
   status: string;
+  currentPeriodStart?: Date;
   currentPeriodEnd?: Date;
   clientSecret?: string; // For payment confirmation (Stripe)
 }
