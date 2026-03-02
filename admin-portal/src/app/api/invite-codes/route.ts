@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import { getBillingService } from '@/lib/billing/server';
 
 const DEFAULT_EXPIRES_DAYS = 7;
 const CODE_LENGTH = 12;
@@ -72,6 +73,33 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
+
+    // Enforce technician limit from plan when inviting a technician
+    if (role === 'technician') {
+      const billingService = await getBillingService();
+      const subscription = await billingService.getUserSubscription(user.id);
+      const isExpired = subscription?.currentPeriodEnd && subscription.currentPeriodEnd < new Date();
+      const plan = subscription && !isExpired
+        ? await billingService.getPlan(subscription.planId)
+        : await billingService.getPlan('plan_free');
+      const maxTechnicians = (plan.features as { max_technicians?: number; max_users?: number })?.max_technicians
+        ?? (plan.features as { max_technicians?: number; max_users?: number })?.max_users
+        ?? 0;
+      if (maxTechnicians !== -1) {
+        const { count, error: countError } = await (supabase as unknown as CaicosSupabaseClient)
+          .from('caicos_profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', profile.company_id)
+          .eq('role', 'technician');
+        if (!countError && (count ?? 0) >= maxTechnicians) {
+          return NextResponse.json(
+            { error: 'Technician limit reached.', code: 'TECHNICIAN_LIMIT_REACHED', max: maxTechnicians },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     const expiresInDays = Math.min(90, Math.max(1, Number(body.expires_in_days) || DEFAULT_EXPIRES_DAYS));
 
   const expiresAt = new Date();

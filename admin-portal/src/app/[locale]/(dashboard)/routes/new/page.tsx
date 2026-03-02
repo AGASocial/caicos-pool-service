@@ -32,7 +32,7 @@ export default function NewRoutePage() {
       const res = await fetch('/api/routes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), team_member_id: teamMemberId }),
+        body: JSON.stringify({ name: name.trim(), technician_id: teamMemberId }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {

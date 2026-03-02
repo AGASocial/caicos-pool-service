@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Pencil } from 'lucide-react';
 
 type Property = {
   id: string;
@@ -20,6 +20,7 @@ type Property = {
   gate_code?: string;
   pool_type?: string;
   pool_surface?: string;
+  equipment_notes?: string;
   notes?: string;
   is_active?: boolean;
 };
@@ -69,28 +70,139 @@ export default function PropertyDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/properties"><ArrowLeft className="h-4 w-4" /></Link>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/properties">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">
+              {property.customer_name}
+            </h1>
+            {property.address && (
+              <p className="text-sm text-muted-foreground">
+                {property.address}
+                {property.city || property.state || property.zip ? (
+                  <>
+                    {', '}
+                    {[property.city, property.state, property.zip].filter(Boolean).join(', ')}
+                  </>
+                ) : null}
+              </p>
+            )}
+          </div>
+        </div>
+        <Button asChild>
+          <Link href={`/properties/${id}/edit`}>
+            <Pencil className="mr-2 h-4 w-4" />
+            {t('edit')}
+          </Link>
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{property.customer_name}</h1>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('properties')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {property.address && <p><span className="text-muted-foreground">{t('address')}:</span> {property.address}</p>}
-          {(property.city || property.state || property.zip) && (
-            <p><span className="text-muted-foreground">{t('city')}:</span> {[property.city, property.state, property.zip].filter(Boolean).join(', ')}</p>
-          )}
-          {property.customer_phone && <p><span className="text-muted-foreground">{t('customerPhone')}:</span> {property.customer_phone}</p>}
-          {property.customer_email && <p><span className="text-muted-foreground">{t('customerEmail')}:</span> {property.customer_email}</p>}
-          {property.gate_code && <p><span className="text-muted-foreground">{t('gateCode')}:</span> {property.gate_code}</p>}
-          {property.pool_type && <p><span className="text-muted-foreground">{t('poolType')}:</span> {property.pool_type}</p>}
-          {property.notes && <p><span className="text-muted-foreground">{t('notes')}:</span> {property.notes}</p>}
-        </CardContent>
-      </Card>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {/* Customer info */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('customer', { defaultValue: 'Customer' })}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-sm">
+            <p>
+              <span className="text-muted-foreground">{t('customerName')}:</span>{' '}
+              {property.customer_name}
+            </p>
+            {property.customer_phone && (
+              <p>
+                <span className="text-muted-foreground">{t('customerPhone')}:</span>{' '}
+                {property.customer_phone}
+              </p>
+            )}
+            {property.customer_email && (
+              <p>
+                <span className="text-muted-foreground">{t('customerEmail')}:</span>{' '}
+                {property.customer_email}
+              </p>
+            )}
+            <p>
+              <span className="text-muted-foreground">{t('status', { defaultValue: 'Status' })}:</span>{' '}
+              {property.is_active !== false
+                ? t('active', { defaultValue: 'Active' })
+                : t('inactive', { defaultValue: 'Inactive' })}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Property / access info */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              {t('property', { defaultValue: 'Property' })}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-sm">
+            {property.address && (
+              <p>
+                <span className="text-muted-foreground">{t('address')}:</span>{' '}
+                {property.address}
+              </p>
+            )}
+            {(property.city || property.state || property.zip) && (
+              <p>
+                <span className="text-muted-foreground">{t('city')}:</span>{' '}
+                {[property.city, property.state, property.zip].filter(Boolean).join(', ')}
+              </p>
+            )}
+            {property.gate_code && (
+              <p>
+                <span className="text-muted-foreground">{t('gateCode')}:</span>{' '}
+                {property.gate_code}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Pool info */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              {t('pool', { defaultValue: 'Pool' })}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-sm">
+            {property.pool_type && (
+              <p>
+                <span className="text-muted-foreground">{t('poolType')}:</span>{' '}
+                {t(`poolType_${property.pool_type}`) || property.pool_type}
+              </p>
+            )}
+            {property.pool_surface && (
+              <p>
+                <span className="text-muted-foreground">{t('poolSurface')}:</span>{' '}
+                {t(`poolSurface_${property.pool_surface}`) || property.pool_surface}
+              </p>
+            )}
+            {property.equipment_notes && (
+              <p>
+                <span className="text-muted-foreground">{t('equipmentNotes')}:</span>{' '}
+                {property.equipment_notes}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {(property.notes) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('notes')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-line text-sm">{property.notes}</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

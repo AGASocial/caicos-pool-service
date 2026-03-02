@@ -13,7 +13,7 @@ const PAYMENT_GATEWAY = process.env.NEXT_PUBLIC_PAYMENT_GATEWAY || 'payu';
 
 interface PlanFeatures {
   admin_users: number;
-  max_users: number;
+  max_technicians: number;
   max_properties: number;
   max_routes: number;
   max_service_jobs: number;
@@ -38,6 +38,7 @@ interface Plan {
   currency: string;
   amountCents: number;
   interval: 'month' | 'year';
+  active: boolean;
   features: PlanFeatures;
 }
 
@@ -68,7 +69,14 @@ export default function PlansPage() {
       });
       if (response.ok) {
         const data = await response.json();
-        setCurrentSubscription(data.subscription);
+        const sub = data.subscription;
+        const periodEnd = sub?.currentPeriodEnd;
+        const isExpired = periodEnd && new Date(periodEnd) < new Date();
+        if (sub && isExpired) {
+          setCurrentSubscription({ id: 'free', planId: 'plan_free' } as SubscriptionWithPlan);
+        } else {
+          setCurrentSubscription(sub ?? null);
+        }
       }
     } catch (error) {
       console.error('Error fetching current subscription:', error);
@@ -282,12 +290,13 @@ export default function PlansPage() {
       <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4 justify-center items-center">
         {filteredPlans.map((plan) => {
           const isPremium = plan.name === 'Necessary';
+          const isActive = plan.active;
           const isCurrentPlan = currentSubscription?.planId === plan.id;
 
           return (
             <Card
               key={plan.id}
-              className={`relative ${
+              className={`relative min-h-[600px] ${isActive ? '' : 'opacity-60'} ${
                 isPremium ? 'border-primary shadow-lg' : ''
               }`}
             >
@@ -334,7 +343,7 @@ export default function PlansPage() {
                   <li className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-primary flex-shrink-0" />
                     <span>
-                      {t('maxTechnicians', { maxTechnicians: formatFeatureValue('max_users', plan.features.max_users) })}
+                      {t('maxTechnicians', { maxTechnicians: formatFeatureValue('max_technicians', plan.features.max_technicians) })}
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
@@ -371,6 +380,7 @@ export default function PlansPage() {
               </CardContent>
 
               <CardFooter>
+                {isActive && (
                 <Button
                   className="w-full"
                   variant={isPremium ? 'default' : 'outline'}
@@ -383,6 +393,16 @@ export default function PlansPage() {
                     ? t('currentPlan')
                     : t('subscribe')}
                 </Button>
+                )}
+                {!isActive && (
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    disabled={true}
+                  >
+                    {t('comingSoon')}
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           );

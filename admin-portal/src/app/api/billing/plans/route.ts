@@ -36,6 +36,7 @@ export async function GET() {
       interval: plan.interval,
       features: plan.features,
       providerPriceMap: plan.provider_price_map,
+      active: plan.active,
     }));
 
     return successResponse({ plans: transformedPlans || [] });

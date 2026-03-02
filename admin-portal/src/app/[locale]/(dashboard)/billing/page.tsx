@@ -14,6 +14,7 @@ import { useTeam } from '@/lib/team';
 /** Plan features from caicos_billing_plans (JSONB). -1 = unlimited. */
 interface PlanFeatures {
   admin_users_included?: number;
+  admin_users?: number; // alias in some API responses
   max_technicians?: number;
   max_properties?: number;
   max_routes?: number;
@@ -58,6 +59,7 @@ interface Invoice {
   status: string;
   issuedAt: Date;
   paidAt?: Date;
+  providerInvoiceId?: string;
 }
 
 export default function BillingPage() {
@@ -65,6 +67,7 @@ export default function BillingPage() {
   const router = useRouter();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [freePlanOverride, setFreePlanOverride] = useState<Subscription['plan'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [canceling, setCanceling] = useState(false);
   const [provider, setProvider] = useState<string | null>(null);
@@ -83,6 +86,22 @@ export default function BillingPage() {
         setSubscription(subData.subscription);
         if (subData.config?.provider) {
           setProvider(subData.config.provider);
+        }
+        // When period has ended, fetch free plan so we can show it as the effective plan
+        const periodEnd = subData.subscription?.currentPeriodEnd;
+        if (periodEnd && new Date(periodEnd) < new Date()) {
+          try {
+            const plansRes = await fetch('/api/billing/plans', { credentials: 'include' });
+            if (plansRes.ok) {
+              const { plans } = await plansRes.json();
+              const free = Array.isArray(plans) ? plans.find((p: { id: string }) => p.id === 'plan_free') : null;
+              setFreePlanOverride(free ?? null);
+            }
+          } catch {
+            setFreePlanOverride(null);
+          }
+        } else {
+          setFreePlanOverride(null);
         }
       }
 
@@ -193,7 +212,11 @@ export default function BillingPage() {
     );
   }
 
-  const isFreePlan = !subscription || subscription.planId === 'plan_free';
+  const isPeriodExpired = Boolean(
+    subscription?.currentPeriodEnd && new Date(subscription.currentPeriodEnd) < new Date()
+  );
+  const isFreePlan = !subscription || subscription.planId === 'plan_free' || isPeriodExpired;
+  const effectivePlan = isPeriodExpired && freePlanOverride ? freePlanOverride : subscription?.plan;
 
   return (
     <div className="container mx-auto py-10 space-y-8 px-2">
@@ -220,11 +243,11 @@ export default function BillingPage() {
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold mb-2">{t('currentPlan')}</h3>
-              <p className="text-2xl font-bold">{subscription?.plan?.name}</p>
+              <p className="text-2xl font-bold">{effectivePlan?.name ?? t('freePlan')}</p>
               <p className="text-muted-foreground">
                 {isFreePlan
                   ? t('freeForever')
-                  : `${formatPrice(subscription?.plan?.amountCents || 0, subscription?.plan?.currency || '')} / ${subscription?.plan?.interval === 'month' ? t('perMonth') : t('perYear')} / ${t('perTechnician')}`
+                  : `${formatPrice(effectivePlan?.amountCents || 0, effectivePlan?.currency || '')} / ${effectivePlan?.interval === 'month' ? t('perMonth') : t('perYear')} / ${t('perTechnician')}`
                 }
               </p>
             </div>
@@ -247,6 +270,15 @@ export default function BillingPage() {
             </div>
           </div>
 
+          {isPeriodExpired && subscription?.currentPeriodEnd && (
+            <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
+              <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0" />
+              <p className="text-sm text-muted-foreground">
+                {t('subscriptionEndedOn', { date: format(new Date(subscription.currentPeriodEnd), 'PPP') })}
+              </p>
+            </div>
+          )}
+
           {/* Users count and next payment */}
           <div className="grid md:grid-cols-2 gap-6">
             <div>
@@ -257,11 +289,11 @@ export default function BillingPage() {
               <p className="text-lg">
                 {t('usersCount', { count: userCount })}
               </p>
-              {subscription?.plan?.features && (
+              {effectivePlan?.features && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  {t('admins', { admins: formatFeatureValue(subscription.plan.features.admin_users) })}
+                  {t('admins', { admins: formatFeatureValue(effectivePlan.features.admin_users_included ?? effectivePlan.features.admin_users) })}
                   {' · '}
-                  {t('maxTechnicians', { maxTechnicians: formatFeatureValue(subscription.plan.features.max_users) })}
+                  {t('maxTechnicians', { maxTechnicians: formatFeatureValue(effectivePlan.features.max_technicians) })}
                 </p>
               )}
             </div>
@@ -272,15 +304,15 @@ export default function BillingPage() {
                   ? t('noPaymentRequired')
                   : subscription?.currentPeriodEnd
                     ? t('nextPaymentOn', {
-                        amount: formatPrice(subscription?.plan?.amountCents * userCount || 0, subscription?.plan?.currency || 'USD'),
+                        amount: formatPrice((effectivePlan?.amountCents ?? 0) * userCount || 0, effectivePlan?.currency || 'USD'),
                         date: format(new Date(subscription.currentPeriodEnd), 'PPP'),
                       })
-                    : formatPrice(subscription?.plan?.amountCents || 0, subscription?.plan?.currency || 'USD')}
+                    : formatPrice(effectivePlan?.amountCents || 0, effectivePlan?.currency || 'USD')}
               </p>
             </div>
           </div>
 
-          {subscription?.cancelAtPeriodEnd && (
+          {subscription?.cancelAtPeriodEnd && !isPeriodExpired && (
             <div className="flex items-center gap-2 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
               <AlertCircle className="h-5 w-5 text-yellow-600" />
               <p className="text-sm">{t('cancelSubscriptionDescription')}</p>
@@ -324,53 +356,53 @@ export default function BillingPage() {
               <div className="flex justify-between p-2 bg-muted rounded">
                 <span>{t('adminsLabel')}</span>
                 <span className="font-semibold">
-                  {formatFeatureValue(subscription?.plan?.features?.admin_users)}
+                  {formatFeatureValue(effectivePlan?.features?.admin_users_included ?? effectivePlan?.features?.admin_users)}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted rounded">
                 <span>{t('maxTechniciansLabel')}</span>
                 <span className="font-semibold">
-                  {formatFeatureValue(subscription?.plan?.features?.max_users)}
+                  {formatFeatureValue(effectivePlan?.features?.max_technicians)}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted rounded">
                 <span>{t('maxPropertiesLabel')}</span>
                 <span className="font-semibold">
-                  {formatFeatureValue(subscription?.plan?.features?.max_properties)}
+                  {formatFeatureValue(effectivePlan?.features?.max_properties)}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted rounded">
                 <span>{t('maxRoutesLabel')}</span>
                 <span className="font-semibold">
-                  {formatFeatureValue(subscription?.plan?.features?.max_routes)}
+                  {formatFeatureValue(effectivePlan?.features?.max_routes)}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted rounded">
                 <span>{t('maxStorage')}</span>
                 <span className="font-semibold">
-                  {subscription?.plan?.features?.storage_gb !== undefined
-                    ? formatFeatureValue(subscription.plan.features.storage_gb, true)
-                    : formatFeatureValue(subscription?.plan?.features?.max_storage_mb)}
+                  {effectivePlan?.features?.storage_gb !== undefined
+                    ? formatFeatureValue(effectivePlan.features.storage_gb, true)
+                    : formatFeatureValue(effectivePlan?.features?.max_storage_mb)}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted rounded">
                 <span>{t('photoRetentionDaysLabel')}</span>
                 <span className="font-semibold">
-                  {subscription?.plan?.features?.photo_retention_days !== undefined
-                    ? formatFeatureValue(subscription.plan.features.photo_retention_days)
+                  {effectivePlan?.features?.photo_retention_days !== undefined
+                    ? formatFeatureValue(effectivePlan.features.photo_retention_days)
                     : '-'}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted rounded">
                 <span>{t('prioritySupport')}</span>
                 <span className="font-semibold">
-                  {formatFeatureValue(subscription?.plan?.features?.priority_support)}
+                  {formatFeatureValue(effectivePlan?.features?.priority_support)}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-muted rounded">
                 <span>{t('advancedAnalytics')}</span>
                 <span className="font-semibold">
-                  {formatFeatureValue(subscription?.plan?.features?.advanced_analytics)}
+                  {formatFeatureValue(effectivePlan?.features?.advanced_analytics)}
                 </span>
               </div>
             </div>
@@ -390,43 +422,67 @@ export default function BillingPage() {
             </div>
             {t('billingHistory')}
           </CardTitle>
+          {invoices.length > 0 && (
+            <p className="text-sm text-muted-foreground font-normal mt-1">
+              {t('billingHistoryDescription')}
+            </p>
+          )}
         </CardHeader>
         <CardContent className="pt-6">
           {invoices.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">{t('noInvoices')}</p>
           ) : (
-            <div className="space-y-3">
-              {invoices.map((invoice) => (
-                <div
-                  key={invoice.id}
-                  className="flex items-center justify-between p-4 border border-transparent rounded-xl bg-muted/30 hover:bg-muted/50 hover:border-border/50 transition-all group"
-                >
-                  <div className="flex items-center gap-4">
-                    <FileText className="h-8 w-8 text-muted-foreground" />
-                    <div>
-                      <p className="font-semibold">
-                        {formatPrice(invoice.amountCents, invoice.currency)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(invoice.issuedAt), 'PPP')}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span
-                      className={`text-sm font-semibold ${invoice.status === 'paid' ? 'text-green-600' : 'text-yellow-600'
-                        }`}
+            <div className="overflow-x-auto rounded-lg border border-border/50">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/50 bg-muted/30">
+                    <th className="text-left font-semibold p-3">{t('invoiceDate')}</th>
+                    <th className="text-left font-semibold p-3">{t('invoiceNumber')}</th>
+                    <th className="text-right font-semibold p-3">{t('invoiceAmount')}</th>
+                    <th className="text-left font-semibold p-3">{t('invoiceStatus')}</th>
+                    <th className="text-right font-semibold p-3 w-24">{t('actions')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map((invoice) => (
+                    <tr
+                      key={invoice.id}
+                      className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors"
                     >
-                      {t(`invoice${invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}`)}
-                    </span>
-                    {invoice.status === 'paid' && (
-                      <Button variant="ghost" size="sm">
-                        {t('downloadInvoice')}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                      <td className="p-3">
+                        <span className="font-medium">{format(new Date(invoice.issuedAt), 'PP')}</span>
+                        {invoice.paidAt && invoice.status === 'paid' && (
+                          <span className="block text-xs text-muted-foreground mt-0.5">
+                            {t('paidOn')} {format(new Date(invoice.paidAt), 'PP')}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3 font-mono text-muted-foreground">
+                        {invoice.providerInvoiceId
+                          ? String(invoice.providerInvoiceId).slice(-12)
+                          : invoice.id.slice(0, 8)}
+                      </td>
+                      <td className="p-3 text-right font-semibold">
+                        {formatPrice(invoice.amountCents, invoice.currency)}
+                      </td>
+                      <td className="p-3">
+                        <span
+                          className={`font-semibold ${invoice.status === 'paid' ? 'text-green-600' : invoice.status === 'open' ? 'text-amber-600' : 'text-muted-foreground'}`}
+                        >
+                          {t(`invoice${invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}`)}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right">
+                        {invoice.status === 'paid' && (
+                          <Button variant="ghost" size="sm">
+                            {t('downloadInvoice')}
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>

@@ -20,7 +20,7 @@ VALUES
     'month',
     '{
     "admin_users_included": 5,
-    "max_technicians": 5,
+    "max_technicians": 3,
     "max_properties": 300,
     "max_routes": 10,
     "max_service_jobs": -1,
