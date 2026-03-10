@@ -46,7 +46,7 @@ export default function JobsPage() {
     const params = new URLSearchParams();
     if (dateFrom) params.set('date_from', dateFrom);
     if (dateTo) params.set('date_to', dateTo);
-    if (teamMemberId) params.set('team_member_id', teamMemberId);
+    if (teamMemberId) params.set('technician_id', teamMemberId);
     if (statusFilter) params.set('status', statusFilter);
     return fetch(`/api/jobs?${params.toString()}`);
   };

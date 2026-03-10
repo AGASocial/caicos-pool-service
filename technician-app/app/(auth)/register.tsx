@@ -56,71 +56,131 @@ export default function RegisterScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: c.background },
-        title: { fontSize: 22, fontWeight: '600', marginBottom: 16, color: c.text },
+        container: { flex: 1, justifyContent: 'center', padding: 16, backgroundColor: c.background },
+        card: {
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: c.border,
+          backgroundColor: c.card,
+          overflow: 'hidden',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 3,
+          elevation: 1,
+        },
+        headerArea: { paddingTop: 32, paddingBottom: 16, paddingHorizontal: 24, alignItems: 'center' },
+        title: { fontSize: 24, fontWeight: '700', color: c.text, letterSpacing: -0.5, textAlign: 'center' },
+        subtitle: { fontSize: 14, color: c.muted, marginTop: 8, fontWeight: '500', textAlign: 'center' },
+        form: { paddingHorizontal: 24, paddingBottom: 32, paddingTop: 8, gap: 16 },
+        fieldLabel: { fontSize: 14, fontWeight: '500', color: c.text, marginBottom: 8 },
         input: {
           borderWidth: 1,
           borderColor: c.border,
-          borderRadius: 8,
-          padding: 12,
-          marginTop: 12,
+          borderRadius: 12,
+          paddingHorizontal: 16,
+          height: 48,
           backgroundColor: c.inputBg,
           color: c.text,
+          fontSize: 16,
         },
-        hint: { fontSize: 14, color: c.muted, marginTop: 8 },
-        error: { color: c.error, marginTop: 8, fontSize: 14 },
-        button: { backgroundColor: c.buttonPrimary, borderRadius: 8, padding: 14, marginTop: 24, alignItems: 'center' },
-        buttonText: { color: c.buttonPrimaryText, fontWeight: '600' },
-        link: { color: c.link, marginTop: 16, textAlign: 'center' },
+        hint: { fontSize: 14, color: c.muted, paddingHorizontal: 4 },
+        error: { color: c.error, fontSize: 14, paddingHorizontal: 4 },
+        button: {
+          backgroundColor: c.buttonPrimary,
+          borderRadius: 12,
+          height: 48,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 12,
+          shadowColor: c.buttonPrimaryShadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 1,
+          shadowRadius: 12,
+          elevation: 4,
+        },
+        buttonText: { color: c.buttonPrimaryText, fontWeight: '700', fontSize: 16, letterSpacing: 0.5 },
+        footer: {
+          backgroundColor: c.background,
+          borderTopWidth: 1,
+          borderTopColor: c.border,
+          paddingVertical: 16,
+          alignItems: 'center',
+        },
+        footerText: { fontSize: 14, color: c.muted },
+        footerLink: { fontWeight: '600', color: c.tint, marginLeft: 4 },
       }),
     [c]
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create account</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Full name"
-        placeholderTextColor={c.placeholder}
-        value={fullName}
-        onChangeText={setFullName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor={c.placeholder}
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      {isInvite && <Text style={styles.hint}>Joining as {invitePayload?.role ?? 'technician'}</Text>}
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor={c.placeholder}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm password"
-        placeholderTextColor={c.placeholder}
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
-      {error && <Text style={styles.error}>{error}</Text>}
-      <Pressable style={styles.button} onPress={handleSignUp} disabled={loading}>
-        {loading ? <ActivityIndicator color={c.buttonPrimaryText} /> : <Text style={styles.buttonText}>Register</Text>}
-      </Pressable>
-      <Link href="/(auth)/login" asChild>
-        <Pressable>
-          <Text style={styles.link}>Already have an account? Sign in</Text>
-        </Pressable>
-      </Link>
+      <View style={styles.card}>
+        <View style={styles.headerArea}>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Join your pool service team in Caicos</Text>
+        </View>
+        <View style={styles.form}>
+          <View>
+            <Text style={styles.fieldLabel}>Full Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Your full name"
+              placeholderTextColor={c.placeholder}
+              value={fullName}
+              onChangeText={setFullName}
+            />
+          </View>
+          <View>
+            <Text style={styles.fieldLabel}>Email Address</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="you@example.com"
+              placeholderTextColor={c.placeholder}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+          </View>
+          {isInvite && <Text style={styles.hint}>Joining as {invitePayload?.role ?? 'technician'}</Text>}
+          <View>
+            <Text style={styles.fieldLabel}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Min. 6 characters"
+              placeholderTextColor={c.placeholder}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
+          <View>
+            <Text style={styles.fieldLabel}>Confirm Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Re-enter password"
+              placeholderTextColor={c.placeholder}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
+          </View>
+          {error && <Text style={styles.error}>{error}</Text>}
+          <Pressable style={styles.button} onPress={handleSignUp} disabled={loading}>
+            {loading ? <ActivityIndicator color={c.buttonPrimaryText} /> : <Text style={styles.buttonText}>CREATE ACCOUNT</Text>}
+          </Pressable>
+        </View>
+        <View style={styles.footer}>
+          <Link href="/(auth)/login" asChild>
+            <Pressable>
+              <Text style={styles.footerText}>
+                Already have an account?<Text style={styles.footerLink}> Sign in</Text>
+              </Text>
+            </Pressable>
+          </Link>
+        </View>
+      </View>
     </View>
   );
 }

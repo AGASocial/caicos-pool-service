@@ -5,38 +5,60 @@ import { useColorScheme } from '@/components/useColorScheme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const tint = Colors[colorScheme ?? 'light'].tint;
+  const colors = Colors[colorScheme ?? 'light'];
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: tint,
-        tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
+        tabBarActiveTintColor: colors.tint,
+        tabBarInactiveTintColor: colors.tabIconDefault,
         headerShown: true,
-        tabBarStyle: { backgroundColor: Colors[colorScheme ?? 'light'].card },
-        headerStyle: { backgroundColor: Colors[colorScheme ?? 'light'].headerBg },
-        headerTintColor: Colors[colorScheme ?? 'light'].text,
+        tabBarStyle: {
+          backgroundColor: colors.card,
+          borderTopColor: colors.borderSubtle,
+          borderTopWidth: 1,
+          paddingTop: 4,
+          height: 56,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '500',
+          letterSpacing: 0.3,
+        },
+        headerStyle: {
+          backgroundColor: colors.card,
+          borderBottomWidth: 0,
+          shadowColor: 'transparent',
+          elevation: 0,
+        },
+        headerTintColor: colors.text,
+        headerShadowVisible: false,
+        headerTitleStyle: {
+          fontWeight: '700',
+          fontSize: 18,
+          letterSpacing: -0.3,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Jobs',
-          tabBarIcon: ({ color }) => <FontAwesome name="list" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <FontAwesome name="list" size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="properties"
         options={{
           title: 'Properties',
-          tabBarIcon: ({ color }) => <FontAwesome name="home" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <FontAwesome name="home" size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
-          tabBarIcon: ({ color }) => <FontAwesome name="cog" size={24} color={color} />,
+          title: 'Me',
+          tabBarIcon: ({ color }) => <FontAwesome name="user" size={22} color={color} />,
         }}
       />
     </Tabs>

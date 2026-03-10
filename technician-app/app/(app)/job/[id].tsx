@@ -12,22 +12,22 @@ import { getUploadBodyFromUri } from '@/lib/uploadPhoto';
 import Colors from '@/constants/Colors';
 
 const CHEMICAL_READINGS = [
-  { key: 'ph_level', label: 'pH', ideal: '7.2-7.6' },
-  { key: 'chlorine_level', label: 'Free Chlorine (ppm)', ideal: '1-3' },
-  { key: 'alkalinity', label: 'Total Alkalinity (ppm)', ideal: '80-120' },
-  { key: 'calcium_hardness', label: 'Calcium Hardness (ppm)', ideal: '200-400' },
-  { key: 'cyanuric_acid', label: 'CYA (ppm)', ideal: '30-100' },
-  { key: 'salt_level', label: 'Salt (ppm)', ideal: '2700-3400' },
-  { key: 'water_temp_f', label: 'Water temp (°F)', ideal: '78-86' },
+  { key: 'ph_level', label: 'pH', ideal: '7.2-7.6', unit: 'pH' },
+  { key: 'chlorine_level', label: 'Chlorine', ideal: '1-3', unit: 'ppm' },
+  { key: 'alkalinity', label: 'Alkalinity', ideal: '80-120', unit: 'ppm' },
+  { key: 'calcium_hardness', label: 'Calcium Hardness', ideal: '200-400', unit: 'ppm' },
+  { key: 'cyanuric_acid', label: 'CYA', ideal: '30-100', unit: 'ppm' },
+  { key: 'salt_level', label: 'Salt', ideal: '2700-3400', unit: 'ppm' },
+  { key: 'water_temp_f', label: 'Water Temp', ideal: '78-86', unit: '\u00b0F' },
 ] as const;
 
 const TASKS = [
-  { key: 'skimmed', label: 'Skimmed surface' },
-  { key: 'vacuumed', label: 'Vacuumed floor' },
-  { key: 'brushed', label: 'Brushed walls' },
-  { key: 'emptied_baskets', label: 'Emptied baskets' },
-  { key: 'backwashed', label: 'Backwashed filter' },
-  { key: 'cleaned_filter', label: 'Cleaned filter' },
+  { key: 'skimmed', label: 'Skim Surface' },
+  { key: 'vacuumed', label: 'Vacuum Pool' },
+  { key: 'brushed', label: 'Brush Walls' },
+  { key: 'emptied_baskets', label: 'Empty Baskets' },
+  { key: 'backwashed', label: 'Backwash Filter' },
+  { key: 'cleaned_filter', label: 'Clean Filter' },
 ] as const;
 
 const EQUIPMENT = [
@@ -53,8 +53,8 @@ function haversineMeters(
       Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  const cc = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * cc;
 }
 
 export default function JobDetailScreen() {
@@ -100,78 +100,260 @@ export default function JobDetailScreen() {
       StyleSheet.create({
         container: { flex: 1, backgroundColor: themeColors.background },
         center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeColors.background },
-        header: {
-          flexDirection: 'row',
-          alignItems: 'flex-start',
+        content: { padding: 16, gap: 16 },
+        // Customer info card
+        customerCard: {
+          backgroundColor: themeColors.card,
+          borderRadius: 12,
           padding: 16,
-          backgroundColor: themeColors.headerBg,
-          borderBottomWidth: 1,
-          borderBottomColor: themeColors.border,
+          borderWidth: 1,
+          borderColor: themeColors.borderSubtle,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.04,
+          shadowRadius: 3,
+          elevation: 1,
         },
-        headerContent: { flex: 1 },
-        menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-start', alignItems: 'flex-end', paddingTop: 56, paddingRight: 16 },
+        customerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 16 },
+        customerInfo: { flex: 1, gap: 4 },
+        title: { fontSize: 20, fontWeight: '700', color: themeColors.text, letterSpacing: -0.3 },
+        gateRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+        gateCode: {
+          fontSize: 14,
+          fontWeight: '500',
+          color: themeColors.text,
+          backgroundColor: themeColors.inputBgAlt,
+          paddingHorizontal: 8,
+          paddingVertical: 2,
+          borderRadius: 4,
+          overflow: 'hidden',
+        },
+        address: { fontSize: 14, color: themeColors.muted, fontWeight: '500' },
+        status: { fontSize: 13, color: themeColors.mutedSecondary },
+        directionsBtn: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          height: 36,
+          paddingHorizontal: 16,
+          borderRadius: 8,
+          backgroundColor: themeColors.inputBgAlt,
+          marginTop: 8,
+          alignSelf: 'flex-start',
+        },
+        directionsBtnText: { fontSize: 14, fontWeight: '500', color: themeColors.text },
+        // Menu modal
+        menuBackdrop: { flex: 1, backgroundColor: themeColors.overlay, justifyContent: 'flex-start', alignItems: 'flex-end', paddingTop: 56, paddingRight: 20 },
         menuCard: {
           backgroundColor: themeColors.card,
           borderRadius: 12,
-          minWidth: 200,
+          minWidth: 220,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 8,
-          elevation: 5,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 12,
+          elevation: 8,
         },
-        menuOption: { paddingVertical: 14, paddingHorizontal: 20 },
+        menuOption: { paddingVertical: 16, paddingHorizontal: 20 },
         menuOptionText: { fontSize: 16, fontWeight: '500', color: themeColors.text },
         menuOptionCancel: { color: themeColors.muted },
-        title: { fontSize: 18, fontWeight: '600', color: themeColors.text },
-        address: { fontSize: 14, color: themeColors.muted, marginTop: 4 },
-        gate: { fontSize: 14, color: themeColors.link, marginTop: 4 },
-        status: { fontSize: 12, color: themeColors.mutedSecondary, marginTop: 4 },
+        // Location warning
         locationWarning: {
-          marginHorizontal: 16,
-          marginTop: 16,
-          marginBottom: 12,
-          padding: 12,
+          padding: 16,
           backgroundColor: themeColors.warningBg,
-          borderRadius: 8,
+          borderRadius: 12,
           borderLeftWidth: 4,
           borderLeftColor: themeColors.warningBorder,
         },
         locationWarningText: { fontSize: 14, color: themeColors.warningText },
-        startButton: { backgroundColor: themeColors.buttonSuccess, margin: 16, padding: 16, borderRadius: 8, alignItems: 'center' },
-        startButtonText: { color: themeColors.buttonSuccessText, fontWeight: '700', fontSize: 16 },
-        cantServiceButton: { backgroundColor: themeColors.buttonDanger, marginHorizontal: 16, marginBottom: 16, padding: 16, borderRadius: 8, alignItems: 'center' },
-        cantServiceButtonText: { color: themeColors.buttonDangerText, fontWeight: '600', fontSize: 16 },
-        sectionTitle: { fontSize: 16, fontWeight: '600', marginTop: 20, marginHorizontal: 16, color: themeColors.text },
-        field: { marginHorizontal: 16, marginTop: 8 },
-        label: { fontSize: 14, color: themeColors.muted },
-        input: {
+        // Start/action buttons
+        startButton: {
+          backgroundColor: themeColors.buttonPrimary,
+          padding: 18,
+          borderRadius: 12,
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'row',
+          gap: 12,
+          shadowColor: themeColors.buttonPrimaryShadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 1,
+          shadowRadius: 12,
+          elevation: 4,
+        },
+        startButtonText: { color: themeColors.buttonPrimaryText, fontWeight: '700', fontSize: 18, letterSpacing: 0.5 },
+        cantServiceButton: {
+          borderWidth: 1,
+          borderColor: themeColors.buttonDanger,
+          borderRadius: 12,
+          padding: 16,
+          alignItems: 'center',
+        },
+        cantServiceButtonText: { color: themeColors.buttonDanger, fontWeight: '600', fontSize: 16 },
+        // Section cards
+        sectionCard: {
+          backgroundColor: themeColors.card,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: themeColors.borderSubtle,
+          overflow: 'hidden',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.04,
+          shadowRadius: 3,
+          elevation: 1,
+        },
+        sectionHeader: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderBottomWidth: 1,
+          borderBottomColor: themeColors.borderSubtle,
+          backgroundColor: themeColors.sectionHeaderBg,
+        },
+        sectionHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+        sectionIcon: {
+          width: 32,
+          height: 32,
+          borderRadius: 16,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        sectionIconText: { fontSize: 16 },
+        sectionTitle: { fontSize: 16, fontWeight: '700', color: themeColors.text },
+        // Chemical readings grid
+        chemGrid: {
+          padding: 16,
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 16,
+        },
+        chemField: { width: '46%' },
+        chemFieldFull: { width: '100%' },
+        chemLabel: {
+          fontSize: 11,
+          fontWeight: '600',
+          color: themeColors.muted,
+          textTransform: 'uppercase',
+          letterSpacing: 0.8,
+          marginBottom: 6,
+        },
+        chemInput: {
           borderWidth: 1,
           borderColor: themeColors.border,
           borderRadius: 8,
-          padding: 12,
-          marginTop: 4,
+          paddingHorizontal: 12,
+          height: 48,
           backgroundColor: themeColors.inputBg,
           color: themeColors.text,
+          fontSize: 18,
+          fontVariant: ['tabular-nums'],
         },
-        textArea: { minHeight: 80 },
-        row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 16, marginTop: 12 },
-        taskLabel: { fontSize: 14, color: themeColors.text },
-        completeButton: { backgroundColor: themeColors.buttonPrimary, margin: 16, padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 24 },
-        completeButtonText: { color: themeColors.buttonPrimaryText, fontWeight: '600' },
-        photoActions: { flexDirection: 'row', gap: 12, marginHorizontal: 16, marginTop: 8 },
-        photoButton: { flex: 1, backgroundColor: themeColors.photoButtonBg, padding: 12, borderRadius: 8, alignItems: 'center' },
-        photoButtonText: { fontSize: 14, fontWeight: '500', color: themeColors.text },
-        photoThumbs: { marginTop: 12, marginHorizontal: 16 },
-        photoThumbsContent: { gap: 8, paddingRight: 16 },
+        // Task toggle rows
+        taskRow: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+          borderBottomWidth: 1,
+          borderBottomColor: themeColors.divider,
+        },
+        taskRowLast: { borderBottomWidth: 0 },
+        taskLabel: { fontSize: 16, fontWeight: '500', color: themeColors.text },
+        // Equipment section
+        equipmentRow: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingVertical: 12,
+        },
+        equipmentBody: { padding: 16, gap: 12 },
+        // Notes
+        notesCard: {
+          backgroundColor: themeColors.card,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: themeColors.borderSubtle,
+          overflow: 'hidden',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.04,
+          shadowRadius: 3,
+          elevation: 1,
+        },
+        notesInput: {
+          padding: 16,
+          minHeight: 88,
+          fontSize: 16,
+          color: themeColors.text,
+          textAlignVertical: 'top',
+        },
+        // Photos section
+        photoActions: { flexDirection: 'row', gap: 12, padding: 16 },
+        photoButton: {
+          flex: 1,
+          height: 48,
+          backgroundColor: themeColors.photoButtonBg,
+          borderRadius: 12,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: 2,
+          borderStyle: 'dashed',
+          borderColor: themeColors.border,
+        },
+        photoButtonText: { fontSize: 14, fontWeight: '600', color: themeColors.muted },
+        photoThumbs: { paddingHorizontal: 16, paddingBottom: 16 },
+        photoThumbsContent: { gap: 12, paddingRight: 20 },
         thumbWrap: { position: 'relative' },
-        thumb: { width: 80, height: 80, borderRadius: 8, backgroundColor: themeColors.thumbBg },
-        removeThumb: { position: 'absolute', top: 2, right: 2, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
-        removeThumbText: { color: '#fff', fontSize: 20, lineHeight: 22, fontWeight: '600' },
+        thumb: { width: 90, height: 90, borderRadius: 12, backgroundColor: themeColors.thumbBg },
+        removeThumb: { position: 'absolute', top: 4, right: 4, width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
+        removeThumbText: { color: '#fff', fontSize: 14, lineHeight: 16 },
         photoFullScreenBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' },
         photoFullScreenImage: { width: '100%', height: '100%' },
-        photoFullScreenClose: { position: 'absolute', top: 48, right: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' },
+        photoFullScreenClose: { position: 'absolute', top: 48, right: 24, width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
         photoFullScreenCloseText: { color: '#fff', fontSize: 28, lineHeight: 32, fontWeight: '300' },
+        // Follow-up
+        followUpRow: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: themeColors.card,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: themeColors.borderSubtle,
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+        },
+        followUpInput: {
+          backgroundColor: themeColors.card,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: themeColors.borderSubtle,
+          padding: 16,
+          minHeight: 88,
+          fontSize: 16,
+          color: themeColors.text,
+          textAlignVertical: 'top',
+        },
+        // Complete button
+        completeButton: {
+          backgroundColor: themeColors.buttonPrimary,
+          borderRadius: 12,
+          padding: 18,
+          alignItems: 'center',
+          marginTop: 8,
+          marginBottom: 32,
+          shadowColor: themeColors.buttonPrimaryShadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 1,
+          shadowRadius: 12,
+          elevation: 4,
+        },
+        completeButtonText: { color: themeColors.buttonPrimaryText, fontWeight: '700', fontSize: 16 },
       }),
     [theme]
   );
@@ -191,7 +373,6 @@ export default function JobDetailScreen() {
       .then(() => setLoading(false), () => setLoading(false));
   }, [id]);
 
-  // When job is started (in_progress or completed), load existing report and photos if any
   useEffect(() => {
     if (!id || !job || !started) return;
     let cancelled = false;
@@ -266,7 +447,6 @@ export default function JobDetailScreen() {
     return () => { cancelled = true; };
   }, [id, job?.id, started]);
 
-  // Put "Can't service" menu in the stack header (top right) when job is started
   useLayoutEffect(() => {
     if (!started) {
       navigation.setOptions({ headerRight: undefined });
@@ -281,7 +461,6 @@ export default function JobDetailScreen() {
     });
   }, [started, navigation, themeColors.text]);
 
-  // When job has property lat/lng, get user location and compute distance for warning
   useEffect(() => {
     if (!job || started) return;
     const prop = Array.isArray(job.caicos_properties) ? job.caicos_properties[0] : job.caicos_properties;
@@ -371,7 +550,7 @@ export default function JobDetailScreen() {
       }
       const { error } = await supabase.from('caicos_report_photos').delete().eq('id', photo.id);
       if (error) {
-        Alert.alert('Could not remove photo', error.message ?? 'Delete failed. The photo was removed from the list—you may need to add a policy for deleting report photos.');
+        Alert.alert('Could not remove photo', error.message ?? 'Delete failed. The photo was removed from the list\u2014you may need to add a policy for deleting report photos.');
       }
     }
   }
@@ -516,7 +695,7 @@ export default function JobDetailScreen() {
   if (loading || !job) {
     return (
       <View style={styles.center}>
-        <Text>Loading job…</Text>
+        <Text style={{ color: themeColors.text }}>Loading job...</Text>
       </View>
     );
   }
@@ -525,183 +704,252 @@ export default function JobDetailScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <Text style={styles.title}>{prop?.customer_name ?? '—'}</Text>
-          <Text style={styles.address}>{prop?.address ?? ''}</Text>
-          {prop?.gate_code && <Text style={styles.gate}>Gate: {prop.gate_code}</Text>}
-          <Text style={styles.status}>Status: {job.status}</Text>
-        </View>
-      </View>
-
-      <Modal visible={jobMenuVisible} transparent animationType="fade">
-        <Pressable style={styles.menuBackdrop} onPress={closeJobMenu}>
-          <Pressable style={styles.menuCard} onPress={() => {}}>
-            <Pressable style={styles.menuOption} onPress={handleCantServiceFromMenu}>
-              <Text style={styles.menuOptionText}>Can't service</Text>
-            </Pressable>
-            <Pressable style={styles.menuOption} onPress={handlePutOnHold}>
-              <Text style={styles.menuOptionText}>Put visit on hold</Text>
-            </Pressable>
-            <Pressable style={styles.menuOption} onPress={closeJobMenu}>
-              <Text style={[styles.menuOptionText, styles.menuOptionCancel]}>Cancel</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {!started ? (
-        <>
-          {locationChecking && (
-            <View style={styles.locationWarning}>
-              <Text style={styles.locationWarningText}>Checking your location…</Text>
+      <View style={styles.content}>
+        {/* Customer Info Card */}
+        <View style={styles.customerCard}>
+          <View style={styles.customerInfo}>
+            <Text style={styles.title}>{prop?.customer_name ?? '\u2014'}</Text>
+            {prop?.gate_code && (
+              <View style={styles.gateRow}>
+                <Text style={styles.address}>Gate:</Text>
+                <Text style={styles.gateCode}>{prop.gate_code}</Text>
+              </View>
+            )}
+            <Text style={styles.address}>{prop?.address ?? ''}</Text>
+            <Text style={styles.status}>Status: {job.status}</Text>
+            <View style={styles.directionsBtn}>
+              <Text style={styles.directionsBtnText}>DIRECTIONS</Text>
             </View>
-          )}
-          {distanceMeters != null && distanceMeters > 500 && (
-            <View style={styles.locationWarning}>
-              <Text style={styles.locationWarningText}>
-                You're about {(() => {
-                  const ft = distanceMeters * 3.28084;
-                  return ft >= 5280 ? `${(ft / 5280).toFixed(1)} miles` : `${Math.round(ft)} ft`;
-                })()} from this address. Make sure you're at the right location before starting.
-              </Text>
-            </View>
-          )}
-          {locationError && (
-            <View style={styles.locationWarning}>
-              <Text style={styles.locationWarningText}>{locationError}. Distance check skipped.</Text>
-            </View>
-          )}
-          <Pressable style={styles.startButton} onPress={handleStart}>
-            <Text style={styles.startButtonText}>START</Text>
-          </Pressable>
-          <Pressable style={styles.cantServiceButton} onPress={() => id && router.push(`/(app)/job/${id}/cant-service`)}>
-            <Text style={styles.cantServiceButtonText}>Can't service</Text>
-          </Pressable>
-        </>
-      ) : (
-        <>
-          <Text style={styles.sectionTitle}>Chemical readings</Text>
-          {CHEMICAL_READINGS.map(({ key, label, ideal }) => (
-            <View key={key} style={styles.field}>
-              <Text style={styles.label}>{label} ({ideal})</Text>
-              <TextInput
-                style={styles.input}
-                value={chemicals[key] ?? ''}
-                onChangeText={(v) => setChemicals((c) => ({ ...c, [key]: v }))}
-                keyboardType="decimal-pad"
-                placeholder="—"
-                placeholderTextColor={themeColors.placeholder}
-              />
-            </View>
-          ))}
-
-          <Text style={styles.sectionTitle}>Tasks</Text>
-          {TASKS.map(({ key, label }) => (
-            <View key={key} style={styles.row}>
-              <Text style={styles.taskLabel}>{label}</Text>
-              <Switch value={tasks[key] ?? false} onValueChange={(v) => setTasks((t) => ({ ...t, [key]: v }))} />
-            </View>
-          ))}
-
-          <Text style={styles.sectionTitle}>Equipment</Text>
-          {EQUIPMENT.map(({ key, label }) => (
-            <View key={key} style={styles.row}>
-              <Text style={styles.taskLabel}>{label}</Text>
-              <Switch value={equipment[key] ?? true} onValueChange={(v) => setEquipment((e) => ({ ...e, [key]: v }))} />
-            </View>
-          ))}
-
-          <Text style={styles.sectionTitle}>Notes</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="Service notes…"
-            placeholderTextColor={themeColors.placeholder}
-            multiline
-          />
-
-          <Text style={styles.sectionTitle}>Photos</Text>
-          <View style={styles.photoActions}>
-            <Pressable style={styles.photoButton} onPress={takePhoto}>
-              <Text style={styles.photoButtonText}>📷 Take photo</Text>
-            </Pressable>
-            <Pressable style={styles.photoButton} onPress={pickFromGallery}>
-              <Text style={styles.photoButtonText}>🖼️ Add Photo(s)</Text>
-            </Pressable>
           </View>
-          {pendingOverlay != null && (
-            <PhotoWithOverlay
-              uri={pendingOverlay.uri}
-              width={pendingOverlay.width}
-              height={pendingOverlay.height}
-              overlay={pendingOverlay.overlay}
-              onCaptured={(uri) => {
-                setPhotos((prev) => [...prev, { uri }]);
-                setPendingOverlay(null);
-              }}
-              onError={() => {
-                setPhotos((prev) => [...prev, { uri: pendingOverlay.uri }]);
-                setPendingOverlay(null);
-              }}
-            />
-          )}
-          {photos.length > 0 && (
-            <ScrollView horizontal style={styles.photoThumbs} contentContainerStyle={styles.photoThumbsContent}>
-              {photos.map((photo, index) => (
-                <View key={photo.id ?? `new-${index}`} style={styles.thumbWrap}>
-                  <Pressable onPress={() => setPhotoFullScreenIndex(index)}>
-                    <Image source={{ uri: photo.uri }} style={styles.thumb} />
-                  </Pressable>
-                  <Pressable style={styles.removeThumb} onPress={() => confirmRemovePhoto(index)}>
-                    <Text style={styles.removeThumbText}>×</Text>
-                  </Pressable>
+        </View>
+
+        <Modal visible={jobMenuVisible} transparent animationType="fade">
+          <Pressable style={styles.menuBackdrop} onPress={closeJobMenu}>
+            <Pressable style={styles.menuCard} onPress={() => {}}>
+              <Pressable style={styles.menuOption} onPress={handleCantServiceFromMenu}>
+                <Text style={styles.menuOptionText}>Can't service</Text>
+              </Pressable>
+              <Pressable style={styles.menuOption} onPress={handlePutOnHold}>
+                <Text style={styles.menuOptionText}>Put visit on hold</Text>
+              </Pressable>
+              <Pressable style={styles.menuOption} onPress={closeJobMenu}>
+                <Text style={[styles.menuOptionText, styles.menuOptionCancel]}>Cancel</Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        {!started ? (
+          <>
+            {locationChecking && (
+              <View style={styles.locationWarning}>
+                <Text style={styles.locationWarningText}>Checking your location...</Text>
+              </View>
+            )}
+            {distanceMeters != null && distanceMeters > 500 && (
+              <View style={styles.locationWarning}>
+                <Text style={styles.locationWarningText}>
+                  You're about {(() => {
+                    const ft = distanceMeters * 3.28084;
+                    return ft >= 5280 ? `${(ft / 5280).toFixed(1)} miles` : `${Math.round(ft)} ft`;
+                  })()} from this address. Make sure you're at the right location before starting.
+                </Text>
+              </View>
+            )}
+            {locationError && (
+              <View style={styles.locationWarning}>
+                <Text style={styles.locationWarningText}>{locationError}. Distance check skipped.</Text>
+              </View>
+            )}
+            <Pressable style={styles.startButton} onPress={handleStart}>
+              <Text style={styles.startButtonText}>START SERVICE</Text>
+            </Pressable>
+            <Pressable style={styles.cantServiceButton} onPress={() => id && router.push(`/(app)/job/${id}/cant-service`)}>
+              <Text style={styles.cantServiceButtonText}>Can't service</Text>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            {/* Chemical Readings */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionHeaderLeft}>
+                  <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconBlueBg }]}>
+                    <Text style={[styles.sectionIconText, { color: themeColors.sectionIconBlueText }]}>S</Text>
+                  </View>
+                  <Text style={styles.sectionTitle}>Chemical Readings</Text>
+                </View>
+              </View>
+              <View style={styles.chemGrid}>
+                {CHEMICAL_READINGS.map(({ key, label, unit }, idx) => (
+                  <View key={key} style={idx >= CHEMICAL_READINGS.length - 1 ? styles.chemFieldFull : styles.chemField}>
+                    <Text style={styles.chemLabel}>{label}</Text>
+                    <TextInput
+                      style={styles.chemInput}
+                      value={chemicals[key] ?? ''}
+                      onChangeText={(v) => setChemicals((prev) => ({ ...prev, [key]: v }))}
+                      keyboardType="decimal-pad"
+                      placeholder="\u2014"
+                      placeholderTextColor={themeColors.placeholder}
+                    />
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* Service Tasks */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionHeaderLeft}>
+                  <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconGreenBg }]}>
+                    <Text style={[styles.sectionIconText, { color: themeColors.sectionIconGreenText }]}>T</Text>
+                  </View>
+                  <Text style={styles.sectionTitle}>Service Tasks</Text>
+                </View>
+              </View>
+              {TASKS.map(({ key, label }, idx) => (
+                <View key={key} style={[styles.taskRow, idx === TASKS.length - 1 && styles.taskRowLast]}>
+                  <Text style={styles.taskLabel}>{label}</Text>
+                  <Switch
+                    value={tasks[key] ?? false}
+                    onValueChange={(v) => setTasks((t) => ({ ...t, [key]: v }))}
+                    trackColor={{ false: themeColors.switchTrack, true: themeColors.switchTrackActive }}
+                  />
                 </View>
               ))}
-            </ScrollView>
-          )}
+            </View>
 
-          <Modal visible={photoFullScreenIndex !== null} transparent animationType="fade">
-            <View style={styles.photoFullScreenBackdrop}>
-              {photoFullScreenIndex !== null && photos[photoFullScreenIndex] && (
-                <Image
-                  source={{ uri: photos[photoFullScreenIndex].uri }}
-                  style={styles.photoFullScreenImage}
-                  resizeMode="contain"
+            {/* Equipment Status */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionHeaderLeft}>
+                  <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconAmberBg }]}>
+                    <Text style={[styles.sectionIconText, { color: themeColors.sectionIconAmberText }]}>E</Text>
+                  </View>
+                  <Text style={styles.sectionTitle}>Equipment Status</Text>
+                </View>
+              </View>
+              <View style={styles.equipmentBody}>
+                {EQUIPMENT.map(({ key, label }) => (
+                  <View key={key} style={styles.equipmentRow}>
+                    <Text style={styles.taskLabel}>{label}</Text>
+                    <Switch
+                      value={equipment[key] ?? true}
+                      onValueChange={(v) => setEquipment((e) => ({ ...e, [key]: v }))}
+                      trackColor={{ false: themeColors.switchTrack, true: themeColors.switchTrackActive }}
+                    />
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* Notes */}
+            <View style={styles.notesCard}>
+              <TextInput
+                style={styles.notesInput}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Service notes..."
+                placeholderTextColor={themeColors.placeholder}
+                multiline
+              />
+            </View>
+
+            {/* Photos */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionHeaderLeft}>
+                  <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconPurpleBg }]}>
+                    <Text style={[styles.sectionIconText, { color: themeColors.sectionIconPurpleText }]}>P</Text>
+                  </View>
+                  <Text style={styles.sectionTitle}>Photos</Text>
+                </View>
+              </View>
+              <View style={styles.photoActions}>
+                <Pressable style={styles.photoButton} onPress={takePhoto}>
+                  <Text style={styles.photoButtonText}>Take Photo</Text>
+                </Pressable>
+                <Pressable style={styles.photoButton} onPress={pickFromGallery}>
+                  <Text style={styles.photoButtonText}>Add Photo(s)</Text>
+                </Pressable>
+              </View>
+              {pendingOverlay != null && (
+                <PhotoWithOverlay
+                  uri={pendingOverlay.uri}
+                  width={pendingOverlay.width}
+                  height={pendingOverlay.height}
+                  overlay={pendingOverlay.overlay}
+                  onCaptured={(uri) => {
+                    setPhotos((prev) => [...prev, { uri }]);
+                    setPendingOverlay(null);
+                  }}
+                  onError={() => {
+                    setPhotos((prev) => [...prev, { uri: pendingOverlay.uri }]);
+                    setPendingOverlay(null);
+                  }}
                 />
               )}
-              <Pressable
-                style={styles.photoFullScreenClose}
-                onPress={() => setPhotoFullScreenIndex(null)}
-                hitSlop={16}
-              >
-                <Text style={styles.photoFullScreenCloseText}>×</Text>
-              </Pressable>
+              {photos.length > 0 && (
+                <ScrollView horizontal style={styles.photoThumbs} contentContainerStyle={styles.photoThumbsContent}>
+                  {photos.map((photo, index) => (
+                    <View key={photo.id ?? `new-${index}`} style={styles.thumbWrap}>
+                      <Pressable onPress={() => setPhotoFullScreenIndex(index)}>
+                        <Image source={{ uri: photo.uri }} style={styles.thumb} />
+                      </Pressable>
+                      <Pressable style={styles.removeThumb} onPress={() => confirmRemovePhoto(index)}>
+                        <Text style={styles.removeThumbText}>\u00d7</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
             </View>
-          </Modal>
 
-          <View style={styles.row}>
-            <Text style={styles.taskLabel}>Follow-up needed?</Text>
-            <Switch value={followUp} onValueChange={setFollowUp} />
-          </View>
-          {followUp && (
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={followUpNotes}
-              onChangeText={setFollowUpNotes}
-              placeholder="Follow-up notes…"
-              placeholderTextColor={themeColors.placeholder}
-              multiline
-            />
-          )}
+            <Modal visible={photoFullScreenIndex !== null} transparent animationType="fade">
+              <View style={styles.photoFullScreenBackdrop}>
+                {photoFullScreenIndex !== null && photos[photoFullScreenIndex] && (
+                  <Image
+                    source={{ uri: photos[photoFullScreenIndex].uri }}
+                    style={styles.photoFullScreenImage}
+                    resizeMode="contain"
+                  />
+                )}
+                <Pressable
+                  style={styles.photoFullScreenClose}
+                  onPress={() => setPhotoFullScreenIndex(null)}
+                  hitSlop={16}
+                >
+                  <Text style={styles.photoFullScreenCloseText}>\u00d7</Text>
+                </Pressable>
+              </View>
+            </Modal>
 
-          <Pressable style={styles.completeButton} onPress={handleComplete} disabled={saving}>
-            <Text style={styles.completeButtonText}>{saving ? 'Saving…' : 'Complete & save report'}</Text>
-          </Pressable>
-        </>
-      )}
+            {/* Follow-up */}
+            <View style={styles.followUpRow}>
+              <Text style={styles.taskLabel}>Follow-up needed?</Text>
+              <Switch
+                value={followUp}
+                onValueChange={setFollowUp}
+                trackColor={{ false: themeColors.switchTrack, true: themeColors.switchTrackActive }}
+              />
+            </View>
+            {followUp && (
+              <TextInput
+                style={styles.followUpInput}
+                value={followUpNotes}
+                onChangeText={setFollowUpNotes}
+                placeholder="Follow-up notes..."
+                placeholderTextColor={themeColors.placeholder}
+                multiline
+              />
+            )}
+
+            <Pressable style={styles.completeButton} onPress={handleComplete} disabled={saving}>
+              <Text style={styles.completeButtonText}>{saving ? 'Saving...' : 'Complete & Save Report'}</Text>
+            </Pressable>
+          </>
+        )}
+      </View>
     </ScrollView>
   );
 }
-

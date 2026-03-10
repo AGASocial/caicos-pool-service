@@ -22,7 +22,7 @@ export default function NewJobPage() {
   const { data: teamMembers = [] } = useTeam();
   const [form, setForm] = useState({
     property_id: '',
-    team_member_id: '',
+    technician_id: '',
     scheduled_date: '',
     scheduled_time: '',
     status: 'pending',
@@ -64,7 +64,7 @@ export default function NewJobPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           property_id: form.property_id,
-          team_member_id: form.team_member_id || undefined,
+          technician_id: form.technician_id || undefined,
           scheduled_date: form.scheduled_date,
           scheduled_time: form.scheduled_time || undefined,
           status: form.status,
@@ -123,11 +123,11 @@ export default function NewJobPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="team_member_id">{t('teamMember')}</Label>
+              <Label htmlFor="technician_id">{t('teamMember')}</Label>
               <select
-                id="team_member_id"
-                value={form.team_member_id}
-                onChange={(e) => update('team_member_id', e.target.value)}
+                id="technician_id"
+                value={form.technician_id}
+                onChange={(e) => update('technician_id', e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
               >
                 <option value="">—</option>

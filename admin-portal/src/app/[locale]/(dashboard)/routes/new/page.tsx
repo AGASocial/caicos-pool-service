@@ -80,9 +80,9 @@ export default function NewRoutePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="team_member_id">{t('teamMember')}</Label>
+              <Label htmlFor="technician_id">{t('teamMember')}</Label>
               <select
-                id="team_member_id"
+                id="technician_id"
                 value={teamMemberId}
                 onChange={(e) => setTeamMemberId(e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
