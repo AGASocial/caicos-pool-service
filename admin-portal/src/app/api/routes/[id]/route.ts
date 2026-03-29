@@ -28,6 +28,9 @@ export async function GET(
         id,
         property_id,
         stop_order,
+        day_of_week,
+        service_frequency,
+        week_ordinal,
         property:caicos_properties(id, customer_name, address)
       )
     `)

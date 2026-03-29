@@ -5,6 +5,42 @@ import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+type DefaultStopSchedule = {
+  day_of_week: number;
+  service_frequency: 'weekly' | 'monthly';
+  week_ordinal: number | null;
+};
+
+function parseDefaultStopSchedule(raw: unknown): DefaultStopSchedule | null {
+  if (raw === undefined || raw === null) return null;
+  if (typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>;
+  const dow =
+    typeof o.day_of_week === 'number'
+      ? o.day_of_week
+      : typeof o.day_of_week === 'string'
+        ? Number(o.day_of_week)
+        : NaN;
+  if (!Number.isInteger(dow) || dow < 0 || dow > 6) return null;
+  const freq = o.service_frequency === 'monthly' ? 'monthly' : 'weekly';
+  let weekOrdinal: number | null = null;
+  if (freq === 'monthly') {
+    const w =
+      typeof o.week_ordinal === 'number'
+        ? o.week_ordinal
+        : typeof o.week_ordinal === 'string'
+          ? Number(o.week_ordinal)
+          : NaN;
+    if (!Number.isInteger(w) || w < 1 || w > 4) return null;
+    weekOrdinal = w;
+  }
+  return {
+    day_of_week: dow,
+    service_frequency: freq,
+    week_ordinal: weekOrdinal,
+  };
+}
+
 /** Map Postgres 23505 to a clear message (unique on property_id vs on route+property). */
 function routeStopsConflictError(error: { code?: string; message?: string }): string | null {
   if (error.code !== '23505') return null;
@@ -101,6 +137,12 @@ export async function PATCH(
 
   const addPropertyIds = addParsed.ids;
   const removeStopIds = removeParsed.ids;
+  const defaultSchedule =
+    parseDefaultStopSchedule((raw as Record<string, unknown>).default_stop_schedule) ?? {
+      day_of_week: 1,
+      service_frequency: 'weekly' as const,
+      week_ordinal: null as number | null,
+    };
 
   if (addPropertyIds.length === 0 && removeStopIds.length === 0) {
     return NextResponse.json(
@@ -138,6 +180,9 @@ export async function PATCH(
       route_id: string;
       property_id: string;
       stop_order: number;
+      day_of_week: number;
+      service_frequency: string;
+      week_ordinal: number | null;
       created_at: string;
     }> = [];
 
@@ -179,8 +224,14 @@ export async function PATCH(
         }
       }
 
-      const toInsert: { route_id: string; property_id: string; stop_order: number }[] =
-        [];
+      const toInsert: Array<{
+        route_id: string;
+        property_id: string;
+        stop_order: number;
+        day_of_week: number;
+        service_frequency: 'weekly' | 'monthly';
+        week_ordinal: number | null;
+      }> = [];
       let nextOrder = maxOrder;
       for (const propertyId of addPropertyIds) {
         if (existingPropertyIds.has(propertyId)) {
@@ -196,6 +247,9 @@ export async function PATCH(
           route_id: routeId,
           property_id: propertyId,
           stop_order: nextOrder,
+          day_of_week: defaultSchedule.day_of_week,
+          service_frequency: defaultSchedule.service_frequency,
+          week_ordinal: defaultSchedule.week_ordinal,
         });
         existingPropertyIds.add(propertyId);
       }
@@ -204,7 +258,9 @@ export async function PATCH(
         const { data: inserted, error: insertError } = await client
           .from('caicos_route_stops')
           .insert(toInsert)
-          .select('id, route_id, property_id, stop_order, created_at');
+          .select(
+            'id, route_id, property_id, stop_order, day_of_week, service_frequency, week_ordinal, created_at'
+          );
 
         if (insertError) {
           if (insertError.code === '23505') {
@@ -262,6 +318,17 @@ export async function POST(
     }
 
     const order = typeof stop_order === 'number' ? stop_order : 0;
+    const sched =
+      parseDefaultStopSchedule(body.default_stop_schedule) ??
+      parseDefaultStopSchedule({
+        day_of_week: body.day_of_week,
+        service_frequency: body.service_frequency,
+        week_ordinal: body.week_ordinal,
+      }) ?? {
+        day_of_week: 1,
+        service_frequency: 'weekly' as const,
+        week_ordinal: null as number | null,
+      };
 
     const client = supabase as unknown as CaicosSupabaseClient;
     const { data: existingForProperty, error: existingErr } = await client
@@ -298,8 +365,13 @@ export async function POST(
         route_id: routeId,
         property_id,
         stop_order: order,
+        day_of_week: sched.day_of_week,
+        service_frequency: sched.service_frequency,
+        week_ordinal: sched.week_ordinal,
       })
-      .select('id, route_id, property_id, stop_order, created_at')
+      .select(
+        'id, route_id, property_id, stop_order, day_of_week, service_frequency, week_ordinal, created_at'
+      )
       .single();
 
     if (error) {

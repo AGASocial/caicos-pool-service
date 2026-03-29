@@ -1,7 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,10 +14,24 @@ import { useTeam } from '@/lib/team';
 
 const STATUSES = ['pending', 'in_progress', 'completed', 'skipped', 'cancelled'] as const;
 
+type VisitReason = { id: string; slug: string; label: string };
+
+type PropertyRow = {
+  id: string;
+  customer_name: string;
+  address?: string;
+  route?: { id: string; name: string } | null;
+};
+
 export default function NewJobPage() {
   const t = useTranslations();
   const router = useRouter();
-  const [properties, setProperties] = useState<{ id: string; customer_name: string; address?: string }[]>([]);
+  const searchParams = useSearchParams();
+  const dispatchMode = searchParams.get('mode') === 'dispatch';
+  const [properties, setProperties] = useState<PropertyRow[]>([]);
+  const [routes, setRoutes] = useState<{ id: string; name: string }[]>([]);
+  const [routeFilter, setRouteFilter] = useState<string>('');
+  const [visitReasons, setVisitReasons] = useState<VisitReason[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { data: teamMembers = [] } = useTeam();
@@ -28,16 +43,56 @@ export default function NewJobPage() {
     status: 'pending',
     notes: '',
     estimated_duration_min: 30,
+    visit_kind_id: '',
   });
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/properties');
+        const url = dispatchMode ? '/api/properties?include_route=1' : '/api/properties';
+        const res = await fetch(url);
         if (!cancelled && res.ok) {
           const data = await res.json();
           setProperties(Array.isArray(data) ? data : []);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [dispatchMode]);
+
+  useEffect(() => {
+    if (!dispatchMode) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/routes');
+        if (!cancelled && res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : [];
+          setRoutes(
+            list
+              .map((r: { id: string; name: string }) => ({ id: r.id, name: r.name }))
+              .sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name))
+          );
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [dispatchMode]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/visit-reasons');
+        if (!cancelled && res.ok) {
+          const data = await res.json();
+          setVisitReasons(Array.isArray(data) ? data : []);
         }
       } catch {
         // ignore
@@ -50,11 +105,35 @@ export default function NewJobPage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  const filteredProperties = useMemo(() => {
+    if (!dispatchMode) return properties;
+    if (routeFilter === '') return properties;
+    if (routeFilter === '__none__') {
+      return properties.filter((p) => !p.route);
+    }
+    return properties.filter((p) => p.route?.id === routeFilter);
+  }, [dispatchMode, properties, routeFilter]);
+
+  useEffect(() => {
+    if (!dispatchMode) return;
+    setForm((prev) => {
+      if (!prev.property_id) return prev;
+      if (!filteredProperties.some((p) => p.id === prev.property_id)) {
+        return { ...prev, property_id: '' };
+      }
+      return prev;
+    });
+  }, [dispatchMode, routeFilter, filteredProperties]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!form.property_id || !form.scheduled_date) {
       setError(t('propertyAndDateRequired'));
+      return;
+    }
+    if (dispatchMode && !form.visit_kind_id) {
+      setError(t('visitKindRequired'));
       return;
     }
     setLoading(true);
@@ -70,6 +149,8 @@ export default function NewJobPage() {
           status: form.status,
           notes: form.notes || undefined,
           estimated_duration_min: form.estimated_duration_min,
+          job_source: 'ad_hoc',
+          visit_kind_id: form.visit_kind_id || undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -95,18 +176,41 @@ export default function NewJobPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('createJob')}</h1>
-          <p className="text-muted-foreground dark:text-gray-700">{t('jobsDescription')}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">
+            {dispatchMode ? t('adHocDispatch') : t('createJob')}
+          </h1>
+          <p className="text-muted-foreground dark:text-gray-700">
+            {dispatchMode ? t('adHocDispatchDescription') : t('createJobAdHocHint')}
+          </p>
         </div>
       </div>
 
       <Card className="max-w-lg">
         <CardHeader>
-          <CardTitle>{t('createJob')}</CardTitle>
-          <CardDescription>{t('jobsCardDescription')}</CardDescription>
+          <CardTitle>{dispatchMode ? t('adHocDispatch') : t('createJob')}</CardTitle>
+          <CardDescription>
+            {dispatchMode ? t('adHocDispatchDescription') : t('jobsCardDescription')}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {dispatchMode && (
+              <div className="space-y-2">
+                <Label htmlFor="dispatch_route_filter">{t('dispatchFilterByRoute')}</Label>
+                <select
+                  id="dispatch_route_filter"
+                  value={routeFilter}
+                  onChange={(e) => setRouteFilter(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                >
+                  <option value="">{t('dispatchAllRoutes')}</option>
+                  {routes.map((r) => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                  <option value="__none__">{t('dispatchNoRoutes')}</option>
+                </select>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="property_id">{t('properties')}</Label>
               <select
@@ -117,8 +221,12 @@ export default function NewJobPage() {
                 required
               >
                 <option value="">—</option>
-                {properties.map((p) => (
-                  <option key={p.id} value={p.id}>{p.customer_name} {p.address ? ` · ${p.address}` : ''}</option>
+                {(dispatchMode ? filteredProperties : properties).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.customer_name}
+                    {p.address ? ` · ${p.address}` : ''}
+                    {dispatchMode && p.route?.name ? ` · ${p.route.name}` : ''}
+                  </option>
                 ))}
               </select>
             </div>
@@ -133,6 +241,24 @@ export default function NewJobPage() {
                 <option value="">—</option>
                 {teamMembers.map((member) => (
                   <option key={member.id} value={member.id}>{member.full_name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="visit_kind_id">
+                {t('visitKind')}
+                {dispatchMode ? <span className="text-destructive"> *</span> : null}
+              </Label>
+              <select
+                id="visit_kind_id"
+                value={form.visit_kind_id}
+                onChange={(e) => update('visit_kind_id', e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                required={dispatchMode}
+              >
+                <option value="">{t('visitKindPlaceholder')}</option>
+                {visitReasons.map((r) => (
+                  <option key={r.id} value={r.id}>{r.label}</option>
                 ))}
               </select>
             </div>

@@ -2,9 +2,34 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
 
+const PROPERTY_BASE_FIELDS =
+  'id, customer_name, customer_email, customer_phone, address, city, state, zip, gate_code, pool_type, pool_surface, notes, is_active, created_at';
+
+function attachRouteFromStopRow(row: Record<string, unknown>): Record<string, unknown> {
+  const stops = row.caicos_route_stops;
+  const { caicos_route_stops: _, ...rest } = row;
+  let stop: Record<string, unknown> | undefined;
+  if (Array.isArray(stops)) {
+    stop = stops[0] as Record<string, unknown> | undefined;
+  } else if (stops && typeof stops === 'object') {
+    stop = stops as Record<string, unknown>;
+  }
+  let route: { id: string; name: string } | null = null;
+  if (stop) {
+    const nested = stop.caicos_routes ?? stop.route;
+    const routeObj = Array.isArray(nested)
+      ? (nested[0] as Record<string, unknown> | undefined)
+      : (nested as Record<string, unknown> | undefined);
+    if (routeObj?.id != null && routeObj?.name != null) {
+      route = { id: String(routeObj.id), name: String(routeObj.name) };
+    }
+  }
+  return { ...rest, route };
+}
+
 /**
  * List properties for the current user's company.
- * Query param ?active_only=false to include inactive.
+ * Query: active_only=false to include inactive; include_route=1 to add route { id, name } | null (from caicos_route_stops).
  */
 export async function GET(request: NextRequest) {
   const { supabase, user } = await createAuthenticatedRouteClient();
@@ -15,10 +40,16 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const activeOnly = searchParams.get('active_only') !== 'false';
+  const includeRoute =
+    searchParams.get('include_route') === '1' || searchParams.get('include_route') === 'true';
+
+  const select = includeRoute
+    ? `${PROPERTY_BASE_FIELDS}, caicos_route_stops(route_id, caicos_routes(id, name))`
+    : PROPERTY_BASE_FIELDS;
 
   let query = (supabase as unknown as CaicosSupabaseClient)
     .from('caicos_properties')
-    .select('id, customer_name, customer_email, customer_phone, address, city, state, zip, gate_code, pool_type, pool_surface, notes, is_active, created_at')
+    .select(select)
     .order('customer_name', { ascending: true });
 
   if (activeOnly) {
@@ -32,7 +63,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data || []);
+  const rows = (data ?? []) as unknown[];
+  if (!includeRoute) {
+    return NextResponse.json(rows);
+  }
+
+  return NextResponse.json(
+    rows.map((r) => attachRouteFromStopRow(r as Record<string, unknown>))
+  );
 }
 
 /**

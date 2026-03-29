@@ -19,7 +19,15 @@ import {
 import { ArrowLeft, Trash2, Plus, Calendar, MapPin } from 'lucide-react';
 
 type Property = { id: string; customer_name: string; address?: string };
-type Stop = { id: string; property_id: string; stop_order: number; property?: Property };
+type Stop = {
+  id: string;
+  property_id: string;
+  stop_order: number;
+  day_of_week: number;
+  service_frequency: 'weekly' | 'monthly';
+  week_ordinal: number | null;
+  property?: Property;
+};
 type RouteDetail = {
   id: string;
   name: string;
@@ -49,6 +57,10 @@ export default function RouteDetailPage() {
   const [bulkSearch, setBulkSearch] = useState('');
   const [selectedPropertyIds, setSelectedPropertyIds] = useState<string[]>([]);
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkDayOfWeek, setBulkDayOfWeek] = useState(1);
+  const [bulkFrequency, setBulkFrequency] = useState<'weekly' | 'monthly'>('weekly');
+  const [bulkWeekOrdinal, setBulkWeekOrdinal] = useState(1);
+  const [updatingStopId, setUpdatingStopId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -127,10 +139,18 @@ export default function RouteDetailPage() {
     setInfoMessage(null);
     setBulkSaving(true);
     try {
+      const default_stop_schedule = {
+        day_of_week: bulkDayOfWeek,
+        service_frequency: bulkFrequency,
+        week_ordinal: bulkFrequency === 'monthly' ? bulkWeekOrdinal : null,
+      };
       const res = await fetch(`/api/routes/${id}/stops`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ add_property_ids: selectedPropertyIds }),
+        body: JSON.stringify({
+          add_property_ids: selectedPropertyIds,
+          default_stop_schedule,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -154,6 +174,29 @@ export default function RouteDetailPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to add');
       setBulkSaving(false);
+    }
+  }
+
+  async function patchStop(stopId: string, patch: Record<string, unknown>) {
+    if (!id) return;
+    setUpdatingStopId(stopId);
+    setError(null);
+    try {
+      const res = await fetch(`/api/routes/${id}/stops/${stopId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || res.statusText);
+        return;
+      }
+      await refreshRoute();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to update stop');
+    } finally {
+      setUpdatingStopId(null);
     }
   }
 
@@ -268,7 +311,8 @@ export default function RouteDetailPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{route.name}</h1>
             <p className="text-muted-foreground dark:text-gray-700">
-              {route.technician?.full_name ?? '—'} · {route.stops?.length ?? 0} {t('routeStops')}
+              {route.technician?.full_name ?? '—'} · {route.stops?.length ?? 0} {t('routeStops')} ·{' '}
+              {t('routeStopScheduleHint')}
             </p>
           </div>
         </div>
@@ -289,30 +333,90 @@ export default function RouteDetailPage() {
         <CardHeader>
           <CardTitle>{t('routeStops')}</CardTitle>
           <CardDescription>
-            {(route.stops?.length ?? 0) === 0 ? t('noStopsYet') : t('routeStopsManageDescription')}
+            {(route.stops?.length ?? 0) === 0 ? t('noStopsYet') : t('routeStopsScheduleDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {route.stops && route.stops.length > 0 && (
-            <ul className="divide-y divide-border">
+            <ul className="divide-y divide-border space-y-1">
               {route.stops.map((stop, idx) => (
-                <li key={stop.id} className="flex items-center gap-3 py-2">
-                  <span className="text-muted-foreground w-6 text-sm">{idx + 1}.</span>
-                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <span className="font-medium">{stop.property?.customer_name ?? stop.property_id}</span>
-                    {stop.property?.address && (
-                      <span className="text-muted-foreground block truncate text-sm">{stop.property.address}</span>
-                    )}
+                <li
+                  key={stop.id}
+                  className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:gap-3"
+                >
+                  <div className="flex items-start gap-2 sm:min-w-0 sm:flex-1">
+                    <span className="text-muted-foreground w-6 shrink-0 text-sm pt-2">{idx + 1}.</span>
+                    <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-2" />
+                    <div className="min-w-0 flex-1">
+                      <span className="font-medium">{stop.property?.customer_name ?? stop.property_id}</span>
+                      {stop.property?.address && (
+                        <span className="text-muted-foreground block truncate text-sm">{stop.property.address}</span>
+                      )}
+                    </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => removeStop(stop.id)}
-                  >
-                    {t('removeStop')}
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-2 pl-8 sm:pl-0">
+                    <select
+                      aria-label={t('stopWeekday')}
+                      disabled={updatingStopId === stop.id}
+                      value={stop.day_of_week ?? 1}
+                      onChange={(e) =>
+                        void patchStop(stop.id, { day_of_week: Number(e.target.value) })
+                      }
+                      className="h-9 min-w-[120px] rounded-md border border-input bg-transparent px-2 text-sm"
+                    >
+                      <option value={0}>{t('dow_sunday')}</option>
+                      <option value={1}>{t('dow_monday')}</option>
+                      <option value={2}>{t('dow_tuesday')}</option>
+                      <option value={3}>{t('dow_wednesday')}</option>
+                      <option value={4}>{t('dow_thursday')}</option>
+                      <option value={5}>{t('dow_friday')}</option>
+                      <option value={6}>{t('dow_saturday')}</option>
+                    </select>
+                    <select
+                      aria-label={t('stopFrequency')}
+                      disabled={updatingStopId === stop.id}
+                      value={stop.service_frequency ?? 'weekly'}
+                      onChange={(e) => {
+                        const v = e.target.value === 'monthly' ? 'monthly' : 'weekly';
+                        if (v === 'weekly') {
+                          void patchStop(stop.id, { service_frequency: 'weekly', week_ordinal: null });
+                        } else {
+                          void patchStop(stop.id, {
+                            service_frequency: 'monthly',
+                            week_ordinal: stop.week_ordinal && stop.week_ordinal >= 1 ? stop.week_ordinal : 1,
+                          });
+                        }
+                      }}
+                      className="h-9 min-w-[100px] rounded-md border border-input bg-transparent px-2 text-sm"
+                    >
+                      <option value="weekly">{t('frequency_weekly')}</option>
+                      <option value="monthly">{t('frequency_monthly')}</option>
+                    </select>
+                    {(stop.service_frequency ?? 'weekly') === 'monthly' && (
+                      <select
+                        aria-label={t('stopWeekOrdinal')}
+                        disabled={updatingStopId === stop.id}
+                        value={stop.week_ordinal ?? 1}
+                        onChange={(e) =>
+                          void patchStop(stop.id, { week_ordinal: Number(e.target.value) })
+                        }
+                        className="h-9 min-w-[120px] rounded-md border border-input bg-transparent px-2 text-sm"
+                      >
+                        <option value={1}>{t('ordinal_1')}</option>
+                        <option value={2}>{t('ordinal_2')}</option>
+                        <option value={3}>{t('ordinal_3')}</option>
+                        <option value={4}>{t('ordinal_4')}</option>
+                      </select>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => removeStop(stop.id)}
+                    >
+                      {t('removeStop')}
+                    </Button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -334,12 +438,58 @@ export default function RouteDetailPage() {
               }
             }}
           >
-            <DialogContent className="flex max-h-[100dvh] flex-col gap-0 p-0 sm:max-h-[90vh] sm:max-w-xl">
+            <DialogContent className="flex max-h-[100dvh] flex-col gap-0 p-0 sm:max-h-[90vh] sm:max-w-2xl">
               <div className="space-y-4 p-6 pb-0">
                 <DialogHeader>
                   <DialogTitle>{t('addPropertiesToRoute')}</DialogTitle>
                   <DialogDescription>{t('addPropertiesToRouteDescription')}</DialogDescription>
                 </DialogHeader>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t('defaultStopWeekday')}</Label>
+                    <select
+                      value={bulkDayOfWeek}
+                      onChange={(e) => setBulkDayOfWeek(Number(e.target.value))}
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm"
+                    >
+                      <option value={0}>{t('dow_sunday')}</option>
+                      <option value={1}>{t('dow_monday')}</option>
+                      <option value={2}>{t('dow_tuesday')}</option>
+                      <option value={3}>{t('dow_wednesday')}</option>
+                      <option value={4}>{t('dow_thursday')}</option>
+                      <option value={5}>{t('dow_friday')}</option>
+                      <option value={6}>{t('dow_saturday')}</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t('stopFrequency')}</Label>
+                    <select
+                      value={bulkFrequency}
+                      onChange={(e) =>
+                        setBulkFrequency(e.target.value === 'monthly' ? 'monthly' : 'weekly')
+                      }
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm"
+                    >
+                      <option value="weekly">{t('frequency_weekly')}</option>
+                      <option value="monthly">{t('frequency_monthly')}</option>
+                    </select>
+                  </div>
+                  {bulkFrequency === 'monthly' && (
+                    <div className="space-y-1">
+                      <Label className="text-xs">{t('stopWeekOrdinal')}</Label>
+                      <select
+                        value={bulkWeekOrdinal}
+                        onChange={(e) => setBulkWeekOrdinal(Number(e.target.value))}
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm"
+                      >
+                        <option value={1}>{t('ordinal_1')}</option>
+                        <option value={2}>{t('ordinal_2')}</option>
+                        <option value={3}>{t('ordinal_3')}</option>
+                        <option value={4}>{t('ordinal_4')}</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
                 {availableProperties.length === 0 ? (
                   <p className="text-muted-foreground text-sm">{t('allPropertiesOnRoute')}</p>
                 ) : (
@@ -437,7 +587,7 @@ export default function RouteDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle>{t('generateJobsForDate')}</CardTitle>
-          <CardDescription>{t('generateJobsForDateDescription')}</CardDescription>
+          <CardDescription>{t('generateJobsForDateDescriptionPattern')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-end gap-2">
           <div className="space-y-1">

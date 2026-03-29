@@ -26,10 +26,14 @@ export async function GET(
       route_order,
       estimated_duration_min,
       notes,
+      job_source,
+      visit_kind_id,
       created_at,
       updated_at,
       property:caicos_properties!property_id(id, customer_name, address, customer_phone, city),
-      technician:caicos_profiles!technician_id(id, full_name)
+      technician:caicos_profiles!technician_id(id, full_name),
+      route:caicos_routes!route_id(id, name),
+      visit_kind:caicos_visit_reasons!visit_kind_id(id, slug, label)
     `)
     .eq('id', id)
     .single();
@@ -67,6 +71,42 @@ export async function PATCH(
     if (body.status !== undefined && validStatuses.includes(body.status)) updates.status = body.status;
     if (body.notes !== undefined) updates.notes = body.notes ? String(body.notes).trim() : null;
     if (body.estimated_duration_min !== undefined) updates.estimated_duration_min = Number(body.estimated_duration_min);
+    if (body.route_id !== undefined) updates.route_id = body.route_id || null;
+    if (body.job_source !== undefined) {
+      if (body.job_source !== 'route' && body.job_source !== 'ad_hoc') {
+        return NextResponse.json({ error: 'job_source must be route or ad_hoc' }, { status: 400 });
+      }
+      updates.job_source = body.job_source;
+    }
+    if (body.visit_kind_id !== undefined) {
+      if (body.visit_kind_id === null || body.visit_kind_id === '') {
+        updates.visit_kind_id = null;
+      } else {
+        const { data: profile } = await (supabase as unknown as CaicosSupabaseClient)
+          .from('caicos_profiles')
+          .select('company_id')
+          .eq('id', user.id)
+          .single();
+        const companyId = profile?.company_id as string | undefined;
+        if (!companyId) {
+          return NextResponse.json({ error: 'Company not found' }, { status: 403 });
+        }
+        const { data: kindRow, error: kindErr } = await (supabase as unknown as CaicosSupabaseClient)
+          .from('caicos_visit_reasons')
+          .select('id')
+          .eq('id', body.visit_kind_id)
+          .eq('company_id', companyId)
+          .eq('is_active', true)
+          .maybeSingle();
+        if (kindErr || !kindRow) {
+          return NextResponse.json(
+            { error: 'visit_kind_id must be an active reason in your company' },
+            { status: 400 }
+          );
+        }
+        updates.visit_kind_id = body.visit_kind_id;
+      }
+    }
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });

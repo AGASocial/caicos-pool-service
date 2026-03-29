@@ -73,7 +73,12 @@ export async function GET(request: NextRequest) {
     const techId = job.technician_id as string | null;
     if (!techId) continue;
 
-    const tech = job.technician as { id: string; full_name: string } | null;
+    const rawTech = job.technician as
+      | { id: string; full_name: string }
+      | { id: string; full_name: string }[]
+      | null
+      | undefined;
+    const tech = Array.isArray(rawTech) ? rawTech[0] : rawTech;
     const fullName = tech?.full_name ?? 'Unknown';
 
     if (!techMap.has(techId)) {

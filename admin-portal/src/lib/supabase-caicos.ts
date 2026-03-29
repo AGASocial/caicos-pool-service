@@ -19,6 +19,7 @@ export type CaicosSupabaseClient = SupabaseClient<{
       caicos_profiles: TableShape;
       caicos_service_jobs: TableShape;
       caicos_invite_codes: TableShape;
+      caicos_visit_reasons: TableShape;
     };
   };
 }>;

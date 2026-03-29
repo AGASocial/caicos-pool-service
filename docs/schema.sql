@@ -71,8 +71,9 @@ CREATE TABLE caicos_properties (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Routes: same technician, same set of houses week after week. Add/remove houses on the route over time.
--- "Cancel this week for one house" = create the job as usual and set status to 'cancelled' for that visit.
+-- Routes: same technician, territory / grouping. Per-stop weekday & frequency live on caicos_route_stops.
+-- caicos_routes.day_of_week is deprecated for scheduling (use stops).
+-- "Cancel this week for one house" = job row with status 'cancelled' for that visit.
 CREATE TABLE caicos_routes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id UUID NOT NULL REFERENCES caicos_companies(id) ON DELETE CASCADE,
@@ -84,17 +85,37 @@ CREATE TABLE caicos_routes (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Route stops: which houses are on the route, and in what order. Add/remove houses = add/remove rows here.
+-- Visit reasons (dispatcher / job labeling). Seeded per company on signup.
+CREATE TABLE caicos_visit_reasons (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES caicos_companies(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL,
+  label TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT caicos_visit_reasons_company_slug_unique UNIQUE (company_id, slug)
+);
+
+-- Route stops: property on route + pattern (weekday, weekly vs monthly nth weekday). stop_order is display-only (not unique).
+-- day_of_week: 0=Sunday .. 6=Saturday (JavaScript Date.getDay).
 CREATE TABLE caicos_route_stops (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   route_id UUID NOT NULL REFERENCES caicos_routes(id) ON DELETE CASCADE,
   property_id UUID NOT NULL REFERENCES caicos_properties(id) ON DELETE CASCADE,
   stop_order INTEGER NOT NULL,
+  day_of_week SMALLINT NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
+  service_frequency TEXT NOT NULL DEFAULT 'weekly' CHECK (service_frequency IN ('weekly', 'monthly')),
+  week_ordinal SMALLINT CHECK (week_ordinal IS NULL OR (week_ordinal >= 1 AND week_ordinal <= 4)),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT caicos_route_stops_property_id_unique UNIQUE (property_id)
+  CONSTRAINT caicos_route_stops_property_id_unique UNIQUE (property_id),
+  CONSTRAINT caicos_route_stops_schedule_chk CHECK (
+    (service_frequency = 'weekly' AND week_ordinal IS NULL)
+    OR (service_frequency = 'monthly' AND week_ordinal IS NOT NULL)
+  )
 );
 
--- Service jobs (scheduled visits). Optional route_id when job was generated from a route.
+-- Service jobs (dated instances for billing/history). job_source: route = from pattern generation; ad_hoc = dispatcher/manual.
 CREATE TABLE caicos_service_jobs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id UUID NOT NULL REFERENCES caicos_companies(id) ON DELETE CASCADE,
@@ -107,9 +128,15 @@ CREATE TABLE caicos_service_jobs (
   route_order INTEGER,
   estimated_duration_min INTEGER DEFAULT 30,
   notes TEXT,
+  job_source TEXT NOT NULL DEFAULT 'route' CHECK (job_source IN ('route', 'ad_hoc')),
+  visit_kind_id UUID REFERENCES caicos_visit_reasons(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX caicos_service_jobs_route_property_date_unique
+  ON caicos_service_jobs (route_id, property_id, scheduled_date)
+  WHERE job_source = 'route' AND route_id IS NOT NULL;
 
 -- Service reports (filled out during/after service)
 CREATE TABLE caicos_service_reports (
@@ -168,11 +195,14 @@ CREATE INDEX idx_caicos_properties_company ON caicos_properties(company_id);
 CREATE INDEX idx_caicos_routes_company ON caicos_routes(company_id);
 CREATE INDEX idx_caicos_routes_technician ON caicos_routes(technician_id);
 CREATE INDEX idx_caicos_route_stops_route ON caicos_route_stops(route_id);
+CREATE INDEX idx_caicos_visit_reasons_company ON caicos_visit_reasons(company_id);
 CREATE INDEX idx_caicos_service_jobs_company ON caicos_service_jobs(company_id);
 CREATE INDEX idx_caicos_service_jobs_route ON caicos_service_jobs(route_id);
 CREATE INDEX idx_caicos_service_jobs_date ON caicos_service_jobs(scheduled_date);
 CREATE INDEX idx_caicos_service_jobs_tech_date ON caicos_service_jobs(technician_id, scheduled_date);
 CREATE INDEX idx_caicos_service_jobs_property ON caicos_service_jobs(property_id);
+CREATE INDEX idx_caicos_service_jobs_job_source ON caicos_service_jobs(company_id, job_source);
+CREATE INDEX idx_caicos_service_jobs_visit_kind ON caicos_service_jobs(visit_kind_id);
 CREATE INDEX idx_caicos_service_reports_job ON caicos_service_reports(job_id);
 CREATE INDEX idx_caicos_report_photos_report ON caicos_report_photos(report_id);
 
@@ -186,6 +216,7 @@ ALTER TABLE caicos_invite_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_routes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_route_stops ENABLE ROW LEVEL SECURITY;
+ALTER TABLE caicos_visit_reasons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_service_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_service_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_report_photos ENABLE ROW LEVEL SECURITY;
@@ -256,6 +287,16 @@ CREATE POLICY "Admins can manage route stops"
   ON caicos_route_stops FOR ALL
   USING (EXISTS (SELECT 1 FROM caicos_routes r WHERE r.id = route_id AND r.company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin')))
   WITH CHECK (EXISTS (SELECT 1 FROM caicos_routes r WHERE r.id = route_id AND r.company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin')));
+
+-- Visit reasons: company catalog
+CREATE POLICY "Users can view company visit reasons"
+  ON caicos_visit_reasons FOR SELECT
+  USING (company_id = get_my_company_id());
+
+CREATE POLICY "Admins can manage visit reasons"
+  ON caicos_visit_reasons FOR ALL
+  USING (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin'))
+  WITH CHECK (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin'));
 
 -- Service jobs: company-scoped, techs see their own
 CREATE POLICY "Users can view company jobs"
@@ -353,6 +394,16 @@ BEGIN
       'owner',
       COALESCE(NULLIF(trim(NEW.raw_user_meta_data->>'full_name'), ''), NEW.email)
     );
+
+    INSERT INTO caicos_visit_reasons (company_id, slug, label, sort_order) VALUES
+      (new_company_id, 'routine', 'Routine service', 0),
+      (new_company_id, 'repair', 'Repair', 10),
+      (new_company_id, 'warranty', 'Warranty', 20),
+      (new_company_id, 'opening', 'Opening', 30),
+      (new_company_id, 'quote', 'Quote / estimate', 40),
+      (new_company_id, 'callback', 'Callback', 50),
+      (new_company_id, 'other', 'Other', 100);
+
     RETURN NEW;
   END IF;
 

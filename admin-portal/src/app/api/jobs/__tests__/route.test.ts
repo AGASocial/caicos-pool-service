@@ -179,6 +179,12 @@ describe('POST /api/jobs', () => {
       single: jest.fn().mockResolvedValue({ data: mockJob, error: null }),
     };
 
+    const mockStopQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+    };
+
     const mockProfileQuery = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
@@ -189,6 +195,7 @@ describe('POST /api/jobs', () => {
       from: jest
         .fn()
         .mockReturnValueOnce(mockProfileQuery)
+        .mockReturnValueOnce(mockStopQuery)
         .mockReturnValueOnce(mockInsertQuery),
     };
 

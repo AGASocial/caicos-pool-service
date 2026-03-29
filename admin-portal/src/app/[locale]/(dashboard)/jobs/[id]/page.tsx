@@ -24,6 +24,8 @@ const STATUSES = ['pending', 'in_progress', 'completed', 'skipped', 'cancelled']
 
 type PropertyRef = { id: string; customer_name: string; address?: string; customer_phone?: string; city?: string };
 type TechnicianRef = { id: string; full_name: string };
+type RouteRef = { id: string; name: string } | null;
+type VisitKindRef = { id: string; slug: string; label: string } | null;
 type JobDetail = {
   id: string;
   property_id: string;
@@ -34,10 +36,14 @@ type JobDetail = {
   route_order: number | null;
   estimated_duration_min: number | null;
   notes: string | null;
+  job_source?: string;
+  visit_kind_id?: string | null;
   created_at: string;
   updated_at: string;
   property?: PropertyRef;
   technician?: TechnicianRef | null;
+  route?: RouteRef;
+  visit_kind?: VisitKindRef;
 };
 
 export default function JobDetailPage() {
@@ -192,6 +198,14 @@ export default function JobDetailPage() {
             <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('jobDetails')}</h1>
             <p className="text-muted-foreground dark:text-gray-700">
               {job.property?.customer_name ?? job.property_id} · {job.scheduled_date}
+              {job.job_source === 'ad_hoc' && (
+                <> · {t('jobSource_ad_hoc')}</>
+              )}
+              {job.job_source === 'route' && (
+                <> · {t('jobSource_route')}</>
+              )}
+              {job.route?.name && <> · {job.route.name}</>}
+              {job.visit_kind?.label && <> · {job.visit_kind.label}</>}
             </p>
           </div>
         </div>
