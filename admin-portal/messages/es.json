@@ -130,6 +130,7 @@
   "you": "tú",
   "activateUser": "Activar usuario",
   "deactivateUser": "Desactivar usuario",
+  "emailNotConfirmed": "correo sin confirmar",
   "reportsDescription": "Ver reportes de servicio. Filtra por rango de fechas, técnico y propiedad.",
   "reportsCardDescription": "Reportes de servicio completados con lecturas químicas, revisión de equipo y fotos.",
   "noReportsYet": "Aún no hay reportes. Los reportes aparecen aquí cuando los técnicos completen trabajos.",

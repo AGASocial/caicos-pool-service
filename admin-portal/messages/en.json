@@ -131,6 +131,7 @@
   "you": "you",
   "activateUser": "Activate user",
   "deactivateUser": "Deactivate user",
+  "emailNotConfirmed": "email not confirmed",
   "reportsDescription": "View service reports. Filter by date range, technician, and property.",
   "reportsCardDescription": "Completed service reports with chemical readings, equipment checks, and photos.",
   "noReportsYet": "No reports yet. Reports appear here after technicians complete jobs.",

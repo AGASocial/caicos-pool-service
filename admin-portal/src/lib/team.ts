@@ -7,6 +7,8 @@ export interface TeamMember {
   full_name: string;
   role?: string;
   is_active?: boolean;
+  /** From Supabase Auth; false when the user has not confirmed their email yet. */
+  email_confirmed?: boolean;
 }
 
 async function fetchTeam(): Promise<TeamMember[]> {

@@ -130,6 +130,11 @@ export default function TeamPage() {
                               {!isActive && !isCurrentUser && (
                                 <span className="text-muted-foreground text-sm ml-2">({t('inactive', { defaultValue: 'inactive' })})</span>
                               )}
+                              {member.email_confirmed === false && (
+                                <span className="text-amber-700 dark:text-amber-500 text-sm ml-2">
+                                  ({t('emailNotConfirmed', { defaultValue: 'email not confirmed' })})
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <span className="text-xs text-muted-foreground tabular-nums">

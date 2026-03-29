@@ -1,0 +1,31 @@
+customer_name,address,customer_email,customer_phone,city,state,zip,gate_code,pool_type,pool_surface,equipment_notes,notes,is_active
+"Martinez, Ana","3208 S University Dr",ana.martinez@example.com,954-555-0101,Davie,FL,33328,4521,residential,plaster,"Pump: Hayward Super II; filter sand",Weekly service,TRUE
+"Patel Residence","3215 S University Dr",patel.home@example.com,954-555-0102,Davie,FL,33328,,residential,pebble,"Cartridge filter; salt system",,TRUE
+"O'Brien Family","3222 S University Dr",obrien.fam@example.com,954-555-0103,Davie,FL,33328,8890,residential,tile,"Heater: gas; auto chlorinator",Gate on east side,TRUE
+"Kim / Lee Household","3230 S University Dr",kim.lee.pool@example.com,954-555-0104,Davie,FL,33328,,residential,vinyl,"Single-speed pump",,TRUE
+"Garcia Home","3245 S University Dr",garcia@example.com,954-555-0105,Davie,FL,33328,1204,residential,fiberglass,"Robot cleaner hookup",,TRUE
+"Thompson Pool","3255 S University Dr",thompson.r@example.com,954-555-0106,Davie,FL,33328,,residential,plaster,"DE filter; spa spillover",,TRUE
+"Nguyen Residence","3262 S University Dr",nguyen.home@example.com,954-555-0107,Davie,FL,33328,7733,residential,pebble,"Variable-speed pump",Dogs on property,TRUE
+"Silva Property","3270 S University Dr",silva.pool@example.com,954-555-0108,Davie,FL,33328,,residential,tile,"Heat pump",,TRUE
+"Wright Family","3285 S University Dr",wright.fam@example.com,954-555-0109,Davie,FL,33328,5510,residential,plaster,"Sand filter; LED light",,TRUE
+"Foster Home","3290 S University Dr",foster@example.com,954-555-0110,Davie,FL,33328,,residential,other,"Above-ground equipment pad",Historic oak in backyard,TRUE
+"Hernandez Residence","3298 S University Dr",hernandez@example.com,954-555-0111,Davie,FL,33328,2244,residential,vinyl,"Cartridge; solar panels",,TRUE
+"Brooks Household","3300 S University Dr",brooks.hh@example.com,954-555-0112,Davie,FL,33328,,residential,pebble,"Salt cell replaced 2024",,TRUE
+"Campbell Pool","3312 S University Dr",campbell.pool@example.com,954-555-0113,Davie,FL,33328,6677,residential,plaster,"Dual pumps",,TRUE
+"Rivera Home","3320 S University Dr",rivera@example.com,954-555-0114,Davie,FL,33328,,residential,tile,"Blower for spa",,TRUE
+"Murphy Family","3330 S University Dr",murphy.fam@example.com,954-555-0115,Davie,FL,33328,3399,residential,fiberglass,"Standard equipment",Corner lot,TRUE
+"Cooper Residence","3345 S University Dr",cooper@example.com,954-555-0116,Davie,FL,33328,,residential,plaster,"Sand filter",,TRUE
+"Reed Property","3350 S University Dr",reed.home@example.com,954-555-0117,Davie,FL,33328,1010,residential,pebble,"Automation: Pentair",,TRUE
+"Bailey Home","3360 S University Dr",bailey@example.com,954-555-0118,Davie,FL,33328,,residential,vinyl,"Winter cover stored in shed",,TRUE
+"Ramirez Pool","3375 S University Dr",ramirez.pool@example.com,954-555-0119,Davie,FL,33328,4455,residential,tile,"Gas heater; chlorinator",,TRUE
+"Jensen Household","3388 S University Dr",jensen@example.com,954-555-0120,Davie,FL,33328,,residential,plaster,"DE filter",,TRUE
+"Price Residence","3395 S University Dr",price.r@example.com,954-555-0121,Davie,FL,33328,7788,residential,pebble,"Salt system",,TRUE
+"Collins Family","3210 SW 59th Pl",collins@example.com,954-555-0122,Davie,FL,33328,,residential,plaster,"Cartridge filter",Off University ~2 blocks,TRUE
+"Morgan Home","5230 SW 60th Ave",morgan.home@example.com,954-555-0123,Davie,FL,33328,2121,residential,tile,"Sand filter; heater",,TRUE
+"Peterson Pool","5245 SW 60th Ave",peterson@example.com,954-555-0124,Davie,FL,33328,,residential,pebble,"VS pump",,TRUE
+"Cooper (West)","3260 SW 39th St",cooper.w@example.com,954-555-0125,Davie,FL,33328,9090,residential,vinyl,"Standard pad",,TRUE
+"Bell Residence","3275 SW 39th St",bell@example.com,954-555-0126,Davie,FL,33328,,residential,fiberglass,"Small spa combo",,TRUE
+"Ward Property","3290 SW 39th St",ward.pool@example.com,954-555-0127,Davie,FL,33328,3344,residential,plaster,"DE; LED",,TRUE
+"Torres Home","3305 S University Dr",torres.anchor@example.com,954-555-0128,Davie,FL,33328,,residential,pebble,"Reference block; salt OK",Same block as seed address,TRUE
+"Gray Household","3325 SW 59th Ter",gray@example.com,954-555-0129,Davie,FL,33328,5566,residential,tile,"Heat pump 2023",,TRUE
+"James Pool","3340 SW 59th Ter",james.pool@example.com,954-555-0130,Davie,FL,33328,,residential,plaster,"Cartridge; robot",,TRUE
