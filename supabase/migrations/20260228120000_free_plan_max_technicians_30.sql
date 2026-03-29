@@ -3,6 +3,6 @@ UPDATE public.caicos_billing_plans
 SET features = jsonb_set(
   COALESCE(features, '{}'::jsonb),
   '{max_technicians}',
-  '3'::jsonb
+  '30'::jsonb
 )
 WHERE id = 'plan_free';

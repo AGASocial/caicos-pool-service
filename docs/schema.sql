@@ -91,7 +91,7 @@ CREATE TABLE caicos_route_stops (
   property_id UUID NOT NULL REFERENCES caicos_properties(id) ON DELETE CASCADE,
   stop_order INTEGER NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(route_id, property_id)
+  CONSTRAINT caicos_route_stops_property_id_unique UNIQUE (property_id)
 );
 
 -- Service jobs (scheduled visits). Optional route_id when job was generated from a route.

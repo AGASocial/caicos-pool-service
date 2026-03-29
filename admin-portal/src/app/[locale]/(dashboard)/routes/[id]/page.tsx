@@ -3,11 +3,19 @@
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Link, useRouter } from '@/i18n/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ArrowLeft, Trash2, Plus, Calendar, MapPin } from 'lucide-react';
 
 type Property = { id: string; customer_name: string; address?: string };
@@ -20,6 +28,10 @@ type RouteDetail = {
   stops: Stop[];
 };
 
+function normalizeSearch(s: string) {
+  return s.trim().toLowerCase();
+}
+
 export default function RouteDetailPage() {
   const t = useTranslations();
   const params = useParams();
@@ -29,11 +41,14 @@ export default function RouteDetailPage() {
   const [route, setRoute] = useState<RouteDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [generateDate, setGenerateDate] = useState('');
   const [generating, setGenerating] = useState(false);
-  const [addPropertyId, setAddPropertyId] = useState('');
-  const [properties, setProperties] = useState<{ id: string; customer_name: string; address?: string }[]>([]);
-  const [showAddStop, setShowAddStop] = useState(false);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [bulkSearch, setBulkSearch] = useState('');
+  const [selectedPropertyIds, setSelectedPropertyIds] = useState<string[]>([]);
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -55,7 +70,9 @@ export default function RouteDetailPage() {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   useEffect(() => {
@@ -70,30 +87,73 @@ export default function RouteDetailPage() {
         // ignore
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  async function addStop() {
-    if (!id || !addPropertyId) return;
+  async function refreshRoute() {
+    if (!id) return;
+    const r = await fetch(`/api/routes/${id}`);
+    if (r.ok) setRoute(await r.json());
+  }
+
+  function togglePropertySelected(propertyId: string) {
+    setSelectedPropertyIds((prev) =>
+      prev.includes(propertyId) ? prev.filter((x) => x !== propertyId) : [...prev, propertyId]
+    );
+  }
+
+  function toggleSelectAllVisible(filtered: Property[]) {
+    if (filtered.length === 0) return;
+    const visibleSet = new Set(filtered.map((p) => p.id));
+    const allVisibleSelected = filtered.every((p) => selectedPropertyIds.includes(p.id));
+    if (allVisibleSelected) {
+      setSelectedPropertyIds((prev) => prev.filter((pid) => !visibleSet.has(pid)));
+      return;
+    }
+    setSelectedPropertyIds((prev) => {
+      const next = [...prev];
+      for (const p of filtered) {
+        if (!next.includes(p.id)) next.push(p.id);
+      }
+      return next;
+    });
+  }
+
+  async function bulkAddStops() {
+    if (!id || selectedPropertyIds.length === 0) return;
     setError(null);
+    setInfoMessage(null);
+    setBulkSaving(true);
     try {
-      const stopOrder = (route?.stops?.length ?? 0);
       const res = await fetch(`/api/routes/${id}/stops`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ property_id: addPropertyId, stop_order: stopOrder }),
+        body: JSON.stringify({ add_property_ids: selectedPropertyIds }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data.error || res.statusText);
+        setBulkSaving(false);
         return;
       }
-      setAddPropertyId('');
-      setShowAddStop(false);
-      const r = await fetch(`/api/routes/${id}`);
-      if (r.ok) setRoute(await r.json());
+      const skipped = Array.isArray(data.skipped_property_ids) ? data.skipped_property_ids.length : 0;
+      const onOther = Array.isArray(data.property_ids_on_other_routes)
+        ? data.property_ids_on_other_routes.length
+        : 0;
+      await refreshRoute();
+      setAddDialogOpen(false);
+      setBulkSearch('');
+      setSelectedPropertyIds([]);
+      const parts: string[] = [];
+      if (skipped > 0) parts.push(t('bulkAddPartiallySkipped', { count: skipped }));
+      if (onOther > 0) parts.push(t('bulkAddOnOtherRoutes', { count: onOther }));
+      if (parts.length > 0) setInfoMessage(parts.join(' '));
+      setBulkSaving(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to add');
+      setBulkSaving(false);
     }
   }
 
@@ -107,8 +167,7 @@ export default function RouteDetailPage() {
         setError(data.error || res.statusText);
         return;
       }
-      const r = await fetch(`/api/routes/${id}`);
-      if (r.ok) setRoute(await r.json());
+      await refreshRoute();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to remove');
     }
@@ -154,8 +213,24 @@ export default function RouteDetailPage() {
     }
   }
 
-  const existingIds = new Set((route?.stops ?? []).map((s) => s.property_id));
-  const availableProperties = properties.filter((p) => !existingIds.has(p.id));
+  const availableProperties = useMemo(() => {
+    const onRoute = new Set((route?.stops ?? []).map((s) => s.property_id));
+    return properties.filter((p) => !onRoute.has(p.id));
+  }, [properties, route?.stops]);
+
+  const q = normalizeSearch(bulkSearch);
+  const filteredAvailable = useMemo(() => {
+    if (!q) return availableProperties;
+    return availableProperties.filter((p) => {
+      const name = (p.customer_name ?? '').toLowerCase();
+      const addr = (p.address ?? '').toLowerCase();
+      return name.includes(q) || addr.includes(q);
+    });
+  }, [availableProperties, q]);
+
+  const allVisibleSelected =
+    filteredAvailable.length > 0 &&
+    filteredAvailable.every((p) => selectedPropertyIds.includes(p.id));
 
   if (loading) {
     return (
@@ -204,26 +279,30 @@ export default function RouteDetailPage() {
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
+      {infoMessage && (
+        <p className="text-sm text-muted-foreground" role="status">
+          {infoMessage}
+        </p>
+      )}
 
       <Card>
         <CardHeader>
           <CardTitle>{t('routeStops')}</CardTitle>
-          <CardDescription>{t('noStopsYet')}</CardDescription>
+          <CardDescription>
+            {(route.stops?.length ?? 0) === 0 ? t('noStopsYet') : t('routeStopsManageDescription')}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {route.stops?.length === 0 && (
-            <p className="text-sm text-muted-foreground">{t('noStopsYet')}</p>
-          )}
           {route.stops && route.stops.length > 0 && (
             <ul className="divide-y divide-border">
               {route.stops.map((stop, idx) => (
                 <li key={stop.id} className="flex items-center gap-3 py-2">
                   <span className="text-muted-foreground w-6 text-sm">{idx + 1}.</span>
                   <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <span className="font-medium">{stop.property?.customer_name ?? stop.property_id}</span>
                     {stop.property?.address && (
-                      <span className="text-muted-foreground text-sm block truncate">{stop.property.address}</span>
+                      <span className="text-muted-foreground block truncate text-sm">{stop.property.address}</span>
                     )}
                   </div>
                   <Button
@@ -239,46 +318,126 @@ export default function RouteDetailPage() {
             </ul>
           )}
 
-          {!showAddStop && (
-            <Button variant="outline" size="sm" onClick={() => setShowAddStop(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t('addStop')}
-            </Button>
-          )}
-          {showAddStop && (
-            <div className="flex flex-wrap items-end gap-2 pt-2 border-t">
-              <div className="flex-1 min-w-[200px] space-y-1">
-                <Label>{t('addPropertyToRoute')}</Label>
-                <select
-                  value={addPropertyId}
-                  onChange={(e) => setAddPropertyId(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-                >
-                  <option value="">—</option>
-                  {availableProperties.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.customer_name} {p.address ? ` · ${p.address}` : ''}
-                    </option>
-                  ))}
-                </select>
+          <Button variant="outline" size="sm" onClick={() => setAddDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            {t('addPropertiesToRoute')}
+          </Button>
+
+          <Dialog
+            open={addDialogOpen}
+            onOpenChange={(open) => {
+              setAddDialogOpen(open);
+              if (open) {
+                setBulkSearch('');
+                setSelectedPropertyIds([]);
+                setError(null);
+              }
+            }}
+          >
+            <DialogContent className="flex max-h-[100dvh] flex-col gap-0 p-0 sm:max-h-[90vh] sm:max-w-xl">
+              <div className="space-y-4 p-6 pb-0">
+                <DialogHeader>
+                  <DialogTitle>{t('addPropertiesToRoute')}</DialogTitle>
+                  <DialogDescription>{t('addPropertiesToRouteDescription')}</DialogDescription>
+                </DialogHeader>
+                {availableProperties.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">{t('allPropertiesOnRoute')}</p>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="bulk-property-search" className="sr-only">
+                        {t('searchPropertiesPlaceholder')}
+                      </Label>
+                      <Input
+                        id="bulk-property-search"
+                        type="search"
+                        autoComplete="off"
+                        placeholder={t('searchPropertiesPlaceholder')}
+                        value={bulkSearch}
+                        onChange={(e) => setBulkSearch(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        disabled={filteredAvailable.length === 0}
+                        onClick={() => toggleSelectAllVisible(filteredAvailable)}
+                      >
+                        {allVisibleSelected ? t('deselectAllVisible') : t('selectAllVisible')}
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
-              <Button size="sm" onClick={addStop} disabled={!addPropertyId}>
-                {t('addStop')}
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => { setShowAddStop(false); setAddPropertyId(''); }}>
-                {t('cancel')}
-              </Button>
-            </div>
-          )}
+              {availableProperties.length > 0 && (
+                <>
+                  <div className="min-h-0 flex-1 overflow-y-auto border-y px-6 py-3">
+                    {filteredAvailable.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">{t('noPropertiesMatchSearch')}</p>
+                    ) : (
+                      <ul className="space-y-1">
+                        {filteredAvailable.map((p) => {
+                          const checked = selectedPropertyIds.includes(p.id);
+                          return (
+                            <li key={p.id}>
+                              <label className="hover:bg-muted/60 flex min-h-11 cursor-pointer items-start gap-3 rounded-md px-2 py-2">
+                                <input
+                                  type="checkbox"
+                                  className="border-input text-primary focus-visible:ring-ring mt-1 size-4 shrink-0 rounded border"
+                                  checked={checked}
+                                  onChange={() => togglePropertySelected(p.id)}
+                                />
+                                <span className="min-w-0 flex-1 text-sm leading-snug">
+                                  <span className="font-medium">{p.customer_name}</span>
+                                  {p.address ? (
+                                    <span className="text-muted-foreground block truncate">{p.address}</span>
+                                  ) : null}
+                                </span>
+                              </label>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                  <DialogFooter className="border-t p-6">
+                    <Button type="button" variant="ghost" onClick={() => setAddDialogOpen(false)}>
+                      {t('cancel')}
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => void bulkAddStops()}
+                      disabled={
+                        bulkSaving || selectedPropertyIds.length === 0 || availableProperties.length === 0
+                      }
+                    >
+                      {bulkSaving
+                        ? t('loading', { defaultValue: 'Loading…' })
+                        : selectedPropertyIds.length === 0
+                          ? t('addPropertiesToRoute')
+                          : t('addSelectedToRoute', { count: selectedPropertyIds.length })}
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+              {availableProperties.length === 0 && (
+                <DialogFooter className="p-6 pt-0">
+                  <Button type="button" variant="ghost" onClick={() => setAddDialogOpen(false)}>
+                    {t('close')}
+                  </Button>
+                </DialogFooter>
+              )}
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>{t('generateJobsForDate')}</CardTitle>
-          <CardDescription>
-            {t('generateJobsForDateDescription')}
-          </CardDescription>
+          <CardDescription>{t('generateJobsForDateDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-end gap-2">
           <div className="space-y-1">
@@ -296,7 +455,7 @@ export default function RouteDetailPage() {
             disabled={!generateDate || generating || (route.stops?.length ?? 0) === 0}
           >
             <Calendar className="mr-2 h-4 w-4" />
-            {generating ? (t('loading', { defaultValue: 'Loading…' })) : t('generateJobsForDate')}
+            {generating ? t('loading', { defaultValue: 'Loading…' }) : t('generateJobsForDate')}
           </Button>
         </CardContent>
       </Card>

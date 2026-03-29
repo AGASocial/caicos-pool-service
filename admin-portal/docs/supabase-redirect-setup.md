@@ -2,9 +2,9 @@
 
 ## ✅ Current Configuration
 I can see your Supabase configuration already has:
-- **Site URL**: `https://app.iablee.com`
+- **Site URL**: `https://pooldash.aga.social`
 - **Redirect URLs**: 
-  - `https://app.iablee.com`
+  - `https://pooldash.aga.social`
   - `http://localhost:3000`
 
 ## 🔧 Missing URLs for OAuth

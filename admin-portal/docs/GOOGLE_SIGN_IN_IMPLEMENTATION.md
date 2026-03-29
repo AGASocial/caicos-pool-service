@@ -1,6 +1,6 @@
 # Google Sign In Implementation Guide
 
-This document provides step-by-step instructions for implementing Google Sign In authentication in the iablee-app project using Supabase Auth.
+This document provides step-by-step instructions for implementing Google Sign In authentication in the caicos-app project using Supabase Auth.
 
 ## Table of Contents
 
@@ -33,7 +33,7 @@ Before starting, ensure you have:
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Click on the project dropdown at the top
 3. Click **"New Project"**
-4. Enter a project name (e.g., "iablee-app")
+4. Enter a project name (e.g., "caicos-app")
 5. Click **"Create"**
 
 ### Step 2: Enable Google+ API
@@ -48,7 +48,7 @@ Before starting, ensure you have:
 2. Choose **"External"** (unless you have a Google Workspace account)
 3. Click **"Create"**
 4. Fill in the required information:
-   - **App name**: iablee-app (or your app name)
+   - **App name**: caicos-app (or your app name)
    - **User support email**: Your email address
    - **Developer contact information**: Your email address
 5. Click **"Save and Continue"**
@@ -66,7 +66,7 @@ Before starting, ensure you have:
 1. Navigate to **APIs & Services** → **Credentials**
 2. Click **"+ CREATE CREDENTIALS"** → **"OAuth client ID"**
 3. Select **"Web application"** as the application type
-4. Give it a name (e.g., "iablee-app-web")
+4. Give it a name (e.g., "caicos-app-web")
 5. Add **Authorized JavaScript origins**:
    - For development: `http://localhost:3000`
    - For production: `https://your-production-domain.com`
