@@ -90,3 +90,31 @@ export async function PATCH(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const { supabase, user } = await createAuthenticatedRouteClient();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { error, count } = await (supabase as unknown as CaicosSupabaseClient)
+    .from('caicos_service_jobs')
+    .delete({ count: 'exact' })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Supabase error deleting job:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (count === 0) {
+    return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+  }
+
+  return new NextResponse(null, { status: 204 });
+}

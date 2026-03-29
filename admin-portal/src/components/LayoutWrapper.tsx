@@ -25,6 +25,7 @@ import { Link, useRouter, usePathname } from '@/i18n/navigation';
 import SecurityPinModal from './security/SecurityPinModal';
 import { useSecurity } from '@/context/SecurityContext';
 import { useAuth } from '@/lib/auth';
+import { SessionBillingPrefetch } from '@/lib/billing-queries';
 
 function getFirstName(user: {
   profile?: { full_name?: string } | null;
@@ -83,6 +84,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex min-h-screen bg-background overflow-x-hidden">
+      <SessionBillingPrefetch />
       {/* Sidebar for desktop */}
       <aside className={cn(
         "hidden md:flex flex-col fixed inset-y-0 z-50 transition-all duration-300",

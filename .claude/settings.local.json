@@ -6,10 +6,7 @@
       "mcp__stitch__get_screen",
       "WebFetch(domain:contribution.usercontent.google.com)",
       "WebFetch(domain:lh3.googleusercontent.com)",
-      "Bash(curl -sL \"https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzRkZDdlYzkyZmJjMjQwNWRhMGEzODc4YzJmZjkxYzdkEgsSBxD_t9aWuAMYAZIBJAoKcHJvamVjdF9pZBIWQhQxNzM1MDMzMDk3NDcxMTQxODg0Mw&filename=&opi=89354086\" -o /tmp/stitch-dashboard.html)",
-      "Bash(curl -sL \"https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sX2YwNGY1MzExZDhkZDRmMjRhNTczYjNhNWRhZjQ1MTcwEgsSBxD_t9aWuAMYAZIBJAoKcHJvamVjdF9pZBIWQhQxNzM1MDMzMDk3NDcxMTQxODg0Mw&filename=&opi=89354086\" -o /tmp/stitch-service.html)",
-      "Bash(curl -sL \"https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzFkZTMzYzMyZGQ0ZTQ1Yjg5N2QzZWU4ZWI5ZmRjMTkwEgsSBxD_t9aWuAMYAZIBJAoKcHJvamVjdF9pZBIWQhQxNzM1MDMzMDk3NDcxMTQxODg0Mw&filename=&opi=89354086\" -o /tmp/stitch-properties.html)",
-      "Bash(curl -sL \"https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzA1ZmE0Y2FiOTUxNDQ5YzhiNGQzNGIxYjZkODU1MTU3EgsSBxD_t9aWuAMYAZIBJAoKcHJvamVjdF9pZBIWQhQxNzM1MDMzMDk3NDcxMTQxODg0Mw&filename=&opi=89354086\" -o /tmp/stitch-settings.html)"
+      "Bash(npx jest:*)"
     ]
   }
 }

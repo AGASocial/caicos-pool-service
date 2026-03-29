@@ -1,14 +1,23 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 import { useTeam } from '@/lib/team';
 
 const STATUSES = ['pending', 'in_progress', 'completed', 'skipped', 'cancelled'] as const;
@@ -34,6 +43,7 @@ type JobDetail = {
 export default function JobDetailPage() {
   const t = useTranslations();
   const params = useParams();
+  const router = useRouter();
   const id = params?.id as string;
   const [job, setJob] = useState<JobDetail | null>(null);
   const [properties, setProperties] = useState<{ id: string; customer_name: string }[]>([]);
@@ -41,6 +51,8 @@ export default function JobDetailPage() {
   const { data: teamMembers = [] } = useTeam();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [edit, setEdit] = useState({
     property_id: '',
     technician_id: '',
@@ -133,6 +145,27 @@ export default function JobDetailPage() {
     }
   }
 
+  async function handleDelete() {
+    if (!id) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || res.statusText);
+        setDeleting(false);
+        setDeleteDialogOpen(false);
+        return;
+      }
+      router.push('/jobs');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to delete');
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+    }
+  }
+
   if (loading) return <p className="text-muted-foreground">{t('loading', { defaultValue: 'Loading…' })}</p>;
   if (error && !job) {
     return (
@@ -148,18 +181,42 @@ export default function JobDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/jobs">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('jobDetails')}</h1>
-          <p className="text-muted-foreground dark:text-gray-700">
-            {job.property?.customer_name ?? job.property_id} · {job.scheduled_date}
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/jobs">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('jobDetails')}</h1>
+            <p className="text-muted-foreground dark:text-gray-700">
+              {job.property?.customer_name ?? job.property_id} · {job.scheduled_date}
+            </p>
+          </div>
         </div>
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="destructive" size="sm">
+              <Trash2 className="mr-2 h-4 w-4" />
+              {t('deleteJob')}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('deleteJob')}</DialogTitle>
+              <DialogDescription>{t('confirmDeleteJob')}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>
+                {t('cancel')}
+              </Button>
+              <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+                {deleting ? t('loading', { defaultValue: 'Loading…' }) : t('delete')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}

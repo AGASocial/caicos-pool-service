@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,14 +10,14 @@ import { Link } from '@/i18n/navigation';
 import { ArrowLeft, Copy, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useTeam } from '@/lib/team';
+import {
+  useBillingSubscription,
+  useFreePlan,
+  computeInviteMaxTechnicians,
+} from '@/lib/billing-queries';
 
 type CreatedInvite = { code: string; role: string; expires_at: string };
 type InviteRole = 'technician' | 'admin' | 'operations';
-
-interface PlanFeatures {
-  max_technicians?: number;
-  max_users?: number;
-}
 
 export default function InviteTeamMemberPage() {
   const t = useTranslations();
@@ -30,32 +30,23 @@ export default function InviteTeamMemberPage() {
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedInvite | null>(null);
   const [copied, setCopied] = useState(false);
-  const [maxTechnicians, setMaxTechnicians] = useState<number>(-1);
+
+  const subQ = useBillingSubscription({ userId: user?.id, enabled: !!user?.id });
+  const freeQ = useFreePlan({ enabled: !!user?.id });
+
+  const maxTechnicians = useMemo(
+    () =>
+      computeInviteMaxTechnicians(
+        subQ.data?.subscription,
+        freeQ.data ?? undefined,
+        freeQ.isPending,
+      ),
+    [subQ.data?.subscription, freeQ.data, freeQ.isPending],
+  );
 
   const technicianCount = teamMembers.filter((m) => m.role === 'technician').length;
   const isTechnicianLimitReached =
     role === 'technician' && maxTechnicians !== -1 && technicianCount >= maxTechnicians;
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/billing/subscriptions', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (cancelled || !data?.subscription) return;
-        const periodEnd = data.subscription.currentPeriodEnd;
-        const isExpired = periodEnd && new Date(periodEnd) < new Date();
-        if (isExpired) {
-          setMaxTechnicians(3);
-          return;
-        }
-        const features = data.subscription?.plan?.features as PlanFeatures | undefined;
-        if (!features) return;
-        const max = features.max_technicians ?? features.max_users ?? 5;
-        setMaxTechnicians(max);
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
