@@ -121,6 +121,7 @@
   "visitKindPlaceholder": "Opcional",
   "visitKindRequired": "Elige un tipo de visita para el despacho ad-hoc.",
   "thisWeek": "Esta semana",
+  "thisMonth": "Este mes",
   "filterByDayOfWeek": "Día de la semana",
   "filterByJobSource": "Origen",
   "filterByRoute": "Ruta",

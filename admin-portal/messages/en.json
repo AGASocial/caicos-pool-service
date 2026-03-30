@@ -122,6 +122,7 @@
   "visitKindPlaceholder": "Optional",
   "visitKindRequired": "Choose a visit type for ad-hoc dispatch.",
   "thisWeek": "This week",
+  "thisMonth": "This month",
   "filterByDayOfWeek": "Weekday",
   "filterByJobSource": "Source",
   "filterByRoute": "Route",

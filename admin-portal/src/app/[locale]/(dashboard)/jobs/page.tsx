@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
 import { Plus, Briefcase, ChevronRight, Radio } from 'lucide-react';
 import { useTeam } from '@/lib/team';
-import { weekBoundsMonday } from '@/lib/date-week';
+import { monthBoundsCalendar, weekBoundsMonday } from '@/lib/date-week';
 
 type PropertyRef = { id: string; customer_name: string; address?: string };
 type TechnicianRef = { id: string; full_name: string };
@@ -135,6 +135,12 @@ export default function JobsPage() {
     setDateTo(w.to);
   }
 
+  function setThisMonth() {
+    const m = monthBoundsCalendar();
+    setDateFrom(m.from);
+    setDateTo(m.to);
+  }
+
   function statusLabel(s: string) {
     return t(STATUS_KEYS[s] || 'status_pending');
   }
@@ -189,6 +195,9 @@ export default function JobsPage() {
             </div>
             <Button type="button" variant="secondary" size="sm" onClick={setThisWeek}>
               {t('thisWeek')}
+            </Button>
+            <Button type="button" variant="secondary" size="sm" onClick={setThisMonth}>
+              {t('thisMonth')}
             </Button>
             <div className="space-y-1">
               <Label className="text-xs">{t('filterByDayOfWeek')}</Label>

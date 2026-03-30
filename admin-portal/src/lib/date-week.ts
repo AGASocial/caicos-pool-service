@@ -16,3 +16,12 @@ export function weekBoundsMonday(ref: Date = new Date()): { from: string; to: st
   sun.setDate(mon.getDate() + 6);
   return { from: formatLocalYmd(mon), to: formatLocalYmd(sun) };
 }
+
+/** First and last calendar day of the month containing `ref` (local timezone). */
+export function monthBoundsCalendar(ref: Date = new Date()): { from: string; to: string } {
+  const y = ref.getFullYear();
+  const m = ref.getMonth();
+  const first = new Date(y, m, 1);
+  const last = new Date(y, m + 1, 0);
+  return { from: formatLocalYmd(first), to: formatLocalYmd(last) };
+}
