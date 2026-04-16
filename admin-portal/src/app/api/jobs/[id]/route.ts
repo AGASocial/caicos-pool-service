@@ -45,7 +45,46 @@ export async function GET(
     return NextResponse.json({ error: error?.message || 'Not found' }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  const { data: report } = await (supabase as unknown as CaicosSupabaseClient)
+    .from('caicos_service_reports')
+    .select('id')
+    .eq('job_id', id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!report?.id) {
+    return NextResponse.json({
+      ...data,
+      report_photos: [],
+    });
+  }
+
+  const { data: photoRows } = await (supabase as unknown as CaicosSupabaseClient)
+    .from('caicos_report_photos')
+    .select('id, storage_path, caption, photo_type, created_at')
+    .eq('report_id', report.id)
+    .order('created_at', { ascending: false });
+
+  if (!photoRows?.length) {
+    return NextResponse.json({
+      ...data,
+      report_photos: [],
+    });
+  }
+
+  const paths = photoRows.map((photo) => String(photo.storage_path));
+  const { data: signedData } = await supabase.storage.from('report-photos').createSignedUrls(paths, 3600);
+
+  const photosWithUrls = photoRows.map((photo, index) => ({
+    ...photo,
+    url: signedData?.[index]?.signedUrl ?? null,
+  }));
+
+  return NextResponse.json({
+    ...data,
+    report_photos: photosWithUrls,
+  });
 }
 
 export async function PATCH(

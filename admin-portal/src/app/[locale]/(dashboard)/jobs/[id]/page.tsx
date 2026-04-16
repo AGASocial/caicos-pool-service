@@ -26,6 +26,14 @@ type PropertyRef = { id: string; customer_name: string; address?: string; custom
 type TechnicianRef = { id: string; full_name: string };
 type RouteRef = { id: string; name: string } | null;
 type VisitKindRef = { id: string; slug: string; label: string } | null;
+type ReportPhoto = {
+  id: string;
+  storage_path: string;
+  caption: string | null;
+  photo_type: string | null;
+  created_at: string;
+  url: string | null;
+};
 type JobDetail = {
   id: string;
   property_id: string;
@@ -44,6 +52,7 @@ type JobDetail = {
   technician?: TechnicianRef | null;
   route?: RouteRef;
   visit_kind?: VisitKindRef;
+  report_photos?: ReportPhoto[];
 };
 
 export default function JobDetailPage() {
@@ -59,6 +68,7 @@ export default function JobDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<ReportPhoto | null>(null);
   const [edit, setEdit] = useState({
     property_id: '',
     technician_id: '',
@@ -235,7 +245,66 @@ export default function JobDetailPage() {
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
+
+
       <Card>
+        <CardHeader>
+          <CardTitle>{t('jobDetails')}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          {job.property?.address && (
+            <p><span className="text-muted-foreground">{t('address')}:</span> {job.property.address}</p>
+          )}
+          {job.property?.customer_phone && (
+            <p><span className="text-muted-foreground">{t('customerPhone')}:</span> {job.property.customer_phone}</p>
+          )}
+          <p><span className="text-muted-foreground">{t('status')}:</span> {t(`status_${job.status}`)}</p>
+          {job.notes && <p><span className="text-muted-foreground">{t('notes')}:</span> {job.notes}</p>}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('photos', { defaultValue: 'Photos' })}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {job.report_photos?.length ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {job.report_photos
+                .filter((photo) => photo.url)
+                .map((photo) => (
+                  <button
+                    type="button"
+                    key={photo.id}
+                    onClick={() => setSelectedPhoto(photo)}
+                    className="group block overflow-hidden rounded-md border border-border"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photo.url ?? ''}
+                      alt={photo.caption || t('jobPhoto', { defaultValue: 'Job photo' })}
+                      className="h-44 w-full object-cover transition-transform group-hover:scale-[1.02]"
+                      loading="lazy"
+                    />
+                    <div className="space-y-1 p-2 text-xs">
+                      {photo.caption ? <p className="text-foreground">{photo.caption}</p> : null}
+                      {photo.photo_type ? (
+                        <p className="text-muted-foreground">
+                          {t('type', { defaultValue: 'Type' })}: {photo.photo_type}
+                        </p>
+                      ) : null}
+                    </div>
+                  </button>
+                ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {t('noPhotosAvailable', { defaultValue: 'No photos available for this job yet.' })}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+            <Card>
         <CardHeader>
           <CardTitle>{t('editJob')}</CardTitle>
         </CardHeader>
@@ -320,21 +389,36 @@ export default function JobDetailPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('jobDetails')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {job.property?.address && (
-            <p><span className="text-muted-foreground">{t('address')}:</span> {job.property.address}</p>
-          )}
-          {job.property?.customer_phone && (
-            <p><span className="text-muted-foreground">{t('customerPhone')}:</span> {job.property.customer_phone}</p>
-          )}
-          <p><span className="text-muted-foreground">{t('status')}:</span> {t(`status_${job.status}`)}</p>
-          {job.notes && <p><span className="text-muted-foreground">{t('notes')}:</span> {job.notes}</p>}
-        </CardContent>
-      </Card>
+      <Dialog
+        open={Boolean(selectedPhoto)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedPhoto(null);
+        }}
+      >
+        <DialogContent className="max-w-5xl p-4 sm:p-6">
+          <DialogHeader className="flex flex-row items-center justify-between space-y-0">
+            <DialogTitle className="text-sm font-medium">
+            {selectedPhoto?.url ? (
+              <Button asChild size="sm">
+                <a href={selectedPhoto.url} download target="_blank" rel="noreferrer">
+                  {t('download', { defaultValue: 'Download' })}
+                </a>
+              </Button>
+            ) : null}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedPhoto?.url ? (
+            <div className="mt-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={selectedPhoto.url}
+                alt={selectedPhoto.caption || t('jobPhoto', { defaultValue: 'Job photo' })}
+                className="h-auto max-h-[80vh] w-full rounded-md object-contain"
+              />
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -119,7 +119,7 @@
   "dispatchFilterByRoute": "Route",
   "dispatchAllRoutes": "All routes",
   "dispatchNoRoutes": "No route",
-  "createJobAdHocHint": "Creates an ad-hoc job. Use routes to generate recurring visits from your pattern.",
+  "createJobAdHocHint": "Schedule a one-off visit. Recurring stops are managed in Routes.",
   "visitKind": "Visit type",
   "visitKindPlaceholder": "Optional",
   "visitKindRequired": "Choose a visit type for ad-hoc dispatch.",

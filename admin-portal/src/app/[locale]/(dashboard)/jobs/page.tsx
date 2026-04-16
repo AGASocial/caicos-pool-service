@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
-import { Plus, Briefcase, ChevronRight, Radio } from 'lucide-react';
+import { Briefcase, ChevronRight, Radio } from 'lucide-react';
 import { useTeam } from '@/lib/team';
 import { monthBoundsCalendar, weekBoundsMonday } from '@/lib/date-week';
 
@@ -152,20 +152,12 @@ export default function JobsPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t('jobs')}</h1>
           <p className="text-muted-foreground">{t('jobsDescription')}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" asChild className="w-fit shrink-0">
-            <Link href="/jobs/new?mode=dispatch">
-              <Radio className="mr-2 h-4 w-4" />
-              {t('adHocDispatch')}
-            </Link>
-          </Button>
-          <Button asChild className="w-fit shrink-0">
-            <Link href="/jobs/new">
-              <Plus className="mr-2 h-4 w-4" />
-              {t('createJob')}
-            </Link>
-          </Button>
-        </div>
+        <Button asChild className="w-fit shrink-0">
+          <Link href="/jobs/new?mode=dispatch">
+            <Radio className="mr-2 h-4 w-4" />
+            {t('adHocDispatch')}
+          </Link>
+        </Button>
       </div>
 
       <Card>
