@@ -17,8 +17,17 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ArrowLeft, Trash2, Plus, Calendar, MapPin } from 'lucide-react';
+import { formatLocalYmd } from '@/lib/date-week';
 
 type Property = { id: string; customer_name: string; address?: string };
+type ScheduleSeg = {
+  id: string;
+  effective_from: string;
+  effective_until: string | null;
+  day_of_week: number;
+  service_frequency: 'weekly' | 'monthly';
+  week_ordinal: number | null;
+};
 type Stop = {
   id: string;
   property_id: string;
@@ -27,6 +36,7 @@ type Stop = {
   service_frequency: 'weekly' | 'monthly';
   week_ordinal: number | null;
   property?: Property;
+  schedules?: ScheduleSeg[];
 };
 type RouteDetail = {
   id: string;
@@ -61,6 +71,7 @@ export default function RouteDetailPage() {
   const [bulkFrequency, setBulkFrequency] = useState<'weekly' | 'monthly'>('weekly');
   const [bulkWeekOrdinal, setBulkWeekOrdinal] = useState(1);
   const [updatingStopId, setUpdatingStopId] = useState<string | null>(null);
+  const [scheduleEffectiveFrom, setScheduleEffectiveFrom] = useState(() => formatLocalYmd(new Date()));
 
   useEffect(() => {
     if (!id) return;
@@ -181,11 +192,17 @@ export default function RouteDetailPage() {
     if (!id) return;
     setUpdatingStopId(stopId);
     setError(null);
+    const scheduleKeys = ['day_of_week', 'service_frequency', 'week_ordinal'];
+    const touchesSchedule = scheduleKeys.some((k) => k in patch);
+    const body =
+      touchesSchedule
+        ? { ...patch, schedule_effective_from: scheduleEffectiveFrom }
+        : patch;
     try {
       const res = await fetch(`/api/routes/${id}/stops/${stopId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patch),
+        body: JSON.stringify(body),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -337,6 +354,20 @@ export default function RouteDetailPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {route.stops && route.stops.length > 0 && (
+            <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-muted/30 p-3">
+              <div className="space-y-1">
+                <Label className="text-xs">{t('scheduleEffectiveFrom')}</Label>
+                <Input
+                  type="date"
+                  value={scheduleEffectiveFrom}
+                  onChange={(e) => setScheduleEffectiveFrom(e.target.value)}
+                  className="w-[160px]"
+                />
+              </div>
+              <p className="text-muted-foreground max-w-xl text-xs">{t('scheduleEffectiveFromHint')}</p>
+            </div>
+          )}
           {route.stops && route.stops.length > 0 && (
             <ul className="divide-y divide-border space-y-1">
               {route.stops.map((stop, idx) => (

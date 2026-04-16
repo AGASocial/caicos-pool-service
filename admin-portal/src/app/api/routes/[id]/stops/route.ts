@@ -11,6 +11,35 @@ type DefaultStopSchedule = {
   week_ordinal: number | null;
 };
 
+async function insertInitialScheduleForStop(
+  client: CaicosSupabaseClient,
+  stopId: string,
+  pattern: DefaultStopSchedule
+) {
+  const { data: existing, error: exErr } = await client
+    .from('caicos_route_stop_schedules')
+    .select('id')
+    .eq('route_stop_id', stopId)
+    .eq('effective_from', '2000-01-01')
+    .maybeSingle();
+  if (exErr) {
+    throw new Error(exErr.message);
+  }
+  if (existing) return;
+
+  const { error } = await client.from('caicos_route_stop_schedules').insert({
+    route_stop_id: stopId,
+    effective_from: '2000-01-01',
+    effective_until: null,
+    day_of_week: pattern.day_of_week,
+    service_frequency: pattern.service_frequency,
+    week_ordinal: pattern.week_ordinal,
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 function parseDefaultStopSchedule(raw: unknown): DefaultStopSchedule | null {
   if (raw === undefined || raw === null) return null;
   if (typeof raw !== 'object' || Array.isArray(raw)) return null;
@@ -280,6 +309,22 @@ export async function PATCH(
         addedStops.push(
           ...(inserted as typeof addedStops)
         );
+
+        for (const s of inserted as typeof addedStops) {
+          try {
+            await insertInitialScheduleForStop(client, s.id, {
+              day_of_week: s.day_of_week,
+              service_frequency: s.service_frequency === 'monthly' ? 'monthly' : 'weekly',
+              week_ordinal: s.week_ordinal,
+            });
+          } catch (e) {
+            console.error('Failed to insert schedule for new stop:', s.id, e);
+            return NextResponse.json(
+              { error: e instanceof Error ? e.message : 'Failed to create stop schedule' },
+              { status: 500 }
+            );
+          }
+        }
       }
     }
 
@@ -384,6 +429,21 @@ export async function POST(
       }
       console.error('Supabase error adding stop:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const created = data as { id: string; day_of_week: number; service_frequency: string; week_ordinal: number | null };
+    try {
+      await insertInitialScheduleForStop(client, created.id, {
+        day_of_week: created.day_of_week,
+        service_frequency: created.service_frequency === 'monthly' ? 'monthly' : 'weekly',
+        week_ordinal: created.week_ordinal,
+      });
+    } catch (e) {
+      console.error('Failed to insert schedule for new stop:', e);
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : 'Failed to create stop schedule' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(data);

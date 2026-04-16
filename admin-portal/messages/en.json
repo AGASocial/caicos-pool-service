@@ -90,6 +90,8 @@
   "generateJobsForDateDescriptionPattern": "Creates jobs only for stops whose pattern matches that calendar date (weekday and weekly vs monthly). Skips properties that already have a route job that day.",
   "routeStopScheduleHint": "Each stop has its own weekday and frequency",
   "routeStopsScheduleDescription": "Set weekday and weekly or monthly (1st–4th weekday) for each stop. Job generation uses these patterns.",
+  "scheduleEffectiveFrom": "New pattern applies from",
+  "scheduleEffectiveFromHint": "When you change weekday or frequency, a schedule segment starts on this date. Pending jobs on or after this date are moved to match the new pattern where possible.",
   "defaultStopWeekday": "Default weekday (new stops)",
   "stopWeekday": "Weekday",
   "stopFrequency": "Frequency",

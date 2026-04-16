@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import { pickSegmentForDate, toScheduleRow } from '@/lib/route-stop-schedule';
+import { loadSchedulesByStopId } from '@/lib/route-stop-schedules-db';
 import { stopMatchesDate } from '@/lib/schedule';
 
 export async function POST(
@@ -50,7 +52,7 @@ export async function POST(
 
     const { data: stops, error: stopsError } = await (supabase as unknown as CaicosSupabaseClient)
       .from('caicos_route_stops')
-      .select('id, property_id, stop_order, day_of_week, service_frequency, week_ordinal')
+      .select('id, property_id, stop_order')
       .eq('route_id', routeId)
       .order('stop_order', { ascending: true });
 
@@ -62,23 +64,17 @@ export async function POST(
     }
 
     const client = supabase as unknown as CaicosSupabaseClient;
-
-    const matchingStops = (stops as Array<{
-      property_id: string;
-      stop_order: number;
-      day_of_week: number;
-      service_frequency: string;
-      week_ordinal: number | null;
-    }>).filter((s) =>
-      stopMatchesDate(
-        {
-          day_of_week: s.day_of_week,
-          service_frequency: s.service_frequency === 'monthly' ? 'monthly' : 'weekly',
-          week_ordinal: s.week_ordinal,
-        },
-        dateOnly
-      )
+    const stopRows = stops as Array<{ id: string; property_id: string; stop_order: number }>;
+    const scheduleByStop = await loadSchedulesByStopId(
+      client,
+      stopRows.map((s) => s.id)
     );
+
+    const matchingStops = stopRows.filter((s) => {
+      const seg = pickSegmentForDate(scheduleByStop.get(s.id) ?? [], dateOnly);
+      if (!seg) return false;
+      return stopMatchesDate(toScheduleRow(seg), dateOnly);
+    });
 
     if (matchingStops.length === 0) {
       return NextResponse.json({

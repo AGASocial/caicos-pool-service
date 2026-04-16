@@ -1,4 +1,6 @@
 import { addMonths, eachDayOfInterval, format, startOfDay } from 'date-fns';
+import { pickSegmentForDate, toScheduleRow } from '@/lib/route-stop-schedule';
+import { loadSchedulesByStopId } from '@/lib/route-stop-schedules-db';
 import { stopMatchesDate } from '@/lib/schedule';
 import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
 
@@ -9,12 +11,10 @@ type RouteRow = {
 };
 
 type StopRow = {
+  id: string;
   route_id: string;
   property_id: string;
   stop_order: number;
-  day_of_week: number;
-  service_frequency: string;
-  week_ordinal: number | null;
 };
 
 function ymdInRange(start: string, end: string): string[] {
@@ -97,7 +97,7 @@ export async function ensureRouteJobsForDateRange(
   const routeIds = routeList.map((r) => r.id);
   const { data: stops, error: stopsErr } = await client
     .from('caicos_route_stops')
-    .select('route_id, property_id, stop_order, day_of_week, service_frequency, week_ordinal')
+    .select('id, route_id, property_id, stop_order')
     .in('route_id', routeIds);
 
   if (stopsErr) {
@@ -111,6 +111,11 @@ export async function ensureRouteJobsForDateRange(
     list.push(s);
     stopsByRoute.set(s.route_id, list);
   }
+
+  const scheduleByStop = await loadSchedulesByStopId(
+    client,
+    stopList.map((s) => s.id)
+  );
 
   const existingKeys = new Set<string>();
   const pageSize = 1000;
@@ -159,14 +164,10 @@ export async function ensureRouteJobsForDateRange(
 
     for (const dateStr of dates) {
       for (const stop of routeStops) {
-        const matches = stopMatchesDate(
-          {
-            day_of_week: stop.day_of_week,
-            service_frequency: stop.service_frequency === 'monthly' ? 'monthly' : 'weekly',
-            week_ordinal: stop.week_ordinal,
-          },
-          dateStr
-        );
+        const segments = scheduleByStop.get(stop.id) ?? [];
+        const seg = pickSegmentForDate(segments, dateStr);
+        if (!seg) continue;
+        const matches = stopMatchesDate(toScheduleRow(seg), dateStr);
         if (!matches) continue;
 
         const key = jobKey(route.id, stop.property_id, dateStr);

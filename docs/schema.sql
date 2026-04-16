@@ -115,6 +115,27 @@ CREATE TABLE caicos_route_stops (
   )
 );
 
+-- Effective-dated schedule segments per stop (pattern can change after effective_from).
+CREATE TABLE caicos_route_stop_schedules (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  route_stop_id UUID NOT NULL REFERENCES caicos_route_stops(id) ON DELETE CASCADE,
+  day_of_week SMALLINT NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
+  service_frequency TEXT NOT NULL DEFAULT 'weekly' CHECK (service_frequency IN ('weekly', 'monthly')),
+  week_ordinal SMALLINT CHECK (week_ordinal IS NULL OR (week_ordinal >= 1 AND week_ordinal <= 4)),
+  effective_from DATE NOT NULL,
+  effective_until DATE NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT caicos_route_stop_schedules_schedule_chk CHECK (
+    (service_frequency = 'weekly' AND week_ordinal IS NULL)
+    OR (service_frequency = 'monthly' AND week_ordinal IS NOT NULL)
+  ),
+  CONSTRAINT caicos_route_stop_schedules_until_chk CHECK (
+    effective_until IS NULL OR effective_until >= effective_from
+  ),
+  CONSTRAINT caicos_route_stop_schedules_stop_from_unique UNIQUE (route_stop_id, effective_from)
+);
+
 -- Service jobs (dated instances for billing/history). job_source: route = from pattern generation; ad_hoc = dispatcher/manual.
 CREATE TABLE caicos_service_jobs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -195,6 +216,8 @@ CREATE INDEX idx_caicos_properties_company ON caicos_properties(company_id);
 CREATE INDEX idx_caicos_routes_company ON caicos_routes(company_id);
 CREATE INDEX idx_caicos_routes_technician ON caicos_routes(technician_id);
 CREATE INDEX idx_caicos_route_stops_route ON caicos_route_stops(route_id);
+CREATE INDEX idx_caicos_route_stop_schedules_stop ON caicos_route_stop_schedules(route_stop_id);
+CREATE INDEX idx_caicos_route_stop_schedules_from ON caicos_route_stop_schedules(route_stop_id, effective_from);
 CREATE INDEX idx_caicos_visit_reasons_company ON caicos_visit_reasons(company_id);
 CREATE INDEX idx_caicos_service_jobs_company ON caicos_service_jobs(company_id);
 CREATE INDEX idx_caicos_service_jobs_route ON caicos_service_jobs(route_id);
@@ -216,6 +239,7 @@ ALTER TABLE caicos_invite_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_routes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_route_stops ENABLE ROW LEVEL SECURITY;
+ALTER TABLE caicos_route_stop_schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_visit_reasons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_service_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE caicos_service_reports ENABLE ROW LEVEL SECURITY;
@@ -287,6 +311,37 @@ CREATE POLICY "Admins can manage route stops"
   ON caicos_route_stops FOR ALL
   USING (EXISTS (SELECT 1 FROM caicos_routes r WHERE r.id = route_id AND r.company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin')))
   WITH CHECK (EXISTS (SELECT 1 FROM caicos_routes r WHERE r.id = route_id AND r.company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin')));
+
+CREATE POLICY "Users can view company route stop schedules"
+  ON caicos_route_stop_schedules FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM caicos_route_stops s
+      JOIN caicos_routes r ON r.id = s.route_id
+      WHERE s.id = route_stop_id AND r.company_id = get_my_company_id()
+    )
+  );
+
+CREATE POLICY "Admins can manage route stop schedules"
+  ON caicos_route_stop_schedules FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM caicos_route_stops s
+      JOIN caicos_routes r ON r.id = s.route_id
+      WHERE s.id = route_stop_id
+        AND r.company_id = get_my_company_id()
+        AND get_my_role() IN ('owner', 'admin')
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM caicos_route_stops s
+      JOIN caicos_routes r ON r.id = s.route_id
+      WHERE s.id = route_stop_id
+        AND r.company_id = get_my_company_id()
+        AND get_my_role() IN ('owner', 'admin')
+    )
+  );
 
 -- Visit reasons: company catalog
 CREATE POLICY "Users can view company visit reasons"

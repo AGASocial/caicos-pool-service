@@ -15,6 +15,7 @@ export type CaicosSupabaseClient = SupabaseClient<{
     Tables: {
       caicos_routes: TableShape;
       caicos_route_stops: TableShape;
+      caicos_route_stop_schedules: TableShape;
       caicos_properties: TableShape;
       caicos_profiles: TableShape;
       caicos_service_jobs: TableShape;

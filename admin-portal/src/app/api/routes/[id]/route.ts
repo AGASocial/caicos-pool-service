@@ -13,7 +13,9 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: route, error } = await (supabase as unknown as CaicosSupabaseClient)
+  const client = supabase as unknown as CaicosSupabaseClient;
+
+  const { data: route, error } = await client
     .from('caicos_routes')
     .select(`
       id,
@@ -45,9 +47,51 @@ export async function GET(
     return NextResponse.json({ error: error?.message || 'Not found' }, { status: 500 });
   }
 
-  const stops = (route.stops || []).sort(
-    (a: { stop_order: number }, b: { stop_order: number }) => a.stop_order - b.stop_order
-  );
+  const rawStops = route.stops || [];
+  const stopIds = rawStops.map((s: { id: string }) => s.id);
+
+  type ScheduleRow = {
+    id: string;
+    route_stop_id: string;
+    effective_from: string;
+    effective_until: string | null;
+    day_of_week: number;
+    service_frequency: string;
+    week_ordinal: number | null;
+  };
+
+  const schedulesByStopId = new Map<string, Omit<ScheduleRow, 'route_stop_id'>[]>();
+
+  if (stopIds.length > 0) {
+    const { data: scheduleRows, error: schedError } = await client
+      .from('caicos_route_stop_schedules')
+      .select(
+        'id, route_stop_id, effective_from, effective_until, day_of_week, service_frequency, week_ordinal'
+      )
+      .in('route_stop_id', stopIds);
+
+    if (schedError) {
+      console.error('Supabase error fetching route stop schedules:', schedError);
+      return NextResponse.json({ error: schedError.message }, { status: 500 });
+    }
+
+    for (const row of (scheduleRows || []) as ScheduleRow[]) {
+      const { route_stop_id: sid, ...rest } = row;
+      const list = schedulesByStopId.get(sid) ?? [];
+      list.push(rest);
+      schedulesByStopId.set(sid, list);
+    }
+  }
+
+  const stops = rawStops
+    .map((s: Record<string, unknown>) => {
+      const sid = s.id as string;
+      const schedules = (schedulesByStopId.get(sid) ?? []).sort((a, b) =>
+        a.effective_from < b.effective_from ? -1 : a.effective_from > b.effective_from ? 1 : 0
+      );
+      return { ...s, schedules };
+    })
+    .sort((a: { stop_order: number }, b: { stop_order: number }) => a.stop_order - b.stop_order);
 
   return NextResponse.json({ ...route, stops });
 }

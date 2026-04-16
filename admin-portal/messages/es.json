@@ -89,6 +89,8 @@
   "generateJobsForDateDescriptionPattern": "Crea trabajos solo para paradas cuyo patrón coincide con esa fecha (día de la semana y semanal vs mensual). Omite propiedades que ya tengan un trabajo de ruta ese día.",
   "routeStopScheduleHint": "Cada parada tiene su día y frecuencia",
   "routeStopsScheduleDescription": "Define día de la semana y frecuencia semanal o mensual (1.ª–4.ª semana) por parada. La generación de trabajos usa estos patrones.",
+  "scheduleEffectiveFrom": "El nuevo patrón aplica desde",
+  "scheduleEffectiveFromHint": "Al cambiar día o frecuencia, el segmento de agenda empieza en esta fecha. Los trabajos pendientes en o después de esa fecha se reubican al nuevo patrón cuando es posible.",
   "defaultStopWeekday": "Día por defecto (nuevas paradas)",
   "stopWeekday": "Día",
   "stopFrequency": "Frecuencia",
