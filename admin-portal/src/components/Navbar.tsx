@@ -25,7 +25,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
             <div className="relative h-16 w-32 overflow-hidden rounded-lg">
               <Image
                 src="/logo-iablee.png"
-                alt="PoolDash"
+                alt="NeuraPool"
                 fill
                 className="object-contain dark:hidden"
                 priority
@@ -33,7 +33,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
               />
               <Image
                 src="/logo-iablee-dark.png"
-                alt="PoolDash"
+                alt="NeuraPool"
                 fill
                 className="object-contain hidden dark:block"
                 priority

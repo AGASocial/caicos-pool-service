@@ -35,9 +35,9 @@ export default function ReportsPage() {
   const today = new Date().toISOString().slice(0, 10);
   const firstOfMonth = today.slice(0, 7) + '-01';
 
-  const [dateFrom, setDateFrom] = useState(firstOfMonth);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
-  const [appliedFrom, setAppliedFrom] = useState(firstOfMonth);
+  const [appliedFrom, setAppliedFrom] = useState(today);
   const [appliedTo, setAppliedTo] = useState(today);
 
   const [stats, setStats] = useState<ReportsStats | null>(null);

@@ -19,8 +19,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "PoolDash - Pool Service Management Platform",
-  description: "Manage your pool service business with PoolDash",
+  title: "NeuraPool - Pool Service Management Platform",
+  description: "Manage your pool service business with NeuraPool",
   icons: {
     icon: "/logo-primary.png",
     apple: "/logo-primary.png",

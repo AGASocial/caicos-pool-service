@@ -8,7 +8,9 @@
       "WebFetch(domain:lh3.googleusercontent.com)",
       "Bash(npx jest:*)",
       "Bash(ls -la /Users/gabrielvega/Projects/agasocial/caicos/technician-app/*.md)",
-      "Read(//Users/gabrielvega/Projects/agasocial/**)"
+      "Read(//Users/gabrielvega/Projects/agasocial/**)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

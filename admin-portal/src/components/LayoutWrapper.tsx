@@ -102,7 +102,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
             )}>
               <Image
                 src={sidebarCollapsed ? "/logo-lock.png" : "/logo-iablee.png"}
-                alt="PoolDash"
+                alt="NeuraPool"
                 fill
                 className="object-contain dark:hidden"
                 priority
@@ -110,7 +110,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               />
               <Image
                 src={sidebarCollapsed ? "/logo-lock-dark.png" : "/logo-iablee-dark.png"}
-                alt="PoolDash"
+                alt="NeuraPool"
                 fill
                 className="object-contain hidden dark:block"
                 priority
@@ -284,7 +284,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               </DropdownMenu>
 
               <div className="text-xs text-muted-foreground dark:text-sidebar-foreground/60 text-center mt-4">
-                © 2026 PoolDash Inc.
+                © 2026 NeuraPool Inc.
               </div>
             </div>
           </div>

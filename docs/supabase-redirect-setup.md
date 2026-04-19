@@ -2,9 +2,9 @@
 
 ## ✅ Current Configuration
 I can see your Supabase configuration already has:
-- **Site URL**: `https://pooldash.aga.social`
+- **Site URL**: `https://NeuraPool.aga.social`
 - **Redirect URLs**: 
-  - `https://pooldash.aga.social`
+  - `https://NeuraPool.aga.social`
   - `http://localhost:3000`
 
 ## 🔧 Missing URLs for OAuth
