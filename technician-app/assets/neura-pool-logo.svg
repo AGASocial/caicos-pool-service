@@ -1,0 +1,44 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Water Droplet Shape with Neural Network -->
+  <defs>
+    <linearGradient id="dropletGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#00D9FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0D7C8F;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Outer circle (Neural network) -->
+  <circle cx="100" cy="100" r="90" fill="none" stroke="#0D7C8F" stroke-width="8"/>
+
+  <!-- Middle circle -->
+  <circle cx="100" cy="100" r="65" fill="none" stroke="#0D7C8F" stroke-width="6"/>
+
+  <!-- Inner circle -->
+  <circle cx="100" cy="100" r="40" fill="none" stroke="#0D7C8F" stroke-width="5"/>
+
+  <!-- Neural network nodes on outer circle -->
+  <circle cx="100" cy="25" r="6" fill="#0D7C8F"/>
+  <circle cx="155" cy="55" r="6" fill="#0D7C8F"/>
+  <circle cx="175" cy="100" r="6" fill="#0D7C8F"/>
+  <circle cx="155" cy="145" r="6" fill="#0D7C8F"/>
+  <circle cx="100" cy="175" r="6" fill="#0D7C8F"/>
+  <circle cx="45" cy="145" r="6" fill="#0D7C8F"/>
+  <circle cx="25" cy="100" r="6" fill="#0D7C8F"/>
+  <circle cx="45" cy="55" r="6" fill="#0D7C8F"/>
+
+  <!-- Neural network nodes on middle circle -->
+  <circle cx="100" cy="50" r="5" fill="#0D7C8F"/>
+  <circle cx="141" cy="80" r="5" fill="#0D7C8F"/>
+  <circle cx="150" cy="130" r="5" fill="#0D7C8F"/>
+  <circle cx="100" cy="155" r="5" fill="#0D7C8F"/>
+  <circle cx="59" cy="130" r="5" fill="#0D7C8F"/>
+  <circle cx="50" cy="80" r="5" fill="#0D7C8F"/>
+
+  <!-- Center water droplet -->
+  <path d="M 100 70 C 85 85, 80 95, 80 105 C 80 120, 88 130, 100 130 C 112 130, 120 120, 120 105 C 120 95, 115 85, 100 70 Z"
+        fill="url(#dropletGradient)"
+        filter="drop-shadow(0 2px 4px rgba(0,217,255,0.3))"/>
+
+  <!-- Water droplet highlight -->
+  <ellipse cx="95" cy="85" rx="6" ry="8" fill="#ffffff" opacity="0.4"/>
+</svg>

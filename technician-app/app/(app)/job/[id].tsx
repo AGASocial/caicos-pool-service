@@ -87,6 +87,8 @@ export default function JobDetailScreen() {
   const [photos, setPhotos] = useState<{ uri: string; id?: string; storage_path?: string }[]>([]);
   const [existingReportId, setExistingReportId] = useState<string | null>(null);
   const [jobMenuVisible, setJobMenuVisible] = useState(false);
+  const [chemExpanded, setChemExpanded] = useState(false);
+  const [equipExpanded, setEquipExpanded] = useState(false);
   const [pendingOverlay, setPendingOverlay] = useState<{
     uri: string;
     width: number;
@@ -770,33 +772,6 @@ export default function JobDetailScreen() {
           </>
         ) : (
           <>
-            {/* Chemical Readings */}
-            <View style={styles.sectionCard}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionHeaderLeft}>
-                  <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconBlueBg }]}>
-                    <Text style={[styles.sectionIconText, { color: themeColors.sectionIconBlueText }]}>S</Text>
-                  </View>
-                  <Text style={styles.sectionTitle}>Chemical Readings</Text>
-                </View>
-              </View>
-              <View style={styles.chemGrid}>
-                {CHEMICAL_READINGS.map(({ key, label, unit }, idx) => (
-                  <View key={key} style={idx >= CHEMICAL_READINGS.length - 1 ? styles.chemFieldFull : styles.chemField}>
-                    <Text style={styles.chemLabel}>{label}</Text>
-                    <TextInput
-                      style={styles.chemInput}
-                      value={chemicals[key] ?? ''}
-                      onChangeText={(v) => setChemicals((prev) => ({ ...prev, [key]: v }))}
-                      keyboardType="decimal-pad"
-                      placeholder="\u2014"
-                      placeholderTextColor={themeColors.placeholder}
-                    />
-                  </View>
-                ))}
-              </View>
-            </View>
-
             {/* Service Tasks */}
             <View style={styles.sectionCard}>
               <View style={styles.sectionHeader}>
@@ -817,42 +792,6 @@ export default function JobDetailScreen() {
                   />
                 </View>
               ))}
-            </View>
-
-            {/* Equipment Status */}
-            <View style={styles.sectionCard}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionHeaderLeft}>
-                  <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconAmberBg }]}>
-                    <Text style={[styles.sectionIconText, { color: themeColors.sectionIconAmberText }]}>E</Text>
-                  </View>
-                  <Text style={styles.sectionTitle}>Equipment Status</Text>
-                </View>
-              </View>
-              <View style={styles.equipmentBody}>
-                {EQUIPMENT.map(({ key, label }) => (
-                  <View key={key} style={styles.equipmentRow}>
-                    <Text style={styles.taskLabel}>{label}</Text>
-                    <Switch
-                      value={equipment[key] ?? true}
-                      onValueChange={(v) => setEquipment((e) => ({ ...e, [key]: v }))}
-                      trackColor={{ false: themeColors.switchTrack, true: themeColors.switchTrackActive }}
-                    />
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {/* Notes */}
-            <View style={styles.notesCard}>
-              <TextInput
-                style={styles.notesInput}
-                value={notes}
-                onChangeText={setNotes}
-                placeholder="Service notes..."
-                placeholderTextColor={themeColors.placeholder}
-                multiline
-              />
             </View>
 
             {/* Photos */}
@@ -923,6 +862,83 @@ export default function JobDetailScreen() {
                 </Pressable>
               </View>
             </Modal>
+
+            {/* Service Notes */}
+            <View style={styles.notesCard}>
+              <TextInput
+                style={styles.notesInput}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Service notes..."
+                placeholderTextColor={themeColors.placeholder}
+                multiline
+              />
+            </View>
+
+            {/* Equipment Status */}
+            <View style={styles.sectionCard}>
+              <Pressable style={styles.sectionHeader} onPress={() => setEquipExpanded((v) => !v)}>
+                <View style={styles.sectionHeaderLeft}>
+                  <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconAmberBg }]}>
+                    <Text style={[styles.sectionIconText, { color: themeColors.sectionIconAmberText }]}>E</Text>
+                  </View>
+                  <Text style={styles.sectionTitle}>Equipment Status</Text>
+                </View>
+                <Ionicons
+                  name={equipExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                  color={themeColors.muted}
+                />
+              </Pressable>
+              {equipExpanded && (
+                <View style={styles.equipmentBody}>
+                  {EQUIPMENT.map(({ key, label }) => (
+                    <View key={key} style={styles.equipmentRow}>
+                      <Text style={styles.taskLabel}>{label}</Text>
+                      <Switch
+                        value={equipment[key] ?? true}
+                        onValueChange={(v) => setEquipment((e) => ({ ...e, [key]: v }))}
+                        trackColor={{ false: themeColors.switchTrack, true: themeColors.switchTrackActive }}
+                      />
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* Chemical Readings (collapsible) */}
+            <View style={styles.sectionCard}>
+              <Pressable style={styles.sectionHeader} onPress={() => setChemExpanded((v) => !v)}>
+                <View style={styles.sectionHeaderLeft}>
+                  <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconBlueBg }]}>
+                    <Text style={[styles.sectionIconText, { color: themeColors.sectionIconBlueText }]}>S</Text>
+                  </View>
+                  <Text style={styles.sectionTitle}>Chemical Readings</Text>
+                </View>
+                <Ionicons
+                  name={chemExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                  color={themeColors.muted}
+                />
+              </Pressable>
+              {chemExpanded && (
+                <View style={styles.chemGrid}>
+                  {CHEMICAL_READINGS.map(({ key, label }, idx) => (
+                    <View key={key} style={idx >= CHEMICAL_READINGS.length - 1 ? styles.chemFieldFull : styles.chemField}>
+                      <Text style={styles.chemLabel}>{label}</Text>
+                      <TextInput
+                        style={styles.chemInput}
+                        value={chemicals[key] ?? ''}
+                        onChangeText={(v) => setChemicals((prev) => ({ ...prev, [key]: v }))}
+                        keyboardType="decimal-pad"
+                        placeholder=""
+                        placeholderTextColor={themeColors.placeholder}
+                      />
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
 
             {/* Follow-up */}
             <View style={styles.followUpRow}>

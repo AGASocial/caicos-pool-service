@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "technician-app",
-    "slug": "pooldash",
+    "name": "Neura Pool",
+    "slug": "neura-pool",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,7 +60,6 @@ export default function RouteDetailPage() {
   const [route, setRoute] = useState<RouteDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [generateDate, setGenerateDate] = useState('');
   const [generating, setGenerating] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -147,7 +147,6 @@ export default function RouteDetailPage() {
   async function bulkAddStops() {
     if (!id || selectedPropertyIds.length === 0) return;
     setError(null);
-    setInfoMessage(null);
     setBulkSaving(true);
     try {
       const default_stop_schedule = {
@@ -177,10 +176,8 @@ export default function RouteDetailPage() {
       setAddDialogOpen(false);
       setBulkSearch('');
       setSelectedPropertyIds([]);
-      const parts: string[] = [];
-      if (skipped > 0) parts.push(t('bulkAddPartiallySkipped', { count: skipped }));
-      if (onOther > 0) parts.push(t('bulkAddOnOtherRoutes', { count: onOther }));
-      if (parts.length > 0) setInfoMessage(parts.join(' '));
+      if (skipped > 0) toast.warning(t('bulkAddPartiallySkipped', { count: skipped }));
+      if (onOther > 0) toast.warning(t('bulkAddOnOtherRoutes', { count: onOther }));
       setBulkSaving(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to add');
@@ -340,11 +337,6 @@ export default function RouteDetailPage() {
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
-      {infoMessage && (
-        <p className="text-sm text-muted-foreground" role="status">
-          {infoMessage}
-        </p>
-      )}
 
       <Card>
         <CardHeader>
