@@ -11,15 +11,39 @@ export default function PropertiesScreen() {
   const c = Colors[theme];
 
   useEffect(() => {
-    supabase
-      .from('caicos_properties')
-      .select('id, customer_name, address, pool_type')
-      .eq('is_active', true)
-      .order('customer_name')
-      .then(({ data }) => {
-        setProperties((data as Property[]) ?? []);
-      })
-      .then(() => setLoading(false), () => setLoading(false));
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || cancelled) return;
+
+        const { data: stops } = await supabase
+          .from('caicos_route_stops')
+          .select('property_id, caicos_routes!inner(technician_id)')
+          .eq('caicos_routes.technician_id', user.id);
+
+        if (cancelled) return;
+
+        const propertyIds = (stops ?? []).map((s: { property_id: string }) => s.property_id);
+
+        if (!propertyIds.length) {
+          setProperties([]);
+          return;
+        }
+
+        const { data } = await supabase
+          .from('caicos_properties')
+          .select('id, customer_name, address, pool_type')
+          .in('id', propertyIds)
+          .eq('is_active', true)
+          .order('customer_name');
+
+        if (!cancelled) setProperties((data as Property[]) ?? []);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   const styles = useMemo(
@@ -171,7 +195,7 @@ export default function PropertiesScreen() {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <>
-            <View style={styles.header}>
+            {/* <View style={styles.header}>
               <View style={styles.searchWrapper}>
                 <View style={styles.searchBg}>
                   <TextInput
@@ -192,7 +216,7 @@ export default function PropertiesScreen() {
                   <Text style={styles.filterText}>Commercial</Text>
                 </View>
               </View>
-            </View>
+            </View> */}
             <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Properties ({properties.length})</Text>
           </>
         }

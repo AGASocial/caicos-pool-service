@@ -279,7 +279,7 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.sectionCard}>
-          <Pressable style={styles.menuItem}>
+          <Pressable style={styles.menuItem} onPress={() => router.push('/(app)/notifications')}>
             <View style={styles.menuItemLeft}>
               <View style={styles.menuIcon}>
                 <Text style={styles.menuIconText}>N</Text>
@@ -288,7 +288,7 @@ export default function SettingsScreen() {
             </View>
             <Text style={styles.menuChevron}>{'>'}</Text>
           </Pressable>
-          <Pressable style={[styles.menuItem, styles.menuItemLast]}>
+          <Pressable style={[styles.menuItem, styles.menuItemLast]} onPress={() => router.push('/(app)/password-security')}>
             <View style={styles.menuItemLeft}>
               <View style={styles.menuIcon}>
                 <Text style={styles.menuIconText}>S</Text>

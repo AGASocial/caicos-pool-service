@@ -14,7 +14,14 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "social.aga.neurapool",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We use your location to find and assign nearby jobs.",
+        "NSPhotoLibraryUsageDescription": "We need access to your photo library to upload job photos.",
+        "NSCameraUsageDescription": "We need camera access to capture photos for job documentation."
+      }
     },
     "android": {
       "adaptiveIcon": {

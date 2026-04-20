@@ -30,6 +30,8 @@ export default function AppLayout() {
     >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="job/[id]" />
+      <Stack.Screen name="notifications" options={{ headerShown: true, title: 'Notifications', headerBackTitle: 'Settings' }} />
+      <Stack.Screen name="password-security" options={{ headerShown: true, title: 'Password & Security', headerBackTitle: 'Settings' }} />
     </Stack>
   );
 }

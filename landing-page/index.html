@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neura Pool – Intelligent Pool Service Management</title>
+  <meta name="description" content="The all-in-one platform for pool service companies. Manage technicians, schedule jobs, capture service reports, and grow your business — all from one place." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            teal:  { DEFAULT: '#0D7C8F', dark: '#0a6275', light: '#1a9db5' },
+            cyan:  { DEFAULT: '#00D9FF', dark: '#00b8d9', light: '#66eaff' },
+            navy:  { DEFAULT: '#1A3A52', dark: '#112840', light: '#254d6e' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    html { scroll-behavior: smooth; }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #00D9FF 0%, #0D7C8F 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-glow {
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,217,255,0.12) 0%, transparent 70%);
+    }
+
+    .card-glow:hover {
+      box-shadow: 0 0 0 1px rgba(0,217,255,0.3), 0 8px 32px rgba(13,124,143,0.15);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #00D9FF 0%, #0D7C8F 100%);
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0,217,255,0.35);
+    }
+
+    .nav-blur {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .feature-icon {
+      background: linear-gradient(135deg, rgba(0,217,255,0.15) 0%, rgba(13,124,143,0.15) 100%);
+    }
+
+    .step-line::after {
+      content: '';
+      position: absolute;
+      top: 28px;
+      left: calc(50% + 28px);
+      width: calc(100% - 56px);
+      height: 1px;
+      background: linear-gradient(90deg, #0D7C8F, transparent);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    .float { animation: float 4s ease-in-out infinite; }
+    .float-delayed { animation: float 4s ease-in-out 1.5s infinite; }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,217,255,0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(0,217,255,0); }
+    }
+    .pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
+  </style>
+</head>
+<body class="bg-[#080F18] text-white font-sans antialiased">
+
+  <!-- ─── NAV ─────────────────────────────────────────────────────────── -->
+  <header class="fixed top-0 inset-x-0 z-50 nav-blur bg-[#080F18]/80 border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2.5">
+        <svg viewBox="0 0 48 48" class="w-9 h-9" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="24" r="22" stroke="#0D7C8F" stroke-width="2"/>
+          <circle cx="24" cy="24" r="15" stroke="#0D7C8F" stroke-width="1.5"/>
+          <circle cx="24" cy="24" r="8"  stroke="#0D7C8F" stroke-width="1.5"/>
+          <!-- outer nodes -->
+          <circle cx="24"   cy="3"  r="2" fill="#0D7C8F"/>
+          <circle cx="42"   cy="13" r="2" fill="#0D7C8F"/>
+          <circle cx="45"   cy="24" r="2" fill="#0D7C8F"/>
+          <circle cx="42"   cy="35" r="2" fill="#0D7C8F"/>
+          <circle cx="24"   cy="45" r="2" fill="#0D7C8F"/>
+          <circle cx="6"    cy="35" r="2" fill="#0D7C8F"/>
+          <circle cx="3"    cy="24" r="2" fill="#0D7C8F"/>
+          <circle cx="6"    cy="13" r="2" fill="#0D7C8F"/>
+          <!-- droplet -->
+          <path d="M24 16 C19 21,17 25,17 28 C17 32,20 35,24 35 C28 35,31 32,31 28 C31 25,29 21,24 16 Z"
+                fill="url(#lg)" filter="url(#glow)"/>
+          <ellipse cx="22" cy="21" rx="2" ry="3" fill="white" opacity="0.35"/>
+          <defs>
+            <linearGradient id="lg" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#00D9FF"/>
+              <stop offset="100%" stop-color="#0D7C8F"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="1" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+          </defs>
+        </svg>
+        <span class="text-lg font-700 tracking-tight">
+          <span class="text-white font-semibold">Neura</span><span class="gradient-text font-bold"> Pool</span>
+        </span>
+      </a>
+
+      <!-- Nav links -->
+      <nav class="hidden md:flex items-center gap-7 text-sm text-white/60">
+        <a href="#features"   class="hover:text-white transition-colors">Features</a>
+        <a href="#product"    class="hover:text-white transition-colors">Product</a>
+        <a href="#how"        class="hover:text-white transition-colors">How it works</a>
+        <a href="#pricing"    class="hover:text-white transition-colors">Pricing</a>
+      </nav>
+
+      <!-- CTAs -->
+      <div class="flex items-center gap-3">
+        <a href="#" class="hidden sm:block text-sm text-white/60 hover:text-white transition-colors px-3 py-2">Sign in</a>
+        <a href="#cta" class="btn-primary text-sm font-semibold text-navy px-5 py-2.5 rounded-lg text-[#0a2035]">
+          Get started free
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── HERO ─────────────────────────────────────────────────────────── -->
+  <section class="relative pt-32 pb-24 px-6 overflow-hidden hero-glow">
+    <!-- bg grid -->
+    <div class="absolute inset-0 opacity-[0.03]"
+         style="background-image: linear-gradient(#00D9FF 1px, transparent 1px), linear-gradient(90deg, #00D9FF 1px, transparent 1px); background-size: 48px 48px;"></div>
+
+    <div class="relative max-w-5xl mx-auto text-center">
+      <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-sm text-cyan mb-8">
+        <span class="w-2 h-2 rounded-full bg-cyan pulse-glow inline-block"></span>
+        Now serving pool companies across Florida
+      </div>
+
+      <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.05] tracking-tight mb-6">
+        Pool service,<br/>
+        <span class="gradient-text">intelligently managed.</span>
+      </h1>
+
+      <p class="text-lg sm:text-xl text-white/55 max-w-2xl mx-auto mb-10 leading-relaxed">
+        Neura Pool gives your team a mobile app for field technicians and a powerful web portal for managers — so every job gets done right and every report reaches the right person.
+      </p>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="#cta" class="btn-primary w-full sm:w-auto text-base font-bold text-[#0a2035] px-8 py-4 rounded-xl">
+          Start for free
+        </a>
+        <a href="#product" class="w-full sm:w-auto flex items-center justify-center gap-2 border border-white/15 hover:border-white/30 text-white/80 hover:text-white text-base font-medium px-8 py-4 rounded-xl transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          See how it works
+        </a>
+      </div>
+
+      <!-- hero mockup -->
+      <div class="relative mt-20 max-w-4xl mx-auto">
+        <!-- glow behind -->
+        <div class="absolute -inset-4 bg-gradient-to-b from-cyan/10 to-teal/5 blur-3xl rounded-3xl"></div>
+
+        <!-- admin portal mockup -->
+        <div class="relative float rounded-2xl overflow-hidden border border-white/10 bg-navy/60 shadow-2xl">
+          <!-- browser bar -->
+          <div class="flex items-center gap-2 px-4 py-3 bg-white/5 border-b border-white/5">
+            <span class="w-3 h-3 rounded-full bg-red-400/70"></span>
+            <span class="w-3 h-3 rounded-full bg-yellow-400/70"></span>
+            <span class="w-3 h-3 rounded-full bg-green-400/70"></span>
+            <div class="ml-3 flex-1 max-w-xs bg-white/5 rounded text-xs text-white/30 px-3 py-1">
+              app.neurapool.com/dashboard
+            </div>
+          </div>
+          <!-- dashboard content -->
+          <div class="p-6 grid grid-cols-3 gap-4">
+            <!-- stat cards -->
+            <div class="col-span-3 grid grid-cols-3 sm:grid-cols-4 gap-3">
+              <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                <p class="text-xs text-white/40 mb-1">Today's Jobs</p>
+                <p class="text-2xl font-bold text-white">22</p>
+                <p class="text-xs text-cyan mt-1">↑ 3 from yesterday</p>
+              </div>
+              <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                <p class="text-xs text-white/40 mb-1">Completed</p>
+                <p class="text-2xl font-bold text-white">17</p>
+                <p class="text-xs text-green-400 mt-1">77% done</p>
+              </div>
+              <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                <p class="text-xs text-white/40 mb-1">Technicians</p>
+                <p class="text-2xl font-bold text-white">4</p>
+                <p class="text-xs text-white/40 mt-1">All active</p>
+              </div>
+              <div class="hidden sm:block bg-white/5 rounded-xl p-4 border border-white/5">
+                <p class="text-xs text-white/40 mb-1">Properties</p>
+                <p class="text-2xl font-bold text-white">86</p>
+                <p class="text-xs text-white/40 mt-1">Managed</p>
+              </div>
+            </div>
+            <!-- jobs table -->
+            <div class="col-span-3 bg-white/5 rounded-xl border border-white/5 overflow-hidden">
+              <div class="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+                <span class="text-sm font-semibold text-white">Today's Route</span>
+                <span class="text-xs text-cyan bg-cyan/10 px-2 py-0.5 rounded-full">Live</span>
+              </div>
+              <div class="divide-y divide-white/5">
+                <div class="flex items-center justify-between px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                    <div>
+                      <p class="text-sm text-white">Residencia Miller</p>
+                      <p class="text-xs text-white/40">1244 Blue Water Dr</p>
+                    </div>
+                  </div>
+                  <span class="text-xs text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">Done</span>
+                </div>
+                <div class="flex items-center justify-between px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-cyan animate-pulse"></span>
+                    <div>
+                      <p class="text-sm text-white">Henderson Pool</p>
+                      <p class="text-xs text-white/40">82 Coral Reef Blvd</p>
+                    </div>
+                  </div>
+                  <span class="text-xs text-cyan bg-cyan/10 px-2 py-0.5 rounded-full">In progress</span>
+                </div>
+                <div class="flex items-center justify-between px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-white/20"></span>
+                    <div>
+                      <p class="text-sm text-white/60">Beach House #5</p>
+                      <p class="text-xs text-white/30">720 Ocean Drive</p>
+                    </div>
+                  </div>
+                  <span class="text-xs text-white/40 bg-white/5 px-2 py-0.5 rounded-full">Pending</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- floating mobile card -->
+        <div class="absolute -right-4 sm:-right-12 bottom-6 float-delayed w-44 sm:w-52 bg-navy border border-white/10 rounded-2xl shadow-2xl p-4 overflow-hidden">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-6 h-6 rounded-full bg-gradient-to-br from-cyan to-teal flex items-center justify-center">
+              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2z"/></svg>
+            </div>
+            <span class="text-xs font-semibold text-white">Technician App</span>
+          </div>
+          <div class="text-xs text-white/50 mb-1">Current job</div>
+          <div class="text-sm font-semibold text-white mb-2">Henderson Pool</div>
+          <div class="w-full bg-white/10 rounded-full h-1.5 mb-1">
+            <div class="bg-gradient-to-r from-teal to-cyan h-1.5 rounded-full" style="width:65%"></div>
+          </div>
+          <div class="text-xs text-white/40">pH: 7.4 · Cl: 2.1 ppm</div>
+          <div class="mt-3 w-full text-center py-1.5 rounded-lg text-xs font-bold text-navy" style="background: linear-gradient(135deg,#00D9FF,#0D7C8F)">
+            Mark Complete
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── LOGOS / SOCIAL PROOF ──────────────────────────────────────────── -->
+  <section class="py-12 border-y border-white/5 px-6">
+    <div class="max-w-5xl mx-auto text-center">
+      <p class="text-sm text-white/30 uppercase tracking-widest mb-8">Trusted by pool service companies</p>
+      <div class="flex flex-wrap justify-center gap-x-12 gap-y-4 text-white/20 font-semibold text-lg">
+        <span>AquaBlue Services</span>
+        <span>SunState Pools</span>
+        <span>ClearWave</span>
+        <span>TideRidge Co.</span>
+        <span>Palm Pool Pros</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FEATURES ──────────────────────────────────────────────────────── -->
+  <section id="features" class="py-24 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl sm:text-5xl font-extrabold mb-4">
+          Everything your team needs.<br/>
+          <span class="gradient-text">Nothing they don't.</span>
+        </h2>
+        <p class="text-white/50 text-lg max-w-xl mx-auto">Built for the realities of pool service — sun, water, and tight schedules.</p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+        <!-- Feature 1 -->
+        <div class="card-glow group bg-white/[0.03] border border-white/8 rounded-2xl p-6 transition-all duration-300 hover:bg-white/[0.06]">
+          <div class="feature-icon w-11 h-11 rounded-xl flex items-center justify-center mb-5">
+            <svg class="w-5 h-5 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Digital service reports</h3>
+          <p class="text-white/50 text-sm leading-relaxed">Technicians capture chemical readings, equipment checks, tasks, and photos — all in one structured form. No paper, no guesswork.</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="card-glow group bg-white/[0.03] border border-white/8 rounded-2xl p-6 transition-all duration-300 hover:bg-white/[0.06]">
+          <div class="feature-icon w-11 h-11 rounded-xl flex items-center justify-center mb-5">
+            <svg class="w-5 h-5 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Smart route scheduling</h3>
+          <p class="text-white/50 text-sm leading-relaxed">Plan daily routes for each technician, set stop order, and track progress in real time from the admin portal.</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="card-glow group bg-white/[0.03] border border-white/8 rounded-2xl p-6 transition-all duration-300 hover:bg-white/[0.06]">
+          <div class="feature-icon w-11 h-11 rounded-xl flex items-center justify-center mb-5">
+            <svg class="w-5 h-5 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Photo documentation</h3>
+          <p class="text-white/50 text-sm leading-relaxed">Before, after, and issue photos are captured in-app and synced instantly. Protect your business and keep customers informed.</p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="card-glow group bg-white/[0.03] border border-white/8 rounded-2xl p-6 transition-all duration-300 hover:bg-white/[0.06]">
+          <div class="feature-icon w-11 h-11 rounded-xl flex items-center justify-center mb-5">
+            <svg class="w-5 h-5 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Team management</h3>
+          <p class="text-white/50 text-sm leading-relaxed">Invite technicians by email, assign roles, and manage your crew from a central admin dashboard. No IT required.</p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="card-glow group bg-white/[0.03] border border-white/8 rounded-2xl p-6 transition-all duration-300 hover:bg-white/[0.06]">
+          <div class="feature-icon w-11 h-11 rounded-xl flex items-center justify-center mb-5">
+            <svg class="w-5 h-5 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Property database</h3>
+          <p class="text-white/50 text-sm leading-relaxed">Store gate codes, pool specs, customer contacts, and notes for every property. Technicians see exactly what they need on-site.</p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="card-glow group bg-white/[0.03] border border-white/8 rounded-2xl p-6 transition-all duration-300 hover:bg-white/[0.06]">
+          <div class="feature-icon w-11 h-11 rounded-xl flex items-center justify-center mb-5">
+            <svg class="w-5 h-5 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Reports & exports</h3>
+          <p class="text-white/50 text-sm leading-relaxed">Search, filter, and export service reports as PDF or CSV. Share with customers or use for billing — in seconds.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── PRODUCT SHOWCASE ──────────────────────────────────────────────── -->
+  <section id="product" class="py-24 px-6 bg-gradient-to-b from-transparent to-navy/20">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl sm:text-5xl font-extrabold mb-4">Two products.<br/><span class="gradient-text">One platform.</span></h2>
+        <p class="text-white/50 text-lg max-w-xl mx-auto">The admin portal runs on the web. The technician app runs on any iPhone or Android. Both stay in sync — automatically.</p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-8">
+
+        <!-- Admin Portal -->
+        <div class="bg-white/[0.03] border border-white/8 rounded-3xl p-8 flex flex-col">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal to-navy flex items-center justify-center">
+              <svg class="w-5 h-5 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white">Admin Portal</h3>
+              <p class="text-xs text-white/40">Web · app.neurapool.com</p>
+            </div>
+          </div>
+
+          <ul class="space-y-3 mb-8 flex-1">
+            <li class="flex items-start gap-3 text-sm text-white/70">
+              <svg class="w-4 h-4 text-cyan mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Create and assign jobs across your team
+            </li>
+            <li class="flex items-start gap-3 text-sm text-white/70">
+              <svg class="w-4 h-4 text-cyan mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Monitor route progress in real time
+            </li>
+            <li class="flex items-start gap-3 text-sm text-white/70">
+              <svg class="w-4 h-4 text-cyan mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Manage your property and customer database
+            </li>
+            <li class="flex items-start gap-3 text-sm text-white/70">
+              <svg class="w-4 h-4 text-cyan mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              View, search, and export all service reports
+            </li>
+            <li class="flex items-start gap-3 text-sm text-white/70">
+              <svg class="w-4 h-4 text-cyan mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Invite team members with role-based access
+            </li>
+          </ul>
+
+          <a href="#cta" class="block text-center border border-teal/50 hover:border-cyan text-cyan font-semibold py-3 rounded-xl transition-all hover:bg-cyan/5 text-sm">
+            Open admin portal →
+          </a>
+        </div>
+
+        <!-- Technician App -->
+        <div class="bg-white/[0.03] border border-white/8 rounded-3xl p-8 flex flex-col">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan/20 to-teal flex items-center justify-center">
+              <svg class="w-5 h-5 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white">Technician App</h3>
+              <p class="text-xs text-white/40">iOS & Android · Neura Pool</p>
+            </div>
+          </div>
+
+          <ul class="space-y-3 mb-8 flex-1">
+            <li class="flex items-start gap-3 text-sm text-white/70">
+              <svg class="w-4 h-4 text-cyan mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              See daily jobs and navigate the route
+            </li>
+            <li class="flex items-start gap-3 text-sm text-white/70">
+              <svg class="w-4 h-4 text-cyan mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Log chemical readings (pH, chlorine, alkalinity…)
+            </li>
+            <li class="flex items-start gap-3 text-sm text-white/70">
+              <svg class="w-4 h-4 text-cyan mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Check off tasks and flag equipment issues
+            </li>
+            <li class="flex items-start gap-3 text-sm text-white/70">
+              <svg class="w-4 h-4 text-cyan mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Take before/after photos from the job site
+            </li>
+            <li class="flex items-start gap-3 text-sm text-white/70">
+              <svg class="w-4 h-4 text-cyan mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Works offline — syncs when back online
+            </li>
+          </ul>
+
+          <a href="#cta" class="btn-primary block text-center font-semibold py-3 rounded-xl text-sm text-[#0a2035]">
+            Download the app →
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── HOW IT WORKS ──────────────────────────────────────────────────── -->
+  <section id="how" class="py-24 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl sm:text-5xl font-extrabold mb-4">Up and running<br/><span class="gradient-text">in minutes.</span></h2>
+        <p class="text-white/50 text-lg">No training sessions. No consultants. Just sign up and go.</p>
+      </div>
+
+      <div class="grid sm:grid-cols-3 gap-8 relative">
+
+        <div class="text-center relative sm:step-line">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan/20 to-teal/20 border border-cyan/30 flex items-center justify-center mx-auto mb-5">
+            <span class="text-xl font-extrabold gradient-text">1</span>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Create your account</h3>
+          <p class="text-white/50 text-sm leading-relaxed">Sign up as an owner, set up your company, and add your properties. Takes about 5 minutes.</p>
+        </div>
+
+        <div class="text-center">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan/20 to-teal/20 border border-cyan/30 flex items-center justify-center mx-auto mb-5">
+            <span class="text-xl font-extrabold gradient-text">2</span>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Invite your technicians</h3>
+          <p class="text-white/50 text-sm leading-relaxed">Send invite links to your team. They download the app, sign up with their code, and they're ready to work.</p>
+        </div>
+
+        <div class="text-center">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan/20 to-teal/20 border border-cyan/30 flex items-center justify-center mx-auto mb-5">
+            <span class="text-xl font-extrabold gradient-text">3</span>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Start managing jobs</h3>
+          <p class="text-white/50 text-sm leading-relaxed">Schedule routes, get real-time updates, and review completed service reports — all from your dashboard.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── STATS ─────────────────────────────────────────────────────────── -->
+  <section class="py-20 px-6 border-y border-white/5">
+    <div class="max-w-4xl mx-auto grid sm:grid-cols-3 gap-10 text-center">
+      <div>
+        <div class="text-5xl font-extrabold gradient-text mb-2">5 min</div>
+        <p class="text-white/50 text-sm">Average time to complete a service report</p>
+      </div>
+      <div>
+        <div class="text-5xl font-extrabold gradient-text mb-2">100%</div>
+        <p class="text-white/50 text-sm">Data isolated per company — fully multi-tenant</p>
+      </div>
+      <div>
+        <div class="text-5xl font-extrabold gradient-text mb-2">iOS + Android</div>
+        <p class="text-white/50 text-sm">Native app for every technician in the field</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── PRICING ───────────────────────────────────────────────────────── -->
+  <section id="pricing" class="py-24 px-6">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl sm:text-5xl font-extrabold mb-4">Simple, honest <span class="gradient-text">pricing.</span></h2>
+        <p class="text-white/50 text-lg">No per-seat fees. No surprise overages. One plan that scales with you.</p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+
+        <!-- Starter -->
+        <div class="bg-white/[0.03] border border-white/8 rounded-3xl p-8">
+          <h3 class="text-lg font-bold text-white mb-1">Starter</h3>
+          <p class="text-white/40 text-sm mb-5">For small crews getting started</p>
+          <div class="mb-6">
+            <span class="text-4xl font-extrabold text-white">$99</span>
+            <span class="text-white/40 text-sm"> / month</span>
+          </div>
+          <ul class="space-y-2.5 mb-8 text-sm text-white/60">
+            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-cyan shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Up to 5 technicians</li>
+            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-cyan shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Unlimited jobs & reports</li>
+            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-cyan shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Up to 100 properties</li>
+            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-cyan shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> iOS & Android app</li>
+            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-cyan shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> CSV & PDF exports</li>
+          </ul>
+          <a href="#cta" class="block text-center border border-teal/50 hover:border-cyan text-cyan font-semibold py-3 rounded-xl transition-all hover:bg-cyan/5 text-sm">
+            Start free trial
+          </a>
+        </div>
+
+        <!-- Pro -->
+        <div class="relative bg-gradient-to-b from-teal/20 to-navy/40 border border-teal/30 rounded-3xl p-8">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-cyan to-teal text-[#0a2035] text-xs font-bold px-3 py-1 rounded-full">
+            Most popular
+          </div>
+          <h3 class="text-lg font-bold text-white mb-1">Pro</h3>
+          <p class="text-white/40 text-sm mb-5">For growing service companies</p>
+          <div class="mb-6">
+            <span class="text-4xl font-extrabold text-white">$249</span>
+            <span class="text-white/40 text-sm"> / month</span>
+          </div>
+          <ul class="space-y-2.5 mb-8 text-sm text-white/70">
+            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-cyan shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Unlimited technicians</li>
+            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-cyan shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Unlimited jobs, reports & properties</li>
+            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-cyan shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Route scheduling & optimization</li>
+            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-cyan shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Priority support</li>
+            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-cyan shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Customer portal (coming soon)</li>
+          </ul>
+          <a href="#cta" class="btn-primary block text-center font-semibold py-3 rounded-xl text-sm text-[#0a2035]">
+            Start free trial
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CTA ───────────────────────────────────────────────────────────── -->
+  <section id="cta" class="py-28 px-6">
+    <div class="max-w-3xl mx-auto text-center">
+      <div class="relative inline-block mb-8">
+        <div class="absolute inset-0 bg-gradient-to-br from-cyan/20 to-teal/20 blur-3xl rounded-full scale-150"></div>
+        <svg viewBox="0 0 80 80" class="relative w-20 h-20 mx-auto" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="40" cy="40" r="38" stroke="#0D7C8F" stroke-width="2"/>
+          <circle cx="40" cy="40" r="26" stroke="#0D7C8F" stroke-width="1.5"/>
+          <circle cx="40" cy="40" r="14" stroke="#0D7C8F" stroke-width="1.5"/>
+          <circle cx="40"  cy="3"  r="3" fill="#0D7C8F"/>
+          <circle cx="72"  cy="20" r="3" fill="#0D7C8F"/>
+          <circle cx="77"  cy="40" r="3" fill="#0D7C8F"/>
+          <circle cx="72"  cy="60" r="3" fill="#0D7C8F"/>
+          <circle cx="40"  cy="77" r="3" fill="#0D7C8F"/>
+          <circle cx="8"   cy="60" r="3" fill="#0D7C8F"/>
+          <circle cx="3"   cy="40" r="3" fill="#0D7C8F"/>
+          <circle cx="8"   cy="20" r="3" fill="#0D7C8F"/>
+          <path d="M40 26 C33 33,30 37,30 42 C30 48,34 53,40 53 C46 53,50 48,50 42 C50 37,47 33,40 26Z"
+                fill="url(#lg2)" filter="url(#glow2)"/>
+          <ellipse cx="37" cy="32" rx="3" ry="4" fill="white" opacity="0.3"/>
+          <defs>
+            <linearGradient id="lg2" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#00D9FF"/>
+              <stop offset="100%" stop-color="#0D7C8F"/>
+            </linearGradient>
+            <filter id="glow2">
+              <feGaussianBlur stdDeviation="1.5" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+          </defs>
+        </svg>
+      </div>
+
+      <h2 class="text-4xl sm:text-5xl font-extrabold mb-5">
+        Ready to modernize<br/><span class="gradient-text">your pool business?</span>
+      </h2>
+      <p class="text-white/50 text-lg mb-10 max-w-xl mx-auto">
+        Join pool service companies that have ditched spreadsheets and paper forms. Start your free 14-day trial — no credit card required.
+      </p>
+
+      <form class="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto" onsubmit="return false;">
+        <input
+          type="email"
+          placeholder="your@company.com"
+          class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-white/30 focus:outline-none focus:border-cyan/50 focus:bg-white/8 transition-all text-sm"
+        />
+        <button type="submit" class="btn-primary font-bold text-[#0a2035] px-7 py-3.5 rounded-xl text-sm whitespace-nowrap">
+          Get started free
+        </button>
+      </form>
+
+      <p class="text-white/25 text-xs mt-4">14-day free trial · No credit card · Cancel anytime</p>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ────────────────────────────────────────────────────────── -->
+  <footer class="border-t border-white/5 py-12 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+
+        <div class="flex items-center gap-2.5">
+          <svg viewBox="0 0 48 48" class="w-8 h-8" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="24" r="22" stroke="#0D7C8F" stroke-width="2"/>
+            <circle cx="24" cy="24" r="15" stroke="#0D7C8F" stroke-width="1.5"/>
+            <circle cx="24" cy="24" r="8"  stroke="#0D7C8F" stroke-width="1.5"/>
+            <circle cx="24"  cy="3"  r="2" fill="#0D7C8F"/>
+            <circle cx="42"  cy="13" r="2" fill="#0D7C8F"/>
+            <circle cx="45"  cy="24" r="2" fill="#0D7C8F"/>
+            <circle cx="42"  cy="35" r="2" fill="#0D7C8F"/>
+            <circle cx="24"  cy="45" r="2" fill="#0D7C8F"/>
+            <circle cx="6"   cy="35" r="2" fill="#0D7C8F"/>
+            <circle cx="3"   cy="24" r="2" fill="#0D7C8F"/>
+            <circle cx="6"   cy="13" r="2" fill="#0D7C8F"/>
+            <path d="M24 16 C19 21,17 25,17 28 C17 32,20 35,24 35 C28 35,31 32,31 28 C31 25,29 21,24 16 Z"
+                  fill="url(#lgf)"/>
+            <ellipse cx="22" cy="21" rx="2" ry="3" fill="white" opacity="0.35"/>
+            <defs>
+              <linearGradient id="lgf" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#00D9FF"/>
+                <stop offset="100%" stop-color="#0D7C8F"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <span class="text-white font-semibold">Neura Pool</span>
+        </div>
+
+        <nav class="flex flex-wrap justify-center gap-6 text-sm text-white/40">
+          <a href="#features"  class="hover:text-white/70 transition-colors">Features</a>
+          <a href="#pricing"   class="hover:text-white/70 transition-colors">Pricing</a>
+          <a href="privacy.html" class="hover:text-white/70 transition-colors">Privacy</a>
+          <a href="terms.html"  class="hover:text-white/70 transition-colors">Terms</a>
+          <a href="mailto:hello@neurapool.com" class="hover:text-white/70 transition-colors">Contact</a>
+        </nav>
+
+        <p class="text-white/25 text-sm">© 2026 Neura Pool. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
