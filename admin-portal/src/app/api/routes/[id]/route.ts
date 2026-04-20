@@ -91,7 +91,7 @@ export async function GET(
       );
       return { ...s, schedules };
     })
-    .sort((a: { stop_order: number }, b: { stop_order: number }) => a.stop_order - b.stop_order);
+    .sort((a, b) => (a as unknown as { stop_order: number }).stop_order - (b as unknown as { stop_order: number }).stop_order);
 
   return NextResponse.json({ ...route, stops });
 }

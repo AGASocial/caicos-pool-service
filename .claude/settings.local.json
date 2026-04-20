@@ -20,7 +20,8 @@
       "Bash(python3 -c ' *)",
       "Bash(pip3 install *)",
       "Bash(sips -g pixelWidth -g pixelHeight /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/adaptive-icon.png /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/favicon.png /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/splash-icon.png)",
-      "Bash(sips -g pixelWidth -g pixelHeight -g hasAlpha /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/adaptive-icon.png /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/favicon.png /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/splash-icon.png)"
+      "Bash(sips -g pixelWidth -g pixelHeight -g hasAlpha /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/adaptive-icon.png /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/favicon.png /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/splash-icon.png)",
+      "Bash(npm run *)"
     ]
   }
 }
