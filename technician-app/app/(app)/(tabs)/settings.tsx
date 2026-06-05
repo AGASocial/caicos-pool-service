@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, ScrollView, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { disableBiometricLogin } from '@/lib/biometric-auth';
 import Colors from '@/constants/Colors';
 
 export default function SettingsScreen() {
@@ -34,6 +35,7 @@ export default function SettingsScreen() {
   }
 
   async function handleSignOut() {
+    await disableBiometricLogin();
     await supabase.auth.signOut();
     router.replace('/(auth)/login');
   }

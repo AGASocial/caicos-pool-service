@@ -101,18 +101,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               sidebarCollapsed ? "h-16 w-16" : "w-48 h-24"
             )}>
               <Image
-                src={sidebarCollapsed ? "/logo-lock.png" : "/logo-iablee.png"}
+                src={sidebarCollapsed ? "/logo-neurapool-icon.png" : "/logo-neurapool.png"}
                 alt="NeuraPool"
                 fill
-                className="object-contain dark:hidden"
-                priority
-                unoptimized
-              />
-              <Image
-                src={sidebarCollapsed ? "/logo-lock-dark.png" : "/logo-iablee-dark.png"}
-                alt="NeuraPool"
-                fill
-                className="object-contain hidden dark:block"
+                className="object-contain"
                 priority
                 unoptimized
               />
@@ -211,17 +203,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               <div className="flex items-center gap-3">
                 <div className="relative h-12 w-32 overflow-hidden rounded-lg">
                   <Image
-                    src="/logo-iablee.png"
-                    alt="iablee"
+                    src="/logo-neurapool.png"
+                    alt="NeuraPool"
                     fill
-                    className="object-contain dark:hidden"
-                    unoptimized
-                  />
-                  <Image
-                    src="/logo-iablee-dark.png"
-                    alt="iablee"
-                    fill
-                    className="object-contain hidden dark:block"
+                    className="object-contain"
                     unoptimized
                   />
                 </div>

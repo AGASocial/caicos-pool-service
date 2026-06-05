@@ -1,18 +1,93 @@
-import { useState, useMemo } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, useColorScheme, Image, ScrollView } from 'react-native';
+import { useCallback, useEffect, useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+  useColorScheme,
+  Image,
+  ScrollView,
+  Alert,
+} from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import Colors from '@/constants/Colors';
+import {
+  enableBiometricLogin,
+  getBiometricCapability,
+  getStoredBiometricEmail,
+  hasStoredBiometricCredentials,
+  isBiometricLoginEnabled,
+  signInWithBiometrics,
+} from '@/lib/biometric-auth';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showBiometricSignIn, setShowBiometricSignIn] = useState(false);
+  const [biometricLabel, setBiometricLabel] = useState('Face ID');
   const router = useRouter();
   const theme = useColorScheme() ?? 'light';
   const c = Colors[theme];
+
+  const loadBiometricState = useCallback(async () => {
+    const [{ available, label }, enabled, hasCredentials, storedEmail] = await Promise.all([
+      getBiometricCapability(),
+      isBiometricLoginEnabled(),
+      hasStoredBiometricCredentials(),
+      getStoredBiometricEmail(),
+    ]);
+
+    setBiometricLabel(label);
+    setShowBiometricSignIn(available && enabled && hasCredentials);
+
+    if (storedEmail) {
+      setEmail(storedEmail);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadBiometricState();
+  }, [loadBiometricState]);
+
+  async function promptEnableBiometric(label: string): Promise<void> {
+    const alreadyEnabled = await isBiometricLoginEnabled();
+    if (alreadyEnabled) return;
+
+    const { available } = await getBiometricCapability();
+    if (!available) return;
+
+    await new Promise<void>((resolve) => {
+      Alert.alert(
+        `Enable ${label}?`,
+        `Use ${label} to sign in faster and lock the app when you switch away.`,
+        [
+          { text: 'Not now', style: 'cancel', onPress: () => resolve() },
+          {
+            text: 'Enable',
+            onPress: () => {
+              void (async () => {
+                const result = await enableBiometricLogin();
+                if (!result.ok) {
+                  Alert.alert('Could not enable', result.error);
+                } else {
+                  await loadBiometricState();
+                }
+                resolve();
+              })();
+            },
+          },
+        ],
+        { cancelable: true, onDismiss: () => resolve() }
+      );
+    });
+  }
 
   async function handleSignIn() {
     setLoading(true);
@@ -23,6 +98,27 @@ export default function LoginScreen() {
       setError(err.message);
       return;
     }
+
+    await promptEnableBiometric(biometricLabel);
+    router.replace('/(app)/(tabs)');
+  }
+
+  async function handleBiometricSignIn() {
+    setBiometricLoading(true);
+    setError(null);
+
+    const result = await signInWithBiometrics();
+    setBiometricLoading(false);
+
+    if (!result.ok) {
+      setError(result.error);
+      if (result.error.includes('password')) {
+        setShowBiometricSignIn(false);
+        await loadBiometricState();
+      }
+      return;
+    }
+
     router.replace('/(app)/(tabs)');
   }
 
@@ -84,8 +180,18 @@ export default function LoginScreen() {
           shadowRadius: 12,
           elevation: 6,
         },
+        biometricButton: {
+          backgroundColor: c.card,
+          borderRadius: 12,
+          height: 56,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: 1.5,
+          borderColor: '#00D9FF',
+        },
         buttonDisabled: { opacity: 0.6 },
         buttonText: { color: '#ffffff', fontWeight: '700', fontSize: 16, letterSpacing: 0.5 },
+        biometricButtonText: { color: '#00D9FF', fontWeight: '700', fontSize: 16, letterSpacing: 0.5 },
         divider: { height: 1, backgroundColor: c.border, marginVertical: 24 },
         footerText: { fontSize: 14, color: c.muted, textAlign: 'center' },
         footerLink: { fontWeight: '700', color: '#00D9FF' },
@@ -118,6 +224,20 @@ export default function LoginScreen() {
           <Text style={styles.welcomeText}>Welcome Back, Technician</Text>
 
           <View style={styles.form}>
+            {showBiometricSignIn && (
+              <Pressable
+                style={[styles.biometricButton, biometricLoading && styles.buttonDisabled]}
+                onPress={() => void handleBiometricSignIn()}
+                disabled={biometricLoading || loading}
+              >
+                {biometricLoading ? (
+                  <ActivityIndicator color="#00D9FF" size="small" />
+                ) : (
+                  <Text style={styles.biometricButtonText}>Sign in with {biometricLabel}</Text>
+                )}
+              </Pressable>
+            )}
+
             <View style={styles.fieldWrapper}>
               <Text style={styles.fieldLabel}>Email Address</Text>
               <TextInput
@@ -128,7 +248,7 @@ export default function LoginScreen() {
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                editable={!loading}
+                editable={!loading && !biometricLoading}
               />
             </View>
 
@@ -141,16 +261,16 @@ export default function LoginScreen() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-                editable={!loading}
+                editable={!loading && !biometricLoading}
               />
             </View>
 
             {error && <Text style={styles.error}>❌ {error}</Text>}
 
             <Pressable
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleSignIn}
-              disabled={loading}
+              style={[styles.button, (loading || biometricLoading) && styles.buttonDisabled]}
+              onPress={() => void handleSignIn()}
+              disabled={loading || biometricLoading}
             >
               {loading ? (
                 <ActivityIndicator color="#ffffff" size="small" />

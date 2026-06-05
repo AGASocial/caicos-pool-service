@@ -24,18 +24,10 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
           <Link href="/dashboard" className="flex md:hidden items-center gap-2 transition-opacity hover:opacity-90">
             <div className="relative h-16 w-32 overflow-hidden rounded-lg">
               <Image
-                src="/logo-iablee.png"
+                src="/logo-neurapool.png"
                 alt="NeuraPool"
                 fill
-                className="object-contain dark:hidden"
-                priority
-                unoptimized
-              />
-              <Image
-                src="/logo-iablee-dark.png"
-                alt="NeuraPool"
-                fill
-                className="object-contain hidden dark:block"
+                className="object-contain"
                 priority
                 unoptimized
               />

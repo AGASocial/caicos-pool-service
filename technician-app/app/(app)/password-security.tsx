@@ -1,8 +1,24 @@
-import { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, ScrollView, useColorScheme, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  ScrollView,
+  useColorScheme,
+  ActivityIndicator,
+  Switch,
+  Alert,
+} from 'react-native';
 import { supabase } from '@/lib/supabase';
 import Colors from '@/constants/Colors';
+import {
+  disableBiometricLogin,
+  enableBiometricLogin,
+  getBiometricCapability,
+  isBiometricLoginEnabled,
+} from '@/lib/biometric-auth';
 
 export default function PasswordSecurityScreen() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -11,9 +27,49 @@ export default function PasswordSecurityScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const router = useRouter();
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricLabel, setBiometricLabel] = useState('Face ID');
+  const [biometricUpdating, setBiometricUpdating] = useState(false);
   const theme = useColorScheme() ?? 'light';
   const c = Colors[theme];
+
+  const loadBiometricSettings = useCallback(async () => {
+    const [{ available, label }, enabled] = await Promise.all([
+      getBiometricCapability(),
+      isBiometricLoginEnabled(),
+    ]);
+    setBiometricAvailable(available);
+    setBiometricLabel(label);
+    setBiometricEnabled(enabled);
+  }, []);
+
+  useEffect(() => {
+    void loadBiometricSettings();
+  }, [loadBiometricSettings]);
+
+  async function handleBiometricToggle(nextValue: boolean) {
+    if (biometricUpdating) return;
+
+    setBiometricUpdating(true);
+
+    if (nextValue) {
+      const result = await enableBiometricLogin();
+      setBiometricUpdating(false);
+
+      if (!result.ok) {
+        Alert.alert('Could not enable', result.error);
+        return;
+      }
+
+      setBiometricEnabled(true);
+      return;
+    }
+
+    await disableBiometricLogin();
+    setBiometricUpdating(false);
+    setBiometricEnabled(false);
+  }
 
   async function handleChangePassword() {
     setError(null);
@@ -34,7 +90,6 @@ export default function PasswordSecurityScreen() {
 
     setSaving(true);
 
-    // Re-authenticate with current password first
     const { data: { user } } = await supabase.auth.getUser();
     if (!user?.email) {
       setError('Unable to verify current session.');
@@ -62,6 +117,8 @@ export default function PasswordSecurityScreen() {
       return;
     }
 
+    await disableBiometricLogin();
+    setBiometricEnabled(false);
     setSuccess(true);
     setCurrentPassword('');
     setNewPassword('');
@@ -158,7 +215,15 @@ export default function PasswordSecurityScreen() {
         infoContent: { flex: 1, gap: 2 },
         infoLabel: { fontSize: 14, fontWeight: '600', color: c.text },
         infoDesc: { fontSize: 13, color: c.muted, lineHeight: 18 },
-        checkmark: { fontSize: 16, color: c.success ?? '#16A34A' },
+        toggleRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          paddingHorizontal: 20,
+          paddingVertical: 16,
+        },
+        toggleText: { flex: 1, gap: 4 },
       }),
     [c]
   );
@@ -166,7 +231,29 @@ export default function PasswordSecurityScreen() {
   return (
     <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
       <View style={styles.content}>
-        {/* Change Password */}
+        {biometricAvailable && (
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Biometric Sign-In</Text>
+            </View>
+            <View style={styles.toggleRow}>
+              <View style={styles.toggleText}>
+                <Text style={styles.infoLabel}>{biometricLabel}</Text>
+                <Text style={styles.infoDesc}>
+                  Sign in faster and lock the app when you switch away from Neura Pool.
+                </Text>
+              </View>
+              <Switch
+                value={biometricEnabled}
+                onValueChange={(value) => void handleBiometricToggle(value)}
+                disabled={biometricUpdating}
+                trackColor={{ false: c.border, true: c.tint }}
+                thumbColor="#ffffff"
+              />
+            </View>
+          </View>
+        )}
+
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Change Password</Text>
@@ -179,7 +266,9 @@ export default function PasswordSecurityScreen() {
             )}
             {success && (
               <View style={styles.success}>
-                <Text style={styles.successText}>Password updated successfully.</Text>
+                <Text style={styles.successText}>
+                  Password updated successfully. Re-enable {biometricLabel} if you want biometric sign-in again.
+                </Text>
               </View>
             )}
             <View style={styles.fieldGroup}>
@@ -227,14 +316,13 @@ export default function PasswordSecurityScreen() {
 
         <Pressable
           style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
-          onPress={handleChangePassword}
+          onPress={() => void handleChangePassword()}
           disabled={saving}
         >
           {saving && <ActivityIndicator color={c.buttonPrimaryText} size="small" />}
           <Text style={styles.saveBtnText}>{saving ? 'Updating...' : 'Update Password'}</Text>
         </Pressable>
 
-        {/* Security Info */}
         <View style={styles.sectionCard}>
           <View style={styles.infoRow}>
             <View style={styles.infoIcon}>
@@ -242,7 +330,9 @@ export default function PasswordSecurityScreen() {
             </View>
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Two-Factor Authentication</Text>
-              <Text style={styles.infoDesc}>Managed through your account email. Contact your administrator to enable.</Text>
+              <Text style={styles.infoDesc}>
+                Managed through your account email. Contact your administrator to enable.
+              </Text>
             </View>
           </View>
           <View style={[styles.infoRow, styles.infoRowLast]}>
@@ -251,7 +341,9 @@ export default function PasswordSecurityScreen() {
             </View>
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Secure Session</Text>
-              <Text style={styles.infoDesc}>Your session is encrypted and secured with Supabase Auth.</Text>
+              <Text style={styles.infoDesc}>
+                Your session is encrypted and secured with Supabase Auth.
+              </Text>
             </View>
           </View>
         </View>

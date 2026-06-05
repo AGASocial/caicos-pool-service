@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "social.aga.neurapool",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSFaceIDUsageDescription": "Neura Pool uses Face ID to sign you in quickly and lock the app when you switch away."
       }
     },
     "android": {
@@ -42,7 +43,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -22,8 +22,8 @@ export const metadata: Metadata = {
   title: "NeuraPool - Pool Service Management Platform",
   description: "Manage your pool service business with NeuraPool",
   icons: {
-    icon: "/logo-primary.png",
-    apple: "/logo-primary.png",
+    icon: "/logo-neurapool-icon.png",
+    apple: "/logo-neurapool-icon.png",
   },
 };
 

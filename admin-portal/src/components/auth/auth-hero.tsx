@@ -206,7 +206,7 @@ export function AuthHero({ quote, author, children }: { quote: string; author: s
         {children || (
           <div className="flex items-center group">
             <div className="p-1.5 sm:p-2 rounded-lg transition-colors">
-              <Image src="/logo-iablee-dark2.png" alt="Logo" width={300} height={200} />
+              <Image src="/logo-neurapool.png" alt="NeuraPool" width={300} height={200} />
             </div>
           </div>
         )}
