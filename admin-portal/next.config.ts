@@ -35,6 +35,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Turbopack configuration
   turbopack: {
+    // Pin the workspace root to this app directory. Without this, Next 16
+    // infers the git repo root (caicos/) as the root and resolves CSS module
+    // imports like `@import "tailwindcss"` against caicos/node_modules, which
+    // doesn't exist — spamming "Can't resolve 'tailwindcss'" on every compile.
+    root: __dirname,
     resolveAlias: {
       '@/*': ['./src/*'],
     },
