@@ -14,8 +14,11 @@ function getLocalDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+type JobWithProperty = ServiceJob & { caicos_properties?: { customer_name: string; address: string } | null };
+
 export default function JobsScreen() {
-  const [jobs, setJobs] = useState<(ServiceJob & { caicos_properties?: { customer_name: string; address: string } | null })[]>([]);
+  const [jobs, setJobs] = useState<JobWithProperty[]>([]);
+  const [overdueJobs, setOverdueJobs] = useState<JobWithProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
@@ -27,13 +30,24 @@ export default function JobsScreen() {
   const fetchJobs = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data } = await supabase
-      .from('caicos_service_jobs')
-      .select('id, status, scheduled_date, scheduled_time, route_order, estimated_duration_min, caicos_properties(customer_name, address)')
-      .eq('scheduled_date', today)
-      .eq('technician_id', user.id)
-      .order('route_order', { nullsFirst: false });
-    setJobs((data ?? []) as unknown as (ServiceJob & { caicos_properties?: { customer_name: string; address: string } | null })[]);
+    const [todayRes, overdueRes] = await Promise.all([
+      supabase
+        .from('caicos_service_jobs')
+        .select('id, status, scheduled_date, scheduled_time, route_order, estimated_duration_min, caicos_properties(customer_name, address)')
+        .eq('scheduled_date', today)
+        .eq('technician_id', user.id)
+        .order('route_order', { nullsFirst: false }),
+      supabase
+        .from('caicos_service_jobs')
+        .select('id, status, scheduled_date, scheduled_time, route_order, estimated_duration_min, caicos_properties(customer_name, address)')
+        .lt('scheduled_date', today)
+        .eq('technician_id', user.id)
+        .in('status', ['pending', 'in_progress'])
+        .order('scheduled_date', { ascending: false })
+        .order('route_order', { nullsFirst: false }),
+    ]);
+    setJobs((todayRes.data ?? []) as unknown as JobWithProperty[]);
+    setOverdueJobs((overdueRes.data ?? []) as unknown as JobWithProperty[]);
   }, [today]);
 
   useEffect(() => {
@@ -74,7 +88,6 @@ export default function JobsScreen() {
         date: { fontSize: 18, fontWeight: '700', color: c.text, letterSpacing: -0.3 },
         headerSub: { fontSize: 12, color: c.muted, marginTop: 2, fontWeight: '500' },
         progressCard: {
-          marginHorizontal: 24,
           marginTop: 16,
           marginBottom: 8,
           padding: 20,
@@ -168,6 +181,46 @@ export default function JobsScreen() {
         },
         statusBadgeText: { fontSize: 12, fontWeight: '600', color: c.tint },
         empty: { textAlign: 'center', color: c.muted, marginTop: 32, fontSize: 15 },
+        overdueSection: { marginTop: 8, paddingBottom: 24 },
+        overdueHeader: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          paddingHorizontal: 0,
+          paddingTop: 20,
+          paddingBottom: 16,
+        },
+        overdueHeaderTitle: { fontSize: 20, fontWeight: '700', color: c.warningBorder },
+        overdueCountBadge: {
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          backgroundColor: c.warningBorder,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        overdueCountBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+        overdueCard: {
+          backgroundColor: c.card,
+          borderRadius: 16,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: c.warningBorder,
+          overflow: 'hidden',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.04,
+          shadowRadius: 4,
+          elevation: 1,
+        },
+        overdueDateBadge: {
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderRadius: 8,
+          backgroundColor: c.warningBorder,
+          alignSelf: 'flex-start',
+        },
+        overdueDateText: { fontSize: 11, fontWeight: '700', color: '#fff' },
       }),
     [c]
   );
@@ -225,6 +278,46 @@ export default function JobsScreen() {
         </>
       }
       ListEmptyComponent={<Text style={styles.empty}>No jobs today. Enjoy your day off!</Text>}
+      ListFooterComponent={
+        overdueJobs.length > 0 ? (
+          <View style={styles.overdueSection}>
+            <View style={styles.overdueHeader}>
+              <Text style={styles.overdueHeaderTitle}>Pending from Past</Text>
+              <View style={styles.overdueCountBadge}>
+                <Text style={styles.overdueCountBadgeText}>{overdueJobs.length}</Text>
+              </View>
+            </View>
+            {overdueJobs.map((item) => {
+              const prop = Array.isArray(item.caicos_properties) ? item.caicos_properties[0] : item.caicos_properties;
+              const dateLabel = item.scheduled_date
+                ? new Date(item.scheduled_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                : '';
+              return (
+                <Pressable key={item.id} style={styles.overdueCard} onPress={() => router.push(`/(app)/job/${item.id}`)}>
+                  <View style={styles.cardBody}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={styles.cardTitle}>{prop?.customer_name ?? '—'}</Text>
+                        <View style={styles.cardAddressRow}>
+                          <Text style={styles.cardAddress}>{prop?.address ?? ''}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.overdueDateBadge}>
+                        <Text style={styles.overdueDateText}>{dateLabel}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.cardFooter}>
+                      <View style={styles.startServiceBtn}>
+                        <Text style={styles.startServiceText}>Start Service</Text>
+                      </View>
+                    </View>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null
+      }
       renderItem={({ item }) => {
         const prop = Array.isArray(item.caicos_properties) ? item.caicos_properties[0] : item.caicos_properties;
         const isCompleted = item.status === 'completed';

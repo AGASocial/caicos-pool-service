@@ -42,6 +42,8 @@ export async function GET(request: NextRequest) {
   const activeOnly = searchParams.get('active_only') !== 'false';
   const includeRoute =
     searchParams.get('include_route') === '1' || searchParams.get('include_route') === 'true';
+  const unassignedOnly =
+    searchParams.get('unassigned') === '1' || searchParams.get('unassigned') === 'true';
 
   const select = includeRoute
     ? `${PROPERTY_BASE_FIELDS}, caicos_route_stops(route_id, caicos_routes(id, name))`
@@ -54,6 +56,17 @@ export async function GET(request: NextRequest) {
 
   if (activeOnly) {
     query = query.eq('is_active', true);
+  }
+
+  if (unassignedOnly) {
+    // Exclude properties that already have a stop on any route
+    const { data: assignedStops } = await (supabase as unknown as CaicosSupabaseClient)
+      .from('caicos_route_stops')
+      .select('property_id');
+    const assignedIds = (assignedStops ?? []).map((s) => s.property_id);
+    if (assignedIds.length > 0) {
+      query = query.not('id', 'in', `(${assignedIds.join(',')})`);
+    }
   }
 
   const { data, error } = await query;

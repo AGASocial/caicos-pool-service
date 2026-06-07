@@ -102,7 +102,7 @@ export default function RouteDetailPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/properties');
+        const res = await fetch('/api/properties?unassigned=true');
         if (!res.ok) return;
         const data = await res.json();
         if (!cancelled) setProperties(Array.isArray(data) ? data : []);
@@ -117,8 +117,15 @@ export default function RouteDetailPage() {
 
   async function refreshRoute() {
     if (!id) return;
-    const r = await fetch(`/api/routes/${id}`);
-    if (r.ok) setRoute(await r.json());
+    const [routeRes, propsRes] = await Promise.all([
+      fetch(`/api/routes/${id}`),
+      fetch('/api/properties?unassigned=true'),
+    ]);
+    if (routeRes.ok) setRoute(await routeRes.json());
+    if (propsRes.ok) {
+      const data = await propsRes.json();
+      setProperties(Array.isArray(data) ? data : []);
+    }
   }
 
   function togglePropertySelected(propertyId: string) {
@@ -362,7 +369,12 @@ export default function RouteDetailPage() {
           )}
           {route.stops && route.stops.length > 0 && (
             <ul className="divide-y divide-border space-y-1">
-              {route.stops.map((stop, idx) => (
+              {[...route.stops]
+                .sort((a, b) => {
+                  const dow = (d: number) => (d === 0 ? 7 : d);
+                  return dow(a.day_of_week) - dow(b.day_of_week);
+                })
+                .map((stop, idx) => (
                 <li
                   key={stop.id}
                   className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:gap-3"
