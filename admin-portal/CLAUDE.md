@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Iablee is a Next.js 15 application for managing digital assets and beneficiaries. It uses Supabase for authentication and data storage, with support for internationalization (English and Spanish).
+Cadenza is a Next.js 15 application for managing digital assets and beneficiaries. It uses Supabase for authentication and data storage, with support for internationalization (English and Spanish).
 
 ## Reference Documents
 

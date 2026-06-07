@@ -1,9 +1,9 @@
-### iablee: Technical Business Overview
+### cadenza: Technical Business Overview
 
-This document gives an AI engineer all essential context to build and ship new features across the iablee platform. The platform has two codebases in this monorepo:
+This document gives an AI engineer all essential context to build and ship new features across the cadenza platform. The platform has two codebases in this monorepo:
 
-- iablee application: `iablee-app/` — Next.js 15 app for authenticated users to manage digital assets and beneficiaries.
-- marketing site: `iablee-site/` — Jekyll site for public marketing pages and acquisition.
+- cadenza application: `cadenza-app/` — Next.js 15 app for authenticated users to manage digital assets and beneficiaries.
+- marketing site: `cadenza-site/` — Jekyll site for public marketing pages and acquisition.
 
 ### Product Summary
 
@@ -25,14 +25,14 @@ This document gives an AI engineer all essential context to build and ship new f
 
 ### Repos and Responsibilities
 
-- `iablee-app/` (product app)
+- `cadenza-app/` (product app)
   - Auth, session enforcement, and locale negotiation via middleware
   - Views: auth pages, wizard, dashboard, digital assets, beneficiaries
   - Shared UI components and form controls
   - Supabase client and type definitions
   - i18n routing and translations scaffolding
 
-- `iablee-site/` (marketing site)
+- `cadenza-site/` (marketing site)
   - Jekyll config and layouts
   - SEO tags, GTM (`GT-MK5DRWPX`), GA (`G-WQ020FXKLE`), and cookie consent banner with Consent Mode enforcement
   - Alternate languages supported at the URL level (`es` default with `/en/` alternate)
@@ -98,7 +98,7 @@ TypeScript types: `src/lib/supabase.ts` declares a `Database` type that matches 
 - Library: `next-intl`.
 - Routing: `src/i18n/routing.ts` defines `locales = ['en','es']`, `defaultLocale = 'es'`.
 - Middleware: negotiates locale from URL and enforces redirects.
-- Content: translation message files are present under `iablee-app/messages/` and `iablee-app/iablee-app/src/messages/`. The user prefers lowercase hyphen-separated keys in `@en.json` and `@es.json` [[memory:3376191]].
+- Content: translation message files are present under `cadenza-app/messages/` and `cadenza-app/cadenza-app/src/messages/`. The user prefers lowercase hyphen-separated keys in `@en.json` and `@es.json` [[memory:3376191]].
 
 ### App Navigation and Pages (high level)
 
@@ -144,23 +144,23 @@ TypeScript types: `src/lib/supabase.ts` declares a `Database` type that matches 
   - Builds a list of files (with type inference and icons), supports preview and download behaviors, and upload/delete operations.
   - The `files` array is stored in the `digital_assets.files` JSONB field and `number_of_files` is kept in sync.
 
-### Marketing Site Highlights (`iablee-site/`)
+### Marketing Site Highlights (`cadenza-site/`)
 
-- `_config.yml` sets `lang: es`, `url: https://iablee.com`, and `alternate_languages: en`.
+- `_config.yml` sets `lang: es`, `url: https://cadenza.com`, and `alternate_languages: en`.
 - `_layouts/default.html` includes:
   - GTM snippet with container `GT-MK5DRWPX` and Google Analytics `G-WQ020FXKLE` (through `analytics.html`).
   - Consent banner (`_includes/consent-banner.html`) that sets a `cookie_preferences` cookie, toggles `gtag('consent','update', ...)`, and pushes a `consent_update` event to dataLayer.
-  - Navigation links to the app (`https://app.iablee.com/es/auth/login` and `/register`).
+  - Navigation links to the app (`https://app.cadenza.com/es/auth/login` and `/register`).
 - SEO tags: `_includes/tags.html` configures og/twitter/canonical and structured data for the organization.
 
 ### Deployment and Hosting (assumptions)
 
-- App (`iablee-app/`):
+- App (`cadenza-app/`):
   - Deploy to a Next.js-compatible host (Vercel or similar). Ensure env vars for Supabase are set in the deployment environment.
   - Image domains configured in `next.config.ts` must be whitelisted.
   - Middleware requires Edge Runtime compatibility for best performance (default Next.js middleware environment is fine).
 
-- Site (`iablee-site/`):
+- Site (`cadenza-site/`):
   - Jekyll 4 site: build via `bundle exec jekyll build` and serve via static hosting or GitHub Pages.
   - Ensure GTM/GA IDs are kept in secrets if templating is added later.
 
@@ -174,7 +174,7 @@ TypeScript types: `src/lib/supabase.ts` declares a `Database` type that matches 
 ### Adding New Features (playbook)
 
 1) Define the data needs:
-   - If new columns/tables are required, add a Supabase migration in `iablee-app/supabase/migrations/` with RLS policies mirroring existing patterns.
+   - If new columns/tables are required, add a Supabase migration in `cadenza-app/supabase/migrations/` with RLS policies mirroring existing patterns.
    - Update `Database` types in `src/lib/supabase.ts` to match the new schema.
 
 2) Wire product surfaces:

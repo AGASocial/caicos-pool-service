@@ -1,4 +1,4 @@
-// Design tokens aligned with Neura Pool brand system
+// Design tokens aligned with Cadenza brand system
 // Font: Inter | Roundness: 12px
 // Primary: Deep Teal #0D7C8F | Secondary: Midnight Blue #1A3A52 | Accent: Bright Cyan #00D9FF
 const primaryTeal = '#0D7C8F';      // Deep Teal - Primary brand color

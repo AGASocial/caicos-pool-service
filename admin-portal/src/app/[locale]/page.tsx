@@ -65,7 +65,7 @@ export default function LocalePage() {
           <div className="mr-4 flex">
             <Link href="/" className="mr-6 flex items-center space-x-2">
               <span className="font-heading text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-500">
-                iablee
+                cadenza
               </span>
             </Link>
           </div>
@@ -100,7 +100,7 @@ export default function LocalePage() {
             </h1>
 
             <p className="max-w-[42rem] leading-normal text-muted-foreground text-lg sm:text-xl sm:leading-8">
-              iablee helps you manage styling, securely store assets, and ensure your digital presence is handled exactly how you want.
+              cadenza helps you manage styling, securely store assets, and ensure your digital presence is handled exactly how you want.
               The future of digital inheritance is here.
             </p>
 
@@ -219,7 +219,7 @@ export default function LocalePage() {
               rel="noreferrer"
               className="font-medium underline underline-offset-4 hover:text-primary transition-colors"
             >
-              iablee team
+              cadenza team
             </a>
           </p>
           <div className="flex items-center gap-4">

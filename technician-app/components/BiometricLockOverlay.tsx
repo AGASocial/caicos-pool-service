@@ -32,7 +32,7 @@ export function BiometricLockOverlay({ visible, onUnlock }: Props) {
       setUnlocking(true);
       setError(null);
 
-      const success = await authenticateWithBiometrics(`Unlock Neura Pool with ${biometricLabel}`);
+      const success = await authenticateWithBiometrics(`Unlock Cadenza with ${biometricLabel}`);
       setUnlocking(false);
 
       if (success) {
@@ -109,7 +109,7 @@ export function BiometricLockOverlay({ visible, onUnlock }: Props) {
       />
       <View style={styles.content}>
         <Image source={require('@/assets/images/icon.png')} style={styles.logo} />
-        <Text style={styles.title}>Neura Pool</Text>
+        <Text style={styles.title}>Cadenza</Text>
         <Text style={styles.subtitle}>App locked. Use {label} to continue.</Text>
 
         <Pressable

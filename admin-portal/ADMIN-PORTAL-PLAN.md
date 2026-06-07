@@ -1,14 +1,14 @@
 # Admin Portal – Scan & Plan
 
-After copying the example-app (iablee) into admin-portal, this doc summarizes what’s there, what Caicos needs, and a phased plan to get to the required pages.
+After copying the example-app (cadenza) into admin-portal, this doc summarizes what’s there, what Caicos needs, and a phased plan to get to the required pages.
 
 ---
 
 ## 1. Current state (what you have)
 
 ### Branding & config
-- **package.json**: name `"iablee-app"`, Next **16.1.1**, React 19, **next-intl**, Turbopack, Tailwind v4.
-- **CLAUDE.md**: Still describes “Iablee” (digital assets, beneficiaries, i18n).
+- **package.json**: name `"cadenza-app"`, Next **16.1.1**, React 19, **next-intl**, Turbopack, Tailwind v4.
+- **CLAUDE.md**: Still describes “Cadenza” (digital assets, beneficiaries, i18n).
 - **Routes**: All under **`[locale]`** (en/es). No top-level `/dashboard` or `/jobs`; everything is `/[locale]/...`.
 
 ### App routes (current)
@@ -18,10 +18,10 @@ After copying the example-app (iablee) into admin-portal, this doc summarizes wh
 | **Landing** | `(landing)/page.tsx`, `layout.tsx` | Marketing/landing |
 | **Auth** | `[locale]/auth/login`, `register`, `callback`, `page`, `test-redirect` | Login, register, OAuth |
 | **Dashboard** | `[locale]/(dashboard)/dashboard/page.tsx` | Main dashboard |
-| **Digital assets** | `[locale]/(dashboard)/digital-assets/page.tsx` | Iablee: assets list |
-| **Beneficiaries** | `[locale]/(dashboard)/beneficiaries/page.tsx` | Iablee: beneficiaries |
-| **Billing** | `[locale]/(dashboard)/billing/page.tsx`, `billing/plans/page.tsx` | Iablee: Stripe/billing |
-| **Wizard** | `[locale]/(dashboard)/wizard/page.tsx`, `layout.tsx` | Iablee: onboarding |
+| **Digital assets** | `[locale]/(dashboard)/digital-assets/page.tsx` | Cadenza: assets list |
+| **Beneficiaries** | `[locale]/(dashboard)/beneficiaries/page.tsx` | Cadenza: beneficiaries |
+| **Billing** | `[locale]/(dashboard)/billing/page.tsx`, `billing/plans/page.tsx` | Cadenza: Stripe/billing |
+| **Wizard** | `[locale]/(dashboard)/wizard/page.tsx`, `layout.tsx` | Cadenza: onboarding |
 | **Settings** | `[locale]/(dashboard)/settings/page.tsx`, `preferences`, `security` | Profile, preferences, security |
 
 ### API routes (current)
@@ -87,13 +87,13 @@ SOLUTION.md suggests routes under **`/dashboard`** (e.g. `/dashboard/jobs`, `/da
 |----------|---------|--------|
 | Auth: login with company context | Login exists (generic) | Adapt copy, add “Create Company” → register |
 | Auth: register with **Company Name** | Register exists (no company) | Add company name, create `caicos_companies` + owner profile |
-| Dashboard with job/property/tech stats | Dashboard exists (iablee) | Replace with Caicos KPIs + recent jobs + quick actions |
+| Dashboard with job/property/tech stats | Dashboard exists (cadenza) | Replace with Caicos KPIs + recent jobs + quick actions |
 | Jobs list + filters + create + detail | Missing | New: jobs list, job form, job detail (+ report) |
 | Properties list + detail + new | Missing | New: properties list, property form, property detail |
 | Team (technicians) list + invite + detail | Missing | New: team list, invite flow, technician detail |
 | Reports list + detail (readings, photos, PDF) | Missing | New: reports list, report detail |
 | Settings (company) | Settings exists (profile/preferences/security) | Add company settings or repurpose |
-| Data layer | Iablee (users, assets, beneficiaries) | Add Caicos types + APIs for companies, profiles, properties, jobs, reports |
+| Data layer | Cadenza (users, assets, beneficiaries) | Add Caicos types + APIs for companies, profiles, properties, jobs, reports |
 | Nav items | Dashboard, Digital Assets, Beneficiaries, Billing, Wizard | Replace with: Dashboard, Jobs, Properties, Team, Reports, Settings |
 | Locale | All routes under `[locale]` | Decide: keep i18n and `[locale]` or simplify to single locale for MVP |
 
@@ -104,7 +104,7 @@ SOLUTION.md suggests routes under **`/dashboard`** (e.g. `/dashboard/jobs`, `/da
 ### Phase 0 – Foundation (do first)
 1. **Rename & brand**
    - `package.json`: name → `admin-portal` (or `caicos-admin`), ensure Next/React versions are supported on your stack.
-   - Replace “Iablee” / “iablee” with “Caicos” in UI and CLAUDE.md / README.
+   - Replace “Cadenza” / “cadenza” with “Caicos” in UI and CLAUDE.md / README.
 2. **Route strategy**
    - Decide: keep **`[locale]`** (en/es) or drop it for MVP and use flat `/dashboard`, `/auth`, etc.
    - If keeping locale: all new pages live under `[locale]/(dashboard)/...` and auth under `[locale]/auth/...`.
@@ -168,7 +168,7 @@ SOLUTION.md suggests routes under **`/dashboard`** (e.g. `/dashboard/jobs`, `/da
 ### Phase 6 – Settings & cleanup
 19. **Settings**
     - Add or repurpose settings for **company** (name, logo, phone, address). Keep profile/preferences/security if useful.
-20. **Remove or stub Iablee**
+20. **Remove or stub Cadenza**
     - Digital assets, beneficiaries, billing, wizard: remove from nav and optionally delete routes or leave as 404/stub.
 21. **APIs**
     - Add CRUD APIs (or Server Actions) for: companies (if needed), properties, jobs, reports, profiles (team), and ensure all use `company_id` from session (RLS).

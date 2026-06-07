@@ -1,5 +1,5 @@
 /* =========================================================
-   Neura Pool — Landing interactions
+   Cadenza — Landing interactions
    - Mobile menu
    - Smooth scroll for anchor links
    - Reveal-on-scroll (IntersectionObserver)

@@ -12,7 +12,10 @@ const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
 const VERSION = 1; // Current encryption version
-const MASTER_KEY_SALT = 'iablee-master-key-v1'; // Context for HKDF
+// HISTORICAL SALT — name retained for backwards-compat with already-encrypted
+// user data. Do NOT bump or rename during brand migrations; doing so will
+// invalidate every existing encrypted key in the system.
+const MASTER_KEY_SALT = 'iablee-master-key-v1'; // Context for HKDF (do not change)
 
 // --- Types ---
 export interface EncryptionMetadata {

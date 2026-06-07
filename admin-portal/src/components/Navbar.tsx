@@ -24,8 +24,8 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
           <Link href="/dashboard" className="flex md:hidden items-center gap-2 transition-opacity hover:opacity-90">
             <div className="relative h-16 w-32 overflow-hidden rounded-lg">
               <Image
-                src="/logo-neurapool.png"
-                alt="NeuraPool"
+                src="/logo-cadenza.png"
+                alt="Cadenza"
                 fill
                 className="object-contain"
                 priority

@@ -216,7 +216,7 @@ export default function LoginScreen() {
             source={require('@/assets/images/icon.png')}
             style={styles.logo}
           />
-          <Text style={styles.brandName}>Neura Pool</Text>
+          <Text style={styles.brandName}>Cadenza</Text>
           <Text style={styles.subtitle}>Technician Portal</Text>
         </View>
 
@@ -242,7 +242,7 @@ export default function LoginScreen() {
               <Text style={styles.fieldLabel}>Email Address</Text>
               <TextInput
                 style={styles.input}
-                placeholder="technician@neurapool.com"
+                placeholder="technician@cadenza.com"
                 placeholderTextColor={c.placeholder}
                 value={email}
                 onChangeText={setEmail}
