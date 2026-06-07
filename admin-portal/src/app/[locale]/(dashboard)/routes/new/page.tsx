@@ -57,8 +57,8 @@ export default function NewRoutePage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('createRoute')}</h1>
-          <p className="text-muted-foreground dark:text-gray-700">{t('routesDescription')}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('createRoute')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('routesDescription')}</p>
         </div>
       </div>
 

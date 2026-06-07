@@ -79,8 +79,8 @@ export default function EditPropertyPage() {
           <Link href={`/properties/${id}`}><ArrowLeft className="h-4 w-4" /></Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('editProperty')}</h1>
-          <p className="text-muted-foreground dark:text-gray-700">{property.customer_name}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('editProperty')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{property.customer_name}</p>
         </div>
       </div>
       <PropertyForm        

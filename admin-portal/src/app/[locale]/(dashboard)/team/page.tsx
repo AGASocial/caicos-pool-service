@@ -66,8 +66,8 @@ export default function TeamPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('team')}</h1>
-          <p className="text-muted-foreground dark:text-gray-700">{t('teamDescription')}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('team')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('teamDescription')}</p>
         </div>
         <Button asChild className="w-fit shrink-0">
           <Link href="/team/invite">

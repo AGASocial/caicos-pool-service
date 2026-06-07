@@ -7,12 +7,12 @@ import { Menu } from "lucide-react";
 export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
   return (
-    <div className="sticky top-0 z-40 w-full border-b border-white/10 bg-white/60 backdrop-blur-xl transition-all dark:bg-black/40 supports-[backdrop-filter]:bg-white/60">
+    <div className="sticky top-0 z-40 w-full border-b border-border bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 transition-all">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4">
           {onMenuClick && (
             <button
-              className="group flex items-center justify-center rounded-lg p-2 text-foreground/70 hover:bg-accent hover:text-foreground md:hidden transition-colors"
+              className="group flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground md:hidden transition-colors"
               onClick={onMenuClick}
               aria-label="Open menu"
             >

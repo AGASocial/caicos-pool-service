@@ -46,17 +46,19 @@ export async function GET() {
     const totalTeamMembers = teamRes.count ?? 0;
     const totalProperties = propertiesRes.count ?? 0;
 
-    // Last 4 completed jobs and last 4 pending jobs (with property + technician)
+    // Last 4 completed jobs and last 4 pending jobs (with property + technician + route)
     const jobSelect = `
       id,
       property_id,
       technician_id,
+      route_id,
       scheduled_date,
       scheduled_time,
       status,
       created_at,
       property:caicos_properties!property_id(id, customer_name, address),
-      technician:caicos_profiles!technician_id(id, full_name)
+      technician:caicos_profiles!technician_id(id, full_name),
+      route:caicos_routes!route_id(id, name)
     `;
 
     const [completedRes, pendingRes] = await Promise.all([

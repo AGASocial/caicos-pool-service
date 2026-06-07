@@ -78,7 +78,7 @@ export default function PropertyDetailPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               {property.customer_name}
             </h1>
             {property.address && (

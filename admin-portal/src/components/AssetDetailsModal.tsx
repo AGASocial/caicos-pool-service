@@ -355,7 +355,7 @@ export default function AssetDetailsModal({
                                 <Icon className={`w-7 h-7 ${style.iconColor}`} />
                             </div>
                             <div>
-                                <Badge variant="secondary" className="mb-1.5 opacity-80 backdrop-blur-md bg-white/50 dark:bg-black/20 hover:bg-white/60">
+                                <Badge variant="secondary" className="mb-1.5 opacity-90 backdrop-blur-md bg-secondary/80 hover:bg-secondary">
                                     {t(asset.asset_type_details.name)}
                                 </Badge>
                                 <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">
@@ -368,14 +368,14 @@ export default function AssetDetailsModal({
                                 <Button
                                     variant="secondary"
                                     size="icon"
-                                    className="h-9 w-9 bg-white/40 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/30 text-foreground transition-colors backdrop-blur-sm"
+                                    className="h-9 w-9 bg-secondary/80 hover:bg-secondary text-foreground transition-colors"
                                     onClick={() => setIsEditing(true)}
                                     title={t('edit')}
                                 >
                                     <Pencil className="w-4 h-4" />
                                 </Button>
                             )}
-                            <DialogClose className="rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                            <DialogClose className="rounded-full p-2 hover:bg-accent hover:text-accent-foreground transition-colors">
                                 <X className="w-5 h-5 text-foreground/70" />
                             </DialogClose>
                         </div>

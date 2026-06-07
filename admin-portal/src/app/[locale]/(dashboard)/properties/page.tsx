@@ -47,8 +47,8 @@ export default function PropertiesPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('properties')}</h1>
-          <p className="text-muted-foreground dark:text-gray-700">{t('propertiesDescription')}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('properties')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('propertiesDescription')}</p>
         </div>
         <Button asChild className="w-fit shrink-0">
           <Link href="/properties/new">

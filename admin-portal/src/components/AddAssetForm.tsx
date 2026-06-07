@@ -188,7 +188,7 @@ export default function AddAssetForm({ assetType, onSuccess, onCancel, asset }: 
           value={form.asset_name}
           onChange={handleChange}
           required
-          className="bg-background/50 border-white/10 focus:border-primary/50"
+          className="bg-background/60 border-input focus:border-primary/50"
         />
       </div>
 
@@ -204,7 +204,7 @@ export default function AddAssetForm({ assetType, onSuccess, onCancel, asset }: 
             type="text"
             autoComplete="off"
             required={isFieldRequired('email')}
-            className="bg-background/50 border-white/10 focus:border-primary/50"
+            className="bg-background/60 border-input focus:border-primary/50"
           />
         </div>
       )}
@@ -220,7 +220,7 @@ export default function AddAssetForm({ assetType, onSuccess, onCancel, asset }: 
             type="text"
             autoComplete="off"
             required={isFieldRequired('password')}
-            className="bg-background/50 border-white/10 focus:border-primary/50"
+            className="bg-background/60 border-input focus:border-primary/50"
           />
         </div>
       )}
@@ -234,7 +234,7 @@ export default function AddAssetForm({ assetType, onSuccess, onCancel, asset }: 
             value={form.website}
             onChange={handleChange}
             required={isFieldRequired('website')}
-            className="bg-background/50 border-white/10 focus:border-primary/50"
+            className="bg-background/60 border-input focus:border-primary/50"
           />
         </div>
       )}
@@ -249,7 +249,7 @@ export default function AddAssetForm({ assetType, onSuccess, onCancel, asset }: 
             onChange={handleChange}
             type="date"
             required={isFieldRequired('valid_until')}
-            className="bg-background/50 border-white/10 focus:border-primary/50"
+            className="bg-background/60 border-input focus:border-primary/50"
           />
         </div>
       )}
@@ -263,7 +263,7 @@ export default function AddAssetForm({ assetType, onSuccess, onCancel, asset }: 
             value={form.description}
             onChange={handleChange}
             required={isFieldRequired('description')}
-            className="bg-background/50 border-white/10 focus:border-primary/50 min-h-[80px]"
+            className="bg-background/60 border-input focus:border-primary/50 min-h-[80px]"
           />
         </div>
       )}
@@ -279,7 +279,7 @@ export default function AddAssetForm({ assetType, onSuccess, onCancel, asset }: 
               value={String(form.customFields[field.key] || '')}
               onChange={(e) => handleCustomFieldChange(field.key, e.target.value)}
               required={field.required}
-              className="bg-background/50 border-white/10 focus:border-primary/50"
+              className="bg-background/60 border-input focus:border-primary/50"
             />
           )}
           {field.type === 'textarea' && (
@@ -288,7 +288,7 @@ export default function AddAssetForm({ assetType, onSuccess, onCancel, asset }: 
               value={String(form.customFields[field.key] || '')}
               onChange={(e) => handleCustomFieldChange(field.key, e.target.value)}
               required={field.required}
-              className="bg-background/50 border-white/10 focus:border-primary/50 min-h-[80px]"
+              className="bg-background/60 border-input focus:border-primary/50 min-h-[80px]"
             />
           )}
           {field.type === 'select' && (
@@ -296,7 +296,7 @@ export default function AddAssetForm({ assetType, onSuccess, onCancel, asset }: 
               value={String(form.customFields[field.key] || '')}
               onValueChange={(value) => handleCustomFieldChange(field.key, value)}
             >
-              <SelectTrigger className="bg-background/50 border-white/10 focus:border-primary/50 w-full">
+              <SelectTrigger className="bg-background/60 border-input focus:border-primary/50 w-full">
                 <SelectValue placeholder={t('select')} />
               </SelectTrigger>
               <SelectContent>

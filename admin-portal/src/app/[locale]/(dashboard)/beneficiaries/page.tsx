@@ -236,7 +236,7 @@ export default function BeneficiariesPage() {
             />
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-4xl font-bold text-gray-900 dark:text-white">{t('beneficiariesTitle')}</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('beneficiariesTitle')}</h1>
                     {limitReached && limitInfo && (
                         <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
                             {t('beneficiaryLimitReachedDescription', { limit: limitInfo.limit ?? 0 })} —{' '}
@@ -348,7 +348,7 @@ export default function BeneficiariesPage() {
                 selectedBeneficiary && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-2 sm:hidden">
                         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 w-full max-w-sm border border-gray-200 dark:border-gray-700">
-                            <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">{selectedBeneficiary.full_name}</h3>
+                            <h3 className="text-lg font-bold mb-4 text-foreground">{selectedBeneficiary.full_name}</h3>
                             <div className="space-y-2">
                                 <div><span className="font-semibold">{t('email')}:</span> {selectedBeneficiary.email}</div>
                                 <div><span className="font-semibold">{t('phoneNumber')}:</span> {selectedBeneficiary.phone_number}</div>

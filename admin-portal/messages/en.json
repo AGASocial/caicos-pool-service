@@ -21,6 +21,7 @@
   "properties": "Properties",
   "team": "Team",
   "reports": "Reports",
+  "route": "Route",
   "routes": "Routes",
   "routesDescription": "Recurring routes: same technician, same houses week after week.",
   "createRoute": "Create route",

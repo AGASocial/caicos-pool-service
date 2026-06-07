@@ -100,8 +100,8 @@ export default function InviteTeamMemberPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">{t('inviteTeamMember')}</h1>
-          <p className="text-muted-foreground dark:text-gray-700">{t('teamDescription')}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('inviteTeamMember')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('teamDescription')}</p>
         </div>
       </div>
 

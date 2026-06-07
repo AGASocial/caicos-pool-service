@@ -43,15 +43,15 @@ const STATUS_KEYS: Record<string, string> = {
 function jobStatusBadgeClassName(status: string) {
   switch (status) {
     case 'completed':
-      return 'border-transparent bg-emerald-600 text-white hover:bg-emerald-600/90';
+      return 'border-transparent bg-success text-success-foreground hover:bg-success/90';
     case 'in_progress':
-      return 'border-transparent bg-blue-600 text-white hover:bg-blue-600/90';
+      return 'border-transparent bg-info text-info-foreground hover:bg-info/90';
     case 'pending':
-      return 'border-transparent bg-amber-400 text-amber-950 hover:bg-amber-400/90';
+      return 'border-transparent bg-warning text-warning-foreground hover:bg-warning/90';
     case 'cancelled':
-      return 'border-transparent bg-red-600 text-white hover:bg-red-600/90';
+      return 'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90';
     case 'skipped':
-      return 'border-transparent bg-slate-500 text-white hover:bg-slate-500/90';
+      return 'border-transparent bg-muted text-muted-foreground hover:bg-muted/90';
     default:
       return 'border-transparent bg-muted text-muted-foreground';
   }
@@ -180,8 +180,8 @@ export default function JobsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('jobs')}</h1>
-          <p className="text-muted-foreground">{t('jobsDescription')}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('jobs')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('jobsDescription')}</p>
         </div>
         <Button asChild className="w-fit shrink-0">
           <Link href="/jobs/new?mode=dispatch">
