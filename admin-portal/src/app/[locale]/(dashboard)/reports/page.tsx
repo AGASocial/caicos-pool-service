@@ -83,10 +83,10 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
           {t('reports')}
         </h1>
-        <p className="text-muted-foreground dark:text-gray-700">{t('reportsDescription')}</p>
+        <p className="text-sm text-muted-foreground mt-1">{t('reportsDescription')}</p>
       </div>
 
       {/* Date range filter */}

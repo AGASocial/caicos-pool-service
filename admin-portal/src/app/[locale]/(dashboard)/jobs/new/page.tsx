@@ -176,10 +176,10 @@ export default function NewJobPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-700">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {dispatchMode ? t('adHocDispatch') : t('createJob')}
           </h1>
-          <p className="text-muted-foreground dark:text-gray-700">
+          <p className="text-sm text-muted-foreground mt-1">
             {dispatchMode ? t('adHocDispatchDescription') : t('createJobAdHocHint')}
           </p>
         </div>

@@ -313,7 +313,7 @@ export default function DigitalAssetsPage() {
         )}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">{t('digitalAssetsTitle')}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('digitalAssetsTitle')}</h1>
             {limitReached && limitInfo && (
               <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
                 {t('assetLimitReachedDescription', { limit: limitInfo.limit ?? 0 })} —{' '}
@@ -461,7 +461,7 @@ export default function DigitalAssetsPage() {
         <Dialog open={assignModalOpen} onOpenChange={(open) => { setAssignModalOpen(open); if (!open) { setSelectedAsset(null); setSelectedBeneficiaryId(null); } }}>
           <DialogContent className="max-w-lg w-full bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-700 p-4 sm:p-8">
             <DialogHeader>
-              <DialogTitle className="text-gray-900 dark:text-white">{t('assignBeneficiary')}</DialogTitle>
+              <DialogTitle className="text-foreground">{t('assignBeneficiary')}</DialogTitle>
               <DialogClose asChild />
             </DialogHeader>
             <div className="mt-4 space-y-2">
@@ -480,8 +480,8 @@ export default function DigitalAssetsPage() {
                       onClick={() => setSelectedBeneficiaryId(b.id)}
                     >
                       <div>
-                        <span className="font-medium text-gray-900 dark:text-white">{b.full_name}</span>
-                        <span className="block text-sm text-gray-500 dark:text-gray-300">{b.email}</span>
+                        <span className="font-medium text-foreground">{b.full_name}</span>
+                        <span className="block text-sm text-muted-foreground">{b.email}</span>
                       </div>
                       {selectedBeneficiaryId === b.id && <span className="ml-4 text-xs text-blue-600 dark:text-blue-300">{t('selected')}</span>}
                     </button>

@@ -151,7 +151,7 @@ export default function AddBeneficiaryModal({ open, onOpenChange, onSuccess, ben
                             onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                             placeholder="John Doe"
                             required
-                            className="bg-background/50 border-white/10 focus:border-primary/50"
+                            className="bg-background/60 border-input focus:border-primary/50"
                         />
                     </div>
 
@@ -164,7 +164,7 @@ export default function AddBeneficiaryModal({ open, onOpenChange, onSuccess, ben
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 placeholder="john@example.com"
-                                className="bg-background/50 border-white/10 focus:border-primary/50"
+                                className="bg-background/60 border-input focus:border-primary/50"
                             />
                         </div>
 
@@ -175,7 +175,7 @@ export default function AddBeneficiaryModal({ open, onOpenChange, onSuccess, ben
                                 value={formData.phone_number}
                                 onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
                                 placeholder="+1 234 567 890"
-                                className="bg-background/50 border-white/10 focus:border-primary/50"
+                                className="bg-background/60 border-input focus:border-primary/50"
                             />
                         </div>
                     </div>
@@ -186,7 +186,7 @@ export default function AddBeneficiaryModal({ open, onOpenChange, onSuccess, ben
                             value={formData.relationship_id?.toString() || ""}
                             onValueChange={(value) => setFormData({ ...formData, relationship_id: parseInt(value) })}
                         >
-                            <SelectTrigger className="bg-background/50 border-white/10 focus:border-primary/50 w-full">
+                            <SelectTrigger className="bg-background/60 border-input focus:border-primary/50 w-full">
                                 <SelectValue placeholder={t('selectRelationship') || t('relationship')} />
                             </SelectTrigger>
                             <SelectContent className="max-h-[200px]">
@@ -206,7 +206,7 @@ export default function AddBeneficiaryModal({ open, onOpenChange, onSuccess, ben
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                             placeholder={t('notesPlaceholder') || "Additional notes..."}
-                            className="bg-background/50 border-white/10 focus:border-primary/50 min-h-[80px]"
+                            className="bg-background/60 border-input focus:border-primary/50 min-h-[80px]"
                         />
                     </div>
 

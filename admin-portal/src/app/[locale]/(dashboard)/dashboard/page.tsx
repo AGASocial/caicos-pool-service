@@ -2,9 +2,10 @@
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Briefcase, MapPin, Users, Building2, CheckCircle2, Clock } from "lucide-react";
+import { Briefcase, MapPin, Users, Building2, ChevronRight, Route as RouteIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from '@/i18n/navigation';
+import { cn } from '@/lib/utils';
 
 type DashboardJob = {
   id: string;
@@ -14,6 +15,7 @@ type DashboardJob = {
   created_at: string;
   property: { id: string; customer_name: string; address: string } | null;
   technician: { id: string; full_name: string } | null;
+  route: { id: string; name: string } | null;
 };
 
 type DashboardStats = {
@@ -23,23 +25,45 @@ type DashboardStats = {
   totalProperties: number;
 };
 
-function JobRow({ job }: { job: DashboardJob }) {
+function JobRow({ job, dotClass }: { job: DashboardJob; dotClass: string }) {
+  const t = useTranslations();
   const propertyName = job.property?.customer_name ?? '—';
-  const technicianName = job.technician?.full_name ?? '—';
-  const date = job.scheduled_date;
-  const time = job.scheduled_time ? String(job.scheduled_time).slice(0, 5) : '';
+  const address = job.property?.address;
+  const technicianName = job.technician?.full_name;
+  const routeName = job.route?.name;
 
   return (
-    <Link href={`/jobs/${job.id}`}>
-      <div className="group flex items-center justify-between p-3 border border-transparent rounded-xl bg-white/5 hover:bg-white/10 transition-all hover:border-primary/10">
-        <div className="min-w-0 flex-1">
-          <p className="font-medium text-foreground truncate">{propertyName}</p>
-          <p className="text-sm text-muted-foreground truncate">
-            {technicianName} · {date}{time ? ` ${time}` : ''}
-          </p>
+    <li>
+      <Link
+        href={`/jobs/${job.id}`}
+        className="flex items-center gap-3 py-3 px-1 rounded-lg hover:bg-muted/50 transition-colors"
+      >
+        <Briefcase className="h-5 w-5 text-muted-foreground shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-foreground truncate">{propertyName}</div>
+          <div className="text-sm text-muted-foreground truncate">
+            {address && <span>{address}</span>}
+            {address && technicianName && <span className="mx-1.5 opacity-60">·</span>}
+            {technicianName && <span>{technicianName}</span>}
+            {!address && !technicianName && <span className="opacity-60">—</span>}
+          </div>
         </div>
-      </div>
-    </Link>
+        {routeName && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-info-soft text-info-soft-foreground px-2.5 py-0.5 text-xs font-medium shrink-0"
+            title={`${t('route')}: ${routeName}`}
+          >
+            <RouteIcon className="h-3 w-3" aria-hidden />
+            {routeName}
+          </span>
+        )}
+        <span
+          aria-hidden
+          className={cn("h-2 w-2 rounded-full shrink-0", dotClass)}
+        />
+        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+      </Link>
+    </li>
   );
 }
 
@@ -78,22 +102,22 @@ export default function DashboardPage() {
     <div className="flex-1 space-y-8 p-4 sm:p-8 pt-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {t('dashboard')}
-          </h2>
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">{t('dashboardOverview')}</p>
         </div>
       </div>
 
       {/* Stats Overview */}
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="glass-panel hover-lift border-border/50 animate-fade-in-up delay-100">
+        <Card className="hover-lift animate-fade-in-up delay-100">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-foreground">
               {t('jobs')}
             </CardTitle>
-            <div className="p-2.5 rounded-xl bg-primary/10 shadow-inner">
-              <Briefcase className="h-4 w-4 text-primary" />
+            <div className="icon-chip icon-bg-primary">
+              <Briefcase className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
@@ -103,13 +127,13 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="glass-panel hover-lift border-border/50 animate-fade-in-up delay-200">
+        <Card className="hover-lift animate-fade-in-up delay-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-foreground">
               {t('routes')}
             </CardTitle>
-            <div className="p-2.5 rounded-xl icon-bg-success shadow-inner">
-              <MapPin className="h-4 w-4 icon-success" />
+            <div className="icon-chip icon-bg-success">
+              <MapPin className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
@@ -119,13 +143,13 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="glass-panel hover-lift border-border/50 animate-fade-in-up delay-300">
+        <Card className="hover-lift animate-fade-in-up delay-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-foreground">
               {t('team')}
             </CardTitle>
-            <div className="p-2.5 rounded-xl icon-bg-accent shadow-inner">
-              <Users className="h-4 w-4 icon-accent" />
+            <div className="icon-chip icon-bg-accent">
+              <Users className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
@@ -135,13 +159,13 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="glass-panel hover-lift border-border/50 animate-fade-in-up delay-[400ms]">
+        <Card className="hover-lift animate-fade-in-up delay-400">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-foreground">
               {t('properties')}
             </CardTitle>
-            <div className="p-2.5 rounded-xl icon-bg-info shadow-inner">
-              <Building2 className="h-4 w-4 icon-info" />
+            <div className="icon-chip icon-bg-info">
+              <Building2 className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
@@ -154,75 +178,63 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Content Cards: Completed (left) and Pending (right) */}
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 animate-fade-in-up delay-[500ms]">
-        <Card className="col-span-1 glass-card border-none shadow-xl bg-card/30">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-white/5 pb-4">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 animate-fade-in-up delay-500">
+        <Card className="col-span-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
-              <CardTitle className="text-xl flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <CardTitle className="text-xl flex items-center gap-2 text-foreground">
+                <span className="status-dot status-dot--success" aria-hidden />
                 {t('recentCompletedJobs')}
               </CardTitle>
-              <CardDescription className="text-base">{t('status_completed')}</CardDescription>
+              <CardDescription>{t('status_completed')}</CardDescription>
             </div>
             <Link href="/jobs?status=completed">
               <Button variant="ghost" size="sm">{t('jobs')}</Button>
             </Link>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent>
             {loading ? (
-              <div className="flex items-center justify-center py-6">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              </div>
+              <p className="text-sm text-muted-foreground py-4">
+                {t('loading', { defaultValue: 'Loading…' })}
+              </p>
             ) : completedJobs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <CheckCircle2 className="h-12 w-12 text-muted-foreground/50 mb-3" />
-                <p className="text-sm text-muted-foreground">{t('noCompletedJobs')}</p>
-                <Link href="/jobs">
-                  <Button variant="outline" size="sm" className="mt-3">{t('jobs')}</Button>
-                </Link>
-              </div>
+              <p className="text-sm text-muted-foreground py-4">{t('noCompletedJobs')}</p>
             ) : (
-              <div className="space-y-2">
+              <ul className="divide-y divide-border">
                 {completedJobs.map((job) => (
-                  <JobRow key={job.id} job={job} />
+                  <JobRow key={job.id} job={job} dotClass="bg-success" />
                 ))}
-              </div>
+              </ul>
             )}
           </CardContent>
         </Card>
 
-        <Card className="col-span-1 glass-card border-none shadow-xl bg-card/30">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-white/5 pb-4">
+        <Card className="col-span-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
-              <CardTitle className="text-xl flex items-center gap-2">
-                <Clock className="h-5 w-5 text-amber-500" />
+              <CardTitle className="text-xl flex items-center gap-2 text-foreground">
+                <span className="status-dot status-dot--warning" aria-hidden />
                 {t('recentPendingJobs')}
               </CardTitle>
-              <CardDescription className="text-base">{t('status_pending')}</CardDescription>
+              <CardDescription>{t('status_pending')}</CardDescription>
             </div>
             <Link href="/jobs?status=pending">
               <Button variant="ghost" size="sm">{t('jobs')}</Button>
             </Link>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent>
             {loading ? (
-              <div className="flex items-center justify-center py-6">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              </div>
+              <p className="text-sm text-muted-foreground py-4">
+                {t('loading', { defaultValue: 'Loading…' })}
+              </p>
             ) : pendingJobs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Clock className="h-12 w-12 text-muted-foreground/50 mb-3" />
-                <p className="text-sm text-muted-foreground">{t('noPendingJobs')}</p>
-                <Link href="/jobs">
-                  <Button variant="outline" size="sm" className="mt-3">{t('jobs')}</Button>
-                </Link>
-              </div>
+              <p className="text-sm text-muted-foreground py-4">{t('noPendingJobs')}</p>
             ) : (
-              <div className="space-y-2">
+              <ul className="divide-y divide-border">
                 {pendingJobs.map((job) => (
-                  <JobRow key={job.id} job={job} />
+                  <JobRow key={job.id} job={job} dotClass="bg-warning" />
                 ))}
-              </div>
+              </ul>
             )}
           </CardContent>
         </Card>

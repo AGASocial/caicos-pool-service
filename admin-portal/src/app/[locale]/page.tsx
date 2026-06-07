@@ -60,7 +60,7 @@ export default function LocalePage() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-secondary/20 blur-[120px] mix-blend-screen" />
       </div>
 
-      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center px-4 sm:px-6 lg:px-8">
           <div className="mr-4 flex">
             <Link href="/" className="mr-6 flex items-center space-x-2">
@@ -111,7 +111,7 @@ export default function LocalePage() {
                 </Button>
               </Link>
               <Link href="/about" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg h-12 backdrop-blur-md bg-white/5 border-white/10 hover:bg-white/10">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg h-12 backdrop-blur-md bg-card/40 border-border hover:bg-card/60">
                   Learn More
                 </Button>
               </Link>
@@ -209,7 +209,7 @@ export default function LocalePage() {
         </section>
       </main>
 
-      <footer className="border-t border-white/10 bg-background/50 py-6 md:py-0 backdrop-blur-lg">
+      <footer className="border-t border-border bg-background/50 py-6 md:py-0 backdrop-blur-lg">
         <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row px-4">
           <p className="text-center text-sm leading-loose text-muted-foreground md:text-left flex items-center gap-1">
             Built with <Heart className="h-4 w-4 text-red-500 fill-red-500" /> by{" "}
