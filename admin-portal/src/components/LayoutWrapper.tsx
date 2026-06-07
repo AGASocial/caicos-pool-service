@@ -101,8 +101,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               sidebarCollapsed ? "h-16 w-16" : "w-48 h-24"
             )}>
               <Image
-                src={sidebarCollapsed ? "/logo-neurapool-icon.png" : "/logo-neurapool.png"}
-                alt="NeuraPool"
+                src={sidebarCollapsed ? "/logo-cadenza-icon.png" : "/logo-cadenza.png"}
+                alt="Cadenza"
                 fill
                 className="object-contain"
                 priority
@@ -203,8 +203,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               <div className="flex items-center gap-3">
                 <div className="relative h-12 w-32 overflow-hidden rounded-lg">
                   <Image
-                    src="/logo-neurapool.png"
-                    alt="NeuraPool"
+                    src="/logo-cadenza.png"
+                    alt="Cadenza"
                     fill
                     className="object-contain"
                     unoptimized
@@ -269,7 +269,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               </DropdownMenu>
 
               <div className="text-xs text-sidebar-foreground/60 text-center mt-4">
-                © 2026 NeuraPool Inc.
+                © 2026 Cadenza Inc.
               </div>
             </div>
           </div>

@@ -9,7 +9,7 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
       defaultTheme="system"
       enableSystem
       disableTransitionOnChange
-      storageKey="iablee-theme"
+      storageKey="cadenza-theme"
     >
       {children}
     </ThemeProvider>

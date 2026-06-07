@@ -65,7 +65,7 @@ async function createStripePrice(productId, amount, interval) {
 }
 
 async function main() {
-  console.log('🚀 Setting up Stripe products for Iablee...\n');
+  console.log('🚀 Setting up Stripe products for Cadenza...\n');
 
   try {
     // Create Necessary Plan

@@ -135,7 +135,7 @@ export default function RegisterScreen() {
             source={require('@/assets/images/icon.png')}
             style={styles.logo}
           />
-          <Text style={styles.brandName}>Neura Pool</Text>
+          <Text style={styles.brandName}>Cadenza</Text>
           <Text style={styles.headerSubtitle}>Create Your Account</Text>
         </View>
 
@@ -162,7 +162,7 @@ export default function RegisterScreen() {
               <Text style={styles.fieldLabel}>Email Address</Text>
               <TextInput
                 style={styles.input}
-                placeholder="you@neurapool.com"
+                placeholder="you@cadenza.com"
                 placeholderTextColor={c.placeholder}
                 value={email}
                 onChangeText={setEmail}

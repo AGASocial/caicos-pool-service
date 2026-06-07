@@ -4,7 +4,7 @@
 @variant dark (&:where(.dark, .dark *));
 
 /* =============================================================================
-   NeuraPool — Design Tokens
+   Cadenza — Design Tokens
    -----------------------------------------------------------------------------
    All colors use OKLCH for perceptually uniform contrast.
 
@@ -133,7 +133,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.16 0.022 258);
 
-  /* Brand: deep royal blue (NeuraPool) */
+  /* Brand: deep royal blue (Cadenza) */
   --primary: oklch(0.48 0.20 258);
   --primary-foreground: oklch(0.98 0.006 258);
 

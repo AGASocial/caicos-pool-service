@@ -1,19 +1,19 @@
 {
   "expo": {
-    "name": "neura-pool",
-    "slug": "neura-pool",
+    "name": "cadenza",
+    "slug": "cadenza",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "neurapool",
+    "scheme": "cadenza",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "social.aga.neurapool",
+      "bundleIdentifier": "social.aga.cadenza",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSFaceIDUsageDescription": "Neura Pool uses Face ID to sign you in quickly and lock the app when you switch away."
+        "NSFaceIDUsageDescription": "Cadenza uses Face ID to sign you in quickly and lock the app when you switch away."
       }
     },
     "android": {

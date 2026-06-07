@@ -1,15 +1,15 @@
-# NeuraPool Brand Identity Guide
+# Cadenza Brand Identity Guide
 
 **Version:** 1.0
 **Last Updated:** February 21, 2026
-**Created for:** NeuraPool - Pool Service Management Platform
+**Created for:** Cadenza - Pool Service Management Platform
 
 ---
 
 ## 1. Brand Overview
 
 ### Brand Name
-**NeuraPool**
+**Cadenza**
 
 ### Tagline
 "Service Management, Synchronized"
@@ -28,12 +28,12 @@ Modern, reliable, efficient, professional
 - **Style:** Minimalist, modern
 - **Elements:**
   - Stylized water droplet or dashboard-inspired wave
-  - "NeuraPool" wordmark in modern sans-serif
+  - "Cadenza" wordmark in modern sans-serif
   - Square format for app icon compatibility
   - Horizontal lockup for web/marketing
 
 ### Logo Variations
-1. **Full Logo:** NeuraPool name + icon
+1. **Full Logo:** Cadenza name + icon
 2. **Icon Only:** Icon mark alone (for app home screen)
 3. **Horizontal Lockup:** Icon left, text right (for headers)
 4. **Stacked:** Icon above text (for narrow spaces)
@@ -297,7 +297,7 @@ Label:           12px, 500
 ### Web (Admin Portal)
 
 **Header:**
-- Logo + "NeuraPool" wordmark on left
+- Logo + "Cadenza" wordmark on left
 - Teal background or white with teal accent border
 - Navigation links in Slate 600
 - White background for content area
@@ -316,7 +316,7 @@ Label:           12px, 500
 ### Mobile (Technician App)
 
 **App Icon:**
-- Square logo (NeuraPool icon only)
+- Square logo (Cadenza icon only)
 - Teal background with white icon mark
 - 180px minimum size for app store
 
@@ -338,7 +338,7 @@ Label:           12px, 500
 ### Marketing Materials
 
 **Email:**
-- Teal header with NeuraPool logo
+- Teal header with Cadenza logo
 - Slate 600 body text
 - Teal CTAs with "→" arrow
 - Clean, minimal layout
@@ -402,7 +402,7 @@ Label:           12px, 500
 
 | Element | Value |
 |---------|-------|
-| **Brand Name** | NeuraPool |
+| **Brand Name** | Cadenza |
 | **Tagline** | Service Management, Synchronized |
 | **Primary Color** | #0891B2 (Teal) |
 | **Primary Font** | Inter |
@@ -497,6 +497,6 @@ For brand questions or clarifications, refer to:
 
 ---
 
-**NeuraPool Brand Guidelines v1.0**
+**Cadenza Brand Guidelines v1.0**
 Created: February 21, 2026
 Status: Ready to implement

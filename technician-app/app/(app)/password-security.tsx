@@ -240,7 +240,7 @@ export default function PasswordSecurityScreen() {
               <View style={styles.toggleText}>
                 <Text style={styles.infoLabel}>{biometricLabel}</Text>
                 <Text style={styles.infoDesc}>
-                  Sign in faster and lock the app when you switch away from Neura Pool.
+                  Sign in faster and lock the app when you switch away from Cadenza.
                 </Text>
               </View>
               <Switch

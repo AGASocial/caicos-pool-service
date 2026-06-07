@@ -1,7 +1,7 @@
-# ✅ Neura Pool Mobile App Rebrand - APPLIED
+# ✅ Cadenza Mobile App Rebrand - APPLIED
 
 ## Summary
-The technician mobile app has been successfully rebranded with Neura Pool identity. All color tokens, assets, and configuration have been updated.
+The technician mobile app has been successfully rebranded with Cadenza identity. All color tokens, assets, and configuration have been updated.
 
 ---
 
@@ -37,8 +37,8 @@ The technician mobile app has been successfully rebranded with Neura Pool identi
 ```json
 {
   "expo": {
-    "name": "Neura Pool",           // Was: "technician-app"
-    "slug": "neura-pool",            // Was: "NeuraPool"
+    "name": "Cadenza",           // Was: "technician-app"
+    "slug": "cadenza",            // Was: "Cadenza"
     "icon": "./assets/images/icon.png",
     "splash": {
       "image": "./assets/images/splash-icon.png"
@@ -59,7 +59,7 @@ The technician mobile app has been successfully rebranded with Neura Pool identi
 - `splash-icon.png` (512x512) - Splash screen
 - `favicon.png` (192x192) - Web favicon
 - `adaptive-icon.png` (512x512) - Android adaptive icon
-- `neura-pool-logo.svg` - Vector logo source
+- `cadenza-logo.svg` - Vector logo source
 
 **Design Features:**
 - Water droplet in gradient (Cyan → Deep Teal)
@@ -70,7 +70,7 @@ The technician mobile app has been successfully rebranded with Neura Pool identi
 
 ### 4. ✅ Logo Asset Created
 
-**File:** `technician-app/assets/neura-pool-logo.svg`
+**File:** `technician-app/assets/cadenza-logo.svg`
 
 Features:
 - 3 concentric circles representing neural networks
@@ -88,7 +88,7 @@ Features:
 🎨 Colors:
 - Primary: #0066CC (Generic blue)
 - Dark: #3399FF (Generic light blue)
-- Name: "NeuraPool"
+- Name: "Cadenza"
 
 🔘 Buttons:
 - Standard blue CTAs
@@ -101,7 +101,7 @@ Features:
 - Primary: #0D7C8F (Deep Teal - trustworthy, modern)
 - Accent: #00D9FF (Bright Cyan - tech-forward, visible)
 - Secondary: #1A3A52 (Midnight Blue - professional)
-- Name: "Neura Pool"
+- Name: "Cadenza"
 
 🔘 Buttons:
 - Bright Cyan CTAs (START SERVICE, MARK COMPLETE)
@@ -150,13 +150,13 @@ npm start    # Start Expo dev server
 ```bash
 eas build --platform ios
 # Update TestFlight with new build
-# Update app store listing with Neura Pool name
+# Update app store listing with Cadenza name
 ```
 
 ### For Android Play Store
 ```bash
 eas build --platform android
-# Update Play Store listing with Neura Pool name
+# Update Play Store listing with Cadenza name
 # Update app icon in Google Play Console
 ```
 
@@ -168,11 +168,11 @@ eas build --platform android
 |------|--------|---------|
 | `constants/Colors.ts` | ✅ Updated | All color tokens updated |
 | `app.json` | ✅ Updated | App name, slug, icon paths |
-| `assets/images/icon.png` | ✅ Replaced | New Neura Pool logo |
-| `assets/images/splash-icon.png` | ✅ Replaced | New Neura Pool logo |
-| `assets/images/favicon.png` | ✅ Replaced | New Neura Pool logo |
-| `assets/images/adaptive-icon.png` | ✅ Replaced | New Neura Pool logo |
-| `assets/neura-pool-logo.svg` | ✅ Created | Vector logo source |
+| `assets/images/icon.png` | ✅ Replaced | New Cadenza logo |
+| `assets/images/splash-icon.png` | ✅ Replaced | New Cadenza logo |
+| `assets/images/favicon.png` | ✅ Replaced | New Cadenza logo |
+| `assets/images/adaptive-icon.png` | ✅ Replaced | New Cadenza logo |
+| `assets/cadenza-logo.svg` | ✅ Created | Vector logo source |
 
 ---
 
@@ -199,7 +199,7 @@ eas build --platform android
 
 2. **Update Branding**
    - Update app store listings (description, category)
-   - Update website to mention Neura Pool
+   - Update website to mention Cadenza
    - Update marketing materials
 
 3. **Version Bump**
@@ -216,7 +216,7 @@ eas build --platform android
    - [ ] "Mark Complete" button stands out
    - [ ] All text has proper contrast
    - [ ] Icons render correctly on app store
-   - [ ] Splash screen shows Neura Pool logo
+   - [ ] Splash screen shows Cadenza logo
    - [ ] Dark mode works correctly
    - [ ] Tablet layout (if supported) looks good
 
@@ -231,13 +231,13 @@ eas build --platform android
 ## Support Information
 
 **Brand Assets:**
-- Logo (SVG): `technician-app/assets/neura-pool-logo.svg`
+- Logo (SVG): `technician-app/assets/cadenza-logo.svg`
 - Color palette: Defined in `constants/Colors.ts`
 - Brand guide: `Mobile_App_Branding_Update.md`
 
 **Questions?**
 Refer to:
-- `Neura_Pool_Brand_Guidelines.docx` - Full brand guidelines
+- `Cadenza_Brand_Guidelines.docx` - Full brand guidelines
 - `Mobile_App_Branding_Update.md` - App-specific design specs
 
 ---

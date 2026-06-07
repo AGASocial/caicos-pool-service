@@ -1,7 +1,7 @@
-# Neura Pool - Mobile App Branding Update
+# Cadenza - Mobile App Branding Update
 
 ## Overview
-The technician mobile app has been updated with the new Neura Pool brand identity. All color tokens have been refreshed to use the primary brand colors.
+The technician mobile app has been updated with the new Cadenza brand identity. All color tokens have been refreshed to use the primary brand colors.
 
 ---
 
@@ -58,7 +58,7 @@ chipText: '#00D9FF'
 ### Screen 1: Login Screen
 ```
 ┌─────────────────────────────────┐
-│       Neura Pool                │ ← Deep Teal (#0D7C8F) header
+│       Cadenza                │ ← Deep Teal (#0D7C8F) header
 │         [Logo]                  │ ← Bright Cyan circle (water droplet)
 ├─────────────────────────────────┤
 │                                 │
@@ -171,7 +171,7 @@ chipText: '#00D9FF'
 │                                 │
 │ ┌───────────────────────────┐   │
 │ │ John Technician           │   │ ← White card
-│ │ john@neurapool.com        │   │
+│ │ john@cadenza.com        │   │
 │ │ Role: Technician          │   │ ← Deep Teal text
 │ └───────────────────────────┘   │
 │                                 │
@@ -206,14 +206,14 @@ chipText: '#00D9FF'
 
 ### Files Updated
 1. **constants/Colors.ts**
-   - Updated all color tokens to use Neura Pool brand colors
+   - Updated all color tokens to use Cadenza brand colors
    - Deep Teal as primary (#0D7C8F)
    - Bright Cyan as accent/CTA (#00D9FF)
    - Midnight Blue as secondary (#1A3A52)
 
 2. **app.json**
-   - App name: "Neura Pool"
-   - Slug: "neura-pool"
+   - App name: "Cadenza"
+   - Slug: "cadenza"
 
 ### Key Changes
 ✅ **Button Colors:**
@@ -273,12 +273,12 @@ chipText: '#00D9FF'
 ## Next Steps
 
 1. **Update App Icons:**
-   - Replace NeuraPool icon with Neura Pool logo
-   - Splash screen should feature Neura Pool branding
+   - Replace Cadenza icon with Cadenza logo
+   - Splash screen should feature Cadenza branding
    - App icon: Cyan water droplet on Deep Teal background
 
 2. **Update Assets:**
-   - Replace all app images/icons with Neura Pool assets
+   - Replace all app images/icons with Cadenza assets
    - Ensure logo appears in app header
 
 3. **QA & Testing:**

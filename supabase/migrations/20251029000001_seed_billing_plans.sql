@@ -136,7 +136,7 @@ VALUES
     "dedicated_account_manager": false
   }'::jsonb,
         '{
-    "stripe": "price_necessary_year_NeuraPool",
+    "stripe": "price_necessary_year_Cadenza",
     "paypal": "PLAN-NECESSARY-YEAR",
     "wompi": "necessary_year",
     "payu": "NECESSARY-YEAR"

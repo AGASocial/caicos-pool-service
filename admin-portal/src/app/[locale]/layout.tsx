@@ -19,11 +19,11 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "NeuraPool - Pool Service Management Platform",
-  description: "Manage your pool service business with NeuraPool",
+  title: "Cadenza - Pool Service Management Platform",
+  description: "Manage your pool service business with Cadenza",
   icons: {
-    icon: "/logo-neurapool-icon.png",
-    apple: "/logo-neurapool-icon.png",
+    icon: "/logo-cadenza-icon.png",
+    apple: "/logo-cadenza-icon.png",
   },
 };
 

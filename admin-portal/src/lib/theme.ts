@@ -1,5 +1,5 @@
 /**
- * Sistema de Diseño Centralizado - iablee (Updated for Premium Redesign)
+ * Sistema de Diseño Centralizado - cadenza (Updated for Premium Redesign)
  * 
  * Este archivo contiene toda la configuración de colores, sombras, gradientes
  * y otros elementos de diseño para mantener consistencia en toda la aplicación.

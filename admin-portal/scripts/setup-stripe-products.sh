@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Setup Stripe products and prices for Iablee
+# Setup Stripe products and prices for Cadenza
 # Run this with: bash scripts/setup-stripe-products.sh
 # Make sure you have STRIPE_SECRET_KEY in your .env file
 
 set -e
 
-echo "🚀 Setting up Stripe products for Iablee..."
+echo "🚀 Setting up Stripe products for Cadenza..."
 echo ""
 
 # Load environment variables

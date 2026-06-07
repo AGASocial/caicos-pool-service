@@ -38,7 +38,7 @@ export async function POST() {
 
         // Send Email via Resend
         const { error: emailError } = await resend.emails.send({
-            from: 'Iablee Security <security@security.iablee.com>',
+            from: 'Cadenza Security <security@security.cadenza.com>',
             to: [user.email],
             subject: 'Your Security PIN Reset Code',
             html: `<p>Your security code is: <strong>${code}</strong></p><p>This code will expire in 15 minutes.</p>`
