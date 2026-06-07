@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cadenza — Brand Guidelines</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;0,6..96,700;1,6..96,400;1,6..96,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root{ --ink:#0F1419; --brass:#C7A85F; --linen:#FAF7F2; --white:#FFFFFF; --inkdeep:#15191F; --hair:#ECE6DB; }
+*{ box-sizing:border-box; }
+html{ scroll-behavior:smooth; }
+body{ margin:0; background:#E9E6DF; color:var(--ink); font-family:'Inter',sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased; }
+.container{ max-width:980px; margin:0 auto; padding:46px 22px 80px; }
+
+.page-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; padding-bottom:18px; border-bottom:1px solid #D8D3C8; }
+.ph-left{ display:flex; align-items:center; gap:13px; }
+.ph-meta{ font-size:12px; color:#7c736a; text-align:right; line-height:1.6; }
+.lede{ font-size:14.5px; color:#5B6470; max-width:660px; margin:20px 0 30px; line-height:1.65; }
+.lede em{ font-family:'Bodoni Moda',serif; font-style:italic; color:#7c736a; }
+
+.board{ display:flex; flex-direction:column; gap:16px; }
+.panel{ border-radius:16px; padding:42px 36px; position:relative; }
+.cap{ position:absolute; top:14px; left:18px; font-family:'Inter',sans-serif; font-weight:600; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; }
+.subtitle{ font-family:'Inter',sans-serif; color:#6b7280; font-size:14px; line-height:1.55; }
+
+.wm{ font-family:'Bodoni Moda',serif; font-weight:500; line-height:1; letter-spacing:.3px; }
+.serifC{ font-family:'Bodoni Moda',serif; font-weight:600; line-height:1; }
+.tagit{ font-family:'Bodoni Moda',serif; font-style:italic; font-weight:400; }
+.ui{ font-family:'Inter',sans-serif; }
+.mono{ font-family:'JetBrains Mono',monospace; }
+
+.tile{ border-radius:24%; display:flex; align-items:center; justify-content:center; }
+.swatch{ border-radius:12px; height:96px; display:flex; align-items:flex-end; padding:12px; }
+.swname{ font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px; }
+.swhex{ font-family:'JetBrains Mono',monospace; font-size:11px; opacity:.85; }
+.swrole{ font-family:'Inter',sans-serif; font-size:11px; color:#8a8f98; margin-top:5px; }
+.btn-brass{ font-family:'Inter',sans-serif; font-weight:600; font-size:13px; background:var(--brass); color:#1a1407; padding:9px 18px; border-radius:8px; display:inline-block; }
+
+.ts-row{ display:flex; align-items:baseline; gap:20px; padding:13px 0; border-bottom:1px solid var(--hair); }
+.ts-spec{ font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#9aa0a8; white-space:nowrap; min-width:182px; }
+
+.dir-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:26px; margin-top:18px; }
+.dir h4{ font-family:'Inter',sans-serif; font-size:13px; font-weight:700; margin:0 0 8px; color:var(--ink); }
+.dir p{ font-family:'Inter',sans-serif; font-size:12.5px; line-height:1.6; color:#5B6470; margin:0; }
+.dir .lbl{ font-family:'Inter',sans-serif; font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--brass); }
+
+.ref{ width:100%; border-collapse:collapse; margin-top:14px; }
+.ref td{ font-family:'JetBrains Mono',monospace; font-size:11.5px; padding:7px 10px; border-bottom:1px solid var(--hair); color:#3a3f47; }
+.ref td:first-child{ color:#9aa0a8; width:140px; }
+.dot{ display:inline-block; width:11px; height:11px; border-radius:3px; vertical-align:middle; margin-right:8px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08); }
+
+.foot{ margin-top:30px; font-family:'Inter',sans-serif; font-size:12px; color:#8a8f98; text-align:center; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="page-head">
+    <div class="ph-left">
+      <div class="tile" style="width:46px;height:46px;background:var(--linen);box-shadow:inset 0 0 0 1px var(--hair);"><span class="serifC" style="font-size:30px;color:var(--ink);">C</span></div>
+      <div>
+        <div class="wm" style="font-size:30px;color:var(--ink);">Cadenza</div>
+        <div class="ui" style="font-size:12px;color:#7c736a;letter-spacing:.04em;">Brand Guidelines</div>
+      </div>
+    </div>
+    <div class="ph-meta">Version 1.0 · 2026<br>Didone serif · Brass &amp; Linen</div>
+  </header>
+
+  <p class="lede">Cadenza is the operator’s control plane for field-service businesses. The platform orchestrates the whole movement — intake, property, route, schedule, dispatch — so the technician can step on stage and perform. The identity lives in the name and the typography, not in decoration. <em>Every visit, performed.</em></p>
+
+  <div class="board">
+
+    <!-- 01 WORDMARK LIGHT -->
+    <div class="panel" style="background:var(--linen);border:1px solid var(--hair);">
+      <span class="cap" style="color:#b3a07a;">01 · Primary wordmark</span>
+      <div style="display:flex;align-items:center;justify-content:center;min-height:150px;">
+        <span class="wm" style="font-size:clamp(48px,7vw,86px);color:var(--ink);">Cadenza</span>
+      </div>
+    </div>
+
+    <!-- 02 WORDMARK DARK -->
+    <div class="panel" style="background:var(--inkdeep);">
+      <span class="cap" style="color:#5d6470;">02 · Inverted wordmark</span>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:150px;gap:16px;">
+        <span class="wm" style="font-size:clamp(48px,7vw,86px);color:#F3EEE4;">Cadenza</span>
+        <span style="width:54px;height:2px;background:var(--brass);border-radius:2px;"></span>
+      </div>
+    </div>
+
+    <!-- 03 MONOGRAM / APP ICON -->
+    <div class="panel" style="background:var(--white);border:1px solid var(--hair);">
+      <span class="cap" style="color:#b3a07a;">03 · Monogram &amp; app icon</span>
+      <div style="display:flex;gap:34px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:10px;">
+        <div style="text-align:center;">
+          <div class="tile" style="width:118px;height:118px;background:var(--linen);box-shadow:0 8px 24px rgba(15,20,25,.1),inset 0 0 0 1px var(--hair);"><span class="serifC" style="font-size:74px;color:var(--ink);">C</span></div>
+          <div class="ui" style="font-size:11px;color:#8a8f98;margin-top:8px;">Primary · ink on linen</div>
+        </div>
+        <div style="text-align:center;">
+          <div class="tile" style="width:118px;height:118px;background:var(--inkdeep);box-shadow:0 8px 24px rgba(15,20,25,.22);"><span class="serifC" style="font-size:74px;color:var(--brass);">C</span></div>
+          <div class="ui" style="font-size:11px;color:#8a8f98;margin-top:8px;">Dark variant · brass on ink</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="display:flex;gap:10px;align-items:flex-end;justify-content:center;">
+            <div class="tile" style="width:48px;height:48px;border-radius:26%;background:var(--linen);box-shadow:inset 0 0 0 1px var(--hair);"><span class="serifC" style="font-size:30px;font-weight:700;color:var(--ink);">C</span></div>
+            <div class="tile" style="width:32px;height:32px;border-radius:26%;background:var(--linen);box-shadow:inset 0 0 0 1px var(--hair);"><span class="serifC" style="font-size:21px;font-weight:700;color:var(--ink);">C</span></div>
+            <div class="tile" style="width:20px;height:20px;border-radius:28%;background:var(--linen);box-shadow:inset 0 0 0 1px var(--hair);"><span class="serifC" style="font-size:14px;font-weight:700;color:var(--ink);">C</span></div>
+          </div>
+          <div class="ui" style="font-size:11px;color:#8a8f98;margin-top:8px;">Favicon · sturdier optical weight</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 04 PALETTE -->
+    <div class="panel" style="background:var(--white);border:1px solid var(--hair);">
+      <span class="cap" style="color:#b3a07a;">04 · Color tokens</span>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:14px;">
+        <div><div class="swatch" style="background:#0F1419;"><span class="swname" style="color:#F3EEE4;">Ink</span></div><div class="swhex" style="margin-top:6px;">#0F1419</div><div class="swrole">Primary text</div></div>
+        <div><div class="swatch" style="background:#C7A85F;"><span class="swname" style="color:#1a1407;">Brass</span></div><div class="swhex" style="margin-top:6px;">#C7A85F</div><div class="swrole">Accent · CTAs, rules</div></div>
+        <div><div class="swatch" style="background:#FAF7F2;box-shadow:inset 0 0 0 1px var(--hair);"><span class="swname" style="color:#0F1419;">Linen</span></div><div class="swhex" style="margin-top:6px;">#FAF7F2</div><div class="swrole">Warm surface</div></div>
+        <div><div class="swatch" style="background:#FFFFFF;box-shadow:inset 0 0 0 1px var(--hair);"><span class="swname" style="color:#0F1419;">White</span></div><div class="swhex" style="margin-top:6px;">#FFFFFF</div><div class="swrole">Cards · base</div></div>
+        <div><div class="swatch" style="background:#15191F;"><span class="swname" style="color:#F3EEE4;">Ink Deep</span></div><div class="swhex" style="margin-top:6px;">#15191F</div><div class="swrole">Dark-mode surface</div></div>
+      </div>
+      <div class="ui" style="font-size:11.5px;color:#9aa0a8;margin-top:14px;">+ semantics tuned to the palette: success #3E7D5A · warning #B7791F · danger #B4453B · info #3E6A8D · hairline #ECE6DB · muted text #6B7280.</div>
+    </div>
+
+    <!-- 05 HERO -->
+    <div class="panel" style="background:var(--linen);border:1px solid var(--hair);padding:0;overflow:hidden;">
+      <span class="cap" style="color:#b3a07a;z-index:2;">05 · Hero composition</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 26px;border-bottom:1px solid var(--hair);">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <span class="serifC" style="font-size:22px;color:var(--ink);">C</span>
+          <span class="wm" style="font-size:19px;color:var(--ink);">Cadenza</span>
+        </div>
+        <div class="ui" style="display:flex;gap:22px;align-items:center;font-size:13px;color:#5B6470;">
+          <span>Product</span><span>Pricing</span><span>Company</span><span class="btn-brass">Start free</span>
+        </div>
+      </div>
+      <div style="text-align:center;padding:74px 24px 84px;">
+        <div class="ui" style="font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#b3a07a;margin-bottom:22px;">The operator’s control plane</div>
+        <span class="wm" style="font-size:clamp(56px,9vw,104px);color:var(--ink);display:block;">Cadenza</span>
+        <div class="tagit" style="font-size:clamp(17px,2.4vw,22px);color:#7c736a;margin-top:18px;">Every visit, performed.</div>
+        <div style="margin-top:34px;display:flex;gap:16px;justify-content:center;align-items:center;">
+          <span class="btn-brass" style="padding:12px 24px;font-size:14px;">Start free</span>
+          <span class="ui" style="font-size:14px;color:var(--ink);border-bottom:1px solid var(--brass);padding-bottom:2px;">Book a demo →</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 06 TYPE SCALE -->
+    <div class="panel" style="background:var(--white);border:1px solid var(--hair);">
+      <span class="cap" style="color:#b3a07a;">06 · Typography</span>
+      <div style="margin-top:18px;">
+        <div class="ts-row"><span class="ts-spec">Bodoni Moda · 500 · 56/1.05</span><span class="wm" style="font-size:42px;color:var(--ink);">Display &amp; wordmark</span></div>
+        <div class="ts-row"><span class="ts-spec">Inter · 600 · 32/1.15</span><span class="ui" style="font-size:28px;font-weight:600;color:var(--ink);">Heading H1</span></div>
+        <div class="ts-row"><span class="ts-spec">Inter · 600 · 24/1.2</span><span class="ui" style="font-size:21px;font-weight:600;color:var(--ink);">Heading H2</span></div>
+        <div class="ts-row"><span class="ts-spec">Inter · 600 · 18/1.3</span><span class="ui" style="font-size:17px;font-weight:600;color:var(--ink);">Heading H3</span></div>
+        <div class="ts-row"><span class="ts-spec">Inter · 400 · 16/1.55</span><span class="ui" style="font-size:16px;color:#3a3f47;">Body — the workhorse for product UI and prose.</span></div>
+        <div class="ts-row"><span class="ts-spec">Inter · 600 · 12/1.4 · .08em</span><span class="ui" style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8a8f98;">Overline / Label</span></div>
+        <div class="ts-row" style="border-bottom:none;"><span class="ts-spec">JetBrains Mono · 400 · 13/1.5</span><span class="mono" style="font-size:13px;color:#3a3f47;">route_id: "tue-am-north" · 09:40</span></div>
+      </div>
+    </div>
+
+    <!-- 07 DIRECTION -->
+    <div class="panel" style="background:var(--white);border:1px solid var(--hair);">
+      <span class="cap" style="color:#b3a07a;">07 · Iconography · Photography · Motion</span>
+      <div class="dir-grid">
+        <div class="dir">
+          <div class="lbl">Iconography</div>
+          <h4>Even, geometric, unfilled</h4>
+          <p>Line icons, 1.5px stroke at 24px, geometric construction with lightly rounded joins (~2px). Outline-only in UI; filled reserved for status. Lucide / Phosphor (regular) as the reference set — matches the wordmark’s calm confidence.</p>
+        </div>
+        <div class="dir">
+          <div class="lbl">Photography</div>
+          <h4>Editorial, not stock</h4>
+          <p>Real field craft shot like premium lifestyle — natural light, warm-neutral, lightly desaturated. Hands and tools mid-task: the performance, not staged smiles. Generous negative space for wordmark overlay. Avoid pool-cyan; stay vertical-agnostic.</p>
+        </div>
+        <div class="dir">
+          <div class="lbl">Motion</div>
+          <h4>Slow, eased, restrained</h4>
+          <p>240–420ms on cubic-bezier(0.22, 1, 0.36, 1). Never bouncy. Signature: the brass “echo” — the C or an underline reveals with one faint trailing echo on load. Page transitions: fade + 8px rise. Decoration earns its place or it’s cut.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 08 TOKEN QUICK REFERENCE -->
+    <div class="panel" style="background:var(--linen);border:1px solid var(--hair);">
+      <span class="cap" style="color:#b3a07a;">08 · Token quick reference</span>
+      <table class="ref">
+        <tr><td>--ink</td><td><span class="dot" style="background:#0F1419;"></span>#0F1419</td><td>Primary text / dark fills</td></tr>
+        <tr><td>--brass</td><td><span class="dot" style="background:#C7A85F;"></span>#C7A85F</td><td>Accent · CTAs · rules · echo</td></tr>
+        <tr><td>--linen</td><td><span class="dot" style="background:#FAF7F2;"></span>#FAF7F2</td><td>Warm primary surface</td></tr>
+        <tr><td>--white</td><td><span class="dot" style="background:#FFFFFF;"></span>#FFFFFF</td><td>Cards · base surface</td></tr>
+        <tr><td>--ink-deep</td><td><span class="dot" style="background:#15191F;"></span>#15191F</td><td>Dark-mode surface</td></tr>
+        <tr><td>--hairline</td><td><span class="dot" style="background:#ECE6DB;"></span>#ECE6DB</td><td>Borders · dividers</td></tr>
+        <tr><td>--muted</td><td><span class="dot" style="background:#6B7280;"></span>#6B7280</td><td>Secondary text</td></tr>
+        <tr><td>font/display</td><td>Bodoni Moda</td><td>Wordmark · hero · display</td></tr>
+        <tr><td>font/ui</td><td>Inter</td><td>Headings · body · labels</td></tr>
+        <tr><td>font/mono</td><td>JetBrains Mono</td><td>Code · data · IDs</td></tr>
+      </table>
+    </div>
+
+  </div>
+
+  <p class="foot">Cadenza Brand Guidelines · v1.0 · “Every visit, performed.”<br>Stand-in web fonts (Bodoni Moda / Inter / JetBrains Mono) approximate the final tuned wordmark.</p>
+
+</div>
+</body>
+</html>

@@ -11,6 +11,7 @@
 !.yarn/versions
 
 /docs/whatsapp
+.worktrees/
 
 # testing
 /coverage
@@ -48,3 +49,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Superpowers brainstorm artifacts
+.superpowers/

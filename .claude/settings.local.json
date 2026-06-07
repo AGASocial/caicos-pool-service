@@ -21,7 +21,11 @@
       "Bash(pip3 install *)",
       "Bash(sips -g pixelWidth -g pixelHeight /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/adaptive-icon.png /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/favicon.png /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/splash-icon.png)",
       "Bash(sips -g pixelWidth -g pixelHeight -g hasAlpha /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/adaptive-icon.png /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/favicon.png /Users/gabrielvega/Projects/agasocial/caicos/technician-app/assets/images/splash-icon.png)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git -C /Users/gabrielvega/Projects/agasocial/caicos/.worktrees/rebrand-cadenza status --porcelain=v1)",
+      "Bash(git cherry-pick *)",
+      "Bash(echo \"--- exit: $? ---\")",
+      "Bash(/Users/gabrielvega/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/scripts/start-server.sh --project-dir /Users/gabrielvega/Projects/agasocial/caicos)"
     ]
   }
 }
