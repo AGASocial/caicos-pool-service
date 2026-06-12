@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 import { reconcilePendingRouteJobsForStop } from '@/lib/reconcile-route-jobs';
 import { dayBeforeYmd, todayUtcYmd } from '@/lib/route-stop-schedule';
 import {
@@ -71,7 +71,7 @@ type StopRow = {
 };
 
 async function persistScheduleSegment(
-  client: CaicosSupabaseClient,
+  client: CadenzaSupabaseClient,
   args: {
     routeStopId: string;
     routeId: string;
@@ -85,7 +85,7 @@ async function persistScheduleSegment(
   const { routeStopId, routeId, propertyId, effectiveFrom, ...pattern } = args;
 
   const { data: atDate, error: selErr } = await client
-    .from('caicos_route_stop_schedules')
+    .from('cadenza_route_stop_schedules')
     .select('id')
     .eq('route_stop_id', routeStopId)
     .eq('effective_from', effectiveFrom)
@@ -97,7 +97,7 @@ async function persistScheduleSegment(
 
   if (atDate && typeof (atDate as { id: string }).id === 'string') {
     const { error } = await client
-      .from('caicos_route_stop_schedules')
+      .from('cadenza_route_stop_schedules')
       .update({
         day_of_week: pattern.day_of_week,
         service_frequency: pattern.service_frequency,
@@ -109,14 +109,14 @@ async function persistScheduleSegment(
     const before = dayBeforeYmd(effectiveFrom);
     if (before) {
       const { error: closeErr } = await client
-        .from('caicos_route_stop_schedules')
+        .from('cadenza_route_stop_schedules')
         .update({ effective_until: before })
         .eq('route_stop_id', routeStopId)
         .is('effective_until', null)
         .lt('effective_from', effectiveFrom);
       if (closeErr) throw new Error(closeErr.message);
     }
-    const { error: insErr } = await client.from('caicos_route_stop_schedules').insert({
+    const { error: insErr } = await client.from('cadenza_route_stop_schedules').insert({
       route_stop_id: routeStopId,
       effective_from: effectiveFrom,
       effective_until: null,
@@ -166,9 +166,9 @@ export async function PATCH(
         ? (body.schedule as Record<string, unknown>)
         : null;
 
-    const client = supabase as unknown as CaicosSupabaseClient;
+    const client = supabase as unknown as CadenzaSupabaseClient;
     const { data: row, error: fetchErr } = await client
-      .from('caicos_route_stops')
+      .from('cadenza_route_stops')
       .select(
         'id, route_id, property_id, stop_order, day_of_week, service_frequency, week_ordinal'
       )
@@ -207,7 +207,7 @@ export async function PATCH(
 
     if (!hasNestedSchedule && !hasLegacyScheduleChange && onlyStopOrder) {
       const { data, error } = await client
-        .from('caicos_route_stops')
+        .from('cadenza_route_stops')
         .update({ stop_order: updates.stop_order })
         .eq('id', stopId)
         .eq('route_id', routeId)
@@ -277,7 +277,7 @@ export async function PATCH(
 
       if (updates.stop_order !== undefined) {
         const { error: ordErr } = await client
-          .from('caicos_route_stops')
+          .from('cadenza_route_stops')
           .update({ stop_order: updates.stop_order })
           .eq('id', stopId)
           .eq('route_id', routeId);
@@ -287,7 +287,7 @@ export async function PATCH(
       }
 
       const { data: out, error: outErr } = await client
-        .from('caicos_route_stops')
+        .from('cadenza_route_stops')
         .select(
           'id, property_id, stop_order, day_of_week, service_frequency, week_ordinal, created_at'
         )
@@ -340,7 +340,7 @@ export async function PATCH(
 
       if (updates.stop_order !== undefined) {
         const { error: ordErr } = await client
-          .from('caicos_route_stops')
+          .from('cadenza_route_stops')
           .update({ stop_order: updates.stop_order })
           .eq('id', stopId)
           .eq('route_id', routeId);
@@ -350,7 +350,7 @@ export async function PATCH(
       }
 
       const { data: out, error: outErr } = await client
-        .from('caicos_route_stops')
+        .from('cadenza_route_stops')
         .select(
           'id, property_id, stop_order, day_of_week, service_frequency, week_ordinal, created_at'
         )
@@ -364,7 +364,7 @@ export async function PATCH(
 
     if (updates.stop_order !== undefined) {
       const { data, error } = await client
-        .from('caicos_route_stops')
+        .from('cadenza_route_stops')
         .update({ stop_order: updates.stop_order })
         .eq('id', stopId)
         .eq('route_id', routeId)
@@ -396,8 +396,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { error, count } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_route_stops')
+  const { error, count } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_route_stops')
     .delete({ count: 'exact' })
     .eq('id', stopId)
     .eq('route_id', routeId);

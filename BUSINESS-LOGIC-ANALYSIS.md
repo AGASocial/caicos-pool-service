@@ -1,4 +1,4 @@
-# 📊 CAICOS POOL SERVICE - Business Logic Analysis
+# 📊 CADENZA POOL SERVICE - Business Logic Analysis
 ## Gabriella's Chat vs. Current Feature Specs
 
 ---
@@ -99,7 +99,7 @@
 - Should be in reports
 
 ### 5. **Service Issue Documentation**
-**Reality:** Messages with additional info = Issues requiring Caicos action
+**Reality:** Messages with additional info = Issues requiring Cadenza action
 - 92.5% of messages contain additional information/issues
 - Examples: "Pisicna tiene muy mala circulación, tienen que programar la bomba..."
 **Spec:** Mentions "notes" field but doesn't emphasize issue escalation
@@ -107,7 +107,7 @@
 **Solution Needed:**
 - Flag system for issues requiring follow-up
 - Service classification: Timer, Filter cartridge, Motor damaged, Motor service, etc.
-- Queue for Caicos to address issues
+- Queue for Cadenza to address issues
 
 ### 6. **Data Source Challenge**
 **Reality:** WhatsApp is the primary data source (technicians won't change)
@@ -144,7 +144,7 @@
 
 2. **Service Issues Queue**
    - Filter by issue type
-   - Assign to Caicos team member
+   - Assign to Cadenza team member
    - Track resolution status
    - Prevent duplicate issue reports
 

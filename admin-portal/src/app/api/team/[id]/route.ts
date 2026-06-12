@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -33,11 +33,11 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: 'Body must include is_active (boolean)' }, { status: 400 });
   }
 
-  const client = supabase as unknown as CaicosSupabaseClient;
+  const client = supabase as unknown as CadenzaSupabaseClient;
 
   // Current user's profile (company + role)
   const { data: callerProfile, error: callerError } = await client
-    .from('caicos_profiles')
+    .from('cadenza_profiles')
     .select('company_id, role')
     .eq('id', user.id)
     .single();
@@ -48,7 +48,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   // Target must be in same company
   const { data: targetProfile, error: targetError } = await client
-    .from('caicos_profiles')
+    .from('cadenza_profiles')
     .select('id, company_id')
     .eq('id', targetId)
     .single();
@@ -69,8 +69,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: 'Only admins can activate or deactivate other team members.' }, { status: 403 });
   }
 
-  const { error: updateError } = await (supabaseAdmin as unknown as CaicosSupabaseClient)
-    .from('caicos_profiles')
+  const { error: updateError } = await (supabaseAdmin as unknown as CadenzaSupabaseClient)
+    .from('cadenza_profiles')
     .update({ is_active: body.is_active })
     .eq('id', targetId);
 

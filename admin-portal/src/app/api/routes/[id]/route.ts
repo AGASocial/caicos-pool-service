@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 export async function GET(
   _request: NextRequest,
@@ -13,10 +13,10 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const client = supabase as unknown as CaicosSupabaseClient;
+  const client = supabase as unknown as CadenzaSupabaseClient;
 
   const { data: route, error } = await client
-    .from('caicos_routes')
+    .from('cadenza_routes')
     .select(`
       id,
       name,
@@ -25,15 +25,15 @@ export async function GET(
       is_active,
       created_at,
       updated_at,
-      technician:caicos_profiles!technician_id(id, full_name),
-      stops:caicos_route_stops(
+      technician:cadenza_profiles!technician_id(id, full_name),
+      stops:cadenza_route_stops(
         id,
         property_id,
         stop_order,
         day_of_week,
         service_frequency,
         week_ordinal,
-        property:caicos_properties(id, customer_name, address)
+        property:cadenza_properties(id, customer_name, address)
       )
     `)
     .eq('id', id)
@@ -64,7 +64,7 @@ export async function GET(
 
   if (stopIds.length > 0) {
     const { data: scheduleRows, error: schedError } = await client
-      .from('caicos_route_stop_schedules')
+      .from('cadenza_route_stop_schedules')
       .select(
         'id, route_stop_id, effective_from, effective_until, day_of_week, service_frequency, week_ordinal'
       )
@@ -119,8 +119,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }
 
-    const { data, error } = await (supabase as unknown as CaicosSupabaseClient)
-      .from('caicos_routes')
+    const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+      .from('cadenza_routes')
       .update(updates)
       .eq('id', id)
       .select('id, name, technician_id, day_of_week, is_active, updated_at')
@@ -149,7 +149,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { error } = await (supabase as unknown as CaicosSupabaseClient).from('caicos_routes').delete().eq('id', id);
+  const { error } = await (supabase as unknown as CadenzaSupabaseClient).from('cadenza_routes').delete().eq('id', id);
 
   if (error) {
     console.error('Supabase error deleting route:', error);

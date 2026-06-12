@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 export async function GET() {
   const { supabase, user } = await createAuthenticatedRouteClient();
@@ -9,18 +9,18 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const client = supabase as unknown as CaicosSupabaseClient;
+  const client = supabase as unknown as CadenzaSupabaseClient;
 
   try {
-    // Check if user has a Caicos profile (company_id)
+    // Check if user has a Cadenza profile (company_id)
     const { data: profile, error: profileError } = await client
-      .from('caicos_profiles')
+      .from('cadenza_profiles')
       .select('company_id')
       .eq('id', user.id)
       .single();
 
     if (profileError || !profile?.company_id) {
-      // No Caicos company: return zeros and empty lists
+      // No Cadenza company: return zeros and empty lists
       return NextResponse.json({
         stats: {
           totalJobs: 0,
@@ -35,10 +35,10 @@ export async function GET() {
 
     // Counts (RLS filters by company)
     const [jobsRes, routesRes, teamRes, propertiesRes] = await Promise.all([
-      client.from('caicos_service_jobs').select('*', { count: 'exact', head: true }),
-      client.from('caicos_routes').select('*', { count: 'exact', head: true }),
-      client.from('caicos_profiles').select('*', { count: 'exact', head: true }),
-      client.from('caicos_properties').select('*', { count: 'exact', head: true }),
+      client.from('cadenza_service_jobs').select('*', { count: 'exact', head: true }),
+      client.from('cadenza_routes').select('*', { count: 'exact', head: true }),
+      client.from('cadenza_profiles').select('*', { count: 'exact', head: true }),
+      client.from('cadenza_properties').select('*', { count: 'exact', head: true }),
     ]);
 
     const totalJobs = jobsRes.count ?? 0;
@@ -56,20 +56,20 @@ export async function GET() {
       scheduled_time,
       status,
       created_at,
-      property:caicos_properties!property_id(id, customer_name, address),
-      technician:caicos_profiles!technician_id(id, full_name),
-      route:caicos_routes!route_id(id, name)
+      property:cadenza_properties!property_id(id, customer_name, address),
+      technician:cadenza_profiles!technician_id(id, full_name),
+      route:cadenza_routes!route_id(id, name)
     `;
 
     const [completedRes, pendingRes] = await Promise.all([
       client
-        .from('caicos_service_jobs')
+        .from('cadenza_service_jobs')
         .select(jobSelect)
         .eq('status', 'completed')
         .order('created_at', { ascending: false })
         .limit(4),
       client
-        .from('caicos_service_jobs')
+        .from('cadenza_service_jobs')
         .select(jobSelect)
         .eq('status', 'pending')
         .order('created_at', { ascending: false })

@@ -1,4 +1,4 @@
-# CAICOS Platform - Development Checklist
+# CADENZA Platform - Development Checklist
 
 **Last Updated:** 2026-02-28
 **Project:** Admin Portal + Technician Mobile App
@@ -50,14 +50,14 @@
 ### Database & Backend
 - [x] Supabase PostgreSQL database setup
 - [x] User authentication schema (auth.users)
-- [x] User profiles table (caicos_profiles)
-- [x] Company/organization management tables (caicos_companies)
+- [x] User profiles table (cadenza_profiles)
+- [x] Company/organization management tables (cadenza_companies)
 - [x] Row-level security (RLS) policies (in place for data isolation)
-- [x] Service jobs table with status tracking (caicos_service_jobs)
-- [x] Service reports table with photo references (caicos_service_reports)
-- [x] Properties/houses inventory table (caicos_properties)
-- [x] Routes management table (caicos_routes)
-- [x] Team members & roles table (caicos_team_members)
+- [x] Service jobs table with status tracking (cadenza_service_jobs)
+- [x] Service reports table with photo references (cadenza_service_reports)
+- [x] Properties/houses inventory table (cadenza_properties)
+- [x] Routes management table (cadenza_routes)
+- [x] Team members & roles table (cadenza_team_members)
 - [x] Invite codes & token management (RPC-based with get_invite_code_payload)
 - [ ] Error handling & logging infrastructure
 
@@ -531,7 +531,7 @@
   - [x] Error state & error handling
 
 - [x] Jobs management implemented directly in screens
-  - [x] Fetch jobs from caicos_service_jobs table
+  - [x] Fetch jobs from cadenza_service_jobs table
   - [x] Filter by technician_id & scheduled_date
   - [x] Loading state
   - [x] Refresh function (onRefresh in FlatList)

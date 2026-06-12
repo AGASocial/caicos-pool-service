@@ -1,4 +1,4 @@
-ALTER TABLE public.caicos_profiles
+ALTER TABLE public.cadenza_profiles
   ADD COLUMN IF NOT EXISTS notification_prefs JSONB NOT NULL DEFAULT '{
     "job_assigned": true,
     "job_reminder": true,

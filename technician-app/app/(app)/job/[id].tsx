@@ -70,7 +70,7 @@ export default function JobDetailScreen() {
     company_id: string;
     technician_id: string | null;
     scheduled_date?: string;
-    caicos_properties?: { customer_name: string; address: string; gate_code: string | null; lat: number | null; lng: number | null } | null;
+    cadenza_properties?: { customer_name: string; address: string; gate_code: string | null; lat: number | null; lng: number | null } | null;
   } | null>(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -363,8 +363,8 @@ export default function JobDetailScreen() {
   useEffect(() => {
     if (!id) return;
     supabase
-      .from('caicos_service_jobs')
-      .select('id, status, property_id, company_id, technician_id, scheduled_date, caicos_properties(customer_name, address, gate_code, lat, lng)')
+      .from('cadenza_service_jobs')
+      .select('id, status, property_id, company_id, technician_id, scheduled_date, cadenza_properties(customer_name, address, gate_code, lat, lng)')
       .eq('id', id)
       .single()
       .then(({ data }) => {
@@ -380,7 +380,7 @@ export default function JobDetailScreen() {
     let cancelled = false;
     (async () => {
       const { data: reportRow } = await supabase
-        .from('caicos_service_reports')
+        .from('cadenza_service_reports')
         .select('id, ph_level, chlorine_level, alkalinity, calcium_hardness, cyanuric_acid, salt_level, water_temp_f, skimmed, vacuumed, brushed, emptied_baskets, backwashed, cleaned_filter, pump_ok, filter_ok, heater_ok, cleaner_ok, notes, follow_up_needed, follow_up_notes')
         .eq('job_id', id)
         .order('created_at', { ascending: false })
@@ -422,7 +422,7 @@ export default function JobDetailScreen() {
       setFollowUpNotes((r.follow_up_notes as string) ?? '');
 
       const { data: photoRows } = await supabase
-        .from('caicos_report_photos')
+        .from('cadenza_report_photos')
         .select('id, storage_path')
         .eq('report_id', r.id);
       if (cancelled) return;
@@ -465,7 +465,7 @@ export default function JobDetailScreen() {
 
   useEffect(() => {
     if (!job || started) return;
-    const prop = Array.isArray(job.caicos_properties) ? job.caicos_properties[0] : job.caicos_properties;
+    const prop = Array.isArray(job.cadenza_properties) ? job.cadenza_properties[0] : job.cadenza_properties;
     const lat = prop?.lat ?? null;
     const lng = prop?.lng ?? null;
     if (lat == null || lng == null) return;
@@ -502,7 +502,7 @@ export default function JobDetailScreen() {
     if (!id) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    await supabase.from('caicos_service_jobs').update({ status: 'in_progress' }).eq('id', id);
+    await supabase.from('cadenza_service_jobs').update({ status: 'in_progress' }).eq('id', id);
     setStarted(true);
   }
 
@@ -550,7 +550,7 @@ export default function JobDetailScreen() {
       if (photo.storage_path) {
         await supabase.storage.from('report-photos').remove([photo.storage_path]);
       }
-      const { error } = await supabase.from('caicos_report_photos').delete().eq('id', photo.id);
+      const { error } = await supabase.from('cadenza_report_photos').delete().eq('id', photo.id);
       if (error) {
         Alert.alert('Could not remove photo', error.message ?? 'Delete failed. The photo was removed from the list\u2014you may need to add a policy for deleting report photos.');
       }
@@ -603,7 +603,7 @@ export default function JobDetailScreen() {
       let reportId: string;
       if (existingReportId) {
         const { error: updateErr } = await supabase
-          .from('caicos_service_reports')
+          .from('cadenza_service_reports')
           .update(reportPayload)
           .eq('id', existingReportId);
         if (updateErr) {
@@ -613,7 +613,7 @@ export default function JobDetailScreen() {
         reportId = existingReportId;
       } else {
         const { data: reportRow, error: reportErr } = await supabase
-          .from('caicos_service_reports')
+          .from('cadenza_service_reports')
           .insert(reportPayload)
           .select('id')
           .single();
@@ -624,7 +624,7 @@ export default function JobDetailScreen() {
         reportId = reportRow.id;
       }
 
-      const { error: updateJobErr } = await supabase.from('caicos_service_jobs').update({ status: 'completed' }).eq('id', id);
+      const { error: updateJobErr } = await supabase.from('cadenza_service_jobs').update({ status: 'completed' }).eq('id', id);
       if (updateJobErr) {
         Alert.alert('Error', updateJobErr.message ?? 'Failed to update job status');
         return;
@@ -645,7 +645,7 @@ export default function JobDetailScreen() {
             .from('report-photos')
             .upload(fileName, body, { contentType: 'image/jpeg' });
           if (!uploadErr) {
-            await supabase.from('caicos_report_photos').insert({
+            await supabase.from('cadenza_report_photos').insert({
               report_id: reportId,
               company_id: job.company_id,
               storage_path: fileName,
@@ -686,7 +686,7 @@ export default function JobDetailScreen() {
   async function handlePutOnHold() {
     closeJobMenu();
     if (!id) return;
-    const { error } = await supabase.from('caicos_service_jobs').update({ status: 'pending' }).eq('id', id);
+    const { error } = await supabase.from('cadenza_service_jobs').update({ status: 'pending' }).eq('id', id);
     if (error) {
       Alert.alert('Error', error.message ?? 'Failed to update job');
       return;
@@ -702,7 +702,7 @@ export default function JobDetailScreen() {
     );
   }
 
-  const prop = Array.isArray(job.caicos_properties) ? job.caicos_properties[0] : job.caicos_properties;
+  const prop = Array.isArray(job.cadenza_properties) ? job.cadenza_properties[0] : job.cadenza_properties;
 
   return (
     <ScrollView style={styles.container}>

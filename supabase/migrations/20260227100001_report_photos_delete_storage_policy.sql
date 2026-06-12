@@ -5,5 +5,5 @@ ON storage.objects FOR DELETE
 TO authenticated
 USING (
   bucket_id = 'report-photos'
-  AND (storage.foldername(name))[1] = (SELECT company_id::text FROM caicos_profiles WHERE id = auth.uid())
+  AND (storage.foldername(name))[1] = (SELECT company_id::text FROM cadenza_profiles WHERE id = auth.uid())
 );

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 /** List active visit reasons for the current user's company (for dispatcher / job forms). */
 export async function GET() {
@@ -10,8 +10,8 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_visit_reasons')
+  const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_visit_reasons')
     .select('id, slug, label, sort_order')
     .eq('is_active', true)
     .order('sort_order', { ascending: true });

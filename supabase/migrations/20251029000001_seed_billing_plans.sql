@@ -1,7 +1,7 @@
 -- Seed initial billing plans
--- These plans define the subscription tiers for the caicos platform
+-- These plans define the subscription tiers for the cadenza platform
 -- Free Plan
-INSERT INTO public.caicos_billing_plans
+INSERT INTO public.cadenza_billing_plans
     (
         id          ,
         name        ,
@@ -50,7 +50,7 @@ VALUES
     )
     DO NOTHING;
 -- Necessary Plan - Monthly
-INSERT INTO public.caicos_billing_plans
+INSERT INTO public.cadenza_billing_plans
     (
         id          ,
         name        ,
@@ -99,7 +99,7 @@ VALUES
     )
     DO NOTHING;
 -- Necessary Plan - Yearly
-INSERT INTO public.caicos_billing_plans
+INSERT INTO public.cadenza_billing_plans
     (
         id          ,
         name        ,
@@ -148,7 +148,7 @@ VALUES
     )
     DO NOTHING;
 -- Premium Plan - Monthly
-INSERT INTO public.caicos_billing_plans
+INSERT INTO public.cadenza_billing_plans
     (
         id          ,
         name        ,
@@ -197,7 +197,7 @@ VALUES
     )
     DO NOTHING;
 -- Premium Plan - Yearly
-INSERT INTO public.caicos_billing_plans
+INSERT INTO public.cadenza_billing_plans
     (
         id          ,
         name        ,

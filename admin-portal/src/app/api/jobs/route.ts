@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 /**
  * List jobs for the current user's company.
@@ -22,8 +22,8 @@ export async function GET(request: NextRequest) {
   const routeId = searchParams.get('route_id');
   const dayOfWeekParam = searchParams.get('day_of_week');
 
-  let query = (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_service_jobs')
+  let query = (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_service_jobs')
     .select(`
       id,
       property_id,
@@ -37,10 +37,10 @@ export async function GET(request: NextRequest) {
       job_source,
       visit_kind_id,
       created_at,
-      property:caicos_properties!property_id(id, customer_name, address),
-      technician:caicos_profiles!technician_id(id, full_name),
-      route:caicos_routes!route_id(id, name),
-      visit_kind:caicos_visit_reasons!visit_kind_id(id, slug, label)
+      property:cadenza_properties!property_id(id, customer_name, address),
+      technician:cadenza_profiles!technician_id(id, full_name),
+      route:cadenza_routes!route_id(id, name),
+      visit_kind:cadenza_visit_reasons!visit_kind_id(id, slug, label)
     `)
     .order('scheduled_date', { ascending: true })
     .order('scheduled_time', { ascending: true, nullsFirst: false });
@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: profile, error: profileError } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_profiles')
+  const { data: profile, error: profileError } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_profiles')
     .select('company_id')
     .eq('id', user.id)
     .single();
@@ -127,8 +127,8 @@ export async function POST(request: NextRequest) {
     const visitKindId: string | null =
       typeof visit_kind_id === 'string' && visit_kind_id.trim() ? visit_kind_id.trim() : null;
     if (visitKindId) {
-      const { data: kindRow, error: kindErr } = await (supabase as unknown as CaicosSupabaseClient)
-        .from('caicos_visit_reasons')
+      const { data: kindRow, error: kindErr } = await (supabase as unknown as CadenzaSupabaseClient)
+        .from('cadenza_visit_reasons')
         .select('id')
         .eq('id', visitKindId)
         .eq('company_id', profile.company_id)
@@ -145,9 +145,9 @@ export async function POST(request: NextRequest) {
     const validStatuses = ['pending', 'in_progress', 'completed', 'skipped', 'cancelled'];
     const jobStatus = validStatuses.includes(status) ? status : 'pending';
 
-    /** Route from pattern (caicos_route_stops) so ad-hoc jobs still link to the property's route for reporting. */
-    const { data: stopRow, error: stopErr } = await (supabase as unknown as CaicosSupabaseClient)
-      .from('caicos_route_stops')
+    /** Route from pattern (cadenza_route_stops) so ad-hoc jobs still link to the property's route for reporting. */
+    const { data: stopRow, error: stopErr } = await (supabase as unknown as CadenzaSupabaseClient)
+      .from('cadenza_route_stops')
       .select('route_id')
       .eq('property_id', property_id)
       .maybeSingle();
@@ -181,8 +181,8 @@ export async function POST(request: NextRequest) {
       visit_kind_id: visitKindId,
     };
 
-    const { data, error } = await (supabase as unknown as CaicosSupabaseClient)
-      .from('caicos_service_jobs')
+    const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+      .from('cadenza_service_jobs')
       .insert(row)
       .select(
         'id, property_id, technician_id, route_id, scheduled_date, scheduled_time, status, job_source, visit_kind_id, created_at'

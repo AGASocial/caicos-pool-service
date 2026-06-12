@@ -64,7 +64,7 @@ export default function NotificationsScreen() {
         if (!user) return;
         userIdRef.current = user.id;
         const { data } = await supabase
-          .from('caicos_profiles')
+          .from('cadenza_profiles')
           .select('notification_prefs')
           .eq('id', user.id)
           .single();
@@ -82,7 +82,7 @@ export default function NotificationsScreen() {
     setPrefs(next);
     if (!userIdRef.current) return;
     const { error } = await supabase
-      .from('caicos_profiles')
+      .from('cadenza_profiles')
       .update({ notification_prefs: next })
       .eq('id', userIdRef.current);
     if (error) {

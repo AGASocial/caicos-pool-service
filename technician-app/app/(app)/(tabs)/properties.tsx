@@ -18,9 +18,9 @@ export default function PropertiesScreen() {
         if (!user || cancelled) return;
 
         const { data: stops } = await supabase
-          .from('caicos_route_stops')
-          .select('property_id, caicos_routes!inner(technician_id)')
-          .eq('caicos_routes.technician_id', user.id);
+          .from('cadenza_route_stops')
+          .select('property_id, cadenza_routes!inner(technician_id)')
+          .eq('cadenza_routes.technician_id', user.id);
 
         if (cancelled) return;
 
@@ -32,7 +32,7 @@ export default function PropertiesScreen() {
         }
 
         const { data } = await supabase
-          .from('caicos_properties')
+          .from('cadenza_properties')
           .select('id, customer_name, address, pool_type')
           .in('id', propertyIds)
           .eq('is_active', true)

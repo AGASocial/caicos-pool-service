@@ -14,7 +14,7 @@ function getLocalDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-type JobWithProperty = ServiceJob & { caicos_properties?: { customer_name: string; address: string } | null };
+type JobWithProperty = ServiceJob & { cadenza_properties?: { customer_name: string; address: string } | null };
 
 export default function JobsScreen() {
   const [jobs, setJobs] = useState<JobWithProperty[]>([]);
@@ -32,14 +32,14 @@ export default function JobsScreen() {
     if (!user) return;
     const [todayRes, overdueRes] = await Promise.all([
       supabase
-        .from('caicos_service_jobs')
-        .select('id, status, scheduled_date, scheduled_time, route_order, estimated_duration_min, caicos_properties(customer_name, address)')
+        .from('cadenza_service_jobs')
+        .select('id, status, scheduled_date, scheduled_time, route_order, estimated_duration_min, cadenza_properties(customer_name, address)')
         .eq('scheduled_date', today)
         .eq('technician_id', user.id)
         .order('route_order', { nullsFirst: false }),
       supabase
-        .from('caicos_service_jobs')
-        .select('id, status, scheduled_date, scheduled_time, route_order, estimated_duration_min, caicos_properties(customer_name, address)')
+        .from('cadenza_service_jobs')
+        .select('id, status, scheduled_date, scheduled_time, route_order, estimated_duration_min, cadenza_properties(customer_name, address)')
         .lt('scheduled_date', today)
         .eq('technician_id', user.id)
         .in('status', ['pending', 'in_progress'])
@@ -288,7 +288,7 @@ export default function JobsScreen() {
               </View>
             </View>
             {overdueJobs.map((item) => {
-              const prop = Array.isArray(item.caicos_properties) ? item.caicos_properties[0] : item.caicos_properties;
+              const prop = Array.isArray(item.cadenza_properties) ? item.cadenza_properties[0] : item.cadenza_properties;
               const dateLabel = item.scheduled_date
                 ? new Date(item.scheduled_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
                 : '';
@@ -319,7 +319,7 @@ export default function JobsScreen() {
         ) : null
       }
       renderItem={({ item }) => {
-        const prop = Array.isArray(item.caicos_properties) ? item.caicos_properties[0] : item.caicos_properties;
+        const prop = Array.isArray(item.cadenza_properties) ? item.cadenza_properties[0] : item.cadenza_properties;
         const isCompleted = item.status === 'completed';
         return (
           <Pressable style={styles.card} onPress={() => router.push(`/(app)/job/${item.id}`)}>

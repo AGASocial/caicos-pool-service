@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 export async function GET(request: NextRequest) {
   const { supabase, user } = await createAuthenticatedRouteClient();
@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
   }
 
   // Resolve company_id for the authenticated user
-  const { data: profile, error: profileError } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_profiles')
+  const { data: profile, error: profileError } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_profiles')
     .select('company_id')
     .eq('id', user.id)
     .single();
@@ -28,9 +28,9 @@ export async function GET(request: NextRequest) {
   const dateFrom = searchParams.get('date_from');
   const dateTo = searchParams.get('date_to');
 
-  let query = (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_service_jobs')
-    .select('id, status, technician_id, technician:caicos_profiles!technician_id(id, full_name)')
+  let query = (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_service_jobs')
+    .select('id, status, technician_id, technician:cadenza_profiles!technician_id(id, full_name)')
     .eq('company_id', company_id);
 
   if (dateFrom) {

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 /**
  * List technicians (and admins/owners) for the current user's company.
@@ -15,8 +15,8 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_profiles')
+  const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_profiles')
     .select('id, full_name, role, is_active')
     // .eq('is_active', true)
     .order('full_name', { ascending: true });

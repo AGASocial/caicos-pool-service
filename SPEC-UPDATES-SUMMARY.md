@@ -118,13 +118,13 @@ Pre-defined categories to standardize issue reporting:
 ---
 
 ## Files Updated
-1. `/sessions/adoring-youthful-wozniak/mnt/caicos/FEATURE-ADMIN-PORTAL.md`
+1. `/sessions/adoring-youthful-wozniak/mnt/cadenza/FEATURE-ADMIN-PORTAL.md`
    - Added Routes Management section
    - Added Weekly Completion Report section
    - Updated User Journeys (4 → 5)
    - Updated MVP checklist
 
-2. `/sessions/adoring-youthful-wozniak/mnt/caicos/FEATURE-TECHNICIAN-APP.md`
+2. `/sessions/adoring-youthful-wozniak/mnt/cadenza/FEATURE-TECHNICIAN-APP.md`
    - Updated Daily Dashboard to route-based
    - Added Issue Categories to service form
    - Made GPS + timestamp explicit requirement

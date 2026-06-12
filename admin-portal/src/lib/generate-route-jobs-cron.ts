@@ -2,7 +2,7 @@ import { addMonths, eachDayOfInterval, format, startOfDay } from 'date-fns';
 import { pickSegmentForDate, toScheduleRow } from '@/lib/route-stop-schedule';
 import { loadSchedulesByStopId } from '@/lib/route-stop-schedules-db';
 import { stopMatchesDate } from '@/lib/schedule';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 type RouteRow = {
   id: string;
@@ -55,10 +55,10 @@ export type EnsureRouteJobsResult = {
 };
 
 /**
- * Idempotently inserts route-sourced `caicos_service_jobs` for every matching stop in [startDate, endDate] (YYYY-MM-DD, inclusive).
+ * Idempotently inserts route-sourced `cadenza_service_jobs` for every matching stop in [startDate, endDate] (YYYY-MM-DD, inclusive).
  */
 export async function ensureRouteJobsForDateRange(
-  client: CaicosSupabaseClient,
+  client: CadenzaSupabaseClient,
   startDate: string,
   endDate: string
 ): Promise<EnsureRouteJobsResult> {
@@ -75,7 +75,7 @@ export async function ensureRouteJobsForDateRange(
   }
 
   const { data: routes, error: routesErr } = await client
-    .from('caicos_routes')
+    .from('cadenza_routes')
     .select('id, company_id, technician_id');
 
   if (routesErr) {
@@ -96,7 +96,7 @@ export async function ensureRouteJobsForDateRange(
 
   const routeIds = routeList.map((r) => r.id);
   const { data: stops, error: stopsErr } = await client
-    .from('caicos_route_stops')
+    .from('cadenza_route_stops')
     .select('id, route_id, property_id, stop_order')
     .in('route_id', routeIds);
 
@@ -122,7 +122,7 @@ export async function ensureRouteJobsForDateRange(
   let offset = 0;
   for (;;) {
     const { data: page, error: exErr } = await client
-      .from('caicos_service_jobs')
+      .from('cadenza_service_jobs')
       .select('route_id, property_id, scheduled_date')
       .eq('job_source', 'route')
       .not('route_id', 'is', null)
@@ -193,7 +193,7 @@ export async function ensureRouteJobsForDateRange(
   let created = 0;
   for (let i = 0; i < toInsert.length; i += chunkSize) {
     const chunk = toInsert.slice(i, i + chunkSize);
-    const { error: insErr } = await client.from('caicos_service_jobs').insert(chunk);
+    const { error: insErr } = await client.from('cadenza_service_jobs').insert(chunk);
     if (insErr) {
       throw new Error(`Failed to insert jobs: ${insErr.message}`);
     }

@@ -5,7 +5,7 @@
 
 ## **Project Brief**
 
-Create a professional, data-rich web dashboard for **Caicos Admin Portal** — an enterprise management platform for pool service company owners and administrators. The portal enables managers to oversee technician work, track service completion, manage properties and routes, and generate payroll reports.
+Create a professional, data-rich web dashboard for **Cadenza Admin Portal** — an enterprise management platform for pool service company owners and administrators. The portal enables managers to oversee technician work, track service completion, manage properties and routes, and generate payroll reports.
 
 **Target Audience:** Company owners, operations managers, dispatchers, payroll admins
 **Platform:** Web (Desktop-first, responsive mobile)
@@ -101,7 +101,7 @@ Sidebar Bottom:
 - **Hamburger menu** on mobile/tablet
 
 ### **Header Bar**
-- **Left:** Caicos logo (40x40px) + Company name in text
+- **Left:** Cadenza logo (40x40px) + Company name in text
 - **Center:** Current page breadcrumb (e.g., "Dashboard / Jobs")
 - **Right:** Date (Thu, Feb 21), Notification icon (bell), User avatar + name
 
@@ -117,7 +117,7 @@ Sidebar Bottom:
 - Right side (50%): Login form on white background
 
 **Form Section:**
-- [ ] Caicos logo top-center (60x60px)
+- [ ] Cadenza logo top-center (60x60px)
 - [ ] Heading: "Admin Portal" (24px, bold, blue)
 - [ ] Subheading: "Manage your pool service team" (14px, gray)
 - [ ] Email input field (full width, 36px height):
@@ -133,7 +133,7 @@ Sidebar Bottom:
   - "First time? Create Company" (link blue)
   - "Forgot password? Reset" (link blue)
   - Divider line or spacing between
-- [ ] Footer text: "© 2024 Caicos. All rights reserved." (10px, gray)
+- [ ] Footer text: "© 2024 Cadenza. All rights reserved." (10px, gray)
 
 **Visual Hints:**
 - Right side padding: 48px
@@ -148,7 +148,7 @@ Sidebar Bottom:
 
 **Form Section:**
 - [ ] Heading: "Create Your Company Account" (24px, bold)
-- [ ] Subheading: "Set up your Caicos account in 2 minutes" (14px, gray)
+- [ ] Subheading: "Set up your Cadenza account in 2 minutes" (14px, gray)
 - [ ] Form fields (stacked, full width):
   - Full Name: [input field]
   - Email: [input field]
@@ -521,7 +521,7 @@ Sidebar Bottom:
 - [ ] Card: Sarah Johnson
   - Avatar: "SJ" (circular, 40x40px, blue background)
   - Name: "Sarah Johnson" (bold, 14px)
-  - Email: "sarah@caicos.com" (gray, 13px)
+  - Email: "sarah@cadenza.com" (gray, 13px)
   - Role badge: "👑 OWNER" (gold/yellow pill, 12px)
   - Status: "🟢 Active" (green, 12px)
   - Joined: "Jan 2024" (gray, 11px)
@@ -556,7 +556,7 @@ Sidebar Bottom:
 - [ ] Text: "Share this link with the technician:" (12px, gray)
 - [ ] Link display (read-only):
   - [ ] Box with gray background (light gray #F5F5F5)
-  - [ ] Text: "https://app.caicos.com/join?code=ABC123XYZ" (monospace, 12px)
+  - [ ] Text: "https://app.cadenza.com/join?code=ABC123XYZ" (monospace, 12px)
   - [ ] [Copy] button (blue, inside right side of box)
 - [ ] Instructions: "Expires in 7 days" (gray, 11px)
 
@@ -577,7 +577,7 @@ Sidebar Bottom:
 **Top Section:**
 - [ ] Avatar: "JT" (circular, 60x60px)
 - [ ] Name: "John Technician" (24px, bold)
-- [ ] Email: "john@caicos.com" (gray, 14px)
+- [ ] Email: "john@cadenza.com" (gray, 14px)
 - [ ] Phone: "(555) 987-6543" (gray, 14px)
 - [ ] Role: "🔧 Technician" (badge, blue pill)
 - [ ] Status: "🟢 Active" (green text, 12px)
@@ -719,8 +719,8 @@ Sidebar Bottom:
 **Company Info:**
 - [ ] Section heading: "Company Information" (16px, bold)
 - [ ] Fields:
-  - Company Name: [Caicos Pool Service] (full width input)
-  - Email: [admin@caicos.com] (full width input)
+  - Company Name: [Cadenza Pool Service] (full width input)
+  - Email: [admin@cadenza.com] (full width input)
   - Phone: [(305) 555-1234] (full width input)
   - Address: [123 Main St, Miami, FL 33101] (full width input)
 - [ ] [SAVE CHANGES] button (secondary blue, 40px)
@@ -734,7 +734,7 @@ Sidebar Bottom:
   - [Manage Billing →] link (blue, 12px)
 
 **Account Section (tab):**
-- [ ] Email: admin@caicos.com (read-only gray input, 13px)
+- [ ] Email: admin@cadenza.com (read-only gray input, 13px)
 - [ ] Password: •••••••• (read-only, gray input)
   - [CHANGE PASSWORD] button (secondary blue, 40px)
 - [ ] Two-Factor Authentication: [Off] (toggle switch, 14px)
@@ -1030,9 +1030,9 @@ Disabled: Gray text, 50% opacity
 
 ### **START HERE: Copy-Paste into Canva/Stitch AI**
 
-"Design a professional web dashboard for **Caicos Admin Portal**, an enterprise management system for pool service companies. Create 10 screens in desktop dimensions (1366x768px):
+"Design a professional web dashboard for **Cadenza Admin Portal**, an enterprise management system for pool service companies. Create 10 screens in desktop dimensions (1366x768px):
 
-1. **Login Screen** — Split layout (left: brand storytelling + pool illustration with soft blue gradient; right: login form). Include Caicos logo, email/password inputs with labels, 'Remember me' checkbox, blue 'SIGN IN →' button. Links below for signup and password reset.
+1. **Login Screen** — Split layout (left: brand storytelling + pool illustration with soft blue gradient; right: login form). Include Cadenza logo, email/password inputs with labels, 'Remember me' checkbox, blue 'SIGN IN →' button. Links below for signup and password reset.
 
 2. **Dashboard** — Header with 'Dashboard' title + date + quick actions ([+ NEW JOB], [+ PROPERTY], [+ INVITE TECH]). Four KPI cards in a row: '22 Jobs Today' (blue card), '8 Completed (36%)' (green card with trend ↑), '14 Pending (64%)' (amber card), '5 Technicians Active' (blue card). Below: 'TODAY'S ROUTES' table showing route name, technician, progress bar ('15 of 22'), and status. Then 'RECENT JOBS' list with property, technician, time, status badge, and view/edit links.
 
@@ -1099,7 +1099,7 @@ Once you generate the initial designs, use these follow-up prompts to iterate:
 
 1. Do you prefer a **light theme** (white) or **dark theme** (charcoal)?
 2. Should the **sidebar be always visible** or collapsible?
-3. Do you want **real company branding** (logo, colors) or generic Caicos branding?
+3. Do you want **real company branding** (logo, colors) or generic Cadenza branding?
 4. Should the **dashboard auto-refresh** with real-time data (show indicator)?
 5. Do you need **mobile/tablet mockups** or desktop-only?
 6. Should **tables have bulk action checkboxes** (select multiple rows)?
@@ -1121,7 +1121,7 @@ Once you generate the initial designs, use these follow-up prompts to iterate:
 4. **Refine:** Ask for variations, dark mode, mobile layouts, interactions
 
 ### **Post-Generation Customization**
-- [ ] Update company logo with your actual Caicos branding
+- [ ] Update company logo with your actual Cadenza branding
 - [ ] Replace sample data (technician names, pool numbers, addresses) with real examples
 - [ ] Adjust color palette to match your brand guidelines
 - [ ] Add company-specific fields (e.g., billing hours, service packages)
@@ -1144,4 +1144,4 @@ Once you generate the initial designs, use these follow-up prompts to iterate:
 
 **Status:** Complete design specification ready for AI generation
 
-*Created for: AGA Social (Caicos App Project)*
+*Created for: AGA Social (Cadenza App Project)*

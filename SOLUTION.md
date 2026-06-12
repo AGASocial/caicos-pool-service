@@ -1,15 +1,15 @@
-# Caicos - Pool Service Platform
+# Cadenza - Pool Service Platform
 ## Comprehensive Solution Design
 
 **Status:** MVP Phase
 **Last Updated:** February 2026
-**Client:** Caicos (Pool Service Company, Florida)
+**Client:** Cadenza (Pool Service Company, Florida)
 
 ---
 
 ## 1. Executive Summary
 
-Caicos is a **multi-tenant SaaS platform** designed to streamline pool service operations across technicians and management. The MVP focuses on the **technician-facing mobile app** and **admin management portal** to handle job scheduling, service reporting, and team coordination.
+Cadenza is a **multi-tenant SaaS platform** designed to streamline pool service operations across technicians and management. The MVP focuses on the **technician-facing mobile app** and **admin management portal** to handle job scheduling, service reporting, and team coordination.
 
 ### MVP Scope
 - ✅ Admin web portal (NextJS + Supabase)
@@ -375,7 +375,7 @@ admin-portal/
 ## 9. Next Steps
 
 1. **Clarify requirements:**
-   - Specific chemical readings for Caicos pools?
+   - Specific chemical readings for Cadenza pools?
    - Any integrations (QuickBooks, Stripe)?
    - Branding requirements?
 

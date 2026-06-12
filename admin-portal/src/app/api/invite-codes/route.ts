@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 import { getBillingService } from '@/lib/billing/server';
 
 const DEFAULT_EXPIRES_DAYS = 7;
@@ -25,8 +25,8 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_invite_codes')
+  const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_invite_codes')
     .select('code, role, expires_at, used_at, created_at')
     .order('created_at', { ascending: false });
 
@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: profile, error: profileError } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_profiles')
+  const { data: profile, error: profileError } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_profiles')
     .select('company_id, role')
     .eq('id', user.id)
     .single();
@@ -86,8 +86,8 @@ export async function POST(request: NextRequest) {
         ?? (plan.features as { max_technicians?: number; max_users?: number })?.max_users
         ?? 0;
       if (maxTechnicians !== -1) {
-        const { count, error: countError } = await (supabase as unknown as CaicosSupabaseClient)
-          .from('caicos_profiles')
+        const { count, error: countError } = await (supabase as unknown as CadenzaSupabaseClient)
+          .from('cadenza_profiles')
           .select('id', { count: 'exact', head: true })
           .eq('company_id', profile.company_id)
           .eq('role', 'technician');
@@ -107,8 +107,8 @@ export async function POST(request: NextRequest) {
 
   let code = generateCode();
   for (let attempt = 0; attempt < 5; attempt++) {
-    const { data, error } = await (supabase as unknown as CaicosSupabaseClient)
-      .from('caicos_invite_codes')
+    const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+      .from('cadenza_invite_codes')
       .insert({
         code,
         company_id: profile.company_id,

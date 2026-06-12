@@ -1,4 +1,4 @@
-# 🚀 CAICOS POOL SERVICE - Implementation Roadmap
+# 🚀 CADENZA POOL SERVICE - Implementation Roadmap
 ## Simplified Workflow (WhatsApp → Mobile App)
 
 ---

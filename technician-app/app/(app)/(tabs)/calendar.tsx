@@ -38,7 +38,7 @@ function addDays(d: Date, n: number): Date {
 }
 
 type JobWithProperty = ServiceJob & {
-  caicos_properties?: { customer_name: string; address: string } | null;
+  cadenza_properties?: { customer_name: string; address: string } | null;
 };
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -67,8 +67,8 @@ export default function CalendarScreen() {
     const from = getLocalDateString(weekDates[0]);
     const to = getLocalDateString(weekDates[6]);
     const { data } = await supabase
-      .from('caicos_service_jobs')
-      .select('id, status, scheduled_date, scheduled_time, route_order, estimated_duration_min, caicos_properties(customer_name, address)')
+      .from('cadenza_service_jobs')
+      .select('id, status, scheduled_date, scheduled_time, route_order, estimated_duration_min, cadenza_properties(customer_name, address)')
       .eq('technician_id', user.id)
       .gte('scheduled_date', from)
       .lte('scheduled_date', to)
@@ -298,9 +298,9 @@ export default function CalendarScreen() {
           <Text style={styles.empty}>No jobs scheduled</Text>
         ) : (
           selectedJobs.map((item) => {
-            const prop = Array.isArray(item.caicos_properties)
-              ? item.caicos_properties[0]
-              : item.caicos_properties;
+            const prop = Array.isArray(item.cadenza_properties)
+              ? item.cadenza_properties[0]
+              : item.cadenza_properties;
             const isCompleted = item.status === 'completed';
             return (
               <Pressable

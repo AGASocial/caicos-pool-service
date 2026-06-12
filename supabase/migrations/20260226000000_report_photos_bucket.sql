@@ -1,7 +1,7 @@
 -- Report photos & videos storage bucket for technician app
 -- Path: {company_id}/{yyyy-mm-dd}/{property_id}/{timestamp}-{random}.jpg
 -- Example: 21ca3138-999e-42cf-833c-d905195dd905/2026-02-26/{property-uuid}/1739...-abc.jpg
--- Table caicos_report_photos stores metadata (report_id, company_id, storage_path).
+-- Table cadenza_report_photos stores metadata (report_id, company_id, storage_path).
 -- Max 20MB per file; images (jpeg, png, webp) and videos (mp4, mov, avi, webm, 3gp).
 
 -- Create bucket (private; access via RLS)
@@ -27,7 +27,7 @@ ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (
   bucket_id = 'report-photos'
-  AND (storage.foldername(name))[1] = (SELECT company_id::text FROM caicos_profiles WHERE id = auth.uid())
+  AND (storage.foldername(name))[1] = (SELECT company_id::text FROM cadenza_profiles WHERE id = auth.uid())
 );
 
 -- Allow authenticated users to read only their company's photos
@@ -36,5 +36,5 @@ ON storage.objects FOR SELECT
 TO authenticated
 USING (
   bucket_id = 'report-photos'
-  AND (storage.foldername(name))[1] = (SELECT company_id::text FROM caicos_profiles WHERE id = auth.uid())
+  AND (storage.foldername(name))[1] = (SELECT company_id::text FROM cadenza_profiles WHERE id = auth.uid())
 );

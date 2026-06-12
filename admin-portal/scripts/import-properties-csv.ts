@@ -259,7 +259,7 @@ function buildColumnMap(headerRow: string[]): { ok: true; col: Map<string, numbe
 }
 
 async function assertCompanyExists(supabase: SupabaseClient, companyId: string): Promise<void> {
-  const { data, error } = await supabase.from('caicos_companies').select('id').eq('id', companyId).maybeSingle();
+  const { data, error } = await supabase.from('cadenza_companies').select('id').eq('id', companyId).maybeSingle();
   if (error) throw new Error(`Failed to verify company: ${error.message}`);
   if (!data) throw new Error(`No company found for id ${companyId}`);
 }
@@ -289,7 +289,7 @@ async function insertBatches(
 
   for (let i = 0; i < payloads.length; i += batchSize) {
     const batch = payloads.slice(i, i + batchSize);
-    const { error } = await supabase.from('caicos_properties').insert(batch);
+    const { error } = await supabase.from('cadenza_properties').insert(batch);
     if (error) {
       throw new Error(`Insert failed at row offset ${i + 1}: ${error.message}`);
     }

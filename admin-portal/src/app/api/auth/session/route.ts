@@ -18,7 +18,7 @@ export async function GET() {
     }
 
     const { data: profile } = await supabase
-      .from('caicos_profiles')
+      .from('cadenza_profiles')
       .select('company_id, role, full_name, is_active')
       .eq('id', user.id)
       .maybeSingle();

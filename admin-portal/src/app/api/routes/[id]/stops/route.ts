@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -12,12 +12,12 @@ type DefaultStopSchedule = {
 };
 
 async function insertInitialScheduleForStop(
-  client: CaicosSupabaseClient,
+  client: CadenzaSupabaseClient,
   stopId: string,
   pattern: DefaultStopSchedule
 ) {
   const { data: existing, error: exErr } = await client
-    .from('caicos_route_stop_schedules')
+    .from('cadenza_route_stop_schedules')
     .select('id')
     .eq('route_stop_id', stopId)
     .eq('effective_from', '2000-01-01')
@@ -27,7 +27,7 @@ async function insertInitialScheduleForStop(
   }
   if (existing) return;
 
-  const { error } = await client.from('caicos_route_stop_schedules').insert({
+  const { error } = await client.from('cadenza_route_stop_schedules').insert({
     route_stop_id: stopId,
     effective_from: '2000-01-01',
     effective_until: null,
@@ -74,7 +74,7 @@ function parseDefaultStopSchedule(raw: unknown): DefaultStopSchedule | null {
 function routeStopsConflictError(error: { code?: string; message?: string }): string | null {
   if (error.code !== '23505') return null;
   const msg = error.message ?? '';
-  if (msg.includes('caicos_route_stops_property_id_unique')) {
+  if (msg.includes('cadenza_route_stops_property_id_unique')) {
     return 'This property is already on another route. Remove it from that route first.';
   }
   if (msg.includes('route_id') && msg.includes('property_id')) {
@@ -133,7 +133,7 @@ function parseUuidArray(
  * Bulk add/remove stops on a route.
  *
  * - add_property_ids: properties to append (order preserved; skips if already on this route or on another route).
- * - remove_stop_ids: caicos_route_stops.id rows to delete (scoped to this route).
+ * - remove_stop_ids: cadenza_route_stops.id rows to delete (scoped to this route).
  * Response may include skipped_property_ids and property_ids_on_other_routes.
  */
 export async function PATCH(
@@ -183,13 +183,13 @@ export async function PATCH(
     );
   }
 
-  const client = supabase as unknown as CaicosSupabaseClient;
+  const client = supabase as unknown as CadenzaSupabaseClient;
 
   try {
     let removedStopIds: string[] = [];
     if (removeStopIds.length > 0) {
       const { data: deleted, error: deleteError } = await client
-        .from('caicos_route_stops')
+        .from('cadenza_route_stops')
         .delete()
         .eq('route_id', routeId)
         .in('id', removeStopIds)
@@ -217,7 +217,7 @@ export async function PATCH(
 
     if (addPropertyIds.length > 0) {
       const { data: existingRows, error: existingError } = await client
-        .from('caicos_route_stops')
+        .from('cadenza_route_stops')
         .select('property_id, stop_order')
         .eq('route_id', routeId);
 
@@ -236,7 +236,7 @@ export async function PATCH(
       );
 
       const { data: conflictRows, error: conflictError } = await client
-        .from('caicos_route_stops')
+        .from('cadenza_route_stops')
         .select('property_id, route_id')
         .in('property_id', addPropertyIds);
 
@@ -285,7 +285,7 @@ export async function PATCH(
 
       if (toInsert.length > 0) {
         const { data: inserted, error: insertError } = await client
-          .from('caicos_route_stops')
+          .from('cadenza_route_stops')
           .insert(toInsert)
           .select(
             'id, route_id, property_id, stop_order, day_of_week, service_frequency, week_ordinal, created_at'
@@ -375,9 +375,9 @@ export async function POST(
         week_ordinal: null as number | null,
       };
 
-    const client = supabase as unknown as CaicosSupabaseClient;
+    const client = supabase as unknown as CadenzaSupabaseClient;
     const { data: existingForProperty, error: existingErr } = await client
-      .from('caicos_route_stops')
+      .from('cadenza_route_stops')
       .select('route_id')
       .eq('property_id', property_id)
       .maybeSingle();
@@ -405,7 +405,7 @@ export async function POST(
     }
 
     const { data, error } = await client
-      .from('caicos_route_stops')
+      .from('cadenza_route_stops')
       .insert({
         route_id: routeId,
         property_id,
