@@ -187,7 +187,7 @@ export function AuthHero({ quote, author, children }: { quote: string; author: s
       </div>
 
       {/* Gradient overlay - Primary color with modern gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/70 via-blue-500/50 to-primary/70 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-primary/35 to-foreground/50 backdrop-blur-[2px]" />
 
       {/* Additional overlay for depth and text readability - lightened */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/30" />
@@ -206,7 +206,7 @@ export function AuthHero({ quote, author, children }: { quote: string; author: s
         {children || (
           <div className="flex items-center group">
             <div className="p-1.5 sm:p-2 rounded-lg transition-colors">
-              <Image src="/logo-cadenza.png" alt="Cadenza" width={300} height={200} />
+              <Image src="/brand-assets/cadenza-wordmark-serif.png" alt="Cadenza" width={300} height={200} />
             </div>
           </div>
         )}

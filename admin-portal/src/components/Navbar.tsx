@@ -24,10 +24,10 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
           <Link href="/dashboard" className="flex md:hidden items-center gap-2 transition-opacity hover:opacity-90">
             <div className="relative h-16 w-32 overflow-hidden rounded-lg">
               <Image
-                src="/logo-cadenza.png"
+                src="/brand-assets/cadenza-wordmark-serif.png"
                 alt="Cadenza"
                 fill
-                className="object-contain"
+                className="object-contain dark:invert"
                 priority
                 unoptimized
               />

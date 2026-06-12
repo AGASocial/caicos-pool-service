@@ -1,159 +1,146 @@
 /**
- * Sistema de Diseño Centralizado - cadenza (Updated for Premium Redesign)
- * 
- * Este archivo contiene toda la configuración de colores, sombras, gradientes
- * y otros elementos de diseño para mantener consistencia en toda la aplicación.
+ * Sistema de Diseño Centralizado - Cadenza (Brass & Linen)
+ *
+ * Brand source: brand/index.html v1.0
+ * Tokens mirror globals.css; use CSS variables in components when possible.
  */
 
 export const theme = {
-  // Colores principales
   colors: {
-    // Color primario - Royal Blue (Logo Blue)
+    // Brand accent — Brass (#C7A85F)
     primary: {
-      medium: '#3b82f6', // Fallback
-      DEFAULT: 'oklch(0.55 0.22 260)', // Royal Blue
-      dark: 'oklch(0.45 0.22 260)',
-      darker: 'oklch(0.35 0.22 260)',
-      lightest: 'oklch(0.96 0.05 260)',
-      light: 'oklch(0.90 0.10 260)',
+      medium: '#C7A85F',
+      DEFAULT: 'oklch(0.744 0.099 87.0)',
+      dark: 'oklch(0.65 0.09 87)',
+      darker: 'oklch(0.55 0.08 87)',
+      lightest: 'oklch(0.96 0.03 87)',
+      light: 'oklch(0.90 0.06 87)',
     },
-    // Color secundario - Soft Slate/Blue tint
+    // Warm surfaces — Linen / hairline
     secondary: {
-      DEFAULT: 'oklch(0.96 0.02 260)',
-      dark: 'oklch(0.85 0.05 260)',
-      light: 'oklch(0.98 0.01 260)',
-      lightest: '#ffffff',
+      DEFAULT: 'oklch(0.977 0.007 80.7)',
+      dark: 'oklch(0.927 0.016 82.8)',
+      light: 'oklch(0.950 0.014 84.6)',
+      lightest: '#FFFFFF',
     },
-    // Colores de estado
     success: {
-      DEFAULT: 'oklch(0.60 0.20 145)', // Jade
-      dark: 'oklch(0.50 0.20 145)',
-      light: 'oklch(0.95 0.05 145)',
-      text: 'oklch(0.40 0.15 145)',
+      DEFAULT: 'oklch(0.537 0.086 157.4)',
+      dark: 'oklch(0.45 0.08 157)',
+      light: 'oklch(0.95 0.035 157)',
+      text: 'oklch(0.38 0.08 157)',
     },
     warning: {
-      DEFAULT: 'oklch(0.70 0.20 85)', // Amber/Orange
-      dark: 'oklch(0.60 0.20 85)',
-      light: 'oklch(0.95 0.05 85)',
-      text: 'oklch(0.45 0.15 85)',
+      DEFAULT: 'oklch(0.626 0.125 70.4)',
+      dark: 'oklch(0.52 0.11 70)',
+      light: 'oklch(0.96 0.04 80)',
+      text: 'oklch(0.42 0.10 70)',
     },
     error: {
-      DEFAULT: 'oklch(0.60 0.20 25)', // Red
-      dark: 'oklch(0.50 0.20 25)',
-      light: 'oklch(0.95 0.05 25)',
-      text: 'oklch(0.40 0.15 25)',
+      DEFAULT: 'oklch(0.540 0.147 28.1)',
+      dark: 'oklch(0.45 0.13 28)',
+      light: 'oklch(0.95 0.04 28)',
+      text: 'oklch(0.40 0.12 28)',
     },
     info: {
-      DEFAULT: 'oklch(0.60 0.15 230)', // Sky/Blue
-      dark: 'oklch(0.50 0.15 230)',
-      light: 'oklch(0.95 0.05 230)',
-      text: 'oklch(0.40 0.15 230)',
+      DEFAULT: 'oklch(0.508 0.074 244.0)',
+      dark: 'oklch(0.42 0.07 244)',
+      light: 'oklch(0.95 0.03 244)',
+      text: 'oklch(0.36 0.07 244)',
     },
   },
 
-  // Gradientes
   gradients: {
-    primary: 'linear-gradient(135deg, oklch(0.55 0.22 260) 0%, oklch(0.45 0.22 260) 100%)', // Royal Blue -> Deep Blue
-    primaryLight: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-    primaryDark: 'linear-gradient(135deg, oklch(0.45 0.22 260) 0%, oklch(0.35 0.22 260) 100%)',
-    success: 'linear-gradient(135deg, oklch(0.60 0.20 145) 0%, oklch(0.50 0.20 145) 100%)',
-    card: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)', // Glass effect
+    primary: 'linear-gradient(135deg, oklch(0.744 0.099 87.0) 0%, oklch(0.65 0.09 87) 100%)',
+    primaryLight: 'linear-gradient(135deg, oklch(0.977 0.007 80.7) 0%, oklch(0.950 0.014 84.6) 100%)',
+    primaryDark: 'linear-gradient(135deg, oklch(0.65 0.09 87) 0%, oklch(0.55 0.08 87) 100%)',
+    success: 'linear-gradient(135deg, oklch(0.537 0.086 157.4) 0%, oklch(0.45 0.08 157) 100%)',
+    card: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
     cardDark: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
-    hero: 'radial-gradient(circle at top center, oklch(0.30 0.20 260 / 0.4), transparent 70%)',
+    hero: 'radial-gradient(circle at top center, oklch(0.744 0.099 87.0 / 0.25), transparent 70%)',
   },
 
-  // Sombras
   shadows: {
     sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
     DEFAULT: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
     md: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
     lg: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
     xl: '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    primary: '0 10px 15px -3px oklch(0.55 0.22 260 / 0.3), 0 4px 6px -4px oklch(0.55 0.22 260 / 0.2)',
-    primaryLg: '0 20px 25px -5px oklch(0.55 0.22 260 / 0.4), 0 8px 10px -6px oklch(0.55 0.22 260 / 0.3)',
+    primary: '0 10px 15px -3px oklch(0.744 0.099 87.0 / 0.3), 0 4px 6px -4px oklch(0.744 0.099 87.0 / 0.2)',
+    primaryLg: '0 20px 25px -5px oklch(0.744 0.099 87.0 / 0.4), 0 8px 10px -6px oklch(0.744 0.099 87.0 / 0.3)',
     inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
-    glow: '0 0 20px oklch(0.55 0.22 260 / 0.5)',
+    glow: '0 0 20px oklch(0.744 0.099 87.0 / 0.5)',
   },
 
-  // Radios de borde
   radius: {
-    sm: '0.5rem', // 8px
-    DEFAULT: '0.75rem', // 12px
-    md: '1rem', // 16px
-    lg: '1.5rem', // 24px
-    xl: '2rem', // 32px
-    '2xl': '2.5rem', // 40px
+    sm: '0.5rem',
+    DEFAULT: '0.75rem',
+    md: '1rem',
+    lg: '1.5rem',
+    xl: '2rem',
+    '2xl': '2.5rem',
     full: '9999px',
   },
 
-  // Espaciado
   spacing: {
-    xs: '0.5rem', // 8px
-    sm: '0.75rem', // 12px
-    DEFAULT: '1rem', // 16px
-    md: '1.5rem', // 24px
-    lg: '2rem', // 32px
-    xl: '3rem', // 48px
-    '2xl': '4rem', // 64px
+    xs: '0.5rem',
+    sm: '0.75rem',
+    DEFAULT: '1rem',
+    md: '1.5rem',
+    lg: '2rem',
+    xl: '3rem',
+    '2xl': '4rem',
   },
 
-  // Transiciones
   transitions: {
     fast: '150ms ease-in-out',
-    DEFAULT: '250ms cubic-bezier(0.4, 0, 0.2, 1)',
-    slow: '350ms ease-in-out',
+    DEFAULT: '300ms cubic-bezier(0.22, 1, 0.36, 1)',
+    slow: '420ms cubic-bezier(0.22, 1, 0.36, 1)',
     spring: '500ms cubic-bezier(0.68, -0.55, 0.265, 1.55)',
   },
 } as const;
 
-/**
- * Configuración de tema para modo claro
- */
 export const lightTheme = {
-  background: 'oklch(0.985 0.005 260)',
-  foreground: 'oklch(0.15 0.05 260)',
+  background: 'oklch(0.977 0.007 80.7)',
+  foreground: 'oklch(0.188 0.013 248.5)',
   card: 'oklch(1 0 0)',
-  cardForeground: 'oklch(0.15 0.05 260)',
+  cardForeground: 'oklch(0.188 0.013 248.5)',
   popover: 'oklch(1 0 0)',
-  popoverForeground: 'oklch(0.15 0.05 260)',
-  primary: theme.colors.primary.dark,
-  primaryForeground: '#ffffff',
+  popoverForeground: 'oklch(0.188 0.013 248.5)',
+  primary: theme.colors.primary.DEFAULT,
+  primaryForeground: 'oklch(0.195 0.026 85.8)',
   secondary: theme.colors.secondary.DEFAULT,
-  secondaryForeground: theme.colors.primary.darker,
+  secondaryForeground: 'oklch(0.366 0.015 259.8)',
   muted: theme.colors.secondary.light,
-  mutedForeground: 'oklch(0.50 0.05 260)',
-  accent: theme.colors.secondary.DEFAULT,
-  accentForeground: theme.colors.primary.darker,
+  mutedForeground: 'oklch(0.551 0.023 264.4)',
+  accent: theme.colors.secondary.dark,
+  accentForeground: 'oklch(0.188 0.013 248.5)',
   destructive: theme.colors.error.DEFAULT,
   destructiveForeground: '#ffffff',
-  border: 'oklch(0.90 0.02 260)',
-  input: 'oklch(0.90 0.02 260)',
+  border: 'oklch(0.927 0.016 82.8)',
+  input: 'oklch(0.927 0.016 82.8)',
   ring: theme.colors.primary.DEFAULT,
 } as const;
 
-/**
- * Configuración de tema para modo oscuro
- */
 export const darkTheme = {
-  background: 'oklch(0.13 0.02 265)',
-  foreground: 'oklch(0.95 0.01 265)',
-  card: 'oklch(0.17 0.03 265)',
-  cardForeground: 'oklch(0.95 0.01 265)',
-  popover: 'oklch(0.17 0.03 265)',
-  popoverForeground: 'oklch(0.95 0.01 265)',
-  primary: 'oklch(0.65 0.20 260)',
-  primaryForeground: 'oklch(0.98 0.01 260)',
-  secondary: 'oklch(0.22 0.04 265)',
-  secondaryForeground: 'oklch(0.92 0.02 265)',
-  muted: 'oklch(0.22 0.03 265)',
-  mutedForeground: 'oklch(0.70 0.02 265)',
-  accent: 'oklch(0.24 0.05 265)',
-  accentForeground: 'oklch(0.98 0.01 260)',
-  destructive: 'oklch(0.58 0.22 25)',
-  destructiveForeground: 'oklch(0.98 0 0)',
-  border: 'oklch(0.26 0.03 265)',
-  input: 'oklch(0.26 0.03 265)',
-  ring: 'oklch(0.60 0.20 260)',
+  background: 'oklch(0.212 0.013 258.4)',
+  foreground: 'oklch(0.950 0.014 84.6)',
+  card: 'oklch(0.26 0.014 258)',
+  cardForeground: 'oklch(0.950 0.014 84.6)',
+  popover: 'oklch(0.26 0.014 258)',
+  popoverForeground: 'oklch(0.950 0.014 84.6)',
+  primary: theme.colors.primary.DEFAULT,
+  primaryForeground: 'oklch(0.195 0.026 85.8)',
+  secondary: 'oklch(0.30 0.014 258)',
+  secondaryForeground: 'oklch(0.950 0.014 84.6)',
+  muted: 'oklch(0.30 0.014 258)',
+  mutedForeground: 'oklch(0.74 0.018 258)',
+  accent: 'oklch(0.32 0.020 258)',
+  accentForeground: 'oklch(0.950 0.014 84.6)',
+  destructive: 'oklch(0.60 0.16 28)',
+  destructiveForeground: 'oklch(1 0 0)',
+  border: 'oklch(0.34 0.014 258)',
+  input: 'oklch(0.34 0.014 258)',
+  ring: theme.colors.primary.DEFAULT,
 } as const;
 
 export type Theme = typeof theme;

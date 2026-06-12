@@ -101,10 +101,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               sidebarCollapsed ? "h-16 w-16" : "w-48 h-24"
             )}>
               <Image
-                src={sidebarCollapsed ? "/logo-cadenza-icon.png" : "/logo-cadenza.png"}
+                src={sidebarCollapsed ? "/brand-assets/cadenza-app-icon-clean.png" : "/brand-assets/cadenza-wordmark-serif.png"}
                 alt="Cadenza"
                 fill
-                className="object-contain"
+                className="object-contain dark:invert"
                 priority
                 unoptimized
               />
@@ -203,10 +203,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               <div className="flex items-center gap-3">
                 <div className="relative h-12 w-32 overflow-hidden rounded-lg">
                   <Image
-                    src="/logo-cadenza.png"
+                    src="/brand-assets/cadenza-wordmark-serif.png"
                     alt="Cadenza"
                     fill
-                    className="object-contain"
+                    className="object-contain dark:invert"
                     unoptimized
                   />
                 </div>
