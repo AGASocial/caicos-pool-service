@@ -70,6 +70,34 @@ describe('AuthForm', () => {
       });
     });
 
+    it('should redirect to the dashboard after login without fetching /api/assets', async () => {
+      const user = userEvent.setup();
+      const mockRouter = {
+        push: jest.fn(),
+        replace: jest.fn(),
+        prefetch: jest.fn(),
+        back: jest.fn(),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      jest.spyOn(require('next/navigation'), 'useRouter').mockReturnValue(mockRouter);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true }),
+      });
+
+      render(<AuthForm type="login" />);
+
+      await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+      await user.type(screen.getByLabelText(/password/i), 'password123');
+      await user.click(screen.getByRole('button', { name: /^signIn$/i }));
+
+      await waitFor(() => {
+        expect(mockRouter.push).toHaveBeenCalledWith('/en/dashboard');
+      });
+      expect(mockFetch).not.toHaveBeenCalledWith('/api/assets');
+    });
+
     it('should show error toast on login failure', async () => {
       const user = userEvent.setup();
       const errorMessage = 'Invalid credentials';

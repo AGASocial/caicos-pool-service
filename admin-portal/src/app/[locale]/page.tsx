@@ -17,24 +17,7 @@ export default function LocalePage() {
       const data = response.ok ? await response.json() : { authenticated: false };
 
       if (data.authenticated) {
-        try {
-          // Check if user has any assets via API
-          const res = await fetch('/api/assets');
-          if (!res.ok) {
-            router.replace('/dashboard');
-            return;
-          }
-          const assets = await res.json();
-
-          // If user has no assets, redirect to wizard, else dashboard
-          if (!assets || assets.length === 0) {
-            router.replace('/wizard');
-          } else {
-            router.replace('/dashboard');
-          }
-        } catch {
-          router.replace('/dashboard');
-        }
+        router.replace('/dashboard');
       } else {
         // Not logged in, show landing page
         setIsLoading(false);

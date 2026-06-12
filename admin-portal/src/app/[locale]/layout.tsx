@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Outfit } from "next/font/google";
+import { Inter, Bodoni_Moda, JetBrains_Mono } from "next/font/google";
 import "../globals.css";
 import { NextIntlClientProvider } from 'next-intl';
 import { notFound } from 'next/navigation';
@@ -12,9 +12,15 @@ const inter = Inter({
   display: "swap",
 });
 
-const outfit = Outfit({
+const bodoni = Bodoni_Moda({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  variable: "--font-bodoni",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
   display: "swap",
 });
 
@@ -22,8 +28,8 @@ export const metadata: Metadata = {
   title: "Cadenza - Pool Service Management Platform",
   description: "Manage your pool service business with Cadenza",
   icons: {
-    icon: "/logo-cadenza-icon.png",
-    apple: "/logo-cadenza-icon.png",
+    icon: "/brand-assets/cadenza-app-icon-clean.png",
+    apple: "/brand-assets/cadenza-app-icon-clean.png",
   },
 };
 
@@ -45,7 +51,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${inter.variable} ${outfit.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${bodoni.variable} ${jetbrainsMono.variable} font-sans antialiased`} suppressHydrationWarning>
         <QueryProvider>
           <ThemeRegistry>
             <NextIntlClientProvider locale={locale} messages={messages}>
