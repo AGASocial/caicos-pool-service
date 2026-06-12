@@ -67,7 +67,7 @@ React Native (Expo) mobile application for field technicians to manage daily poo
 ```
 ┌─────────────────────┐
 │                     │
-│   [CAICOS LOGO]     │
+│   [CADENZA LOGO]     │
 │                     │
 │  Email:             │
 │  [_____________]    │
@@ -139,7 +139,7 @@ React Native (Expo) mobile application for field technicians to manage daily poo
 
 ```
 ┌──────────────────────┐
-│ ⬅ CAICOS     📋 ⚙️   │
+│ ⬅ CADENZA     📋 ⚙️   │
 │                      │
 │ Tuesday, Feb 21      │
 │ 🛣️ Ruta 1            │
@@ -445,7 +445,7 @@ EQUIPMENT_CHECKS = [
 
 ```
 ┌──────────────────────┐
-│ CAICOS      🔍      │
+│ CADENZA      🔍      │
 │                      │
 │ Properties (12)      │
 │ [All ▼]              │
@@ -487,22 +487,22 @@ EQUIPMENT_CHECKS = [
 
 ```
 ┌──────────────────────┐
-│ CAICOS      ⚙️      │
+│ CADENZA      ⚙️      │
 │                      │
 │ Profile              │
 │ ┌──────────────────┐ │
 │ │  👤 Avatar       │ │
 │ │  John Technician │ │
-│ │  john@caicos.com │ │
+│ │  john@cadenza.com │ │
 │ │  Role: Technician│ │
-│ │  Company: Caicos │ │
+│ │  Company: Cadenza │ │
 │ └──────────────────┘ │
 │                      │
 │ Full Name:           │
 │ [John Technician]    │
 │                      │
 │ Email:               │
-│ [john@caicos.com]    │ (read-only)
+│ [john@cadenza.com]    │ (read-only)
 │                      │
 │ Phone:               │
 │ [_______________]    │

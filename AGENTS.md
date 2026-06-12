@@ -1,6 +1,6 @@
-# Caicos Development Agents
+# Cadenza Development Agents
 
-Use these agents to structure development work on the Caicos pool service platform. Each agent has a clear role; invoke the right one by context or by saying who should handle the task.
+Use these agents to structure development work on the Cadenza pool service platform. Each agent has a clear role; invoke the right one by context or by saying who should handle the task.
 
 ## Agent overview
 
@@ -24,7 +24,7 @@ Use these agents to structure development work on the Caicos pool service platfo
 
 **How to invoke:** Ask to assign a task, check status, validate scope, or report blockers. Example: *"Assign the jobs dashboard to the right team"* or *"What's blocking the admin dashboard?"*
 
-**Reference:** `caicos-team-plugin/agents/master-agent.md`, `caicos-team-plugin/skills/master-agent/SKILL.md`
+**Reference:** `cadenza-team-plugin/agents/master-agent.md`, `cadenza-team-plugin/skills/master-agent/SKILL.md`
 
 ---
 
@@ -40,7 +40,7 @@ Use these agents to structure development work on the Caicos pool service platfo
 
 **How to invoke:** Work in admin/Next.js code or ask for web feature implementation. Example: *"Build the jobs management page"* or *"Add an API route for creating service jobs"*.
 
-**Reference:** `caicos-team-plugin/agents/nextjs-developer-agent.md`, `caicos-team-plugin/skills/nextjs-developer/SKILL.md`
+**Reference:** `cadenza-team-plugin/agents/nextjs-developer-agent.md`, `cadenza-team-plugin/skills/nextjs-developer/SKILL.md`
 
 ---
 
@@ -56,7 +56,7 @@ Use these agents to structure development work on the Caicos pool service platfo
 
 **How to invoke:** Work in mobile app code or ask for a mobile feature. Example: *"Build the service form with chemical readings"* or *"Implement photo upload with offline sync"*.
 
-**Reference:** `caicos-team-plugin/agents/react-native-developer-agent.md`, `caicos-team-plugin/skills/react-native-developer/SKILL.md`
+**Reference:** `cadenza-team-plugin/agents/react-native-developer-agent.md`, `cadenza-team-plugin/skills/react-native-developer/SKILL.md`
 
 ---
 
@@ -72,13 +72,13 @@ Use these agents to structure development work on the Caicos pool service platfo
 
 **How to invoke:** Ask for QA, validation, or tests. Example: *"Run QA on the jobs page"* or *"Validate the service form code"*.
 
-**Reference:** `caicos-team-plugin/agents/qa-specialist-agent.md`, `caicos-team-plugin/skills/qa-specialist/SKILL.md`
+**Reference:** `cadenza-team-plugin/agents/qa-specialist-agent.md`, `cadenza-team-plugin/skills/qa-specialist/SKILL.md`
 
 ---
 
 ## Workflow (plugin-style)
 
-If you use the **caicos-team-plugin** in Cowork, you have slash commands:
+If you use the **cadenza-team-plugin** in Cowork, you have slash commands:
 
 - `/assign-task` — Master Agent assigns to the right specialist
 - `/code-gen [feature] for: web|mobile` — NextJS or React Native generates code
@@ -125,7 +125,7 @@ Then:
 
 ### Rule for Cursor
 
-The rule **Autonomous development** (`.cursor/rules/caicos-autonomous-development.mdc`) applies when the user asks for autonomous or open-card development. Follow it so the loop runs consistently.
+The rule **Autonomous development** (`.cursor/rules/cadenza-autonomous-development.mdc`) applies when the user asks for autonomous or open-card development. Follow it so the loop runs consistently.
 
 ---
 

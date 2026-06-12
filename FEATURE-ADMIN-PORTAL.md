@@ -105,7 +105,7 @@ NextJS web application for company owners and admins to manage technicians, prop
 #### `/auth/login`
 ```
 ┌────────────────────────────┐
-│   CAICOS Admin Portal       │
+│   CADENZA Admin Portal       │
 │                            │
 │   [Company Logo]           │
 │                            │
@@ -163,7 +163,7 @@ NextJS web application for company owners and admins to manage technicians, prop
 #### `/dashboard`
 ```
 ┌──────────────────────────────────────┐
-│ ☰  CAICOS     Thu, Feb 21      👤    │
+│ ☰  CADENZA     Thu, Feb 21      👤    │
 ├──────────────────────────────────────┤
 │                                      │
 │  Dashboard                           │
@@ -217,7 +217,7 @@ NextJS web application for company owners and admins to manage technicians, prop
 #### `/routes`
 ```
 ┌──────────────────────────────────────┐
-│ ☰  CAICOS     Thu, Feb 21      👤    │
+│ ☰  CADENZA     Thu, Feb 21      👤    │
 ├──────────────────────────────────────┤
 │                                      │
 │  Routes (2 total)                    │
@@ -319,7 +319,7 @@ This Week: 154 of 154 completed
 #### `/jobs`
 ```
 ┌──────────────────────────────────────┐
-│ ☰  CAICOS     Thu, Feb 21      👤    │
+│ ☰  CADENZA     Thu, Feb 21      👤    │
 ├──────────────────────────────────────┤
 │                                      │
 │  Jobs                                │
@@ -460,7 +460,7 @@ customer aware."
 #### `/properties`
 ```
 ┌──────────────────────────────────────┐
-│ ☰  CAICOS     Thu, Feb 21      👤    │
+│ ☰  CADENZA     Thu, Feb 21      👤    │
 ├──────────────────────────────────────┤
 │                                      │
 │  Properties (15 total)               │
@@ -568,7 +568,7 @@ Other Notes: [_____________]
 #### `/team`
 ```
 ┌──────────────────────────────────────┐
-│ ☰  CAICOS     Thu, Feb 21      👤    │
+│ ☰  CADENZA     Thu, Feb 21      👤    │
 ├──────────────────────────────────────┤
 │                                      │
 │  Team Members (5 total)              │
@@ -578,7 +578,7 @@ Other Notes: [_____________]
 │  OWNER                               │
 │  ┌──────────────────────────────┐    │
 │  │ Sarah Johnson                │    │
-│  │ sarah@caicos.com             │    │
+│  │ sarah@cadenza.com             │    │
 │  │ 👑 OWNER                     │    │
 │  │ Status: 🟢 Active            │    │
 │  │ Joined: Jan 2024             │    │
@@ -588,7 +588,7 @@ Other Notes: [_____________]
 │  ADMINS                              │
 │  ┌──────────────────────────────┐    │
 │  │ Mike Wilson                  │    │
-│  │ mike@caicos.com              │    │
+│  │ mike@cadenza.com              │    │
 │  │ 👮 ADMIN                     │    │
 │  │ Status: 🟢 Active            │    │
 │  │ Joined: Mar 2024             │    │
@@ -598,7 +598,7 @@ Other Notes: [_____________]
 │  TECHNICIANS                         │
 │  ┌──────────────────────────────┐    │
 │  │ John Technician              │    │
-│  │ john@caicos.com              │    │
+│  │ john@cadenza.com              │    │
 │  │ 🔧 TECHNICIAN               │    │
 │  │ Status: 🟢 Active            │    │
 │  │ Jobs completed: 42           │    │
@@ -607,7 +607,7 @@ Other Notes: [_____________]
 │                                      │
 │  ┌──────────────────────────────┐    │
 │  │ Maria Garcia                 │    │
-│  │ maria@caicos.com             │    │
+│  │ maria@cadenza.com             │    │
 │  │ 🔧 TECHNICIAN               │    │
 │  │ Status: 🟡 Inactive          │    │
 │  │ Jobs completed: 156          │    │
@@ -634,7 +634,7 @@ Full Name: [_____________]
 Role: [Technician ▼]
 
 Invite Link:
-https://app.caicos.com/join?code=ABC123XYZ
+https://app.cadenza.com/join?code=ABC123XYZ
 (Auto-generated)
 
 [ Copy Link ]
@@ -658,7 +658,7 @@ John Technician
 ────────────────────────────
 
 Status: 🟢 Active
-Email: john@caicos.com
+Email: john@cadenza.com
 Phone: (555) 987-6543
 Role: Technician
 Joined: Mar 15, 2024
@@ -683,7 +683,7 @@ Change Role:
 #### `/reports`
 ```
 ┌──────────────────────────────────────┐
-│ ☰  CAICOS     Thu, Feb 21      👤    │
+│ ☰  CADENZA     Thu, Feb 21      👤    │
 ├──────────────────────────────────────┤
 │                                      │
 │  Service Reports                     │
@@ -729,7 +729,7 @@ Change Role:
 #### `/reports/weekly-completion`
 ```
 ┌──────────────────────────────────────┐
-│ ☰  CAICOS     Thu, Feb 21      👤    │
+│ ☰  CADENZA     Thu, Feb 21      👤    │
 ├──────────────────────────────────────┤
 │                                      │
 │  Weekly Completion Report            │
@@ -793,7 +793,7 @@ Change Role:
 #### `/settings`
 ```
 ┌──────────────────────────────────────┐
-│ ☰  CAICOS     Thu, Feb 21      👤    │
+│ ☰  CADENZA     Thu, Feb 21      👤    │
 ├──────────────────────────────────────┤
 │                                      │
 │  Company Settings                    │
@@ -802,10 +802,10 @@ Change Role:
 │  [Upload Logo]                       │
 │                                      │
 │  Company Name:                       │
-│  [Caicos Pool Service]               │
+│  [Cadenza Pool Service]               │
 │                                      │
 │  Email:                              │
-│  [admin@caicos.com]                  │
+│  [admin@cadenza.com]                  │
 │                                      │
 │  Phone:                              │
 │  [(305) 555-1234]                    │
@@ -826,7 +826,7 @@ Change Role:
 │  ────────────────────────────        │
 │                                      │
 │  Account                             │
-│  Email: admin@caicos.com             │
+│  Email: admin@cadenza.com             │
 │  Password: ••••••••                  │
 │  [Change Password]                   │
 │  [Two-Factor Auth] Off               │

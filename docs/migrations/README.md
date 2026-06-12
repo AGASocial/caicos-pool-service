@@ -1,6 +1,6 @@
 # Database migrations
 
-SQL migrations for the Caicos Supabase project live in a **single** folder at the repository root:
+SQL migrations for the Cadenza Supabase project live in a **single** folder at the repository root:
 
 **[`/supabase/migrations/`](../../supabase/migrations/)**
 

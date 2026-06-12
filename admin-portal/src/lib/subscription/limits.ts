@@ -28,10 +28,10 @@ export async function getSubscriptionLimits(
 ): Promise<SubscriptionLimits> {
   // Get active subscription with plan details
   const { data: subscription } = await supabase
-    .from('caicos_billing_subscriptions')
+    .from('cadenza_billing_subscriptions')
     .select(`
       *,
-      plan:caicos_billing_plans(*)
+      plan:cadenza_billing_plans(*)
     `)
     .eq('user_id', userId)
     .eq('status', 'active')
@@ -40,7 +40,7 @@ export async function getSubscriptionLimits(
   // If no active subscription, get the Free plan from database
   if (!subscription || !subscription.plan) {
     const { data: freePlan } = await supabase
-      .from('caicos_billing_plans')
+      .from('cadenza_billing_plans')
       .select('*')
       .eq('id', 'plan_free')
       .single();
@@ -184,7 +184,7 @@ export async function hasActiveSubscription(
   userId: string
 ): Promise<boolean> {
   const { data: subscription } = await supabase
-    .from('caicos_billing_subscriptions')
+    .from('cadenza_billing_subscriptions')
     .select('id')
     .eq('user_id', userId)
     .eq('status', 'active')
@@ -207,10 +207,10 @@ export async function getSubscriptionStatus(
   usage: UsageStats;
 }> {
   const { data: subscription } = await supabase
-    .from('caicos_billing_subscriptions')
+    .from('cadenza_billing_subscriptions')
     .select(`
       *,
-      plan:caicos_billing_plans(*)
+      plan:cadenza_billing_plans(*)
     `)
     .eq('user_id', userId)
     .eq('status', 'active')

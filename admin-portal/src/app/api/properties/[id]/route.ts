@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 export async function GET(
   _request: NextRequest,
@@ -13,8 +13,8 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_properties')
+  const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_properties')
     .select('*')
     .eq('id', id)
     .single();
@@ -43,8 +43,8 @@ export async function PUT(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: profile, error: profileError } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_profiles')
+  const { data: profile, error: profileError } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_profiles')
     .select('company_id')
     .eq('id', user.id)
     .single();
@@ -81,9 +81,9 @@ export async function PUT(
       );
     }
 
-    const client = supabase as unknown as CaicosSupabaseClient;
+    const client = supabase as unknown as CadenzaSupabaseClient;
     const { data, error } = await client
-      .from('caicos_properties')
+      .from('cadenza_properties')
       .update({
         customer_name: String(customer_name).trim(),
         address: String(address).trim(),

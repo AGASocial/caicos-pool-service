@@ -1,6 +1,6 @@
 # Admin Portal – Scan & Plan
 
-After copying the example-app (cadenza) into admin-portal, this doc summarizes what’s there, what Caicos needs, and a phased plan to get to the required pages.
+After copying the example-app (cadenza) into admin-portal, this doc summarizes what’s there, what Cadenza needs, and a phased plan to get to the required pages.
 
 ---
 
@@ -35,7 +35,7 @@ After copying the example-app (cadenza) into admin-portal, this doc summarizes w
 
 ### Data model (current)
 - **Example-app schema**: `users`, `digital_assets`, `beneficiaries`, billing tables, etc.
-- **Caicos schema** (in `docs/schema.sql`): **`caicos_companies`**, **`caicos_profiles`**, **`caicos_properties`**, **`caicos_service_jobs`**, **`caicos_service_reports`**, **`caicos_report_photos`** — not yet used in admin-portal.
+- **Cadenza schema** (in `docs/schema.sql`): **`cadenza_companies`**, **`cadenza_profiles`**, **`cadenza_properties`**, **`cadenza_service_jobs`**, **`cadenza_service_reports`**, **`cadenza_report_photos`** — not yet used in admin-portal.
 
 ### Layout & nav
 - **ClientLayout** → **LayoutWrapper** (sidebar + Navbar, Profile at bottom, optional SecurityPinModal).
@@ -44,13 +44,13 @@ After copying the example-app (cadenza) into admin-portal, this doc summarizes w
 
 ### Reusable pieces to keep
 - **UI**: `components/ui/*` (button, input, card, form, label, dialog, dropdown-menu, etc.).
-- **Auth flow**: Auth form pattern, login/register API, middleware (needs to be adapted for Caicos + optional locale).
+- **Auth flow**: Auth form pattern, login/register API, middleware (needs to be adapted for Cadenza + optional locale).
 - **Layout pattern**: Sidebar + main content + profile footer.
-- **Supabase**: Server/client helpers (to be switched to Caicos schema and RLS).
+- **Supabase**: Server/client helpers (to be switched to Cadenza schema and RLS).
 
 ---
 
-## 2. Required Caicos pages (from FEATURE-ADMIN-PORTAL.md)
+## 2. Required Cadenza pages (from FEATURE-ADMIN-PORTAL.md)
 
 | Route | Purpose |
 |-------|--------|
@@ -86,14 +86,14 @@ SOLUTION.md suggests routes under **`/dashboard`** (e.g. `/dashboard/jobs`, `/da
 | Required | Current | Action |
 |----------|---------|--------|
 | Auth: login with company context | Login exists (generic) | Adapt copy, add “Create Company” → register |
-| Auth: register with **Company Name** | Register exists (no company) | Add company name, create `caicos_companies` + owner profile |
-| Dashboard with job/property/tech stats | Dashboard exists (cadenza) | Replace with Caicos KPIs + recent jobs + quick actions |
+| Auth: register with **Company Name** | Register exists (no company) | Add company name, create `cadenza_companies` + owner profile |
+| Dashboard with job/property/tech stats | Dashboard exists (cadenza) | Replace with Cadenza KPIs + recent jobs + quick actions |
 | Jobs list + filters + create + detail | Missing | New: jobs list, job form, job detail (+ report) |
 | Properties list + detail + new | Missing | New: properties list, property form, property detail |
 | Team (technicians) list + invite + detail | Missing | New: team list, invite flow, technician detail |
 | Reports list + detail (readings, photos, PDF) | Missing | New: reports list, report detail |
 | Settings (company) | Settings exists (profile/preferences/security) | Add company settings or repurpose |
-| Data layer | Cadenza (users, assets, beneficiaries) | Add Caicos types + APIs for companies, profiles, properties, jobs, reports |
+| Data layer | Cadenza (users, assets, beneficiaries) | Add Cadenza types + APIs for companies, profiles, properties, jobs, reports |
 | Nav items | Dashboard, Digital Assets, Beneficiaries, Billing, Wizard | Replace with: Dashboard, Jobs, Properties, Team, Reports, Settings |
 | Locale | All routes under `[locale]` | Decide: keep i18n and `[locale]` or simplify to single locale for MVP |
 
@@ -103,14 +103,14 @@ SOLUTION.md suggests routes under **`/dashboard`** (e.g. `/dashboard/jobs`, `/da
 
 ### Phase 0 – Foundation (do first)
 1. **Rename & brand**
-   - `package.json`: name → `admin-portal` (or `caicos-admin`), ensure Next/React versions are supported on your stack.
-   - Replace “Cadenza” / “cadenza” with “Caicos” in UI and CLAUDE.md / README.
+   - `package.json`: name → `admin-portal` (or `cadenza-admin`), ensure Next/React versions are supported on your stack.
+   - Replace “Cadenza” / “cadenza” with “Cadenza” in UI and CLAUDE.md / README.
 2. **Route strategy**
    - Decide: keep **`[locale]`** (en/es) or drop it for MVP and use flat `/dashboard`, `/auth`, etc.
    - If keeping locale: all new pages live under `[locale]/(dashboard)/...` and auth under `[locale]/auth/...`.
    - If dropping: move to flat structure and update middleware + links.
 3. **Supabase + types**
-   - Add **Caicos** types (from `docs/schema.sql`): `caicos_companies`, `caicos_profiles`, `caicos_properties`, `caicos_service_jobs`, `caicos_service_reports`, `caicos_report_photos`.
+   - Add **Cadenza** types (from `docs/schema.sql`): `cadenza_companies`, `cadenza_profiles`, `cadenza_properties`, `cadenza_service_jobs`, `cadenza_service_reports`, `cadenza_report_photos`.
    - In `lib/` add `supabase.ts` (or adapt existing) with these types and **company_id**-scoped RLS in mind.
 4. **Navigation**
    - Update **Navigation** (and any nav config) to: **Dashboard**, **Jobs**, **Properties**, **Team**, **Reports**, **Settings**.
@@ -118,14 +118,14 @@ SOLUTION.md suggests routes under **`/dashboard`** (e.g. `/dashboard/jobs`, `/da
 
 ### Phase 1 – Auth & dashboard
 5. **Login**
-   - Keep existing login page/API; adjust copy to “Caicos Admin”, add link to “Create Company” (→ register).
+   - Keep existing login page/API; adjust copy to “Cadenza Admin”, add link to “Create Company” (→ register).
    - Ensure redirect after login goes to `/dashboard` (or `/[locale]/dashboard`).
 6. **Register**
-   - Add **Company Name** (required); on submit create `auth.users` (Supabase Auth), then `caicos_companies` row and `caicos_profiles` row with role `owner`.
+   - Add **Company Name** (required); on submit create `auth.users` (Supabase Auth), then `cadenza_companies` row and `cadenza_profiles` row with role `owner`.
    - Redirect to dashboard after signup.
 7. **Dashboard**
    - Replace current dashboard content with:
-     - 4 KPI cards: Jobs today, Completed, Pending, Active technicians (query Caicos tables).
+     - 4 KPI cards: Jobs today, Completed, Pending, Active technicians (query Cadenza tables).
      - Recent jobs list (e.g. latest 5).
      - Quick actions: Create job, Create property, Invite technician (links or buttons to the right pages).
 
@@ -136,7 +136,7 @@ SOLUTION.md suggests routes under **`/dashboard`** (e.g. `/dashboard/jobs`, `/da
    - “Create job” button → job form (page or modal).
 9. **Create job** – `dashboard/jobs/new/page.tsx` (or modal)
    - Form: property (dropdown), technician (dropdown), date, time, duration, route order, notes.
-   - POST to API that inserts `caicos_service_jobs`.
+   - POST to API that inserts `cadenza_service_jobs`.
 10. **Job detail** – `dashboard/jobs/[id]/page.tsx`
     - Job info (property, technician, date, time, status).
     - If job has a report: show service report block (readings, equipment, tasks, photos, notes, follow-up).
@@ -149,19 +149,19 @@ SOLUTION.md suggests routes under **`/dashboard`** (e.g. `/dashboard/jobs`, `/da
 12. **Property detail** – `dashboard/properties/[id]/page.tsx`
     - Customer info, address, pool details, equipment notes; Edit, View jobs.
 13. **New property** – `dashboard/properties/new/page.tsx`
-    - Form for all `caicos_properties` fields; POST to API.
+    - Form for all `cadenza_properties` fields; POST to API.
 
 ### Phase 4 – Team (technicians)
 14. **Team list** – `dashboard/technicians/page.tsx` (or `team/page.tsx`)
     - List profiles with `role = 'technician'` (and admin if needed); invite button; deactivate.
 15. **Invite** – `dashboard/technicians/new/page.tsx` or modal
-    - Create invite (e.g. link or email); optionally create `caicos_profiles` with `is_active = false` until they sign up.
+    - Create invite (e.g. link or email); optionally create `cadenza_profiles` with `is_active = false` until they sign up.
 16. **Technician detail** – `dashboard/technicians/[id]/page.tsx`
     - Profile, assigned jobs, activity.
 
 ### Phase 5 – Reports
 17. **Reports list** – `dashboard/reports/page.tsx`
-    - Filters: date range, technician, property; list from `caicos_service_reports` (join job, property, profile).
+    - Filters: date range, technician, property; list from `cadenza_service_reports` (join job, property, profile).
 18. **Report detail** – `dashboard/reports/[id]/page.tsx`
     - Chemical readings, equipment checks, tasks, chemicals added, photos, notes, follow-up; “Export PDF” (can stub first).
 
@@ -177,7 +177,7 @@ SOLUTION.md suggests routes under **`/dashboard`** (e.g. `/dashboard/jobs`, `/da
 
 ## 5. Suggested order of implementation
 
-1. **Phase 0** – Foundation (rename, nav, Caicos types, route strategy).
+1. **Phase 0** – Foundation (rename, nav, Cadenza types, route strategy).
 2. **Phase 1** – Auth (register with company) + Dashboard (KPIs + recent jobs + quick actions).
 3. **Phase 2** – Jobs (list → new → detail).
 4. **Phase 3** – Properties (list → new → detail).
@@ -185,4 +185,4 @@ SOLUTION.md suggests routes under **`/dashboard`** (e.g. `/dashboard/jobs`, `/da
 6. **Phase 5** – Reports (list → detail, then PDF).
 7. **Phase 6** – Settings + cleanup.
 
-This gets you from the current example-app copy to the required Caicos admin pages in a clear sequence. If you tell me your preference (e.g. keep or drop `[locale]`, and exact path names), the next step is to implement Phase 0 and Phase 1 in the codebase.
+This gets you from the current example-app copy to the required Cadenza admin pages in a clear sequence. If you tell me your preference (e.g. keep or drop `[locale]`, and exact path names), the next step is to implement Phase 0 and Phase 1 in the codebase.

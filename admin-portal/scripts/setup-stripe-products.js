@@ -103,7 +103,7 @@ async function main() {
 
     for (const { id, priceId } of updates) {
       const { data: plan, error: fetchError } = await supabase
-        .from('caicos_billing_plans')
+        .from('cadenza_billing_plans')
         .select('provider_price_map')
         .eq('id', id)
         .single();
@@ -116,7 +116,7 @@ async function main() {
       const updatedMap = { ...plan.provider_price_map, stripe: priceId };
 
       const { error: updateError } = await supabase
-        .from('caicos_billing_plans')
+        .from('cadenza_billing_plans')
         .update({ provider_price_map: updatedMap })
         .eq('id', id);
 

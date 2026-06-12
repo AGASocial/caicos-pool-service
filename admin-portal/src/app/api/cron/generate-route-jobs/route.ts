@@ -4,7 +4,7 @@ import {
   defaultRollingMonthWindowUtc,
   ensureRouteJobsForDateRange,
 } from '@/lib/generate-route-jobs-cron';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 /**
  * GET /api/cron/generate-route-jobs
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 
   const client = createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
-  }) as unknown as CaicosSupabaseClient;
+  }) as unknown as CadenzaSupabaseClient;
 
   try {
     const result = await ensureRouteJobsForDateRange(client, startDate, endDate);

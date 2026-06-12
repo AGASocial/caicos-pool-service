@@ -1,4 +1,4 @@
-# CAICOS Cost Scaling - Photo Volume Analysis
+# CADENZA Cost Scaling - Photo Volume Analysis
 
 **Purpose:** Show how infrastructure costs increase as photo volume scales
 **Scenario:** Starting with pilot customer (35 routes, 900 pools)

@@ -3,7 +3,7 @@
 ## Folder Structure Overview
 
 ```
-/sessions/adoring-youthful-wozniak/mnt/caicos/
+/sessions/adoring-youthful-wozniak/mnt/cadenza/
 ├── admin-portal/                    # Next.js web app for admins
 │   ├── src/
 │   │   ├── app/                    # Next.js pages (routes)
@@ -39,7 +39,7 @@
 
 ### Option 1: Work on Admin Portal
 ```bash
-cd /sessions/adoring-youthful-wozniak/mnt/caicos/admin-portal
+cd /sessions/adoring-youthful-wozniak/mnt/cadenza/admin-portal
 npm install    # If needed
 npm run dev    # Start development server
 ```
@@ -50,7 +50,7 @@ Key files to check:
 
 ### Option 2: Work on Technician App
 ```bash
-cd /sessions/adoring-youthful-wozniak/mnt/caicos/technician-app
+cd /sessions/adoring-youthful-wozniak/mnt/cadenza/technician-app
 npm install    # If needed
 npm run start  # or `npx expo start`
 ```
@@ -61,8 +61,8 @@ Key files to check:
 
 ### Option 3: Work on Documentation
 Read and update the feature specs:
-- `/sessions/adoring-youthful-wozniak/mnt/caicos/FEATURE-ADMIN-PORTAL.md`
-- `/sessions/adoring-youthful-wozniak/mnt/caicos/FEATURE-TECHNICIAN-APP.md`
+- `/sessions/adoring-youthful-wozniak/mnt/cadenza/FEATURE-ADMIN-PORTAL.md`
+- `/sessions/adoring-youthful-wozniak/mnt/cadenza/FEATURE-TECHNICIAN-APP.md`
 
 ## Current Implementation Status
 

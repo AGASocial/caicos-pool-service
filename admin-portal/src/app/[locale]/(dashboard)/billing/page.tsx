@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import PaymentMethodsList from '@/components/billing/PaymentMethodsList';
 import { useTeam } from '@/lib/team';
 
-/** Plan features from caicos_billing_plans (JSONB). -1 = unlimited. */
+/** Plan features from cadenza_billing_plans (JSONB). -1 = unlimited. */
 interface PlanFeatures {
   admin_users_included?: number;
   admin_users?: number; // alias in some API responses

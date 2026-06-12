@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 const PROPERTY_BASE_FIELDS =
   'id, customer_name, customer_email, customer_phone, address, city, state, zip, gate_code, pool_type, pool_surface, notes, is_active, created_at';
 
 function attachRouteFromStopRow(row: Record<string, unknown>): Record<string, unknown> {
-  const stops = row.caicos_route_stops;
-  const { caicos_route_stops: _, ...rest } = row;
+  const stops = row.cadenza_route_stops;
+  const { cadenza_route_stops: _, ...rest } = row;
   let stop: Record<string, unknown> | undefined;
   if (Array.isArray(stops)) {
     stop = stops[0] as Record<string, unknown> | undefined;
@@ -16,7 +16,7 @@ function attachRouteFromStopRow(row: Record<string, unknown>): Record<string, un
   }
   let route: { id: string; name: string } | null = null;
   if (stop) {
-    const nested = stop.caicos_routes ?? stop.route;
+    const nested = stop.cadenza_routes ?? stop.route;
     const routeObj = Array.isArray(nested)
       ? (nested[0] as Record<string, unknown> | undefined)
       : (nested as Record<string, unknown> | undefined);
@@ -29,7 +29,7 @@ function attachRouteFromStopRow(row: Record<string, unknown>): Record<string, un
 
 /**
  * List properties for the current user's company.
- * Query: active_only=false to include inactive; include_route=1 to add route { id, name } | null (from caicos_route_stops).
+ * Query: active_only=false to include inactive; include_route=1 to add route { id, name } | null (from cadenza_route_stops).
  */
 export async function GET(request: NextRequest) {
   const { supabase, user } = await createAuthenticatedRouteClient();
@@ -46,11 +46,11 @@ export async function GET(request: NextRequest) {
     searchParams.get('unassigned') === '1' || searchParams.get('unassigned') === 'true';
 
   const select = includeRoute
-    ? `${PROPERTY_BASE_FIELDS}, caicos_route_stops(route_id, caicos_routes(id, name))`
+    ? `${PROPERTY_BASE_FIELDS}, cadenza_route_stops(route_id, cadenza_routes(id, name))`
     : PROPERTY_BASE_FIELDS;
 
-  let query = (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_properties')
+  let query = (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_properties')
     .select(select)
     .order('customer_name', { ascending: true });
 
@@ -60,8 +60,8 @@ export async function GET(request: NextRequest) {
 
   if (unassignedOnly) {
     // Exclude properties that already have a stop on any route
-    const { data: assignedStops } = await (supabase as unknown as CaicosSupabaseClient)
-      .from('caicos_route_stops')
+    const { data: assignedStops } = await (supabase as unknown as CadenzaSupabaseClient)
+      .from('cadenza_route_stops')
       .select('property_id');
     const assignedIds = (assignedStops ?? []).map((s) => s.property_id);
     if (assignedIds.length > 0) {
@@ -96,15 +96,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: profile, error: profileError } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_profiles')
+  const { data: profile, error: profileError } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_profiles')
     .select('company_id')
     .eq('id', user.id)
     .single();
 
   if (profileError || !profile?.company_id) {
     return NextResponse.json(
-      { error: 'User profile or company not found. Sign up with a Caicos company first.' },
+      { error: 'User profile or company not found. Sign up with a Cadenza company first.' },
       { status: 403 }
     );
   }
@@ -134,8 +134,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data, error } = await (supabase as unknown as CaicosSupabaseClient)
-      .from('caicos_properties')
+    const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+      .from('cadenza_properties')
       .insert({
         company_id: profile.company_id,
         customer_name: String(customer_name).trim(),

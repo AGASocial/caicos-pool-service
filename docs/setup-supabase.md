@@ -11,7 +11,7 @@ Your current Supabase project URL `https://lrnhrzpwgyhkruwxeppw.supabase.co` is 
 3. Click "New Project"
 4. Choose your organization
 5. Enter project details:
-   - **Name**: `caicos-app` (or your preferred name)
+   - **Name**: `cadenza-app` (or your preferred name)
    - **Database Password**: Choose a strong password
    - **Region**: Choose the closest region to your users
 
@@ -30,10 +30,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-new-anon-key
 ```
 
 ### Step 4: Set Up Database Schema
-Run migrations from the **Caicos repository root** (not inside `admin-portal/`). All SQL files live in `supabase/migrations/` at the monorepo root:
+Run migrations from the **Cadenza repository root** (not inside `admin-portal/`). All SQL files live in `supabase/migrations/` at the monorepo root:
 
 ```bash
-cd /path/to/caicos   # repo root
+cd /path/to/cadenza   # repo root
 supabase db push
 
 # Or manually run the SQL files from supabase/migrations/ in your Supabase dashboard
@@ -56,7 +56,7 @@ npm install -g supabase
 supabase login
 
 # Create a new project
-supabase projects create caicos-app
+supabase projects create cadenza-app
 
 # Get the project credentials
 supabase projects list

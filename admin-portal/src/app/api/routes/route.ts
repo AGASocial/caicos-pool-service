@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 export async function GET() {
   const { supabase, user } = await createAuthenticatedRouteClient();
@@ -9,8 +9,8 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: routes, error } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_routes')
+  const { data: routes, error } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_routes')
     .select(`
       id,
       name,
@@ -18,8 +18,8 @@ export async function GET() {
       day_of_week,
       is_active,
       created_at,
-      technician:caicos_profiles!technician_id(id, full_name),
-      stops:caicos_route_stops(id)
+      technician:cadenza_profiles!technician_id(id, full_name),
+      stops:cadenza_route_stops(id)
     `)
     .order('name', { ascending: true });
 
@@ -55,21 +55,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: profile, error: profileError } = await (supabase as unknown as CaicosSupabaseClient)
-      .from('caicos_profiles')
+    const { data: profile, error: profileError } = await (supabase as unknown as CadenzaSupabaseClient)
+      .from('cadenza_profiles')
       .select('company_id')
       .eq('id', user.id)
       .single();
 
     if (profileError || !profile?.company_id) {
       return NextResponse.json(
-        { error: 'User profile or company not found. Sign up with a Caicos company first.' },
+        { error: 'User profile or company not found. Sign up with a Cadenza company first.' },
         { status: 403 }
       );
     }
 
-    const { data, error } = await (supabase as unknown as CaicosSupabaseClient)
-      .from('caicos_routes')
+    const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+      .from('cadenza_routes')
       .insert({
         company_id: profile.company_id,
         name: String(name).trim(),

@@ -1,4 +1,4 @@
-# Cron jobs – Caicos
+# Cron jobs – Cadenza
 
 Cron jobs for cleanup, consistency, and background tasks. Add new items below as you identify them.
 
@@ -6,7 +6,7 @@ Cron jobs for cleanup, consistency, and background tasks. Add new items below as
 
 ## 1. Orphan report-photos storage cleanup
 
-**Preferred approach:** When a photo is deleted in the technician app, the app should delete the object from the `report-photos` bucket (using the photo’s `storage_path`) in addition to removing the row from `caicos_report_photos`. That keeps storage clean in the normal case.
+**Preferred approach:** When a photo is deleted in the technician app, the app should delete the object from the `report-photos` bucket (using the photo’s `storage_path`) in addition to removing the row from `cadenza_report_photos`. That keeps storage clean in the normal case.
 
 **Cron as backstop:** A scheduled job still runs to remove any orphan objects (e.g. after failed in-app deletes, offline edge cases, or other code paths that remove rows without touching storage).
 
@@ -15,13 +15,13 @@ Cron jobs for cleanup, consistency, and background tasks. Add new items below as
 **Cron solution:**
 
 1. List objects in the `report-photos` bucket (paginate or list by prefix).
-2. Fetch all `storage_path` values from `caicos_report_photos`.
+2. Fetch all `storage_path` values from `cadenza_report_photos`.
 3. Delete from Storage any object whose path is **not** in that set.
 
 **Details:**
 
 - **Bucket:** `report-photos`
-- **Table:** `caicos_report_photos` (column: `storage_path`, path relative to bucket)
+- **Table:** `cadenza_report_photos` (column: `storage_path`, path relative to bucket)
 - **Safety:** Only delete objects that are not referenced in the table; never delete based only on age or pattern without cross-checking the table.
 - **Implementation options:**
   - Supabase Edge Function + pg + Storage API, triggered on a schedule (e.g. daily).

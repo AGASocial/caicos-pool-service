@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     if (inviteCode && typeof inviteCode === 'string' && inviteCode.trim()) {
       const code = inviteCode.trim();
       const { data: invite, error: inviteError } = await supabaseAdmin
-        .from('caicos_invite_codes')
+        .from('cadenza_invite_codes')
         .select('company_id, role')
         .eq('code', code)
         .is('used_at', null)
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     if (inviteCode && typeof inviteCode === 'string' && inviteCode.trim()) {
       await supabaseAdmin
-        .from('caicos_invite_codes')
+        .from('cadenza_invite_codes')
         .update({ used_at: new Date().toISOString() })
         .eq('code', inviteCode.trim());
     }

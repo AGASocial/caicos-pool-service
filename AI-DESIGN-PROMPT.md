@@ -5,7 +5,7 @@
 
 ## **Project Brief**
 
-Create a modern, mobile-first app interface design system for **Caicos Technician App** — a field service management platform for pool maintenance professionals. The app enables technicians to complete daily service jobs, document work with GPS-tagged photos, and report issues in real-time, with offline capability.
+Create a modern, mobile-first app interface design system for **Cadenza Technician App** — a field service management platform for pool maintenance professionals. The app enables technicians to complete daily service jobs, document work with GPS-tagged photos, and report issues in real-time, with offline capability.
 
 **Target Audience:** Field technicians, dispatchers, and pool service business owners
 **Platform:** iOS & Android (React Native/Expo)
@@ -52,7 +52,7 @@ Create a modern, mobile-first app interface design system for **Caicos Technicia
 **Visual Style:** Clean, centered, trust-focused
 
 **Layout Elements:**
-- [ ] Caicos logo/wordmark at top (60x60px)
+- [ ] Cadenza logo/wordmark at top (60x60px)
 - [ ] Two input fields: Email, Password (full width, rounded)
 - [ ] "Remember me" checkbox (accent color when checked)
 - [ ] Large primary button: "SIGN IN →" (full width, 48px height)
@@ -185,7 +185,7 @@ Create a modern, mobile-first app interface design system for **Caicos Technicia
 **Visual Style:** Reference list, searchable, professional
 
 **Layout Elements:**
-- [ ] Header: "CAICOS" (left), Search icon (right)
+- [ ] Header: "CADENZA" (left), Search icon (right)
 - [ ] Heading: "Properties (12)"
 - [ ] Filter dropdown: "[All ▼]" (filterable by type: residential, commercial)
 - [ ] Property Cards (similar to job cards):
@@ -208,13 +208,13 @@ Create a modern, mobile-first app interface design system for **Caicos Technicia
 **Visual Style:** Personal, clear, minimal
 
 **Layout Elements:**
-- [ ] Header: "CAICOS" (left), Settings icon (right)
+- [ ] Header: "CADENZA" (left), Settings icon (right)
 - [ ] Profile Card:
   - Avatar placeholder (circular, 80px, initials or default icon)
   - Name: "John Technician" (bold)
-  - Email: "john@caicos.com" (gray)
+  - Email: "john@cadenza.com" (gray)
   - Role: "Technician" (badge, blue)
-  - Company: "Caicos" (gray)
+  - Company: "Cadenza" (gray)
 - [ ] Editable Fields:
   - Full Name: [text input]
   - Email: [read-only, grayed]
@@ -414,9 +414,9 @@ Create a modern, mobile-first app interface design system for **Caicos Technicia
 
 ### **START HERE: Copy-Paste into Canva/Stitch AI**
 
-"Design a modern mobile app interface for **Caicos Technician App**, a field service management platform for pool maintenance. Create 6 screens in iPhone dimensions (390x844px):
+"Design a modern mobile app interface for **Cadenza Technician App**, a field service management platform for pool maintenance. Create 6 screens in iPhone dimensions (390x844px):
 
-1. **Login Screen** — Clean, centered, professional. Include Caicos logo, email/password fields, 'Remember me' checkbox, 'SIGN IN →' button (primary blue), signup link below.
+1. **Login Screen** — Clean, centered, professional. Include Cadenza logo, email/password fields, 'Remember me' checkbox, 'SIGN IN →' button (primary blue), signup link below.
 
 2. **Daily Jobs Dashboard** — Show date (Tuesday, Feb 21), route name (Ruta 1), progress bar (0 of 22 completed), and 3 sample house cards with customer names, addresses (📍), and 'Start Service' buttons. Use blue progress bar, white/light gray background.
 
@@ -459,7 +459,7 @@ Create a modern, mobile-first app interface design system for **Caicos Technicia
    - "Show the form 80% complete (fields filled in)"
 
 ### **Post-Generation Customization**
-- [ ] Update Caicos logo with your actual brand
+- [ ] Update Cadenza logo with your actual brand
 - [ ] Replace sample data (customer names, addresses) with real examples
 - [ ] Adjust colors to match your brand guide (if different from suggested palette)
 - [ ] Add company name/tagline in header

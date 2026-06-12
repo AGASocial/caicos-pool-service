@@ -27,7 +27,7 @@ export default function CantServiceScreen() {
   useEffect(() => {
     if (!id) return;
     supabase
-      .from('caicos_service_jobs')
+      .from('cadenza_service_jobs')
       .select('company_id, property_id, scheduled_date')
       .eq('id', id)
       .single()
@@ -222,7 +222,7 @@ export default function CantServiceScreen() {
     try {
       let jobData = job;
       if (!jobData) {
-        const { data } = await supabase.from('caicos_service_jobs').select('company_id, property_id, scheduled_date').eq('id', id).single();
+        const { data } = await supabase.from('cadenza_service_jobs').select('company_id, property_id, scheduled_date').eq('id', id).single();
         jobData = data as typeof job;
       }
       if (!jobData) {
@@ -236,14 +236,14 @@ export default function CantServiceScreen() {
         technician_id: user.id,
         notes: comment.trim() || 'Unable to service — no comment provided.',
       };
-      const { data: reportRow, error: reportErr } = await supabase.from('caicos_service_reports').insert(report).select('id').single();
+      const { data: reportRow, error: reportErr } = await supabase.from('cadenza_service_reports').insert(report).select('id').single();
       if (reportErr) {
         Alert.alert('Error', reportErr.message ?? 'Failed to save report');
         return;
       }
       const reportId = reportRow.id;
 
-      const { error: updateJobErr } = await supabase.from('caicos_service_jobs').update({ status: 'skipped' }).eq('id', id);
+      const { error: updateJobErr } = await supabase.from('cadenza_service_jobs').update({ status: 'skipped' }).eq('id', id);
       if (updateJobErr) {
         Alert.alert('Error', updateJobErr.message ?? 'Failed to update job status');
         return;
@@ -257,7 +257,7 @@ export default function CantServiceScreen() {
           const body = await getUploadBodyFromUri(photo.uri);
           const { error: uploadErr } = await supabase.storage.from('report-photos').upload(fileName, body, { contentType: 'image/jpeg' });
           if (!uploadErr) {
-            await supabase.from('caicos_report_photos').insert({
+            await supabase.from('cadenza_report_photos').insert({
               report_id: reportId,
               company_id: jobData.company_id,
               storage_path: fileName,

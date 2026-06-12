@@ -1,7 +1,7 @@
 # Photo Retention Strategy - Option 1 vs Option 2
 
 **Document Date:** 2026-02-28
-**Purpose:** Analyze two photo retention strategies for CAICOS
+**Purpose:** Analyze two photo retention strategies for CADENZA
 **Decision:** Business model choice for scaling
 
 ---
@@ -394,7 +394,7 @@ return (
 - Add retention upselling in Q2 2026
 
 **Example Pitch to Cousin:**
-> "CAICOS includes 3 months of photo storage. Photos are automatically archived after 90 days but remain accessible through your dashboard. If you need longer retention (6 months or unlimited), we can add that for $4.99-9.99 per technician per month."
+> "CADENZA includes 3 months of photo storage. Photos are automatically archived after 90 days but remain accessible through your dashboard. If you need longer retention (6 months or unlimited), we can add that for $4.99-9.99 per technician per month."
 
 ---
 

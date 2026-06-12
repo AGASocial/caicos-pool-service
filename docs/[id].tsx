@@ -126,7 +126,7 @@ export default function JobDetailScreen() {
     if (!job) return;
     try {
       await supabase
-        .from('caicos_service_jobs')
+        .from('cadenza_service_jobs')
         .update({ status: 'in_progress' })
         .eq('id', job.id);
       Alert.alert('Job Started', 'You can now fill out the service report.');
@@ -176,7 +176,7 @@ export default function JobDetailScreen() {
       if (existingReport) {
         // Update existing
         const { error } = await supabase
-          .from('caicos_service_reports')
+          .from('cadenza_service_reports')
           .update(reportData)
           .eq('id', existingReport.id);
         if (error) throw error;
@@ -184,7 +184,7 @@ export default function JobDetailScreen() {
       } else {
         // Create new
         const { data, error } = await supabase
-          .from('caicos_service_reports')
+          .from('cadenza_service_reports')
           .insert(reportData)
           .select('id')
           .single();
@@ -210,7 +210,7 @@ export default function JobDetailScreen() {
           .upload(fileName, formData);
 
         if (!uploadError) {
-          await supabase.from('caicos_report_photos').insert({
+          await supabase.from('cadenza_report_photos').insert({
             report_id: reportId,
             company_id: profile.company_id,
             storage_path: fileName,
@@ -222,7 +222,7 @@ export default function JobDetailScreen() {
 
       // Mark job as completed
       await supabase
-        .from('caicos_service_jobs')
+        .from('cadenza_service_jobs')
         .update({ status: 'completed' })
         .eq('id', job.id);
 

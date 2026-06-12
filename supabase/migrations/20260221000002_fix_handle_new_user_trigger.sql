@@ -14,11 +14,11 @@ DECLARE
 BEGIN
   -- New company (owner signup)
   IF NEW.raw_user_meta_data->>'company_name' IS NOT NULL AND trim(NEW.raw_user_meta_data->>'company_name') != '' THEN
-    INSERT INTO caicos_companies (name)
+    INSERT INTO cadenza_companies (name)
     VALUES (trim(NEW.raw_user_meta_data->>'company_name'))
     RETURNING id INTO new_company_id;
 
-    INSERT INTO caicos_profiles (id, company_id, role, full_name)
+    INSERT INTO cadenza_profiles (id, company_id, role, full_name)
     VALUES (
       NEW.id,
       new_company_id,
@@ -36,7 +36,7 @@ BEGIN
       meta_role := 'technician';
     END IF;
 
-    INSERT INTO caicos_profiles (id, company_id, role, full_name)
+    INSERT INTO cadenza_profiles (id, company_id, role, full_name)
     VALUES (
       NEW.id,
       meta_company_id::UUID,

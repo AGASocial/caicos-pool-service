@@ -1,8 +1,8 @@
-# CAICOS Platform - Cost Analysis & Pilot Strategy
+# CADENZA Platform - Cost Analysis & Pilot Strategy
 
 **Document Created:** 2026-02-28
 **Author:** AGA Social (byagasocial@gmail.com)
-**Purpose:** Financial planning for CAICOS SaaS platform launch
+**Purpose:** Financial planning for CADENZA SaaS platform launch
 **Status:** Pilot Phase Planning
 
 ---
@@ -140,7 +140,7 @@
 
 ### Proposed Offer to Your Cousin
 
-> **"I'm launching CAICOS and want to use your business as our official first pilot customer. Here's the deal:**
+> **"I'm launching CADENZA and want to use your business as our official first pilot customer. Here's the deal:**
 >
 > **Pricing:** $9.99/technician/month (70% discount vs. market rate)
 >
@@ -341,6 +341,6 @@
 
 ---
 
-**Questions?** Keep this document handy for reference as you scale CAICOS.
+**Questions?** Keep this document handy for reference as you scale CADENZA.
 
 *Last updated: 2026-02-28*

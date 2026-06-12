@@ -82,7 +82,7 @@ async function rotateKeys() {
     // Fetch all users with keys
     while (true) {
         let query = supabase
-            .from('caicos_profiles')
+            .from('cadenza_profiles')
             .select('id, encrypted_storage_key')
             .not('encrypted_storage_key', 'is', null)
             .order('id', { ascending: true })
@@ -97,7 +97,7 @@ async function rotateKeys() {
 
         // Supabase range pagination
         const { data: users, error } = await supabase
-            .from('caicos_profiles')
+            .from('cadenza_profiles')
             .select('id, encrypted_storage_key')
             .not('encrypted_storage_key', 'is', null)
             .range(count, count + 99);
@@ -121,7 +121,7 @@ async function rotateKeys() {
 
                 // Update DB
                 const { error: updateError } = await supabase
-                    .from('caicos_profiles')
+                    .from('cadenza_profiles')
                     .update({ encrypted_storage_key: newEncryptedKey })
                     .eq('id', user.id);
 

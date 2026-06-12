@@ -49,7 +49,7 @@ export class BillingService {
    */
   private async getUserEmailAndName(userId: string): Promise<{ email: string; full_name?: string }> {
     const { data: profile } = await this.supabase
-      .from('caicos_profiles')
+      .from('cadenza_profiles')
       .select('email, full_name')
       .eq('id', userId)
       .single();
@@ -71,7 +71,7 @@ export class BillingService {
    */
   async getPlans(): Promise<PlanDefinition[]> {
     const { data, error } = await this.supabase
-      .from('caicos_billing_plans')
+      .from('cadenza_billing_plans')
       .select('*')
       .order('amount_cents', { ascending: true });
 
@@ -87,7 +87,7 @@ export class BillingService {
    */
   async getPlan(planId: string): Promise<PlanDefinition> {
     const { data, error } = await this.supabase
-      .from('caicos_billing_plans')
+      .from('cadenza_billing_plans')
       .select('*')
       .eq('id', planId)
       .single();
@@ -104,7 +104,7 @@ export class BillingService {
    */
   async getUserSubscription(userId: string): Promise<Subscription | null> {
     const { data, error } = await this.supabase
-      .from('caicos_billing_subscriptions')
+      .from('cadenza_billing_subscriptions')
       .select('*')
       .eq('user_id', userId)
       .in('status', ['active', 'trialing', 'past_due'])
@@ -124,7 +124,7 @@ export class BillingService {
    */
   async getPaymentMethods(userId: string): Promise<PaymentMethod[]> {
     const { data, error } = await this.supabase
-      .from('caicos_billing_payment_methods')
+      .from('cadenza_billing_payment_methods')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
@@ -141,7 +141,7 @@ export class BillingService {
    */
   async getInvoices(userId: string, limit = 10): Promise<Invoice[]> {
     const { data, error } = await this.supabase
-      .from('caicos_billing_invoices')
+      .from('cadenza_billing_invoices')
       .select('*')
       .eq('user_id', userId)
       .order('issued_at', { ascending: false })
@@ -160,7 +160,7 @@ export class BillingService {
   async getOrCreateCustomer(userId: string, email: string, name?: string): Promise<CustomerRef> {
     // Check if user already has a payment method (which contains customer ID)
     const { data: existingMethod } = await this.supabase
-      .from('caicos_billing_payment_methods')
+      .from('cadenza_billing_payment_methods')
       .select('provider, provider_customer_id')
       .eq('user_id', userId)
       .eq('provider', this.gateway.getName())
@@ -211,7 +211,7 @@ export class BillingService {
     // If setting as default, update existing default methods
     if (setAsDefault) {
       await this.supabase
-        .from('caicos_billing_payment_methods')
+        .from('cadenza_billing_payment_methods')
         .update({ is_default: false })
         .eq('user_id', userId)
         .eq('provider', this.gateway.getName());
@@ -222,7 +222,7 @@ export class BillingService {
 
     // Store payment method in database
     const { data: savedMethod, error: saveError } = await this.supabase
-      .from('caicos_billing_payment_methods')
+      .from('cadenza_billing_payment_methods')
       .insert({
         user_id: userId,
         provider: this.gateway.getName(),
@@ -254,7 +254,7 @@ export class BillingService {
   async setDefaultPaymentMethod(userId: string, paymentMethodId: string): Promise<void> {
     // Get the payment method
     const { data: paymentMethod, error: pmError } = await this.supabase
-      .from('caicos_billing_payment_methods')
+      .from('cadenza_billing_payment_methods')
       .select('*')
       .eq('id', paymentMethodId)
       .eq('user_id', userId)
@@ -266,14 +266,14 @@ export class BillingService {
 
     // Update all existing payment methods to not be default
     await this.supabase
-      .from('caicos_billing_payment_methods')
+      .from('cadenza_billing_payment_methods')
       .update({ is_default: false })
       .eq('user_id', userId)
       .eq('provider', paymentMethod.provider);
 
     // Set the specified payment method as default
     const { error: updateError } = await this.supabase
-      .from('caicos_billing_payment_methods')
+      .from('cadenza_billing_payment_methods')
       .update({ is_default: true })
       .eq('id', paymentMethodId);
 
@@ -295,7 +295,7 @@ export class BillingService {
   async detachPaymentMethod(userId: string, paymentMethodId: string): Promise<void> {
     // Get the payment method
     const { data: paymentMethod, error: pmError } = await this.supabase
-      .from('caicos_billing_payment_methods')
+      .from('cadenza_billing_payment_methods')
       .select('*')
       .eq('id', paymentMethodId)
       .eq('user_id', userId)
@@ -308,7 +308,7 @@ export class BillingService {
     // Check if this is the default payment method and there's an active subscription
     if (paymentMethod.is_default) {
       const { data: activeSubscription } = await this.supabase
-        .from('caicos_billing_subscriptions')
+        .from('cadenza_billing_subscriptions')
         .select('id')
         .eq('user_id', userId)
         .eq('status', 'active')
@@ -327,7 +327,7 @@ export class BillingService {
 
     // Delete from database
     const { error: deleteError } = await this.supabase
-      .from('caicos_billing_payment_methods')
+      .from('cadenza_billing_payment_methods')
       .delete()
       .eq('id', paymentMethodId);
 
@@ -376,7 +376,7 @@ export class BillingService {
     } else {
       // Try to get the default payment method from database
       const { data: defaultPM } = await this.supabase
-        .from('caicos_billing_payment_methods')
+        .from('cadenza_billing_payment_methods')
         .select('token')
         .eq('user_id', userId)
         .eq('provider', providerName)
@@ -406,7 +406,7 @@ export class BillingService {
 
     // Save subscription to database
     const { data: subscription, error: subscriptionError } = await this.supabase
-      .from('caicos_billing_subscriptions')
+      .from('cadenza_billing_subscriptions')
       .insert({
         user_id: userId,
         plan_id: planId,
@@ -469,7 +469,7 @@ export class BillingService {
     }
 
     const { data: subscription, error: subscriptionError } = await this.supabase
-      .from('caicos_billing_subscriptions')
+      .from('cadenza_billing_subscriptions')
       .insert({
         user_id: params.userId,
         plan_id: params.plan.id,
@@ -485,7 +485,7 @@ export class BillingService {
       throw new BillingError('Failed to create PayU subscription placeholder', 'PAYU_SUBSCRIPTION_FAILED');
     }
 
-    const { error: invoiceError } = await this.supabase.from('caicos_billing_invoices').insert({
+    const { error: invoiceError } = await this.supabase.from('cadenza_billing_invoices').insert({
       user_id: params.userId,
       subscription_id: subscription.id,
       provider: 'payu',
@@ -521,7 +521,7 @@ export class BillingService {
 
     // Get existing subscription
     const { data: subscription, error: fetchError } = await this.supabase
-      .from('caicos_billing_subscriptions')
+      .from('cadenza_billing_subscriptions')
       .select('*')
       .eq('id', subscriptionId)
       .single();
@@ -581,7 +581,7 @@ export class BillingService {
     });
 
     const { error: updateError } = await this.supabase
-      .from('caicos_billing_subscriptions')
+      .from('cadenza_billing_subscriptions')
       .update(updates)
       .eq('id', subscriptionId);
 
@@ -598,7 +598,7 @@ export class BillingService {
 
     // Get existing subscription
     const { data: subscription, error: fetchError } = await this.supabase
-      .from('caicos_billing_subscriptions')
+      .from('cadenza_billing_subscriptions')
       .select('*')
       .eq('id', subscriptionId)
       .single();
@@ -633,7 +633,7 @@ export class BillingService {
       // If current_period_end is not set (e.g. PayU subscriptions), compute it
       // based on the plan's billing interval from the most recent invoice paid_at or creation date
       const { data: latestInvoice } = await this.supabase
-        .from('caicos_billing_invoices')
+        .from('cadenza_billing_invoices')
         .select('paid_at')
         .eq('subscription_id', subscriptionId)
         .eq('status', 'paid')
@@ -642,7 +642,7 @@ export class BillingService {
         .maybeSingle();
 
       const { data: plan } = await this.supabase
-        .from('caicos_billing_plans')
+        .from('cadenza_billing_plans')
         .select('interval')
         .eq('id', subscription.plan_id)
         .single();
@@ -662,7 +662,7 @@ export class BillingService {
     }
 
     const { error: updateError } = await this.supabase
-      .from('caicos_billing_subscriptions')
+      .from('cadenza_billing_subscriptions')
       .update(updates)
       .eq('id', subscriptionId);
 
@@ -705,7 +705,7 @@ export class BillingService {
    * Store webhook event for idempotency and audit
    */
   private async storeWebhookEvent(event: NormalizedEvent): Promise<void> {
-    await this.supabase.from('caicos_billing_webhook_events').insert({
+    await this.supabase.from('cadenza_billing_webhook_events').insert({
       provider: event.provider,
       type: event.type,
       provider_event_id: event.id,
@@ -723,7 +723,7 @@ export class BillingService {
 
     if (!userId) {
       const { data: paymentMethod } = await this.supabase
-        .from('caicos_billing_payment_methods')
+        .from('cadenza_billing_payment_methods')
         .select('user_id')
         .eq('provider_customer_id', data.customerId)
         .limit(1)
@@ -754,7 +754,7 @@ export class BillingService {
     }
 
     await this.supabase
-      .from('caicos_billing_subscriptions')
+      .from('cadenza_billing_subscriptions')
       .upsert(
         upsertPayload,
         { onConflict: 'provider_subscription_id' }
@@ -766,7 +766,7 @@ export class BillingService {
    */
   private async handleSubscriptionCanceled(data: SubscriptionEventData): Promise<void> {
     await this.supabase
-      .from('caicos_billing_subscriptions')
+      .from('cadenza_billing_subscriptions')
       .update({
         status: 'canceled',
         canceled_at: data.canceledAt || new Date().toISOString(),
@@ -782,7 +782,7 @@ export class BillingService {
 
     if (!userId) {
       const { data: paymentMethod } = await this.supabase
-        .from('caicos_billing_payment_methods')
+        .from('cadenza_billing_payment_methods')
         .select('user_id')
         .eq('provider_customer_id', data.customerId)
         .limit(1)
@@ -800,7 +800,7 @@ export class BillingService {
     let subscriptionId: string | undefined;
     if (data.subscriptionId) {
       const { data: subscription } = await this.supabase
-        .from('caicos_billing_subscriptions')
+        .from('cadenza_billing_subscriptions')
         .select('id')
         .eq('provider_subscription_id', data.subscriptionId)
         .maybeSingle();
@@ -809,7 +809,7 @@ export class BillingService {
     }
 
     // Store invoice
-    await this.supabase.from('caicos_billing_invoices').upsert(
+    await this.supabase.from('cadenza_billing_invoices').upsert(
       {
         user_id: userId,
         subscription_id: subscriptionId,
@@ -843,7 +843,7 @@ export class BillingService {
       let interval = 'month'; // default to monthly
       if (planId) {
         const { data: plan } = await this.supabase
-          .from('caicos_billing_plans')
+          .from('cadenza_billing_plans')
           .select('interval')
           .eq('id', planId)
           .single();
@@ -853,13 +853,13 @@ export class BillingService {
       } else {
         // Try to get the interval from the existing subscription's plan
         const { data: sub } = await this.supabase
-          .from('caicos_billing_subscriptions')
+          .from('cadenza_billing_subscriptions')
           .select('plan_id')
           .eq('provider_subscription_id', data.subscriptionId)
           .single();
         if (sub?.plan_id) {
           const { data: plan } = await this.supabase
-            .from('caicos_billing_plans')
+            .from('cadenza_billing_plans')
             .select('interval')
             .eq('id', sub.plan_id)
             .single();
@@ -878,7 +878,7 @@ export class BillingService {
       updates.current_period_end = periodEnd.toISOString();
 
       await this.supabase
-        .from('caicos_billing_subscriptions')
+        .from('cadenza_billing_subscriptions')
         .update(updates)
         .eq('provider_subscription_id', data.subscriptionId);
     }
@@ -891,7 +891,7 @@ export class BillingService {
     // Update subscription status to past_due
     if (data.subscriptionId) {
       await this.supabase
-        .from('caicos_billing_subscriptions')
+        .from('cadenza_billing_subscriptions')
         .update({ status: 'past_due' })
         .eq('provider_subscription_id', data.subscriptionId);
     }

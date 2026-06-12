@@ -1,6 +1,6 @@
-# 🚀 Caicos Platform - Start Here
+# 🚀 Cadenza Platform - Start Here
 
-Welcome! You have a complete MVP solution design for Caicos. This file guides you through the documentation.
+Welcome! You have a complete MVP solution design for Cadenza. This file guides you through the documentation.
 
 ---
 
@@ -177,7 +177,7 @@ Page 6: Company Settings
 ## 💾 Files in This Folder
 
 ```
-/caicos/
+/cadenza/
 ├── START-HERE.md ............................ (you are here)
 ├── README-SOLUTION.md ....................... (index & roadmap)
 ├── SOLUTION.md ............................. (architecture)
@@ -225,7 +225,7 @@ Page 6: Company Settings
 A: Yes! They're in Markdown. Edit freely, use git for version history.
 
 **Q: When do I convert to Word?**
-A: When ready to finalize (Phase 2?). Use: `pandoc *.md -o CAICOS-SOLUTION.docx`
+A: When ready to finalize (Phase 2?). Use: `pandoc *.md -o CADENZA-SOLUTION.docx`
 
 **Q: Are the mockups final?**
 A: No. Use them as starting points. Iterate with designer/users.
@@ -337,7 +337,7 @@ If your team is new to any of these:
 
 ## 🎉 You're Ready!
 
-You have everything needed to start building Caicos:
+You have everything needed to start building Cadenza:
 
 ✅ Complete feature specifications
 ✅ Technology decisions made
@@ -353,5 +353,5 @@ You have everything needed to start building Caicos:
 
 ---
 
-*Created with ❤️ by Claude for AGA Social / Caicos*
+*Created with ❤️ by Claude for AGA Social / Cadenza*
 *Last updated: February 21, 2026*

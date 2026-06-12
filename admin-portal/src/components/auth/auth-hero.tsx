@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
-// Curated collection of pool-related images for Caicos pool service platform
+// Curated collection of pool-related images for Cadenza pool service platform
 // Using Unsplash images - beautiful, high-quality pool and water photos
 const IMAGE_SOURCES = [
   // Resort & luxury pools

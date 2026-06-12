@@ -18,7 +18,7 @@ export default function SettingsScreen() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         setEmail(user.email ?? '');
-        supabase.from('caicos_profiles').select('full_name').eq('id', user.id).single().then(({ data }) => {
+        supabase.from('cadenza_profiles').select('full_name').eq('id', user.id).single().then(({ data }) => {
           setFullName((data?.full_name as string) ?? '');
         });
       }
@@ -30,7 +30,7 @@ export default function SettingsScreen() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     setSaving(true);
-    await supabase.from('caicos_profiles').update({ full_name: fullName }).eq('id', user.id);
+    await supabase.from('cadenza_profiles').update({ full_name: fullName }).eq('id', user.id);
     setSaving(false);
   }
 
@@ -311,7 +311,7 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Caicos Technician App{'\n'}Version 1.0.0</Text>
+          <Text style={styles.footerText}>Cadenza Technician App{'\n'}Version 1.0.0</Text>
         </View>
       </View>
     </ScrollView>

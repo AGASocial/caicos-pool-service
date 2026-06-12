@@ -5,7 +5,7 @@ import {
   type RouteStopScheduleSegment,
 } from '@/lib/route-stop-schedule';
 import { stopMatchesDate } from '@/lib/schedule';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 export type ReconcileRouteJobsResult = {
   examined: number;
@@ -20,7 +20,7 @@ export type ReconcileRouteJobsResult = {
  * or removed if another pending job already occupies that date.
  */
 export async function reconcilePendingRouteJobsForStop(
-  client: CaicosSupabaseClient,
+  client: CadenzaSupabaseClient,
   params: {
     routeId: string;
     propertyId: string;
@@ -32,7 +32,7 @@ export async function reconcilePendingRouteJobsForStop(
   const sorted = [...segments].sort((a, b) => a.effective_from.localeCompare(b.effective_from));
 
   const { data: jobs, error: jobsErr } = await client
-    .from('caicos_service_jobs')
+    .from('cadenza_service_jobs')
     .select('id, scheduled_date')
     .eq('route_id', routeId)
     .eq('property_id', propertyId)
@@ -68,7 +68,7 @@ export async function reconcilePendingRouteJobsForStop(
     }
 
     const { data: clash } = await client
-      .from('caicos_service_jobs')
+      .from('cadenza_service_jobs')
       .select('id')
       .eq('route_id', routeId)
       .eq('property_id', propertyId)
@@ -81,7 +81,7 @@ export async function reconcilePendingRouteJobsForStop(
       : null;
 
     if (clashId && clashId !== job.id) {
-      const { error: delErr } = await client.from('caicos_service_jobs').delete().eq('id', job.id);
+      const { error: delErr } = await client.from('cadenza_service_jobs').delete().eq('id', job.id);
       if (delErr) {
         throw new Error(`reconcile: failed to delete stale job: ${delErr.message}`);
       }
@@ -90,7 +90,7 @@ export async function reconcilePendingRouteJobsForStop(
     }
 
     const { error: updErr } = await client
-      .from('caicos_service_jobs')
+      .from('cadenza_service_jobs')
       .update({ scheduled_date: newDate, updated_at: new Date().toISOString() })
       .eq('id', job.id);
 

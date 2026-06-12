@@ -1,7 +1,7 @@
-# Caicos Team Plugin - Delivery Summary
+# Cadenza Team Plugin - Delivery Summary
 
 **Status:** ✅ Complete - Ready to Install
-**Plugin File:** `caicos-team.plugin` (39 KB)
+**Plugin File:** `cadenza-team.plugin` (39 KB)
 **Version:** 0.1.0
 **Date:** February 21, 2026
 
@@ -9,7 +9,7 @@
 
 ## 🎯 What You Got
 
-A fully functional AI-powered development team plugin that coordinates 4 specialized agents to build the Caicos platform.
+A fully functional AI-powered development team plugin that coordinates 4 specialized agents to build the Cadenza platform.
 
 ### Components Delivered
 
@@ -68,7 +68,7 @@ A fully functional AI-powered development team plugin that coordinates 4 special
 ## 📦 File Structure
 
 ```
-caicos-team.plugin  (39 KB ZIP)
+cadenza-team.plugin  (39 KB ZIP)
 ├── .claude-plugin/plugin.json
 ├── agents/ (4 agent definitions)
 │   ├── master-agent.md
@@ -95,7 +95,7 @@ caicos-team.plugin  (39 KB ZIP)
 ## 🚀 How to Use
 
 ### Installation
-1. Download `caicos-team.plugin`
+1. Download `cadenza-team.plugin`
 2. In Cowork: Settings → Plugins → Add Plugin
 3. Select the plugin file
 4. Authorize access
@@ -334,7 +334,7 @@ These work seamlessly with the plugin.
 ## ⚡ Next Steps
 
 1. **Install Plugin**
-   - Download `caicos-team.plugin`
+   - Download `cadenza-team.plugin`
    - Add to Cowork
    - Configure environment variables
 
@@ -386,9 +386,9 @@ Comprehensive guides included:
 
 ## 🎉 You're Ready!
 
-Your Caicos development team plugin is complete and ready to use.
+Your Cadenza development team plugin is complete and ready to use.
 
-**Download location:** `/sessions/compassionate-modest-pascal/mnt/caicos/caicos-team.plugin`
+**Download location:** `/sessions/compassionate-modest-pascal/mnt/cadenza/cadenza-team.plugin`
 
 **File size:** 39 KB
 
@@ -397,5 +397,5 @@ Your Caicos development team plugin is complete and ready to use.
 ---
 
 **Built by Claude for AGA Social**
-**Caicos Pool Service Platform MVP**
+**Cadenza Pool Service Platform MVP**
 **v0.1.0 - February 21, 2026**

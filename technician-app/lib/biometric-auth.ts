@@ -3,9 +3,26 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
 
+const IS_NATIVE = Platform.OS !== 'web';
+
 const BIOMETRIC_ENABLED_KEY = 'biometric_enabled';
 const BIOMETRIC_REFRESH_TOKEN_KEY = 'biometric_refresh_token';
 const BIOMETRIC_EMAIL_KEY = 'biometric_email';
+
+async function secureGet(key: string): Promise<string | null> {
+  if (!IS_NATIVE) return null;
+  return SecureStore.getItemAsync(key);
+}
+
+async function secureSet(key: string, value: string): Promise<void> {
+  if (!IS_NATIVE) return;
+  await SecureStore.setItemAsync(key, value);
+}
+
+async function secureDelete(key: string): Promise<void> {
+  if (!IS_NATIVE) return;
+  await SecureStore.deleteItemAsync(key);
+}
 
 export type BiometricCapability = {
   available: boolean;
@@ -13,6 +30,10 @@ export type BiometricCapability = {
 };
 
 export async function getBiometricCapability(): Promise<BiometricCapability> {
+  if (!IS_NATIVE) {
+    return { available: false, label: 'Biometrics' };
+  }
+
   const hasHardware = await LocalAuthentication.hasHardwareAsync();
   const isEnrolled = await LocalAuthentication.isEnrolledAsync();
 
@@ -35,17 +56,17 @@ export async function getBiometricCapability(): Promise<BiometricCapability> {
 }
 
 export async function isBiometricLoginEnabled(): Promise<boolean> {
-  const value = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
+  const value = await secureGet(BIOMETRIC_ENABLED_KEY);
   return value === 'true';
 }
 
 export async function hasStoredBiometricCredentials(): Promise<boolean> {
-  const token = await SecureStore.getItemAsync(BIOMETRIC_REFRESH_TOKEN_KEY);
+  const token = await secureGet(BIOMETRIC_REFRESH_TOKEN_KEY);
   return Boolean(token);
 }
 
 export async function getStoredBiometricEmail(): Promise<string | null> {
-  return SecureStore.getItemAsync(BIOMETRIC_EMAIL_KEY);
+  return secureGet(BIOMETRIC_EMAIL_KEY);
 }
 
 export async function authenticateWithBiometrics(promptMessage: string): Promise<boolean> {
@@ -78,19 +99,19 @@ export async function enableBiometricLogin(): Promise<{ ok: true } | { ok: false
     return { ok: false, error: 'No active session found. Sign in with your password first.' };
   }
 
-  await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, 'true');
-  await SecureStore.setItemAsync(BIOMETRIC_REFRESH_TOKEN_KEY, session.refresh_token);
+  await secureSet(BIOMETRIC_ENABLED_KEY, 'true');
+  await secureSet(BIOMETRIC_REFRESH_TOKEN_KEY, session.refresh_token);
   if (session.user.email) {
-    await SecureStore.setItemAsync(BIOMETRIC_EMAIL_KEY, session.user.email);
+    await secureSet(BIOMETRIC_EMAIL_KEY, session.user.email);
   }
 
   return { ok: true };
 }
 
 export async function disableBiometricLogin(): Promise<void> {
-  await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED_KEY);
-  await SecureStore.deleteItemAsync(BIOMETRIC_REFRESH_TOKEN_KEY);
-  await SecureStore.deleteItemAsync(BIOMETRIC_EMAIL_KEY);
+  await secureDelete(BIOMETRIC_ENABLED_KEY);
+  await secureDelete(BIOMETRIC_REFRESH_TOKEN_KEY);
+  await secureDelete(BIOMETRIC_EMAIL_KEY);
 }
 
 export async function signInWithBiometrics(): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -107,7 +128,7 @@ export async function signInWithBiometrics(): Promise<{ ok: true } | { ok: false
     return { ok: false, error: `${label} verification was cancelled.` };
   }
 
-  const refreshToken = await SecureStore.getItemAsync(BIOMETRIC_REFRESH_TOKEN_KEY);
+  const refreshToken = await secureGet(BIOMETRIC_REFRESH_TOKEN_KEY);
   if (!refreshToken) {
     await disableBiometricLogin();
     return { ok: false, error: 'Stored sign-in expired. Use your password to sign in again.' };
@@ -119,7 +140,7 @@ export async function signInWithBiometrics(): Promise<{ ok: true } | { ok: false
     return { ok: false, error: 'Biometric sign-in failed. Use your password to sign in again.' };
   }
 
-  await SecureStore.setItemAsync(BIOMETRIC_REFRESH_TOKEN_KEY, data.session.refresh_token);
+  await secureSet(BIOMETRIC_REFRESH_TOKEN_KEY, data.session.refresh_token);
 
   return { ok: true };
 }

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-Cadenza admin portal — the web app of a field-service operations platform for pool-service companies. Company owners/admins/operations staff use it to manage their team of technicians, customer properties, recurring service routes, scheduled jobs, reports, and billing. It lives in the `caicos` monorepo alongside `technician-app/` (Expo app technicians use in the field), `landing-page/`, and a shared root-level `supabase/` directory.
+Cadenza admin portal — the web app of a field-service operations platform for pool-service companies. Company owners/admins/operations staff use it to manage their team of technicians, customer properties, recurring service routes, scheduled jobs, reports, and billing. It lives in the `cadenza` monorepo alongside `technician-app/` (Expo app technicians use in the field), `landing-page/`, and a shared root-level `supabase/` directory.
 
 Stack: Next.js 16 App Router (Turbopack), React 19, TypeScript strict, Tailwind CSS v4, shadcn-style UI (`components.json`, Radix primitives in `src/components/ui/`), next-intl, Supabase (Auth + Postgres + Storage).
 
@@ -17,7 +17,7 @@ This app was bootstrapped by copying a digital-assets/beneficiaries starter prod
 - `[locale]/page.tsx` still sends signed-in users with no "assets" to `/wizard`
 - `ABOUT.md` and most `e2e/*.spec.ts` skeletons describe the donor product
 
-Do not model new features on these. The real domain is the `caicos_*` tables and the jobs/routes/properties/team code.
+Do not model new features on these. The real domain is the `cadenza_*` tables and the jobs/routes/properties/team code.
 
 ## Commands
 
@@ -52,27 +52,27 @@ All pages live under `src/app/[locale]/` with locales `en`/`es` — **default is
 | `supabase.ts` | Browser client (`createBrowserClient`) + legacy `Database` type |
 | `supabase-server.ts` | `createRouteClient()` / `createAuthenticatedRouteClient()` for API routes (cookie-based; returns `{ supabase, user }`) |
 | `supabase-admin.ts` | `supabaseAdmin` service-role client — bypasses RLS, server-only |
-| `supabase-caicos.ts` | `CaicosSupabaseClient` type for `caicos_*` tables; used via cast `(supabase as unknown as CaicosSupabaseClient)` |
+| `supabase-cadenza.ts` | `CadenzaSupabaseClient` type for `cadenza_*` tables; used via cast `(supabase as unknown as CadenzaSupabaseClient)` |
 
-There is no DB type codegen: `CaicosSupabaseClient` types every table as a loose `Record<string, unknown>` shape, so wrong `caicos_*` column names fail at runtime, not compile time.
+There is no DB type codegen: `CadenzaSupabaseClient` types every table as a loose `Record<string, unknown>` shape, so wrong `cadenza_*` column names fail at runtime, not compile time.
 
-### Data model (`caicos_*` tables)
+### Data model (`cadenza_*` tables)
 
-Multi-tenant by company: `caicos_profiles` carries `company_id`, `role` (constraint-checked: `owner`, `admin`, `technician`, `operations`), `is_active`, and `encrypted_storage_key`. Domain tables: `caicos_properties`, `caicos_routes`, `caicos_route_stops`, `caicos_route_stop_schedules`, `caicos_service_jobs`, `caicos_visit_reasons`, `caicos_invite_codes`, plus `caicos_billing_plans` / `caicos_billing_subscriptions`. Tenancy and role rules are enforced with Postgres RLS policies.
+Multi-tenant by company: `cadenza_profiles` carries `company_id`, `role` (constraint-checked: `owner`, `admin`, `technician`, `operations`), `is_active`, and `encrypted_storage_key`. Domain tables: `cadenza_properties`, `cadenza_routes`, `cadenza_route_stops`, `cadenza_route_stop_schedules`, `cadenza_service_jobs`, `cadenza_visit_reasons`, `cadenza_invite_codes`, plus `cadenza_billing_plans` / `cadenza_billing_subscriptions`. Tenancy and role rules are enforced with Postgres RLS policies.
 
 **Migrations live at the repo root** (`../supabase/migrations/`) — `admin-portal/supabase/migrations/` is just a pointer README. Run the Supabase CLI from the repo root.
 
 ### API route pattern
 
-Handlers under `src/app/api/`. The standard shape (see `api/jobs/route.ts`): `createAuthenticatedRouteClient()` → 401 if no user → read `caicos_profiles` for `company_id` → query `caicos_*` through the cast client, letting RLS scope rows. `supabaseAdmin` is reserved for auth-admin or cross-RLS needs (e.g., `api/team` reading email-confirmation status).
+Handlers under `src/app/api/`. The standard shape (see `api/jobs/route.ts`): `createAuthenticatedRouteClient()` → 401 if no user → read `cadenza_profiles` for `company_id` → query `cadenza_*` through the cast client, letting RLS scope rows. `supabaseAdmin` is reserved for auth-admin or cross-RLS needs (e.g., `api/team` reading email-confirmation status).
 
 ### Route → job generation
 
-Routes have stops with weekly schedules (`caicos_route_stop_schedules`). Jobs are materialized into `caicos_service_jobs` (`job_source = 'route' | 'ad_hoc'`) by `/api/cron/generate-route-jobs`: a daily Vercel cron (`vercel.json`, 06:00 UTC) authenticated with `Authorization: Bearer $CRON_SECRET`, covering today through +1 month by default. Logic lives in `src/lib/generate-route-jobs-cron.ts`, `route-stop-schedule.ts`, `route-stop-schedules-db.ts`, `reconcile-route-jobs.ts`, `schedule.ts`, `date-week.ts`.
+Routes have stops with weekly schedules (`cadenza_route_stop_schedules`). Jobs are materialized into `cadenza_service_jobs` (`job_source = 'route' | 'ad_hoc'`) by `/api/cron/generate-route-jobs`: a daily Vercel cron (`vercel.json`, 06:00 UTC) authenticated with `Authorization: Bearer $CRON_SECRET`, covering today through +1 month by default. Logic lives in `src/lib/generate-route-jobs-cron.ts`, `route-stop-schedule.ts`, `route-stop-schedules-db.ts`, `reconcile-route-jobs.ts`, `schedule.ts`, `date-week.ts`.
 
 ### Encrypted file storage
 
-Envelope encryption in `src/lib/encryption.ts`: `STORAGE_MASTER_KEY` env → HKDF → KEK; a random per-user DEK is stored AES-256-GCM-encrypted in `caicos_profiles.encrypted_storage_key`; files are encrypted/decrypted as streams (`api/storage/upload`, `api/assets/attachments/[id]`). The HKDF salt string `'cadenza-master-key-v1'` is historical — **never change it**, or every stored key becomes undecryptable. Rotation: `scripts/rotate-keys.ts` (master key), `scripts/rotate-user-key.ts` (single user).
+Envelope encryption in `src/lib/encryption.ts`: `STORAGE_MASTER_KEY` env → HKDF → KEK; a random per-user DEK is stored AES-256-GCM-encrypted in `cadenza_profiles.encrypted_storage_key`; files are encrypted/decrypted as streams (`api/storage/upload`, `api/assets/attachments/[id]`). The HKDF salt string `'cadenza-master-key-v1'` is historical — **never change it**, or every stored key becomes undecryptable. Rotation: `scripts/rotate-keys.ts` (master key), `scripts/rotate-user-key.ts` (single user).
 
 ### Security PIN
 
@@ -80,7 +80,7 @@ A second factor separate from login: bcrypt-hashed PIN in `users.security_pin_ha
 
 ### Billing
 
-Provider-agnostic gateway layer in `src/lib/billing/` (adapters + webhook normalizers) supporting Stripe and PayU; the active gateway is selected by `NEXT_PUBLIC_PAYMENT_GATEWAY`. Webhooks: `api/webhooks/stripe`, `api/webhooks/payu`; PayU return page at `[locale]/payments/payu/return`. Plan gating reads `caicos_billing_plans` via `src/lib/subscription/limits.ts` (parts of it still gate donor-app concepts like assets/beneficiaries).
+Provider-agnostic gateway layer in `src/lib/billing/` (adapters + webhook normalizers) supporting Stripe and PayU; the active gateway is selected by `NEXT_PUBLIC_PAYMENT_GATEWAY`. Webhooks: `api/webhooks/stripe`, `api/webhooks/payu`; PayU return page at `[locale]/payments/payu/return`. Plan gating reads `cadenza_billing_plans` via `src/lib/subscription/limits.ts` (parts of it still gate donor-app concepts like assets/beneficiaries).
 
 ### Frontend data layer
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 import { pickSegmentForDate, toScheduleRow } from '@/lib/route-stop-schedule';
 import { loadSchedulesByStopId } from '@/lib/route-stop-schedules-db';
 import { stopMatchesDate } from '@/lib/schedule';
@@ -37,8 +37,8 @@ export async function POST(
 
     const dateOnly = dateStr.slice(0, 10);
 
-    const { data: route, error: routeError } = await (supabase as unknown as CaicosSupabaseClient)
-      .from('caicos_routes')
+    const { data: route, error: routeError } = await (supabase as unknown as CadenzaSupabaseClient)
+      .from('cadenza_routes')
       .select('id, company_id, technician_id')
       .eq('id', routeId)
       .single();
@@ -50,8 +50,8 @@ export async function POST(
       );
     }
 
-    const { data: stops, error: stopsError } = await (supabase as unknown as CaicosSupabaseClient)
-      .from('caicos_route_stops')
+    const { data: stops, error: stopsError } = await (supabase as unknown as CadenzaSupabaseClient)
+      .from('cadenza_route_stops')
       .select('id, property_id, stop_order')
       .eq('route_id', routeId)
       .order('stop_order', { ascending: true });
@@ -63,7 +63,7 @@ export async function POST(
       );
     }
 
-    const client = supabase as unknown as CaicosSupabaseClient;
+    const client = supabase as unknown as CadenzaSupabaseClient;
     const stopRows = stops as Array<{ id: string; property_id: string; stop_order: number }>;
     const scheduleByStop = await loadSchedulesByStopId(
       client,
@@ -88,7 +88,7 @@ export async function POST(
     }
 
     const { data: existingRows, error: existingErr } = await client
-      .from('caicos_service_jobs')
+      .from('cadenza_service_jobs')
       .select('property_id')
       .eq('route_id', routeId)
       .eq('scheduled_date', dateOnly)
@@ -121,7 +121,7 @@ export async function POST(
     let inserted: unknown[] = [];
     if (jobs.length > 0) {
       const { data: ins, error: insertError } = await client
-        .from('caicos_service_jobs')
+        .from('cadenza_service_jobs')
         .insert(jobs)
         .select('id, property_id, scheduled_date, route_order');
 

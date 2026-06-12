@@ -1,6 +1,6 @@
-# Caicos Platform - Complete Solution Documentation
+# Cadenza Platform - Complete Solution Documentation
 
-This folder contains the comprehensive solution design for Caicos, a multi-tenant pool service platform. All documents are in Markdown format for easy iteration and version control.
+This folder contains the comprehensive solution design for Cadenza, a multi-tenant pool service platform. All documents are in Markdown format for easy iteration and version control.
 
 ---
 
@@ -79,7 +79,7 @@ This folder contains the comprehensive solution design for Caicos, a multi-tenan
 ## 🏗️ Architecture Quick Reference
 
 ```
-CAICOS PLATFORM ARCHITECTURE
+CADENZA PLATFORM ARCHITECTURE
 ────────────────────────────────────
 
 ┌─────────────────┐
@@ -173,7 +173,7 @@ Technician fills service form → Photos + report synced
 ```
 1. Owner/Admin clicks "Invite Technician"
 2. System generates unique invite code
-3. Invite link: https://caicos.app/join?code=ABC123
+3. Invite link: https://cadenza.app/join?code=ABC123
 4. Technician signs up with that code
 5. Profile created with: company_id (from code) + role + is_active=true
 6. Code expires after 7 days
@@ -478,5 +478,5 @@ A: Phase 2 (estimated Week 12-16). MVP focuses on internal operations.
 
 **Status:** ✅ MVP Solution Design Complete - Ready for Development
 
-*Created for AGA Social / Caicos Pool Service*
+*Created for AGA Social / Cadenza Pool Service*
 *Tech Lead: Claude*

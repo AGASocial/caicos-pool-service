@@ -1,4 +1,4 @@
-# CAICOS Billing System - Next Actions for Pilot Launch
+# CADENZA Billing System - Next Actions for Pilot Launch
 
 **Date:** 2026-03-01
 **Status:** Ready to implement
@@ -40,7 +40,7 @@
 
 **Verify Success:**
 ```sql
-SELECT name, price_per_tech FROM caicos_billing_plans ORDER BY display_order;
+SELECT name, price_per_tech FROM cadenza_billing_plans ORDER BY display_order;
 -- Expected output:
 -- Free Trial  | 0.00
 -- Growth      | 9.99
@@ -51,11 +51,11 @@ SELECT name, price_per_tech FROM caicos_billing_plans ORDER BY display_order;
 
 ```sql
 -- Step 1: Get her company ID (or create if not exists)
-SELECT id FROM caicos_companies WHERE name = 'Cousin Pool Service';
+SELECT id FROM cadenza_companies WHERE name = 'Cousin Pool Service';
 -- Let's say it's: e1234567-89ab-cdef-0123-456789abcdef
 
 -- Step 2: Create free trial subscription
-INSERT INTO caicos_company_subscriptions (
+INSERT INTO cadenza_company_subscriptions (
   company_id,
   plan_id,
   trial_ends_at,
@@ -70,11 +70,11 @@ SELECT
   'active',
   0,
   35
-FROM caicos_billing_plans
+FROM cadenza_billing_plans
 WHERE slug = 'free-trial';
 
 -- Step 3: Verify
-SELECT * FROM caicos_subscription_dashboard
+SELECT * FROM cadenza_subscription_dashboard
 WHERE company_id = 'e1234567-89ab-cdef-0123-456789abcdef';
 ```
 
@@ -267,7 +267,7 @@ Add to `vercel.json`:
 - [ ] Deploy BILLING-PLANS-SCHEMA.sql to Supabase
 - [ ] Verify billing plans created (3 tiers visible)
 - [ ] Create free trial subscription for cousin
-- [ ] Verify subscription shows in caicos_subscription_dashboard
+- [ ] Verify subscription shows in cadenza_subscription_dashboard
 - [ ] Add photo limit check to technician app
 - [ ] Add job limit check to technician app
 - [ ] Test photo limit (should allow 2, reject 3rd)
@@ -300,7 +300,7 @@ Status:                  "In Trial"
 
 ### Phase 2: Upgrade Offer (Day 85)
 ```
-Email subject: "Your CAICOS trial ends in 5 days"
+Email subject: "Your CADENZA trial ends in 5 days"
 
 "Your free trial ends on [DATE]. Ready to go live?
 All 35 of your technicians with Growth plan: $349.65/month

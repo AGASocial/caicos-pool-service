@@ -132,10 +132,10 @@ ORDER BY
 --   --database=postgres \
 --   --schema=public \
 --   --schema-only \
---   > caicos_schema.sql
+--   > cadenza_schema.sql
 --
 -- Then restore with:
--- psql -f caicos_schema.sql
+-- psql -f cadenza_schema.sql
 
 -- ============================================
 -- 8. QUICK SCHEMA SUMMARY

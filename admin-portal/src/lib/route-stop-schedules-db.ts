@@ -3,7 +3,7 @@ import {
   todayUtcYmd,
   type RouteStopScheduleSegment,
 } from '@/lib/route-stop-schedule';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 function rowToSegment(row: Record<string, unknown>): RouteStopScheduleSegment {
   const sid = row.route_stop_id as string;
@@ -20,7 +20,7 @@ function rowToSegment(row: Record<string, unknown>): RouteStopScheduleSegment {
 }
 
 export async function loadSchedulesByStopId(
-  client: CaicosSupabaseClient,
+  client: CadenzaSupabaseClient,
   stopIds: string[]
 ): Promise<Map<string, RouteStopScheduleSegment[]>> {
   const map = new Map<string, RouteStopScheduleSegment[]>();
@@ -30,7 +30,7 @@ export async function loadSchedulesByStopId(
   for (let i = 0; i < stopIds.length; i += chunkSize) {
     const chunk = stopIds.slice(i, i + chunkSize);
     const { data, error } = await client
-      .from('caicos_route_stop_schedules')
+      .from('cadenza_route_stop_schedules')
       .select(
         'id, route_stop_id, effective_from, effective_until, day_of_week, service_frequency, week_ordinal'
       )
@@ -50,9 +50,9 @@ export async function loadSchedulesByStopId(
   return map;
 }
 
-/** Sets caicos_route_stops.day_of_week / frequency from the segment active today (UTC). */
+/** Sets cadenza_route_stops.day_of_week / frequency from the segment active today (UTC). */
 export async function syncDenormalizedStopFromSchedules(
-  client: CaicosSupabaseClient,
+  client: CadenzaSupabaseClient,
   stopId: string
 ): Promise<void> {
   const map = await loadSchedulesByStopId(client, [stopId]);
@@ -61,7 +61,7 @@ export async function syncDenormalizedStopFromSchedules(
   if (!seg) return;
 
   const { error } = await client
-    .from('caicos_route_stops')
+    .from('cadenza_route_stops')
     .update({
       day_of_week: seg.day_of_week,
       service_frequency: seg.service_frequency,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import type { CaicosSupabaseClient } from '@/lib/supabase-caicos';
+import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 export async function GET(
   _request: NextRequest,
@@ -13,8 +13,8 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_service_jobs')
+  const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_service_jobs')
     .select(`
       id,
       property_id,
@@ -30,10 +30,10 @@ export async function GET(
       visit_kind_id,
       created_at,
       updated_at,
-      property:caicos_properties!property_id(id, customer_name, address, customer_phone, city),
-      technician:caicos_profiles!technician_id(id, full_name),
-      route:caicos_routes!route_id(id, name),
-      visit_kind:caicos_visit_reasons!visit_kind_id(id, slug, label)
+      property:cadenza_properties!property_id(id, customer_name, address, customer_phone, city),
+      technician:cadenza_profiles!technician_id(id, full_name),
+      route:cadenza_routes!route_id(id, name),
+      visit_kind:cadenza_visit_reasons!visit_kind_id(id, slug, label)
     `)
     .eq('id', id)
     .single();
@@ -45,8 +45,8 @@ export async function GET(
     return NextResponse.json({ error: error?.message || 'Not found' }, { status: 500 });
   }
 
-  const { data: report } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_service_reports')
+  const { data: report } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_service_reports')
     .select('id')
     .eq('job_id', id)
     .order('created_at', { ascending: false })
@@ -60,8 +60,8 @@ export async function GET(
     });
   }
 
-  const { data: photoRows } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_report_photos')
+  const { data: photoRows } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_report_photos')
     .select('id, storage_path, caption, photo_type, created_at')
     .eq('report_id', report.id)
     .order('created_at', { ascending: false });
@@ -121,8 +121,8 @@ export async function PATCH(
       if (body.visit_kind_id === null || body.visit_kind_id === '') {
         updates.visit_kind_id = null;
       } else {
-        const { data: profile } = await (supabase as unknown as CaicosSupabaseClient)
-          .from('caicos_profiles')
+        const { data: profile } = await (supabase as unknown as CadenzaSupabaseClient)
+          .from('cadenza_profiles')
           .select('company_id')
           .eq('id', user.id)
           .single();
@@ -130,8 +130,8 @@ export async function PATCH(
         if (!companyId) {
           return NextResponse.json({ error: 'Company not found' }, { status: 403 });
         }
-        const { data: kindRow, error: kindErr } = await (supabase as unknown as CaicosSupabaseClient)
-          .from('caicos_visit_reasons')
+        const { data: kindRow, error: kindErr } = await (supabase as unknown as CadenzaSupabaseClient)
+          .from('cadenza_visit_reasons')
           .select('id')
           .eq('id', body.visit_kind_id)
           .eq('company_id', companyId)
@@ -151,8 +151,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }
 
-    const { data, error } = await (supabase as unknown as CaicosSupabaseClient)
-      .from('caicos_service_jobs')
+    const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+      .from('cadenza_service_jobs')
       .update(updates)
       .eq('id', id)
       .select('id, property_id, technician_id, scheduled_date, scheduled_time, status, updated_at')
@@ -181,8 +181,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { error, count } = await (supabase as unknown as CaicosSupabaseClient)
-    .from('caicos_service_jobs')
+  const { error, count } = await (supabase as unknown as CadenzaSupabaseClient)
+    .from('cadenza_service_jobs')
     .delete({ count: 'exact' })
     .eq('id', id);
 
