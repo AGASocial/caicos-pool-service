@@ -2,195 +2,104 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+## What This Is
 
-Cadenza is a Next.js 15 application for managing digital assets and beneficiaries. It uses Supabase for authentication and data storage, with support for internationalization (English and Spanish).
+Cadenza admin portal — the web app of a field-service operations platform for pool-service companies. Company owners/admins/operations staff use it to manage their team of technicians, customer properties, recurring service routes, scheduled jobs, reports, and billing. It lives in the `caicos` monorepo alongside `technician-app/` (Expo app technicians use in the field), `landing-page/`, and a shared root-level `supabase/` directory.
 
-## Reference Documents
+Stack: Next.js 16 App Router (Turbopack), React 19, TypeScript strict, Tailwind CSS v4, shadcn-style UI (`components.json`, Radix primitives in `src/components/ui/`), next-intl, Supabase (Auth + Postgres + Storage).
 
-- `ABOUT.md` — Technical business overview of the platform, architecture, data model, i18n, middleware, and flows.
-- `TECHNICAL-SPECIFICATIONS.md` — Provider-agnostic subscription and payments architecture (Stripe/PayPal/Wompi/PayU) with schema, APIs, webhooks, and gating.
-- `TODO.md` — Current implementation tasks including the subscription module roadmap and additional SaaS features.
+## Legacy Code Warning
+
+This app was bootstrapped by copying a digital-assets/beneficiaries starter product (see `ADMIN-PORTAL-PLAN.md`). Leftovers from that donor app still compile and run but are **not the product**:
+
+- Pages `[locale]/(dashboard)/digital-assets`, `beneficiaries`, `wizard`; APIs `api/assets/*`, `api/beneficiaries/*`, `api/wizard/*`
+- `src/models/`, `src/constants/assetTypes.ts`, `src/lib/assetTypes.ts`, and the `Database` type in `src/lib/supabase.ts` (users/digital_assets/beneficiaries)
+- `[locale]/page.tsx` still sends signed-in users with no "assets" to `/wizard`
+- `ABOUT.md` and most `e2e/*.spec.ts` skeletons describe the donor product
+
+Do not model new features on these. The real domain is the `caicos_*` tables and the jobs/routes/properties/team code.
 
 ## Commands
 
-### Development
 ```bash
-npm run dev          # Start dev server with Turbopack
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint checks
+npm run dev            # dev server (Turbopack) on :3000
+npm run build          # production build
+npm run lint           # eslint .
+npm test               # Jest unit tests
+npx jest path/to/file.test.ts        # single test file
+npx jest -t "test name"              # single test by name
+npm run test:e2e       # Playwright (e2e/; baseURL localhost:3000 or PLAYWRIGHT_TEST_BASE_URL)
+npm run test:all       # Jest + Playwright
+npm run script:import-properties     # CSV property import
+npx tsx scripts/rotate-keys.ts       # rotate master encryption key (needs NEW_MASTER_KEY env)
+npx tsx scripts/rotate-user-key.ts <USER_ID>   # re-encrypt one user's storage key
 ```
 
-### Important Notes
-- The pre-commit hook runs `npm run lint` and `npm run build` automatically before each commit
-- Both must pass for the commit to succeed
-- Dev server uses Turbopack for faster builds
+Unit tests sit in `__tests__/` folders next to the code (jsdom + ts-jest; `@/` maps to `src/`). `scripts/` also holds Stripe product setup and one-off SQL maintenance helpers. There are no git pre-commit hooks.
 
 ## Architecture
 
-### Routing & Middleware
+### Routing & i18n
 
-**Locale-based routing**: All pages live under `src/app/[locale]/` with support for `en` and `es` locales via next-intl.
+All pages live under `src/app/[locale]/` with locales `en`/`es` — **default is `es`**. Translations in `messages/{en,es}.json`; locale-aware `Link`/`useRouter` come from `src/i18n/navigation.ts`. Dashboard pages are grouped under `[locale]/(dashboard)/`: dashboard, jobs, routes, properties, team, reports, billing, settings. `src/app/(landing)/` is a root landing page outside the locale tree.
 
-**Authentication flow in middleware** (`src/middleware.ts:9-76`):
-1. next-intl middleware runs first for locale negotiation
-2. Supabase session check follows
-3. Unauthenticated users → redirect to `/{locale}/auth/login`
-4. Authenticated users on `/auth/*` → redirect based on assets:
-   - No assets → `/wizard` (onboarding)
-   - Has assets → `/dashboard`
+`src/middleware.ts` chains next-intl locale negotiation with Supabase session refresh (`@supabase/ssr`) and redirects unauthenticated page requests to `/{locale}/auth/login`. Its matcher excludes `/api` — **every API route does its own auth check**.
 
-The middleware chains two concerns: internationalization and authentication. This is why you see both `intlMiddleware` and `supabase` client creation.
+### Supabase client layers (`src/lib/`)
 
-### Supabase Integration
+| File | Use |
+|---|---|
+| `supabase.ts` | Browser client (`createBrowserClient`) + legacy `Database` type |
+| `supabase-server.ts` | `createRouteClient()` / `createAuthenticatedRouteClient()` for API routes (cookie-based; returns `{ supabase, user }`) |
+| `supabase-admin.ts` | `supabaseAdmin` service-role client — bypasses RLS, server-only |
+| `supabase-caicos.ts` | `CaicosSupabaseClient` type for `caicos_*` tables; used via cast `(supabase as unknown as CaicosSupabaseClient)` |
 
-**Client configuration** (`src/lib/supabase.ts`):
-- Uses `@supabase/auth-helpers-nextjs` for Next.js integration
-- Validates Supabase URL format before creating client
-- Contains TypeScript database schema definitions for:
-  - `users` table
-  - `digital_assets` table
-  - `beneficiaries` table
+There is no DB type codegen: `CaicosSupabaseClient` types every table as a loose `Record<string, unknown>` shape, so wrong `caicos_*` column names fail at runtime, not compile time.
 
-**Authentication hook** (`src/lib/auth.ts`):
-- Provides `useAuth()` hook for client components
-- Manages session state, user state, and auth changes
-- Includes `signOut()` helper
+### Data model (`caicos_*` tables)
 
-**Required environment variables** (`.env.local`):
-```bash
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
+Multi-tenant by company: `caicos_profiles` carries `company_id`, `role` (constraint-checked: `owner`, `admin`, `technician`, `operations`), `is_active`, and `encrypted_storage_key`. Domain tables: `caicos_properties`, `caicos_routes`, `caicos_route_stops`, `caicos_route_stop_schedules`, `caicos_service_jobs`, `caicos_visit_reasons`, `caicos_invite_codes`, plus `caicos_billing_plans` / `caicos_billing_subscriptions`. Tenancy and role rules are enforced with Postgres RLS policies.
 
-### Digital Assets System
+**Migrations live at the repo root** (`../supabase/migrations/`) — `admin-portal/supabase/migrations/` is just a pointer README. Run the Supabase CLI from the repo root.
 
-**Asset types** (`src/constants/assetTypes.ts`):
-- Currently active: Cartas (letters), Audios, Fotos, Videos, Documentos
-- Each asset type has:
-  - Custom fields with validation
-  - File type restrictions (`fileAccept`)
-  - Required/optional field definitions
-- Many financial asset types are commented out (bank accounts, insurance, crypto, etc.)
+### API route pattern
 
-**Asset model** (`src/models/asset.ts`):
-- Assets support beneficiary assignment
-- Status types: `active`, `inactive`, `pending`, `assigned`
-- Flexible schema with optional fields (email, password, website, etc.)
-- Support for file attachments via `files` array
-- Custom fields via `custom_fields` JSON object
+Handlers under `src/app/api/`. The standard shape (see `api/jobs/route.ts`): `createAuthenticatedRouteClient()` → 401 if no user → read `caicos_profiles` for `company_id` → query `caicos_*` through the cast client, letting RLS scope rows. `supabaseAdmin` is reserved for auth-admin or cross-RLS needs (e.g., `api/team` reading email-confirmation status).
 
-### Internationalization
+### Route → job generation
 
-**Configuration** (`src/i18n/routing.ts`):
-- Supported locales: `['en', 'es']`
-- Default locale: `en`
+Routes have stops with weekly schedules (`caicos_route_stop_schedules`). Jobs are materialized into `caicos_service_jobs` (`job_source = 'route' | 'ad_hoc'`) by `/api/cron/generate-route-jobs`: a daily Vercel cron (`vercel.json`, 06:00 UTC) authenticated with `Authorization: Bearer $CRON_SECRET`, covering today through +1 month by default. Logic lives in `src/lib/generate-route-jobs-cron.ts`, `route-stop-schedule.ts`, `route-stop-schedules-db.ts`, `reconcile-route-jobs.ts`, `schedule.ts`, `date-week.ts`.
 
-**Translation files**: `messages/en.json` and `messages/es.json`
+### Encrypted file storage
 
-**Usage patterns**:
-- Use next-intl's `useTranslations()` hook in components
-- Navigation utilities available in `src/i18n/navigation.ts`
-- Request-based translations in `src/i18n/request.ts`
+Envelope encryption in `src/lib/encryption.ts`: `STORAGE_MASTER_KEY` env → HKDF → KEK; a random per-user DEK is stored AES-256-GCM-encrypted in `caicos_profiles.encrypted_storage_key`; files are encrypted/decrypted as streams (`api/storage/upload`, `api/assets/attachments/[id]`). The HKDF salt string `'cadenza-master-key-v1'` is historical — **never change it**, or every stored key becomes undecryptable. Rotation: `scripts/rotate-keys.ts` (master key), `scripts/rotate-user-key.ts` (single user).
 
-### Component Architecture
+### Security PIN
 
-**UI components** (`src/components/ui/`):
-- Based on Radix UI primitives
-- Styled with Tailwind CSS and class-variance-authority
-- Use `@/lib/utils.ts` for className merging via `cn()` helper
+A second factor separate from login: bcrypt-hashed PIN in `users.security_pin_hash`, managed by `api/security/*`. Successful verification issues a 15-minute JWT (jose, signed with `SUPABASE_JWT_SECRET`) in the `security_session` cookie; check server-side with `checkSecuritySession()` from `supabase-server.ts`, client state in `src/context/SecurityContext.tsx`. PIN reset emails an OTP via Resend (`api/security/forgot-pin`).
 
-**Key components**:
-- `auth/auth-form.tsx`: Unified auth form component
-- `AddAssetForm.tsx` & `AddAssetModal.tsx`: Asset creation with type-specific fields
-- `AssetAttachmentsModal.tsx`: File upload and preview for assets
-- `ProtectedRoute.tsx`: Client-side route protection
-- `LayoutWrapper.tsx` & `ClientLayout.tsx`: Layout composition
-- `Navigation.tsx` & `Navbar.tsx`: Navigation components
+### Billing
 
-**Theme support**:
-- Dark mode via `next-themes`
-- `ThemeRegistry.tsx` and `theme-provider.tsx` manage theme state
+Provider-agnostic gateway layer in `src/lib/billing/` (adapters + webhook normalizers) supporting Stripe and PayU; the active gateway is selected by `NEXT_PUBLIC_PAYMENT_GATEWAY`. Webhooks: `api/webhooks/stripe`, `api/webhooks/payu`; PayU return page at `[locale]/payments/payu/return`. Plan gating reads `caicos_billing_plans` via `src/lib/subscription/limits.ts` (parts of it still gate donor-app concepts like assets/beneficiaries).
 
-### TypeScript Configuration
+### Frontend data layer
 
-**Path aliases** (`tsconfig.json:21-23`):
-- `@/*` maps to `./src/*`
-- Use `@/components/...`, `@/lib/...`, etc. for imports
+Client components fetch through the API routes with TanStack Query — `src/lib/team.ts` is the canonical pattern (`useQuery` + mutations that invalidate the cache). Forms: react-hook-form + zod. Toasts: sonner. Theming: next-themes.
 
-**Strict mode**: Enabled for type safety
+## Environment
 
-### Next.js Configuration
+`.env.local` (`.env.example` lists only the minimal pair):
 
-**Image domains** (`next.config.ts:9-12`):
-- Configured for OAuth providers: `appleid.cdn-apple.com`, `www.gstatic.com`
-- Localhost allowed for development
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — required everywhere
+- `SUPABASE_SERVICE_ROLE_KEY` — admin client
+- `SUPABASE_JWT_SECRET` — security-PIN session JWTs
+- `STORAGE_MASTER_KEY` — file-encryption KEK
+- `CRON_SECRET` — cron endpoint auth
+- `RESEND_API_KEY` — OTP email
+- Payments: `NEXT_PUBLIC_PAYMENT_GATEWAY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `PAYU_*`
 
-**Turbopack**: Enabled by default with path alias support
+## Gotchas
 
-## Key Development Patterns
-
-### Adding a New Asset Type
-
-1. Add definition to `ASSET_TYPES` array in `src/constants/assetTypes.ts`
-2. Define custom fields with proper types and validation
-3. Add translations to `messages/en.json` and `messages/es.json`
-4. Asset form (`AddAssetForm.tsx`) will automatically render custom fields
-
-### Working with Supabase
-
-- Use `supabase` client from `src/lib/supabase.ts` in client components
-- Middleware uses `createMiddlewareClient` from `@supabase/auth-helpers-nextjs`
-- Database types are defined inline in `src/lib/supabase.ts` (Database type)
-
-### Authentication Flow
-
-- Public pages: Root `/` and `/auth/*` routes
-- Protected pages: Everything else (enforced by middleware)
-- Wizard flow: First-time users with no assets are directed to `/wizard`
-- OAuth callback: Handled at `/auth/callback`
-
-### Internationalization
-
-- All user-facing text should be in translation files
-- Use descriptive keys (e.g., `"writeWhatYouWantToSay"` not `"label1"`)
-- Custom field labels in asset types reference translation keys
-- URLs automatically prefixed with locale (handled by next-intl)
-
-## Database Schema
-
-Key tables (defined in `src/lib/supabase.ts:34-141`):
-
-**users**: Basic user profile (id, email, full_name, timestamps)
-
-**digital_assets**: Asset storage with flexible schema
-- Foreign key: `user_id` → `users.id`
-- Core fields: `asset_type`, `asset_name`, `asset_value`, `access_instructions`
-- Extended fields stored in UI models: `email`, `password`, `website`, `valid_until`, `description`, `files`, `custom_fields`, `beneficiary_id`, `status`
-
-**beneficiaries**: Beneficiary management
-- Foreign key: `user_id` → `users.id`
-- Fields: `full_name`, `email`, `relationship`, `phone_number`, `notes`
-- Status tracking: `notified`, `status`, `last_notified_at`, `email_verified`
-
-## Project Dependencies
-
-**UI/Styling**:
-- Tailwind CSS v4 (with `@tailwindcss/postcss`)
-- Radix UI components
-- Framer Motion for animations
-- Lucide React for icons
-
-**Forms & Validation**:
-- react-hook-form
-- zod (schema validation)
-- @hookform/resolvers
-
-**State Management**:
-- @tanstack/react-query for async state
-
-**Authentication/Database**:
-- @supabase/supabase-js
-- @supabase/auth-helpers-nextjs
-- @supabase/ssr
+- `next.config.ts` pins `turbopack.root` to this directory; without it Next 16 resolves against the monorepo root and Tailwind imports break.
+- Default locale is `es`, not `en`.
+- Deployment is Vercel (`vercel.json` also defines the cron); `netlify.toml` is a leftover.
