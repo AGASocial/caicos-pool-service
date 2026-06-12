@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<!--
+  AVISO IMPORTANTE / IMPORTANT NOTICE
+  Esta traducción al español de la Política de Privacidad fue asistida por máquina
+  (machine-assisted translation). Debe ser revisada y aprobada por un abogado
+  calificado antes de su publicación. En caso de discrepancia, prevalece la
+  versión en inglés (privacy.html en la raíz del sitio).
+
+  This Spanish translation of the Privacy Policy is machine-assisted and
+  requires review by qualified legal counsel before publication.
+-->
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Política de Privacidad — Cadenza</title>
+  <meta name="description" content="Política de Privacidad de Cadenza — cómo recopilamos, usamos y protegemos sus datos." />
+  <meta name="theme-color" content="#FAF7F2" />
+
+  <link rel="canonical" href="https://cadenza.com/es/privacy.html" />
+  <link rel="alternate" hreflang="en" href="https://cadenza.com/privacy.html" />
+  <link rel="alternate" hreflang="es" href="https://cadenza.com/es/privacy.html" />
+  <link rel="alternate" hreflang="x-default" href="https://cadenza.com/privacy.html" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='17' fill='%23FAF7F2'/%3E%3Crect width='63' height='63' x='0.5' y='0.5' rx='16.5' fill='none' stroke='%23ECE6DB'/%3E%3Ctext x='32' y='45' font-family='Bodoni Moda,Didot,Georgia,serif' font-size='42' font-weight='600' text-anchor='middle' fill='%230F1419'%3EC%3C/text%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;0,6..96,700;1,6..96,400;1,6..96,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root{
+      --ink:#0F1419; --brass:#C7A85F; --brass-ink:#1a1407; --brass-soft:#b3a07a; --brass-deep:#8a6d2f;
+      --linen:#FAF7F2; --white:#FFFFFF; --ink-deep:#15191F; --cream:#F3EEE4;
+      --hairline:#ECE6DB; --muted:#6B7280; --body:#3F4650;
+      --ease:cubic-bezier(0.22, 1, 0.36, 1);
+      --serif:'Bodoni Moda', Didot, Georgia, serif;
+      --sans:'Inter', system-ui, sans-serif;
+      --mono:'JetBrains Mono', ui-monospace, monospace;
+    }
+    *,*::before,*::after{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0; background:var(--linen); color:var(--ink);
+      font-family:var(--sans); font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased;
+    }
+    a{ color:inherit; }
+    .container{ max-width:1120px; margin:0 auto; padding:0 24px; }
+
+    .site-header{
+      position:fixed; top:0; left:0; right:0; z-index:50;
+      background:rgba(250,247,242,.88); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--hairline);
+    }
+    .header-inner{ height:64px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    .brand{ display:flex; align-items:baseline; gap:9px; text-decoration:none; color:var(--ink); }
+    .brand-c{ font-family:var(--serif); font-weight:600; font-size:23px; line-height:1; }
+    .brand .wm{ font-family:var(--serif); font-weight:500; letter-spacing:.3px; line-height:1; font-size:20px; }
+    .header-actions{ display:flex; align-items:center; gap:18px; }
+    .back-link{ font-size:13.5px; color:#5B6470; text-decoration:none; transition:color 240ms var(--ease); }
+    .back-link:hover{ color:var(--ink); }
+    .lang-switch{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; letter-spacing:.06em; }
+    .lang-switch .sep{ width:1px; height:12px; background:#D8D3C8; }
+    .lang-current{ color:var(--ink); }
+    .lang-link{ color:var(--muted); text-decoration:none; padding-bottom:2px; border-bottom:1px solid transparent; transition:color 240ms var(--ease), border-color 240ms var(--ease); }
+    .lang-link:hover{ color:var(--ink); border-bottom-color:var(--brass); }
+
+    main{ padding:130px 0 96px; }
+    .legal{ max-width:720px; margin:0 auto; }
+    .legal-head{ margin-bottom:48px; }
+    .overline{ font-size:11px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--brass-soft); margin:0 0 14px; }
+    .legal-head h1{
+      font-family:var(--serif); font-weight:500; letter-spacing:.2px;
+      font-size:clamp(34px, 5vw, 46px); line-height:1.1; color:var(--ink); margin:0 0 14px;
+    }
+    .legal-head h1 em{ font-style:italic; }
+    .legal-meta{ font-size:13px; color:var(--muted); margin:0; }
+    .head-rule{ width:54px; height:2px; border-radius:2px; background:var(--brass); margin-top:22px; }
+
+    .prose h2{ color:var(--ink); font-size:20px; font-weight:600; margin:2.5rem 0 .75rem; }
+    .prose h3{ color:#2B313A; font-size:16px; font-weight:600; margin:1.5rem 0 .5rem; }
+    .prose p{ color:var(--body); font-size:15px; line-height:1.75; margin:0 0 1rem; }
+    .prose ul{ list-style:disc; padding-left:1.5rem; margin:0 0 1rem; }
+    .prose ul li{ color:var(--body); font-size:15px; line-height:1.75; margin-bottom:.35rem; }
+    .prose a{
+      color:var(--ink); text-decoration:underline; text-decoration-color:var(--brass);
+      text-decoration-thickness:1.5px; text-underline-offset:3px;
+      transition:color 240ms var(--ease);
+    }
+    .prose a:hover{ color:var(--brass-deep); }
+    .prose strong{ color:var(--ink); font-weight:600; }
+    .section-divider{ border-top:1px solid var(--hairline); margin-top:2rem; padding-top:.25rem; }
+
+    .site-footer{ background:var(--ink-deep); padding:36px 0; }
+    .footer-inner{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; max-width:720px; margin:0 auto; padding:0 24px; }
+    .footer-copy{ font-size:12.5px; color:#5d6470; margin:0; }
+    .footer-nav{ display:flex; flex-wrap:wrap; gap:20px; }
+    .footer-nav a{
+      font-size:13px; color:#9aa0a8; text-decoration:none; padding-bottom:2px;
+      border-bottom:1px solid transparent;
+      transition:color 240ms var(--ease), border-color 240ms var(--ease);
+    }
+    .footer-nav a:hover{ color:var(--cream); border-bottom-color:var(--brass); }
+    .footer-nav a[aria-current="page"]{ color:var(--brass); }
+
+    @media (prefers-reduced-motion: reduce){
+      *{ animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand" aria-label="Cadenza — inicio">
+        <span class="brand-c" aria-hidden="true">C</span>
+        <span class="wm">Cadenza</span>
+      </a>
+      <div class="header-actions">
+        <nav class="lang-switch" aria-label="Idioma">
+          <a class="lang-link" href="../privacy.html" lang="en" hreflang="en" title="English version">EN</a>
+          <span class="sep" aria-hidden="true"></span>
+          <span class="lang-current" aria-current="true">ES</span>
+        </nav>
+        <a href="index.html" class="back-link">← Volver al inicio</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENIDO -->
+  <main>
+    <div class="container">
+      <div class="legal">
+
+        <div class="legal-head">
+          <p class="overline">Legal</p>
+          <h1>Política de <em>Privacidad</em></h1>
+          <p class="legal-meta">Última actualización: 19 de abril de 2026 &nbsp;·&nbsp; Vigente desde: 19 de abril de 2026</p>
+          <div class="head-rule" aria-hidden="true"></div>
+        </div>
+
+        <div class="prose">
+
+          <p>Cadenza ("nosotros", "nuestro" o "nos") opera la aplicación móvil de Cadenza y el portal web administrativo (en conjunto, el "Servicio"). Esta Política de Privacidad explica cómo recopilamos, usamos, divulgamos y protegemos su información cuando usted utiliza el Servicio. Le pedimos leer esta política con atención. Si no está de acuerdo con sus términos, deje de usar el Servicio.</p>
+
+          <!-- 1 -->
+          <div class="section-divider">
+            <h2>1. Información que Recopilamos</h2>
+          </div>
+
+          <h3>1.1 Información que usted proporciona directamente</h3>
+          <ul>
+            <li><strong>Información de cuenta:</strong> nombre, correo electrónico, contraseña, número de teléfono y nombre de la empresa al registrarse.</li>
+            <li><strong>Datos de perfil:</strong> rol (propietario, administrador o técnico) y foto de perfil si la sube.</li>
+            <li><strong>Datos de reportes de servicio:</strong> lecturas químicas (pH, cloro, alcalinidad, etc.), estado de los equipos, tareas completadas, notas escritas y marcadores de seguimiento ingresados durante un trabajo.</li>
+            <li><strong>Fotos:</strong> fotos de antes, después y de problemas que usted capture o suba a través de la aplicación móvil.</li>
+            <li><strong>Información de propiedades:</strong> direcciones, códigos de acceso, especificaciones de la piscina y datos de contacto de clientes que usted agregue a la plataforma.</li>
+          </ul>
+
+          <h3>1.2 Información recopilada automáticamente</h3>
+          <ul>
+            <li><strong>Datos de uso:</strong> páginas visitadas, funciones utilizadas, marcas de tiempo y duración de la sesión.</li>
+            <li><strong>Datos del dispositivo:</strong> tipo de dispositivo, sistema operativo, versión de la aplicación e identificadores únicos del dispositivo.</li>
+            <li><strong>Datos de registro:</strong> dirección IP, tipo de navegador, URLs de referencia y reportes de errores.</li>
+            <li><strong>Datos de ubicación:</strong> ubicación aproximada derivada de la dirección IP. No recopilamos la ubicación GPS precisa a menos que usted otorgue explícitamente ese permiso en la configuración de su dispositivo.</li>
+          </ul>
+
+          <h3>1.3 Información de terceros</h3>
+          <p>Si usted inicia sesión mediante un proveedor externo (p. ej., Google), recibimos información básica de perfil (nombre, correo electrónico) de ese proveedor, según lo permitan sus ajustes con dicho proveedor.</p>
+
+          <!-- 2 -->
+          <div class="section-divider">
+            <h2>2. Cómo Usamos su Información</h2>
+          </div>
+
+          <p>Usamos la información que recopilamos para:</p>
+          <ul>
+            <li>Crear y administrar su cuenta y el espacio de trabajo de su empresa.</li>
+            <li>Proporcionar, mantener y mejorar el Servicio.</li>
+            <li>Permitir que los técnicos reciban asignaciones de trabajo y envíen reportes de servicio.</li>
+            <li>Permitir que administradores y propietarios revisen reportes, gestionen equipos de trabajo y exporten datos.</li>
+            <li>Enviar correos transaccionales (configuración de cuenta, restablecimiento de contraseña, enlaces de invitación).</li>
+            <li>Monitorear y analizar el uso para mejorar la experiencia de usuario.</li>
+            <li>Detectar y prevenir actividad fraudulenta, no autorizada o ilegal.</li>
+            <li>Cumplir con obligaciones legales.</li>
+          </ul>
+
+          <p><strong>No</strong> vendemos su información personal a terceros. <strong>No</strong> usamos los datos de sus reportes de servicio con fines publicitarios.</p>
+
+          <!-- 3 -->
+          <div class="section-divider">
+            <h2>3. Aislamiento de Datos y Multitenencia</h2>
+          </div>
+
+          <p>Cadenza es una plataforma multiempresa (multi-tenant). Los datos de cada empresa están estrictamente aislados mediante Seguridad a Nivel de Fila (RLS) en la base de datos. Los usuarios de su empresa solo pueden acceder a los datos que pertenecen a su empresa. Los empleados de otras empresas en la plataforma no pueden acceder a sus datos.</p>
+
+          <!-- 4 -->
+          <div class="section-divider">
+            <h2>4. Cómo Compartimos su Información</h2>
+          </div>
+
+          <p>Podemos compartir su información únicamente en las siguientes circunstancias:</p>
+          <ul>
+            <li><strong>Dentro de su empresa:</strong> los propietarios, administradores y técnicos de su cuenta pueden acceder a los datos pertinentes a su rol.</li>
+            <li><strong>Proveedores de servicios:</strong> proveedores externos de confianza que nos ayudan a operar el Servicio (p. ej., infraestructura en la nube, autenticación). Estos proveedores están obligados contractualmente a proteger sus datos.</li>
+            <li><strong>Cumplimiento legal:</strong> cuando lo exija la ley, una orden judicial o una autoridad gubernamental.</li>
+            <li><strong>Transferencia de negocio:</strong> en relación con una fusión, adquisición o venta de activos, con las protecciones de confidencialidad apropiadas.</li>
+            <li><strong>Con su consentimiento:</strong> para cualquier otro propósito con su consentimiento explícito.</li>
+          </ul>
+
+          <!-- 5 -->
+          <div class="section-divider">
+            <h2>5. Retención de Datos</h2>
+          </div>
+
+          <p>Conservamos sus datos mientras su cuenta esté activa o según sea necesario para prestar el Servicio. Si cierra su cuenta, eliminaremos o anonimizaremos sus datos dentro de los 90 días siguientes, salvo cuando debamos conservarlos por motivos legales, regulatorios o de negocio legítimos.</p>
+          <p>Las fotos de los reportes de servicio se conservan mientras su cuenta esté activa. Usted puede eliminar fotos o reportes individuales desde el Servicio en cualquier momento.</p>
+
+          <!-- 6 -->
+          <div class="section-divider">
+            <h2>6. Seguridad</h2>
+          </div>
+
+          <p>Implementamos medidas de seguridad estándar de la industria para proteger su información, incluyendo:</p>
+          <ul>
+            <li>Cifrado TLS/HTTPS en tránsito.</li>
+            <li>Almacenamiento cifrado en reposo a través de nuestro proveedor de infraestructura en la nube.</li>
+            <li>Políticas de Seguridad a Nivel de Fila (RLS) en la capa de base de datos.</li>
+            <li>Autenticación segura mediante Supabase Auth, incluyendo contraseñas con hash.</li>
+            <li>Controles de acceso que limitan el acceso de empleados a los datos de producción.</li>
+          </ul>
+          <p>Ningún método de transmisión por internet o de almacenamiento electrónico es 100% seguro. No podemos garantizar una seguridad absoluta, pero nos comprometemos a usar medios comercialmente razonables para proteger su información.</p>
+
+          <!-- 7 -->
+          <div class="section-divider">
+            <h2>7. Sus Derechos y Opciones</h2>
+          </div>
+
+          <p>Según su ubicación, usted puede tener los siguientes derechos sobre sus datos personales:</p>
+          <ul>
+            <li><strong>Acceso:</strong> solicitar una copia de los datos personales que tenemos sobre usted.</li>
+            <li><strong>Rectificación:</strong> solicitar que corrijamos datos inexactos o incompletos.</li>
+            <li><strong>Eliminación:</strong> solicitar que eliminemos sus datos personales (sujeto a obligaciones legales de retención).</li>
+            <li><strong>Portabilidad:</strong> solicitar una exportación de sus datos en un formato legible por máquina.</li>
+            <li><strong>Oposición / Restricción:</strong> oponerse a ciertas actividades de procesamiento o solicitar su restricción.</li>
+            <li><strong>Retirar el consentimiento:</strong> cuando el procesamiento se base en el consentimiento, puede retirarlo en cualquier momento.</li>
+          </ul>
+          <p>Para ejercer cualquiera de estos derechos, contáctenos en <a href="mailto:privacy@cadenza.com">privacy@cadenza.com</a>. Responderemos dentro de un plazo de 30 días.</p>
+
+          <!-- 8 -->
+          <div class="section-divider">
+            <h2>8. Privacidad de Menores</h2>
+          </div>
+
+          <p>El Servicio está destinado al uso comercial por parte de adultos. No recopilamos deliberadamente información personal de menores de 13 años (o de 16 en el Espacio Económico Europeo). Si nos enteramos de que hemos recopilado información personal de un menor sin verificación del consentimiento parental, eliminaremos esa información de inmediato. Si usted cree que podríamos tener información de o sobre un menor, contáctenos en <a href="mailto:privacy@cadenza.com">privacy@cadenza.com</a>.</p>
+
+          <!-- 9 -->
+          <div class="section-divider">
+            <h2>9. Servicios de Terceros</h2>
+          </div>
+
+          <p>El Servicio se integra con los siguientes servicios de terceros o depende de ellos, cada uno regido por su propia política de privacidad:</p>
+          <ul>
+            <li><strong>Supabase</strong> — base de datos, autenticación y almacenamiento de archivos.</li>
+            <li><strong>Vercel</strong> — alojamiento y entrega de la aplicación web.</li>
+            <li><strong>Expo / EAS</strong> — compilación y distribución de la aplicación móvil.</li>
+            <li><strong>Apple App Store / Google Play</strong> — distribución de la aplicación móvil.</li>
+          </ul>
+          <p>No somos responsables de las prácticas de privacidad de estos terceros. Le recomendamos revisar sus respectivas políticas.</p>
+
+          <!-- 10 -->
+          <div class="section-divider">
+            <h2>10. Transferencias Internacionales de Datos</h2>
+          </div>
+
+          <p>Nuestra infraestructura está alojada principalmente en los Estados Unidos. Si usted se encuentra fuera de los Estados Unidos, su información será transferida y procesada en los Estados Unidos. Al usar el Servicio, usted consiente esta transferencia. Tomamos medidas para garantizar que existan las salvaguardas apropiadas cuando la ley aplicable lo exija.</p>
+
+          <!-- 11 -->
+          <div class="section-divider">
+            <h2>11. Cambios a esta Política</h2>
+          </div>
+
+          <p>Podemos actualizar esta Política de Privacidad periódicamente. Le notificaremos los cambios sustanciales publicando la nueva política en esta página con una fecha de vigencia actualizada y, cuando la ley lo exija, enviándole una notificación por correo electrónico. Le recomendamos revisar esta política periódicamente.</p>
+
+          <!-- 12 -->
+          <div class="section-divider">
+            <h2>12. Contacto</h2>
+          </div>
+
+          <p>Si tiene preguntas, inquietudes o solicitudes sobre esta Política de Privacidad o nuestras prácticas de datos, contáctenos:</p>
+          <ul>
+            <li><strong>Correo electrónico:</strong> <a href="mailto:privacy@cadenza.com">privacy@cadenza.com</a></li>
+            <li><strong>Sitio web:</strong> <a href="index.html">cadenza.com</a></li>
+          </ul>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- PIE DE PÁGINA -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p class="footer-copy">© 2026 Cadenza. Todos los derechos reservados.</p>
+      <nav class="footer-nav" aria-label="Pie de página">
+        <a href="privacy.html" aria-current="page">Política de Privacidad</a>
+        <a href="terms.html">Términos de Servicio</a>
+        <a href="index.html">Inicio</a>
+      </nav>
+    </div>
+  </footer>
+
+</body>
+</html>

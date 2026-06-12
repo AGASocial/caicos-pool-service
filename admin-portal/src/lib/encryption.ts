@@ -15,7 +15,7 @@ const VERSION = 1; // Current encryption version
 // HISTORICAL SALT — name retained for backwards-compat with already-encrypted
 // user data. Do NOT bump or rename during brand migrations; doing so will
 // invalidate every existing encrypted key in the system.
-const MASTER_KEY_SALT = 'iablee-master-key-v1'; // Context for HKDF (do not change)
+const MASTER_KEY_SALT = 'cadenza-master-key-v1'; // Context for HKDF (do not change)
 
 // --- Types ---
 export interface EncryptionMetadata {

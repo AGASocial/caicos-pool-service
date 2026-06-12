@@ -164,19 +164,19 @@ export default function PasswordSecurityScreen() {
         },
         hint: { fontSize: 12, color: c.mutedSecondary, marginTop: 2 },
         error: {
-          backgroundColor: c.errorBg ?? '#FEE2E2',
+          backgroundColor: c.errorBg ?? 'rgba(180, 69, 59, 0.10)',
           borderRadius: 8,
           paddingHorizontal: 14,
           paddingVertical: 10,
         },
-        errorText: { fontSize: 14, color: c.error ?? '#DC2626', fontWeight: '500' },
+        errorText: { fontSize: 14, color: c.error ?? '#B4453B', fontWeight: '500' },
         success: {
-          backgroundColor: c.successBg ?? '#DCFCE7',
+          backgroundColor: c.successBg ?? 'rgba(62, 125, 90, 0.12)',
           borderRadius: 8,
           paddingHorizontal: 14,
           paddingVertical: 10,
         },
-        successText: { fontSize: 14, color: c.success ?? '#16A34A', fontWeight: '500' },
+        successText: { fontSize: 14, color: c.success ?? '#3E7D5A', fontWeight: '500' },
         saveBtn: {
           backgroundColor: c.buttonPrimary,
           borderRadius: 12,

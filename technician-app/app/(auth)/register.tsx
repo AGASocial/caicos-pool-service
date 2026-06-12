@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, useColorScheme, Image, ScrollView } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, useColorScheme, Image, ScrollView, Platform } from 'react-native';
 import { Link, useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
@@ -62,8 +62,9 @@ export default function RegisterScreen() {
         scrollContent: { flexGrow: 1, paddingHorizontal: 16, paddingVertical: 24 },
         headerSection: { alignItems: 'center', marginBottom: 32 },
         logo: { width: 100, height: 100, marginBottom: 16 },
-        brandName: { fontSize: 28, fontWeight: '800', color: '#00D9FF', marginBottom: 4, letterSpacing: -0.5 },
-        headerSubtitle: { fontSize: 14, color: 'rgba(255, 255, 255, 0.8)', fontWeight: '500' },
+        brandName: { fontSize: 30, fontWeight: '500', color: '#F3EEE4', marginBottom: 10, letterSpacing: 0.3, fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }) },
+        brassRule: { width: 54, height: 2, backgroundColor: '#C7A85F', borderRadius: 2, marginBottom: 10 },
+        headerSubtitle: { fontSize: 14, color: 'rgba(243, 238, 228, 0.78)', fontWeight: '500' },
         card: {
           borderRadius: 20,
           backgroundColor: c.card,
@@ -97,30 +98,30 @@ export default function RegisterScreen() {
         hint: { fontSize: 12, color: c.muted, paddingHorizontal: 4, fontWeight: '500', marginTop: -12, marginBottom: 4 },
         error: { color: c.error, fontSize: 13, paddingHorizontal: 4, fontWeight: '500', marginTop: -12 },
         button: {
-          backgroundColor: '#00D9FF',
+          backgroundColor: '#C7A85F',
           borderRadius: 12,
           height: 52,
           alignItems: 'center',
           justifyContent: 'center',
           marginTop: 8,
-          shadowColor: '#00D9FF',
+          shadowColor: '#C7A85F',
           shadowOffset: { width: 0, height: 6 },
           shadowOpacity: 0.3,
           shadowRadius: 12,
           elevation: 6,
         },
         buttonDisabled: { opacity: 0.6 },
-        buttonText: { color: '#ffffff', fontWeight: '700', fontSize: 16, letterSpacing: 0.5 },
+        buttonText: { color: '#1a1407', fontWeight: '700', fontSize: 16, letterSpacing: 0.5 },
         divider: { height: 1, backgroundColor: c.border, marginVertical: 20 },
         footerText: { fontSize: 14, color: c.muted, textAlign: 'center' },
-        footerLink: { fontWeight: '700', color: '#00D9FF' },
+        footerLink: { fontWeight: '700', color: c.link },
       }),
     [c]
   );
 
   return (
     <LinearGradient
-      colors={['#0D7C8F', '#1A3A52']}
+      colors={['#15191F', '#0F1419']}
       start={{ x: 0, y: 0 }}
       end={{ x: 0.5, y: 1 }}
       style={styles.container}
@@ -136,6 +137,7 @@ export default function RegisterScreen() {
             style={styles.logo}
           />
           <Text style={styles.brandName}>Cadenza</Text>
+          <View style={styles.brassRule} />
           <Text style={styles.headerSubtitle}>Create Your Account</Text>
         </View>
 
@@ -212,7 +214,7 @@ export default function RegisterScreen() {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#ffffff" size="small" />
+                <ActivityIndicator color="#1a1407" size="small" />
               ) : (
                 <Text style={styles.buttonText}>CREATE ACCOUNT</Text>
               )}

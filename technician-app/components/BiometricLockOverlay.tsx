@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Image,
   useColorScheme,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -73,16 +74,16 @@ export function BiometricLockOverlay({ visible, onUnlock }: Props) {
           paddingHorizontal: 32,
         },
         logo: { width: 96, height: 96, marginBottom: 24 },
-        title: { fontSize: 28, fontWeight: '800', color: '#00D9FF', marginBottom: 8 },
+        title: { fontSize: 30, fontWeight: '500', color: '#F3EEE4', marginBottom: 8, letterSpacing: 0.3, fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }) },
         subtitle: {
           fontSize: 16,
-          color: 'rgba(255, 255, 255, 0.85)',
+          color: 'rgba(243, 238, 228, 0.8)',
           textAlign: 'center',
           marginBottom: 32,
           lineHeight: 22,
         },
         button: {
-          backgroundColor: '#00D9FF',
+          backgroundColor: '#C7A85F',
           borderRadius: 12,
           minWidth: 220,
           height: 52,
@@ -91,7 +92,7 @@ export function BiometricLockOverlay({ visible, onUnlock }: Props) {
           paddingHorizontal: 24,
         },
         buttonDisabled: { opacity: 0.7 },
-        buttonText: { color: '#ffffff', fontWeight: '700', fontSize: 16 },
+        buttonText: { color: '#1a1407', fontWeight: '700', fontSize: 16 },
         error: { color: c.error, fontSize: 14, marginTop: 16, textAlign: 'center' },
       }),
     [c.error]
@@ -102,7 +103,7 @@ export function BiometricLockOverlay({ visible, onUnlock }: Props) {
   return (
     <View style={styles.overlay}>
       <LinearGradient
-        colors={['#0D7C8F', '#1A3A52']}
+        colors={['#15191F', '#0F1419']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -118,7 +119,7 @@ export function BiometricLockOverlay({ visible, onUnlock }: Props) {
           disabled={unlocking}
         >
           {unlocking ? (
-            <ActivityIndicator color="#ffffff" size="small" />
+            <ActivityIndicator color="#1a1407" size="small" />
           ) : (
             <Text style={styles.buttonText}>Unlock with {label}</Text>
           )}

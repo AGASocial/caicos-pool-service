@@ -35,7 +35,7 @@ const VERSION = 1;
 // HISTORICAL SALT — name retained for backwards-compat with already-encrypted
 // user data. Do NOT bump or rename during brand migrations; doing so will
 // invalidate every existing encrypted key in the system.
-const MASTER_KEY_SALT = 'iablee-master-key-v1'; // do not change
+const MASTER_KEY_SALT = 'cadenza-master-key-v1'; // do not change
 
 function deriveMasterKey(): Buffer {
     return Buffer.from(hkdfSync('sha256', Buffer.from(MASTER_KEY_ENV!), Buffer.alloc(0), MASTER_KEY_SALT, 32));
