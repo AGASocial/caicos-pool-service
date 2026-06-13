@@ -50,7 +50,7 @@ After copying the example-app (cadenza) into admin-portal, this doc summarizes w
 
 ---
 
-## 2. Required Cadenza pages (from FEATURE-ADMIN-PORTAL.md)
+## 2. Required Cadenza pages (from `docs/specs/FEATURE-ADMIN-PORTAL.md`)
 
 | Route | Purpose |
 |-------|--------|
@@ -77,7 +77,7 @@ After copying the example-app (cadenza) into admin-portal, this doc summarizes w
 | **Settings** | |
 | `/settings` | Company settings (and optionally profile) |
 
-SOLUTION.md suggests routes under **`/dashboard`** (e.g. `/dashboard/jobs`, `/dashboard/properties`). FEATURE uses both `/jobs` and “Dashboard → Jobs”; we can standardize on **`/dashboard/jobs`**, **`/dashboard/properties`**, **`/dashboard/technicians`**, **`/dashboard/reports`**, **`/dashboard/settings`** for consistency.
+`docs/architecture/SOLUTION.md` suggests routes under **`/dashboard`** (e.g. `/dashboard/jobs`, `/dashboard/properties`). FEATURE uses both `/jobs` and “Dashboard → Jobs”; we can standardize on **`/dashboard/jobs`**, **`/dashboard/properties`**, **`/dashboard/technicians`**, **`/dashboard/reports`**, **`/dashboard/settings`** for consistency.
 
 ---
 

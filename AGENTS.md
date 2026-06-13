@@ -17,7 +17,7 @@ Use these agents to structure development work on the Cadenza pool service platf
 
 
 **Responsibilities:**
-- Validate requests against MVP scope (see SOLUTION.md, FEATURE-*.md)
+- Validate requests against MVP scope (see `docs/architecture/SOLUTION.md`, `docs/specs/FEATURE-*.md`)
 - Delegate to NextJS Dev (web), React Native Dev (mobile), or QA (validation)
 - Track assignments, completions, and blockers
 - Prevent scope creep; keep Phase 2 items in backlog
@@ -36,7 +36,7 @@ Use these agents to structure development work on the Cadenza pool service platf
 - Implement admin pages (dashboard, jobs, properties, team, reports, settings)
 - Use Next.js 14+ App Router, TypeScript (strict), Tailwind, Shadcn/ui
 - Integrate Supabase with RLS; never bypass company_id / multi-tenant rules
-- Always check `docs/example-app` for patterns, code and UI when building the admin portal; follow FEATURE-ADMIN-PORTAL.md
+- Always check `docs/example-app` for patterns, code and UI when building the admin portal; follow `docs/specs/FEATURE-ADMIN-PORTAL.md`
 
 **How to invoke:** Work in admin/Next.js code or ask for web feature implementation. Example: *"Build the jobs management page"* or *"Add an API route for creating service jobs"*.
 
@@ -52,7 +52,7 @@ Use these agents to structure development work on the Cadenza pool service platf
 - Implement mobile screens (auth, jobs, service form, settings) with Expo SDK 52 + Expo Router
 - Use TypeScript (strict), Zustand, Supabase client; design offline-first (queue + sync)
 - Ensure touch targets ≥44px, safe areas, and photo capture/upload with offline queue
-- Follow FEATURE-TECHNICIAN-APP.md and existing mobile patterns
+- Follow `docs/specs/FEATURE-TECHNICIAN-APP.md` and existing mobile patterns
 
 **How to invoke:** Work in mobile app code or ask for a mobile feature. Example: *"Build the service form with chemical readings"* or *"Implement photo upload with offline sync"*.
 
@@ -66,7 +66,7 @@ Use these agents to structure development work on the Cadenza pool service platf
 
 **Responsibilities:**
 - Run code quality checks (TypeScript strict, lint, no secrets)
-- Verify feature compliance with FEATURE-ADMIN-PORTAL.md / FEATURE-TECHNICIAN-APP.md
+- Verify feature compliance with `docs/specs/FEATURE-ADMIN-PORTAL.md` / `docs/specs/FEATURE-TECHNICIAN-APP.md`
 - Validate database/RLS (multi-tenant isolation, correct tables/columns)
 - Produce pass/fail report with blockers and severity
 
@@ -100,7 +100,7 @@ User says one of:
 - "Start development" / "You have open card to develop" / "Run development autonomously" / "Develop the MVP by yourself"
 
 Then:
-1. **Bootstrap (as Master Agent):** Read SOLUTION.md and FEATURE-ADMIN-PORTAL.md / FEATURE-TECHNICIAN-APP.md. Build an ordered task list of MVP features (respect dependencies: auth & schema first, then core flows).
+1. **Bootstrap (as Master Agent):** Read `docs/architecture/SOLUTION.md` and `docs/specs/FEATURE-ADMIN-PORTAL.md` / `docs/specs/FEATURE-TECHNICIAN-APP.md`. Build an ordered task list of MVP features (respect dependencies: auth & schema first, then core flows).
 2. **Track progress:** Use a todo list (e.g. Cursor todo tool). Mark tasks: pending → in progress → QA → done.
 3. **Per task loop:**
    - **Assign (Master):** Declare the task, assign to NextJS Developer or React Native Developer (or QA if the ask is validation-only). State scope and context.
@@ -131,8 +131,10 @@ The rule **Autonomous development** (`.cursor/rules/cadenza-autonomous-developme
 
 ## Specs and schema
 
-- **SOLUTION.md** — Architecture and MVP scope
-- **FEATURE-ADMIN-PORTAL.md** — Admin portal feature spec
-- **FEATURE-TECHNICIAN-APP.md** — Technician app feature spec
+- **docs/business/BUSINESS-CONTEXT.md** — Business briefing (workflows, economics, open questions)
+- **docs/architecture/SOLUTION.md** — Architecture and MVP scope
+- **docs/specs/FEATURE-ADMIN-PORTAL.md** — Admin portal feature spec
+- **docs/specs/FEATURE-TECHNICIAN-APP.md** — Technician app feature spec
 - **docs/schema.sql** — Database schema
 - **docs/example-app** — Next.js reference implementation
+- **docs/README.md** — Full categorized documentation index

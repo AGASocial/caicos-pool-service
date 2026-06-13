@@ -321,10 +321,10 @@ SUPABASE_API_KEY      # Service role key (admin access)
 ## 🎁 Bonus: Solution Documents
 
 Your workspace also includes:
-- `SOLUTION.md` — High-level architecture
-- `FEATURE-TECHNICIAN-APP.md` — Mobile spec
-- `FEATURE-ADMIN-PORTAL.md` — Web spec
-- `README-SOLUTION.md` — Documentation index
+- `docs/architecture/SOLUTION.md` — High-level architecture
+- `docs/specs/FEATURE-TECHNICIAN-APP.md` — Mobile spec
+- `docs/specs/FEATURE-ADMIN-PORTAL.md` — Web spec
+- `docs/INDEX.md` — Documentation index
 - `START-HERE.md` — Quick start guide
 
 These work seamlessly with the plugin.
@@ -377,8 +377,8 @@ See `README.md` in plugin for:
 
 ### Documentation
 Comprehensive guides included:
-- Feature specifications (FEATURE-*.md)
-- Architecture overview (SOLUTION.md)
+- Feature specifications (`docs/specs/FEATURE-*.md`)
+- Architecture overview (`docs/architecture/SOLUTION.md`)
 - Plugin documentation (README.md)
 - Quick start (START-HERE.md)
 

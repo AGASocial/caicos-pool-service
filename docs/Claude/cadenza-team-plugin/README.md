@@ -102,9 +102,9 @@ Get these from:
 
 ## Feature Specs Reference
 
-- **SOLUTION.md** — High-level architecture & overview
-- **FEATURE-TECHNICIAN-APP.md** — Mobile app detailed spec
-- **FEATURE-ADMIN-PORTAL.md** — Web portal detailed spec
+- **docs/architecture/SOLUTION.md** — High-level architecture & overview
+- **docs/specs/FEATURE-TECHNICIAN-APP.md** — Mobile app detailed spec
+- **docs/specs/FEATURE-ADMIN-PORTAL.md** — Web portal detailed spec
 - **schema.sql** — Database schema with RLS
 
 ## Workflow Example
@@ -129,7 +129,7 @@ Master Agent:
 You: /code-gen Service form with chemical readings for: mobile
 
 React Native Developer:
-  ✓ Reads FEATURE-TECHNICIAN-APP.md
+  ✓ Reads `docs/specs/FEATURE-TECHNICIAN-APP.md`
   ✓ Reviews database schema
   ✓ Checks existing patterns
   → Generates TypeScript component

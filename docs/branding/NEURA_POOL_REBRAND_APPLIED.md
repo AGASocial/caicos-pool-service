@@ -233,12 +233,12 @@ eas build --platform android
 **Brand Assets:**
 - Logo (SVG): `technician-app/assets/cadenza-logo.svg`
 - Color palette: Defined in `constants/Colors.ts`
-- Brand guide: `Mobile_App_Branding_Update.md`
+- Brand guide: `docs/branding/Mobile_App_Branding_Update.md`
 
 **Questions?**
 Refer to:
 - `Cadenza_Brand_Guidelines.docx` - Full brand guidelines
-- `Mobile_App_Branding_Update.md` - App-specific design specs
+- `docs/branding/Mobile_App_Branding_Update.md` - App-specific design specs
 
 ---
 

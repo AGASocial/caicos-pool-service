@@ -493,7 +493,7 @@ EQUIPMENT_CHECKS = [
 │ ┌──────────────────┐ │
 │ │  👤 Avatar       │ │
 │ │  John Technician │ │
-│ │  john@cadenza.com │ │
+│ │  john@cadenzaops.com │ │
 │ │  Role: Technician│ │
 │ │  Company: Cadenza │ │
 │ └──────────────────┘ │
@@ -502,7 +502,7 @@ EQUIPMENT_CHECKS = [
 │ [John Technician]    │
 │                      │
 │ Email:               │
-│ [john@cadenza.com]    │ (read-only)
+│ [john@cadenzaops.com]    │ (read-only)
 │                      │
 │ Phone:               │
 │ [_______________]    │

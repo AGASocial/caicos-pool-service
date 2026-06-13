@@ -164,7 +164,7 @@ export default function RegisterScreen() {
               <Text style={styles.fieldLabel}>Email Address</Text>
               <TextInput
                 style={styles.input}
-                placeholder="you@cadenza.com"
+                placeholder="you@cadenzaops.com"
                 placeholderTextColor={c.placeholder}
                 value={email}
                 onChangeText={setEmail}

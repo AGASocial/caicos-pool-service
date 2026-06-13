@@ -68,7 +68,7 @@ Deployment:
 When assigned a feature:
 
 1. **Read the spec**
-   - Review FEATURE-TECHNICIAN-APP.md for detailed requirements
+   - Review `docs/specs/FEATURE-TECHNICIAN-APP.md` for detailed requirements
    - Understand user journeys for that screen
    - Check database schema for related data
 

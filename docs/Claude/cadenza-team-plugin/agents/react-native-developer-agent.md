@@ -88,7 +88,7 @@ When assigned a feature:
 
 ```
 1. CONTEXT GATHERING (5 min)
-   ├─ Read feature spec (FEATURE-TECHNICIAN-APP.md)
+   ├─ Read feature spec (`docs/specs/FEATURE-TECHNICIAN-APP.md`)
    ├─ Review database schema
    ├─ Check existing patterns
    └─ Identify dependencies
@@ -290,7 +290,7 @@ Feature: Service Form Screen
 Status: Starting implementation
 
 Analyzing:
-  ✓ Feature spec (FEATURE-TECHNICIAN-APP.md)
+  ✓ Feature spec (`docs/specs/FEATURE-TECHNICIAN-APP.md`)
   ✓ Database schema (service_reports table)
   ✓ Existing patterns (jobs.tsx, [id].tsx)
   ✓ Offline sync strategy

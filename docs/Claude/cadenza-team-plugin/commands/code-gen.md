@@ -61,7 +61,7 @@ Developer: NextJS Developer Agent
 Status: Starting code generation...
 
 Analyzing:
-  ✓ Feature spec (FEATURE-ADMIN-PORTAL.md)
+  ✓ Feature spec (`docs/specs/FEATURE-ADMIN-PORTAL.md`)
   ✓ Database schema (service_jobs table)
   ✓ Existing patterns (dashboard.tsx)
   ✓ Dependencies (Supabase RLS, auth context)

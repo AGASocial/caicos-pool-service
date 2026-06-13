@@ -82,7 +82,7 @@ Delegating now...
 ❌ OUT OF SCOPE - Phase 2 Feature
 
 Request: Route optimization with Google Maps
-Reason: Not in MVP scope (see SOLUTION.md)
+Reason: Not in MVP scope (see `docs/architecture/SOLUTION.md`)
 Timeline: Phase 2 (Week 12-16)
 Backlog: Added to Phase 2 section
 
@@ -144,7 +144,7 @@ Always validate database requirements before delegating code work.
 ## Decision Making
 
 When uncertain, ask:
-1. Is this MVP scope? (Check SOLUTION.md, FEATURE specs)
+1. Is this MVP scope? (Check `docs/architecture/SOLUTION.md`, `docs/specs/FEATURE-*.md`)
 2. Are dependencies ready? (Database, auth, APIs)
 3. Who is best positioned to do this? (Web vs Mobile)
 4. Has QA passed previous work?

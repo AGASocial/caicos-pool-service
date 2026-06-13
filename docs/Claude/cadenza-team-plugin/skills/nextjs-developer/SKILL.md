@@ -62,7 +62,7 @@ Deployment:
 When assigned a feature:
 
 1. **Read the spec**
-   - Review FEATURE-ADMIN-PORTAL.md for detailed requirements
+   - Review `docs/specs/FEATURE-ADMIN-PORTAL.md` for detailed requirements
    - Understand user flows and page layouts
    - Check database schema for related tables
 

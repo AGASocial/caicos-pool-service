@@ -245,7 +245,7 @@ export default function LoginScreen() {
               <Text style={styles.fieldLabel}>Email Address</Text>
               <TextInput
                 style={styles.input}
-                placeholder="technician@cadenza.com"
+                placeholder="technician@cadenzaops.com"
                 placeholderTextColor={c.placeholder}
                 value={email}
                 onChangeText={setEmail}

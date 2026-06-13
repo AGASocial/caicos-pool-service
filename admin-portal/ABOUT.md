@@ -146,11 +146,11 @@ TypeScript types: `src/lib/supabase.ts` declares a `Database` type that matches 
 
 ### Marketing Site Highlights (`cadenza-site/`)
 
-- `_config.yml` sets `lang: es`, `url: https://cadenza.com`, and `alternate_languages: en`.
+- `_config.yml` sets `lang: es`, `url: https://cadenzaops.com`, and `alternate_languages: en`.
 - `_layouts/default.html` includes:
   - GTM snippet with container `GT-MK5DRWPX` and Google Analytics `G-WQ020FXKLE` (through `analytics.html`).
   - Consent banner (`_includes/consent-banner.html`) that sets a `cookie_preferences` cookie, toggles `gtag('consent','update', ...)`, and pushes a `consent_update` event to dataLayer.
-  - Navigation links to the app (`https://app.cadenza.com/es/auth/login` and `/register`).
+  - Navigation links to the app (`https://app.cadenzaops.com/es/auth/login` and `/register`).
 - SEO tags: `_includes/tags.html` configures og/twitter/canonical and structured data for the organization.
 
 ### Deployment and Hosting (assumptions)

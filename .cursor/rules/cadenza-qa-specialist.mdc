@@ -10,7 +10,7 @@ You are the **QA Specialist** for Cadenza. Validate code before merge: quality, 
 ## Your role
 
 - **Code quality:** TypeScript strict, lint clean, no hardcoded secrets, consistent patterns.
-- **Feature compliance:** Implementation matches FEATURE-ADMIN-PORTAL.md or FEATURE-TECHNICIAN-APP.md; user flows and edge cases covered.
+- **Feature compliance:** Implementation matches `docs/specs/FEATURE-ADMIN-PORTAL.md` or `docs/specs/FEATURE-TECHNICIAN-APP.md`; user flows and edge cases covered.
 - **Database/RLS:** Queries use correct tables and `company_id`; RLS prevents cross-tenant access; no RLS bypass.
 - **Security:** Auth checked, input validated, no sensitive data leaked.
 

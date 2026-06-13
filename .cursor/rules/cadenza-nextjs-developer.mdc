@@ -24,12 +24,12 @@ const data = await supabase
   .eq('company_id', currentUser.company_id);
 ```
 
-- Follow `docs/example-app` and **FEATURE-ADMIN-PORTAL.md**. Escalate blockers to Master Agent. Submit to QA when done.
+- Follow `docs/example-app` and **docs/specs/FEATURE-ADMIN-PORTAL.md**. Escalate blockers to Master Agent. Submit to QA when done.
 - **After implementing a feature:** Run `npm run lint` and `npm run build` in `admin-portal` (or the app you changed). Fix any errors before marking the task done.
 
 ## Admin portal modules
 
 - **Keep:** Layout, side menu, Dashboard, Settings, Billing.
-- **Do not add** Digital Assets or Beneficiaries to nav; implement **Jobs**, **Properties**, **Team** (technicians), **Reports** per FEATURE-ADMIN-PORTAL.md.
+- **Do not add** Digital Assets or Beneficiaries to nav; implement **Jobs**, **Properties**, **Team** (technicians), **Reports** per `docs/specs/FEATURE-ADMIN-PORTAL.md`.
 
 Reference: `cadenza-team-plugin/agents/nextjs-developer-agent.md`, `AGENTS.md`, `admin-portal/REFERENCE.md`.

@@ -6,7 +6,7 @@ Welcome! You have a complete MVP solution design for Cadenza. This file guides y
 
 ## 📚 Your Solution Documents (4 files)
 
-### 1️⃣ **README-SOLUTION.md** ← BEGIN HERE
+### 1️⃣ **docs/INDEX.md** ← BEGIN HERE
 ```
 Duration: 15 minutes
 Type: Navigation & index
@@ -16,7 +16,7 @@ What: Complete overview of all documents + development roadmap
 
 ---
 
-### 2️⃣ **SOLUTION.md** ← SECOND (Architecture Deep Dive)
+### 2️⃣ **docs/architecture/docs/architecture/SOLUTION.md** ← SECOND (Architecture Deep Dive)
 ```
 Duration: 20 minutes
 Type: High-level design document
@@ -31,7 +31,7 @@ What: MVP scope, tech stack, architecture diagram, feature list
 
 ---
 
-### 3️⃣ **FEATURE-TECHNICIAN-APP.md** ← Developers Read This
+### 3️⃣ **docs/specs/docs/specs/FEATURE-TECHNICIAN-APP.md** ← Developers Read This
 ```
 Duration: 30-40 minutes
 Type: Detailed product specification
@@ -47,7 +47,7 @@ What: Screen mockups, data models, user journeys, API design
 
 ---
 
-### 4️⃣ **FEATURE-ADMIN-PORTAL.md** ← Developers Read This
+### 4️⃣ **docs/specs/docs/specs/FEATURE-ADMIN-PORTAL.md** ← Developers Read This
 ```
 Duration: 30-40 minutes
 Type: Detailed product specification
@@ -66,9 +66,9 @@ What: Web portal pages, forms, data flows, admin workflows
 
 ### Path 1: "I want to understand the entire platform"
 ```
-README-SOLUTION.md (15 min)
+docs/INDEX.md (15 min)
     ↓
-SOLUTION.md (20 min)
+docs/architecture/SOLUTION.md (20 min)
     ↓
 Skim both features (20 min)
 ═══════════════════════════
@@ -77,31 +77,31 @@ Total: ~55 minutes
 
 ### Path 2: "I'm building the mobile app"
 ```
-README-SOLUTION.md (15 min)
+docs/INDEX.md (15 min)
     ↓
-SOLUTION.md - sections 2-4 (15 min)
+docs/architecture/SOLUTION.md - sections 2-4 (15 min)
     ↓
-FEATURE-TECHNICIAN-APP.md (40 min)
+docs/specs/FEATURE-TECHNICIAN-APP.md (40 min)
 ═══════════════════════════
 Total: ~70 minutes
 ```
 
 ### Path 3: "I'm building the web admin"
 ```
-README-SOLUTION.md (15 min)
+docs/INDEX.md (15 min)
     ↓
-SOLUTION.md - sections 2-4 (15 min)
+docs/architecture/SOLUTION.md - sections 2-4 (15 min)
     ↓
-FEATURE-ADMIN-PORTAL.md (40 min)
+docs/specs/FEATURE-ADMIN-PORTAL.md (40 min)
 ═══════════════════════════
 Total: ~70 minutes
 ```
 
 ### Path 4: "I need to present to stakeholders"
 ```
-README-SOLUTION.md (15 min)
+docs/INDEX.md (15 min)
     ↓
-SOLUTION.md - sections 1, 7, 9 (25 min)
+docs/architecture/SOLUTION.md - sections 1, 7, 9 (25 min)
     ↓
 Prepare slides from diagrams
 ═══════════════════════════
@@ -178,20 +178,22 @@ Page 6: Company Settings
 
 ```
 /cadenza/
+├── README.md ................................ (project overview)
 ├── START-HERE.md ............................ (you are here)
-├── README-SOLUTION.md ....................... (index & roadmap)
-├── SOLUTION.md ............................. (architecture)
-├── FEATURE-TECHNICIAN-APP.md ............... (mobile spec)
-├── FEATURE-ADMIN-PORTAL.md ................. (web spec)
+├── AGENTS.md ................................ (AI dev agents)
 │
-├── docs/ ................................... (existing reference)
-│   ├── README.md (old)
+├── docs/ ................................... (all documentation)
+│   ├── README.md ........................... (categorized index)
+│   ├── INDEX.md ............................ (reading guide & roadmap)
+│   ├── architecture/SOLUTION.md
+│   ├── specs/FEATURE-*.md
+│   ├── business/  cost/  branding/  design/
+│   ├── development/  setup/  testing/
 │   ├── schema.sql
-│   ├── [id].tsx
-│   ├── jobs.tsx
-│   └── screenshots/
+│   └── example-app/
 │
-└── (ready for code repos)
+├── admin-portal/ ........................... (Next.js web app)
+└── technician-app/ ......................... (Expo mobile app)
 ```
 
 ---
@@ -199,8 +201,8 @@ Page 6: Company Settings
 ## 🚀 Next Steps
 
 ### This Week
-- [ ] Read **README-SOLUTION.md**
-- [ ] Review **SOLUTION.md**
+- [ ] Read **docs/INDEX.md**
+- [ ] Review **docs/architecture/SOLUTION.md**
 - [ ] Skim both feature specs
 - [ ] Discuss with team (is scope right?)
 
@@ -349,7 +351,7 @@ You have everything needed to start building Cadenza:
 
 ---
 
-**Next: Open `README-SOLUTION.md` →**
+**Next: Open `docs/INDEX.md` →**
 
 ---
 

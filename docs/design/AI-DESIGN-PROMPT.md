@@ -212,7 +212,7 @@ Create a modern, mobile-first app interface design system for **Cadenza Technici
 - [ ] Profile Card:
   - Avatar placeholder (circular, 80px, initials or default icon)
   - Name: "John Technician" (bold)
-  - Email: "john@cadenza.com" (gray)
+  - Email: "john@cadenzaops.com" (gray)
   - Role: "Technician" (badge, blue)
   - Company: "Cadenza" (gray)
 - [ ] Editable Fields:

@@ -1,83 +1,127 @@
-# Pool Service Pro 🏊
+# Cadenza Documentation
 
-A multi-tenant SaaS mobile app for pool service technicians. Built with React Native (Expo) + Supabase.
+All project documentation lives under `docs/`, organized by purpose. Start with [INDEX.md](./INDEX.md) for the full reading guide and development roadmap.
 
-## Features (MVP)
+**Quick entry points:**
+- New to the project → [../START-HERE.md](../START-HERE.md)
+- Architecture overview → [architecture/SOLUTION.md](./architecture/SOLUTION.md)
+- Building features → [specs/](./specs/)
+- AI agents & dev workflow → [../AGENTS.md](../AGENTS.md)
 
-- 🔐 Multi-tenant auth (company signup → invite technicians)
-- 📋 Daily job list with route ordering
-- 📝 Full service form: chemical readings, tasks, equipment checks
-- 📷 Photo capture (before/after, issues)
-- 🏠 Property/customer management
-- 🔒 Row Level Security — each company sees only their data
+---
 
-## Tech Stack
+## Architecture & Product
 
-- **Frontend:** React Native + Expo SDK 52 + Expo Router v4
-- **Backend:** Supabase (Postgres, Auth, Storage, RLS)
-- **State:** Zustand
-- **Language:** TypeScript
+High-level platform design, MVP scope, and tech stack decisions.
 
-## Setup
+| Document | Description |
+|----------|-------------|
+| [SOLUTION.md](./architecture/SOLUTION.md) | Platform architecture, MVP scope, tech stack, schema overview |
+| [INDEX.md](./INDEX.md) | Full documentation index, reading order, and roadmap |
 
-### 1. Create Supabase Project
+---
 
-1. Go to [supabase.com](https://supabase.com) and create a new project
-2. Go to **SQL Editor** and run `supabase/schema.sql`
-3. Go to **Storage** → Create a bucket called `report-photos` (private)
-4. Copy your project URL and anon key from **Settings → API**
+## Feature Specifications
 
-### 2. Configure Environment
+Detailed product specs for each application and background jobs.
 
-```bash
-cp .env.example .env
-```
+| Document | Description |
+|----------|-------------|
+| [FEATURE-ADMIN-PORTAL.md](./specs/FEATURE-ADMIN-PORTAL.md) | Admin web portal — screens, journeys, API, permissions |
+| [FEATURE-TECHNICIAN-APP.md](./specs/FEATURE-TECHNICIAN-APP.md) | Technician mobile app — workflows, data models, offline |
+| [FEATURE-CRON-JOB.md](./specs/FEATURE-CRON-JOB.md) | Scheduled jobs (photo cleanup, consistency tasks) |
 
-Edit `.env` with your Supabase credentials:
+---
 
-```
-EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
+## Business & Domain Analysis
 
-### 3. Install & Run
+Workflow research, gap analysis, product decisions, and business brainstorming context.
 
-```bash
-npm install
-npx expo start
-```
+| Document | Description |
+|----------|-------------|
+| **[BUSINESS-CONTEXT.md](./business/BUSINESS-CONTEXT.md)** | **Start here** for business questions, ideas, strategy, and pilot context |
+| [BUSINESS-LOGIC-ANALYSIS.md](./business/BUSINESS-LOGIC-ANALYSIS.md) | Gabriella's WhatsApp workflow vs. current specs |
+| [IMPLEMENTATION-ROADMAP.md](./business/IMPLEMENTATION-ROADMAP.md) | Simplified workflow roadmap (WhatsApp → mobile app) |
+| [SPEC-UPDATES-SUMMARY.md](./business/SPEC-UPDATES-SUMMARY.md) | Changelog for routes, weekly reports, and workflow updates |
 
-Scan the QR code with Expo Go (iOS/Android) or press `i`/`a` for simulators.
+---
 
-### 4. Seed Test Data
+## Cost & Financial Analysis
 
-1. Register an account through the app (this creates your company)
-2. Run `supabase/seed.sql` in the SQL Editor to add sample properties and jobs
+Pilot economics, infrastructure scaling, billing, and photo storage strategy.
 
-## Project Structure
+| Document | Description |
+|----------|-------------|
+| [COST-ANALYSIS-PILOT.md](./cost/COST-ANALYSIS-PILOT.md) | Pilot customer revenue, costs, and margins |
+| [COST-SCALING-PHOTOS.md](./cost/COST-SCALING-PHOTOS.md) | How Supabase/Vercel costs scale with photo volume |
+| [PHOTO-RETENTION-STRATEGY.md](./cost/PHOTO-RETENTION-STRATEGY.md) | Photo retention tiers and external storage options |
+| [NEXT-ACTIONS-BILLING-LAUNCH.md](./cost/NEXT-ACTIONS-BILLING-LAUNCH.md) | Billing system launch checklist and integration steps |
 
-```
-app/                    # Expo Router screens
-├── (auth)/             # Login & Register
-├── (app)/
-│   ├── (tabs)/         # Jobs, Properties, Settings
-│   ├── job/[id].tsx    # Service form (main workflow)
-│   └── property/       # Property detail & creation
-src/
-├── lib/supabase.ts     # Supabase client config
-├── hooks/              # useAuth, useJobs, useProperties
-├── types/database.ts   # TypeScript types
-└── constants/          # Chemical readings, task lists
-supabase/
-├── schema.sql          # Full database + RLS policies
-└── seed.sql            # Sample data
-```
+---
 
-## Roadmap
+## Branding & Design
 
-- [ ] **Offline mode** — SQLite cache + sync queue
-- [ ] **Route optimization** — Google Maps / OR-Tools
-- [ ] **Push notifications** — new job assignments
-- [ ] **Customer portal** — service history, invoices
-- [ ] **Recurring schedules** — auto-generate weekly jobs
-- [ ] **Reporting dashboard** — chemical trends, tech productivity
+Brand identity, applied rebrand notes, and AI design prompts for presentations.
+
+| Document | Description |
+|----------|-------------|
+| [BRAND-IDENTITY.md](./branding/BRAND-IDENTITY.md) | Logo, colors, typography, voice & tone |
+| [Mobile_App_Branding_Update.md](./branding/Mobile_App_Branding_Update.md) | Mobile app color token specifications |
+| [NEURA_POOL_REBRAND_APPLIED.md](./branding/NEURA_POOL_REBRAND_APPLIED.md) | Applied rebrand changelog (technician app) |
+| [AI-DESIGN-PROMPT.md](./design/AI-DESIGN-PROMPT.md) | AI design prompt for technician mobile app |
+| [AI-DESIGN-PROMPT-ADMIN.md](./design/AI-DESIGN-PROMPT-ADMIN.md) | AI design prompt for admin portal |
+
+---
+
+## Development & Implementation
+
+Progress tracking, implementation checklists, and repo layout.
+
+| Document | Description |
+|----------|-------------|
+| [DEVELOPMENT-CHECKLIST.md](./development/DEVELOPMENT-CHECKLIST.md) | MVP completion status (admin + mobile) |
+| [IMPLEMENTATION-CHECKLIST.md](./development/IMPLEMENTATION-CHECKLIST.md) | Code tasks to align with updated specs |
+| [WORKING-DIRECTORY-GUIDE.md](./development/WORKING-DIRECTORY-GUIDE.md) | Repo structure and implementation status |
+
+---
+
+## Setup & Technical Guides
+
+Environment setup, auth integration, and database configuration.
+
+| Document | Description |
+|----------|-------------|
+| [setup-supabase.md](./setup/setup-supabase.md) | Supabase project setup |
+| [supabase-redirect-setup.md](./setup/supabase-redirect-setup.md) | Auth redirect URLs |
+| [GOOGLE_SIGN_IN_IMPLEMENTATION.md](./setup/GOOGLE_SIGN_IN_IMPLEMENTATION.md) | Google Sign-In integration |
+
+---
+
+## Testing
+
+| Document | Description |
+|----------|-------------|
+| [TESTING.md](./testing/TESTING.md) | Testing approach and procedures |
+| [TEST_SUMMARY.md](./testing/TEST_SUMMARY.md) | Test run summary |
+
+---
+
+## Agents & Tooling
+
+AI development team plugin and agent coordination.
+
+| Document | Description |
+|----------|-------------|
+| [PLUGIN-SUMMARY.md](./agents/PLUGIN-SUMMARY.md) | Cadenza team plugin delivery summary |
+| [../AGENTS.md](../AGENTS.md) | Agent roles, workflow, and autonomous development loop |
+
+---
+
+## Other Resources
+
+| Location | Description |
+|----------|-------------|
+| [schema.sql](./schema.sql) | Database schema |
+| [example-app/](./example-app/) | Next.js reference implementation |
+| [migrations/](./migrations/) | Migration notes |
+| [Claude/cadenza-team-plugin/](./Claude/cadenza-team-plugin/) | Claude Cowork plugin (agents, skills, commands) |

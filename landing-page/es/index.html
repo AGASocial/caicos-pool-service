@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cadenza — Software para servicio de piscinas | Cada visita, ejecutada.</title>
-  <meta name="description" content="La plataforma todo en uno para empresas de servicio de piscinas. Gestiona técnicos, programa trabajos, captura reportes de servicio y haz crecer tu negocio — todo desde un solo lugar." />
+  <title>Cadenza — Software para servicio de piscinas | Solicita acceso anticipado</title>
+  <meta name="description" content="Cadenza es la plataforma todo en uno para empresas de servicio de piscinas — una app móvil para técnicos y un portal web para administradores. En beta privada. Únete a la lista de espera para acceso anticipado." />
   <meta name="theme-color" content="#FAF7F2" />
 
-  <link rel="canonical" href="https://cadenza.com/es/" />
-  <link rel="alternate" hreflang="en" href="https://cadenza.com/" />
-  <link rel="alternate" hreflang="es" href="https://cadenza.com/es/" />
-  <link rel="alternate" hreflang="x-default" href="https://cadenza.com/" />
+  <link rel="canonical" href="https://cadenzaops.com/es/" />
+  <link rel="alternate" hreflang="en" href="https://cadenzaops.com/" />
+  <link rel="alternate" hreflang="es" href="https://cadenzaops.com/es/" />
+  <link rel="alternate" hreflang="x-default" href="https://cadenzaops.com/" />
 
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Cadenza" />
   <meta property="og:title" content="Cadenza — Software para servicio de piscinas" />
-  <meta property="og:description" content="La plataforma todo en uno para empresas de servicio de piscinas. Cada visita, ejecutada." />
-  <meta property="og:url" content="https://cadenza.com/es/" />
+  <meta property="og:description" content="La plataforma todo en uno para empresas de servicio de piscinas. En beta privada — solicita acceso anticipado." />
+  <meta property="og:url" content="https://cadenzaops.com/es/" />
   <meta property="og:locale" content="es_LA" />
   <meta property="og:locale:alternate" content="en_US" />
 
@@ -92,6 +92,7 @@
     .btn-lg{ padding:14px 28px; font-size:15px; border-radius:10px; }
     .btn-outline{ border-color:#DCD5C5; color:var(--ink); background:transparent; padding:11px 22px; font-size:13.5px; }
     .btn-outline:hover{ border-color:var(--brass); background:var(--white); }
+    .btn[disabled]{ opacity:.6; cursor:not-allowed; transform:none; box-shadow:none; }
     .link-quiet{
       color:var(--ink); text-decoration:none; font-size:15px;
       border-bottom:1px solid var(--brass); padding-bottom:2px;
@@ -130,13 +131,13 @@
     @media (max-width:620px){ .signin{ display:none; } }
 
     /* ─── Secciones ────────────────────────────────────────────────────── */
-    .section{ padding:96px 0; }
+    .section{ padding:96px 0; scroll-margin-top:84px; }
     .section-head{ text-align:center; max-width:680px; margin:0 auto 60px; }
     .bg-white{ background:var(--white); }
     .bg-dark{ background:var(--ink-deep); }
 
     /* ─── Hero ─────────────────────────────────────────────────────────── */
-    .hero{ padding:148px 0 110px; text-align:center; }
+    .hero{ padding:160px 0 120px; text-align:center; }
     .badge{
       display:inline-flex; align-items:center; gap:8px;
       background:var(--white); border:1px solid var(--hairline); border-radius:999px;
@@ -148,7 +149,7 @@
       font-family:var(--serif); font-weight:500; letter-spacing:.2px;
       font-size:clamp(44px, 7.4vw, 84px); line-height:1.05; color:var(--ink); margin:0 0 24px;
     }
-    .hero-sub{ font-size:clamp(16px, 2vw, 19px); color:var(--muted); max-width:640px; margin:0 auto 36px; line-height:1.65; }
+    .hero-sub{ font-size:clamp(16px, 2vw, 19px); color:var(--muted); max-width:620px; margin:0 auto 36px; line-height:1.65; }
     .hero-ctas{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:22px; }
 
     /* subrayado de latón con “eco” */
@@ -181,81 +182,6 @@
       .echo-word::after{ transform:scaleX(1); }
       .echo-word::before{ transform:scaleX(1); opacity:.32; }
     }
-
-    /* ─── Mockup del hero ──────────────────────────────────────────────── */
-    .hero-mock{ position:relative; max-width:860px; margin:72px auto 0; text-align:left; }
-    .mock-browser{
-      background:var(--white); border:1px solid var(--hairline); border-radius:16px;
-      box-shadow:0 24px 64px rgba(15,20,25,.10), 0 2px 8px rgba(15,20,25,.04);
-      overflow:hidden;
-    }
-    .mock-bar{
-      display:flex; align-items:center; gap:8px; padding:12px 16px;
-      background:var(--linen); border-bottom:1px solid var(--hairline);
-    }
-    .mock-dot{ width:10px; height:10px; border-radius:50%; background:#E3DCCD; }
-    .mock-url{
-      margin-left:10px; flex:1; max-width:300px;
-      background:var(--white); border:1px solid var(--hairline); border-radius:6px;
-      font-family:var(--mono); font-size:11px; color:var(--muted); padding:4px 10px;
-    }
-    .mock-body{ padding:22px; display:flex; flex-direction:column; gap:14px; }
-    .mock-stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-    .mock-stat{ background:var(--linen); border:1px solid var(--hairline); border-radius:10px; padding:13px 14px; }
-    .mock-stat .lbl{ font-size:11px; color:var(--muted); margin:0 0 4px; }
-    .mock-stat .val{ font-family:var(--serif); font-weight:500; font-size:24px; line-height:1; color:var(--ink); margin:0; }
-    .mock-stat .note{ font-size:11px; margin:6px 0 0; color:var(--muted); }
-    .mock-stat .note.up{ color:var(--success); }
-    .mock-table{ border:1px solid var(--hairline); border-radius:12px; overflow:hidden; }
-    .mock-table-head{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:11px 16px; border-bottom:1px solid var(--hairline); background:var(--white);
-    }
-    .mock-table-head .ttl{ font-size:13px; font-weight:600; color:var(--ink); }
-    .pill{ display:inline-block; font-size:10.5px; font-weight:600; border-radius:999px; padding:3px 10px; }
-    .pill-live{ background:#F4ECD9; color:var(--brass-deep); font-family:var(--mono); letter-spacing:.08em; text-transform:uppercase; font-weight:500; }
-    .pill-done{ background:#E7F0EA; color:var(--success); }
-    .pill-progress{ background:#E9EFF4; color:var(--info); }
-    .pill-pending{ background:#F1EDE4; color:#8a8f98; }
-    .mock-row{ display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-bottom:1px solid var(--hairline); }
-    .mock-row:last-child{ border-bottom:none; }
-    .mock-row .who{ display:flex; align-items:center; gap:11px; }
-    .status-dot{ width:7px; height:7px; border-radius:50%; flex:none; }
-    .dot-done{ background:var(--success); } .dot-progress{ background:var(--info); } .dot-pending{ background:#D8D3C8; }
-    .mock-row .name{ font-size:13.5px; color:var(--ink); margin:0; }
-    .mock-row .addr{ font-size:11.5px; color:var(--muted); margin:1px 0 0; }
-
-    .mock-phone{
-      position:absolute; right:-16px; bottom:-28px; width:212px;
-      background:var(--white); border:1px solid var(--hairline); border-radius:16px;
-      box-shadow:0 18px 48px rgba(15,20,25,.14); padding:16px;
-    }
-    .mock-phone .app-head{ display:flex; align-items:center; gap:8px; margin-bottom:12px; }
-    .mini-c{
-      width:22px; height:22px; border-radius:26%; background:var(--linen);
-      box-shadow:inset 0 0 0 1px var(--hairline);
-      display:flex; align-items:center; justify-content:center;
-      font-family:var(--serif); font-weight:700; font-size:14px; color:var(--ink);
-    }
-    .mock-phone .app-name{ font-size:12px; font-weight:600; color:var(--ink); }
-    .mock-phone .k{ font-size:11px; color:var(--muted); margin:0 0 2px; }
-    .mock-phone .v{ font-size:14px; font-weight:600; color:var(--ink); margin:0 0 10px; }
-    .bar-track{ width:100%; height:5px; border-radius:99px; background:#F1EDE4; margin-bottom:7px; }
-    .bar-fill{ width:65%; height:5px; border-radius:99px; background:var(--brass); }
-    .mock-phone .chem{ font-family:var(--mono); font-size:10.5px; color:var(--muted); margin:0 0 14px; }
-    .mock-phone .btn-brass{ display:block; text-align:center; font-size:12px; padding:8px 10px; }
-
-    @media (max-width:740px){
-      .mock-stats{ grid-template-columns:repeat(2,1fr); }
-      .mock-phone{ position:static; width:auto; max-width:280px; margin:18px auto 0; }
-      .hero-mock{ margin-top:56px; }
-    }
-
-    /* ─── Prueba social ────────────────────────────────────────────────── */
-    .logos{ background:var(--white); border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline); padding:52px 0; text-align:center; }
-    .logos .kicker{ font-size:11.5px; letter-spacing:.18em; text-transform:uppercase; color:#9aa0a8; margin:0 0 26px; }
-    .logos-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:18px 48px; }
-    .logos-row span{ font-size:17px; font-weight:600; color:#B6AD9D; }
 
     /* ─── Funciones ────────────────────────────────────────────────────── */
     .features-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:18px; }
@@ -294,63 +220,20 @@
     .check-list svg{ width:16px; height:16px; flex:none; margin-top:2px; stroke:var(--success); }
     .product-card .btn{ text-align:center; }
 
-    /* ─── Cómo funciona ────────────────────────────────────────────────── */
-    .steps{ display:grid; grid-template-columns:repeat(3,1fr); gap:40px; }
-    @media (max-width:760px){ .steps{ grid-template-columns:1fr; gap:44px; } .step::after{ display:none; } }
-    .step{ text-align:center; position:relative; }
-    .step::after{
-      content:''; position:absolute; top:28px; left:calc(50% + 46px); width:calc(100% - 92px);
-      height:1px; background:var(--hairline);
+    /* ─── Acceso anticipado (teaser) ───────────────────────────────────── */
+    .teaser-card{
+      max-width:560px; margin:0 auto; text-align:center;
+      background:var(--white); border:1px solid var(--hairline); border-radius:20px;
+      box-shadow:0 10px 30px rgba(15,20,25,.05); padding:42px 38px;
     }
-    .step:last-child::after{ display:none; }
-    .step-num{
-      width:56px; height:56px; border-radius:24%; background:var(--white);
-      box-shadow:inset 0 0 0 1px var(--hairline), 0 6px 16px rgba(15,20,25,.05);
-      display:flex; align-items:center; justify-content:center; margin:0 auto 20px;
-      font-family:var(--serif); font-weight:600; font-size:26px; color:var(--ink);
-      position:relative; z-index:1;
+    .teaser-card .tier{
+      font-size:11px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+      color:var(--brass-soft); margin:0 0 14px;
     }
-    .step h3{ font-size:17px; font-weight:600; color:var(--ink); margin:0 0 8px; }
-    .step p{ font-size:14px; color:#5B6470; line-height:1.65; margin:0; max-width:300px; margin-inline:auto; }
+    .teaser-card h3{ font-family:var(--serif); font-weight:500; font-size:27px; line-height:1.15; color:var(--ink); margin:0 0 12px; }
+    .teaser-card p{ font-size:15px; color:var(--muted); line-height:1.65; margin:0 0 26px; }
 
-    /* ─── Cifras (banda oscura) ────────────────────────────────────────── */
-    .stats{ padding:84px 0; }
-    .stats-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:44px; text-align:center; }
-    @media (max-width:680px){ .stats-grid{ grid-template-columns:1fr; } }
-    .stat-num{ font-family:var(--serif); font-weight:500; font-size:clamp(38px,5vw,52px); line-height:1.05; color:var(--cream); margin:0 0 14px; }
-    .stat-rule{ width:28px; height:2px; border-radius:2px; background:var(--brass); margin:0 auto 14px; }
-    .stat-label{ font-size:14px; color:#9aa0a8; line-height:1.6; margin:0; max-width:260px; margin-inline:auto; }
-
-    /* ─── Precios ──────────────────────────────────────────────────────── */
-    .pricing-grid{ display:grid; grid-template-columns:1fr 1fr; gap:22px; max-width:760px; margin:0 auto; }
-    @media (max-width:680px){ .pricing-grid{ grid-template-columns:1fr; } }
-    .price-card{ border-radius:20px; padding:34px 30px; position:relative; }
-    .price-card.light{ background:var(--white); border:1px solid var(--hairline); }
-    .price-card.dark{ background:var(--ink-deep); border:1px solid var(--ink-deep); }
-    .price-card h3{ font-size:18px; font-weight:700; margin:0 0 4px; }
-    .price-card .plan-sub{ font-size:13.5px; margin:0 0 22px; }
-    .price{ margin:0 0 24px; }
-    .price .amount{ font-family:var(--serif); font-weight:500; font-size:46px; line-height:1; }
-    .price .per{ font-size:13.5px; }
-    .price-card ul{ list-style:none; margin:0 0 28px; padding:0; display:flex; flex-direction:column; gap:11px; }
-    .price-card li{ display:flex; align-items:flex-start; gap:10px; font-size:13.5px; line-height:1.5; }
-    .price-card li svg{ width:15px; height:15px; flex:none; margin-top:2px; }
-    .price-card .btn{ display:block; text-align:center; }
-    .price-card.light h3, .price-card.light .amount{ color:var(--ink); }
-    .price-card.light .plan-sub, .price-card.light .per{ color:var(--muted); }
-    .price-card.light li{ color:var(--body); }
-    .price-card.light li svg{ stroke:var(--success); }
-    .price-card.dark h3, .price-card.dark .amount{ color:var(--cream); }
-    .price-card.dark .plan-sub, .price-card.dark .per{ color:#9aa0a8; }
-    .price-card.dark li{ color:#C5C9CF; }
-    .price-card.dark li svg{ stroke:var(--brass); }
-    .popular-pill{
-      position:absolute; top:-13px; left:50%; transform:translateX(-50%);
-      background:var(--brass); color:var(--brass-ink);
-      font-size:11px; font-weight:700; letter-spacing:.04em; border-radius:999px; padding:5px 14px;
-    }
-
-    /* ─── CTA ──────────────────────────────────────────────────────────── */
+    /* ─── CTA / Lista de espera ────────────────────────────────────────── */
     .cta{ text-align:center; }
     .cta-monogram{
       width:64px; height:64px; border-radius:26%; background:var(--linen);
@@ -358,17 +241,37 @@
       display:flex; align-items:center; justify-content:center; margin:0 auto 28px;
       font-family:var(--serif); font-weight:600; font-size:40px; color:var(--ink);
     }
-    .cta-form{ display:flex; gap:12px; justify-content:center; max-width:460px; margin:36px auto 0; }
-    @media (max-width:540px){ .cta-form{ flex-direction:column; } }
-    .cta-form input{
-      flex:1; min-width:0; background:var(--white); border:1px solid var(--hairline); border-radius:10px;
+    .waitlist{ max-width:520px; margin:40px auto 0; text-align:left; }
+    .field{ margin-bottom:15px; }
+    .field label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink); margin:0 0 6px; }
+    .field label .opt{ color:var(--muted); font-weight:400; }
+    .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+    @media (max-width:520px){ .field-row{ grid-template-columns:1fr; gap:0; } }
+    .waitlist input, .waitlist select{
+      width:100%; background:var(--white); border:1px solid var(--hairline); border-radius:10px;
       padding:13px 16px; font-family:var(--sans); font-size:14px; color:var(--ink);
       transition:border-color 240ms var(--ease), box-shadow 240ms var(--ease);
     }
-    .cta-form input::placeholder{ color:#A9A294; }
-    .cta-form input:focus{ outline:none; border-color:var(--brass); box-shadow:0 0 0 3px rgba(199,168,95,.18); }
-    .cta-form .btn{ white-space:nowrap; }
-    .cta-note{ font-size:12px; color:#9aa0a8; margin:16px 0 0; }
+    .waitlist input::placeholder{ color:#A9A294; }
+    .waitlist select{ appearance:none; -webkit-appearance:none; background:var(--white); cursor:pointer; }
+    .waitlist input:focus, .waitlist select:focus{ outline:none; border-color:var(--brass); box-shadow:0 0 0 3px rgba(199,168,95,.18); }
+    .waitlist .btn{ width:100%; margin-top:8px; }
+    .form-status{ font-size:13px; color:var(--muted); margin:16px 0 0; text-align:center; min-height:1px; }
+    .form-status.error{ color:var(--danger); }
+
+    .waitlist-success{
+      display:none; max-width:520px; margin:40px auto 0; text-align:center;
+      background:var(--white); border:1px solid var(--hairline); border-radius:18px;
+      box-shadow:0 10px 30px rgba(15,20,25,.05); padding:40px 32px;
+    }
+    .waitlist-success.show{ display:block; }
+    .waitlist-success .ok{
+      width:54px; height:54px; border-radius:50%; background:#E7F0EA; color:var(--success);
+      display:flex; align-items:center; justify-content:center; margin:0 auto 18px;
+    }
+    .waitlist-success h3{ font-family:var(--serif); font-weight:500; font-size:25px; color:var(--ink); margin:0 0 8px; }
+    .waitlist-success p{ font-size:14.5px; color:var(--muted); line-height:1.6; margin:0; }
+    .cta-note{ font-size:12px; color:#9aa0a8; margin:18px 0 0; }
 
     /* ─── Pie de página ────────────────────────────────────────────────── */
     .site-footer{ background:var(--ink-deep); padding:64px 0 40px; text-align:center; }
@@ -398,8 +301,7 @@
       <nav class="main-nav" aria-label="Principal">
         <a href="#features">Funciones</a>
         <a href="#product">Producto</a>
-        <a href="#how">Cómo funciona</a>
-        <a href="#pricing">Precios</a>
+        <a href="#early-access">Acceso anticipado</a>
       </nav>
 
       <div class="header-actions">
@@ -409,7 +311,7 @@
           <span class="lang-current" aria-current="true">ES</span>
         </nav>
         <a href="#" class="signin">Iniciar sesión</a>
-        <a href="#cta" class="btn btn-brass">Comienza gratis</a>
+        <a href="#waitlist" class="btn btn-brass">Solicitar acceso</a>
       </div>
     </div>
   </header>
@@ -417,126 +319,28 @@
   <!-- ─── HERO ─────────────────────────────────────────────────────────── -->
   <section class="hero">
     <div class="container">
-      <div class="badge rise"><span class="badge-dot" aria-hidden="true"></span> Ya disponible para empresas de piscinas en toda Florida</div>
+      <div class="badge rise"><span class="badge-dot" aria-hidden="true"></span> Beta privada · Invitando a empresas de piscinas fundadoras</div>
 
       <p class="overline rise rise-d1">El centro de mando para tu operación de piscinas</p>
 
       <h1 class="hero-title rise rise-d2">Cada visita, <em class="echo-word">ejecutada.</em></h1>
 
       <p class="hero-sub rise rise-d3">
-        Cadenza le da a tu equipo una app móvil para los técnicos en campo y un potente portal web para los administradores — para que cada trabajo se haga bien y cada reporte llegue a la persona correcta.
+        Estamos construyendo la plataforma todo en uno para empresas de servicio de piscinas — una app móvil para tus técnicos y un portal web para ti. Estamos abriendo una beta privada limitada, y las empresas fundadoras entran primero.
       </p>
 
       <div class="hero-ctas rise rise-d4">
-        <a href="#cta" class="btn btn-brass btn-lg">Comienza gratis</a>
-        <a href="#product" class="link-quiet">Ver cómo funciona →</a>
-      </div>
-
-      <!-- mockup del hero -->
-      <div class="hero-mock rise rise-d5">
-        <div class="mock-browser">
-          <div class="mock-bar">
-            <span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span>
-            <span class="mock-url">app.cadenza.com/dashboard</span>
-          </div>
-          <div class="mock-body">
-            <div class="mock-stats">
-              <div class="mock-stat">
-                <p class="lbl">Trabajos de hoy</p>
-                <p class="val">22</p>
-                <p class="note up">↑ 3 más que ayer</p>
-              </div>
-              <div class="mock-stat">
-                <p class="lbl">Completados</p>
-                <p class="val">17</p>
-                <p class="note up">77% del día</p>
-              </div>
-              <div class="mock-stat">
-                <p class="lbl">Técnicos</p>
-                <p class="val">4</p>
-                <p class="note">Todos activos</p>
-              </div>
-              <div class="mock-stat">
-                <p class="lbl">Propiedades</p>
-                <p class="val">86</p>
-                <p class="note">Administradas</p>
-              </div>
-            </div>
-
-            <div class="mock-table">
-              <div class="mock-table-head">
-                <span class="ttl">Ruta de hoy</span>
-                <span class="pill pill-live">En vivo</span>
-              </div>
-              <div class="mock-row">
-                <div class="who">
-                  <span class="status-dot dot-done" aria-hidden="true"></span>
-                  <div>
-                    <p class="name">Residencia Miller</p>
-                    <p class="addr">1244 Blue Water Dr</p>
-                  </div>
-                </div>
-                <span class="pill pill-done">Completado</span>
-              </div>
-              <div class="mock-row">
-                <div class="who">
-                  <span class="status-dot dot-progress" aria-hidden="true"></span>
-                  <div>
-                    <p class="name">Henderson Pool</p>
-                    <p class="addr">82 Coral Reef Blvd</p>
-                  </div>
-                </div>
-                <span class="pill pill-progress">En progreso</span>
-              </div>
-              <div class="mock-row">
-                <div class="who">
-                  <span class="status-dot dot-pending" aria-hidden="true"></span>
-                  <div>
-                    <p class="name">Beach House #5</p>
-                    <p class="addr">720 Ocean Drive</p>
-                  </div>
-                </div>
-                <span class="pill pill-pending">Pendiente</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- tarjeta flotante de la app -->
-        <aside class="mock-phone" aria-label="Vista previa de la app del técnico">
-          <div class="app-head">
-            <span class="mini-c" aria-hidden="true">C</span>
-            <span class="app-name">App del técnico</span>
-          </div>
-          <p class="k">Trabajo actual</p>
-          <p class="v">Henderson Pool</p>
-          <div class="bar-track"><div class="bar-fill"></div></div>
-          <p class="chem">pH 7.4 · Cl 2.1 ppm</p>
-          <span class="btn btn-brass">Marcar completado</span>
-        </aside>
-      </div>
-    </div>
-  </section>
-
-  <!-- ─── PRUEBA SOCIAL ─────────────────────────────────────────────────── -->
-  <section class="logos">
-    <div class="container">
-      <p class="kicker">Con la confianza de empresas de servicio de piscinas</p>
-      <div class="logos-row">
-        <span>AquaBlue Services</span>
-        <span>SunState Pools</span>
-        <span>ClearWave</span>
-        <span>TideRidge Co.</span>
-        <span>Palm Pool Pros</span>
+        <a href="#waitlist" class="btn btn-brass btn-lg">Solicitar acceso anticipado</a>
+        <a href="#product" class="link-quiet">Mira lo que viene →</a>
       </div>
     </div>
   </section>
 
   <!-- ─── FUNCIONES ─────────────────────────────────────────────────────── -->
-  <section id="features" class="section">
+  <section id="features" class="section bg-white" style="border-top:1px solid var(--hairline);">
     <div class="container">
       <div class="section-head">
-        <p class="overline">Funciones</p>
+        <p class="overline">Lo que estamos construyendo</p>
         <h2 class="display">Todo lo que tu equipo necesita.<br /><em>Nada más.</em></h2>
         <p class="section-sub">Creado para la realidad del servicio de piscinas: sol, agua y horarios apretados.</p>
       </div>
@@ -609,7 +413,7 @@
   </section>
 
   <!-- ─── PRODUCTO ──────────────────────────────────────────────────────── -->
-  <section id="product" class="section bg-white" style="border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);">
+  <section id="product" class="section" style="border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);">
     <div class="container">
       <div class="section-head">
         <p class="overline">La plataforma</p>
@@ -629,7 +433,7 @@
             </div>
             <div>
               <h3>Portal administrativo</h3>
-              <p class="meta">Web · app.cadenza.com</p>
+              <p class="meta">Web · para administradores</p>
             </div>
           </div>
 
@@ -641,7 +445,7 @@
             <li><svg fill="none" stroke-width="1.8" viewBox="0 0 20 20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5l4 4 8-9"/></svg> Invita a tu equipo con accesos según su rol</li>
           </ul>
 
-          <a href="#cta" class="btn btn-outline">Abrir portal administrativo →</a>
+          <a href="#waitlist" class="btn btn-outline">Solicitar acceso anticipado →</a>
         </div>
 
         <!-- App del técnico -->
@@ -654,7 +458,7 @@
             </div>
             <div>
               <h3>App del técnico</h3>
-              <p class="meta">iOS y Android · Cadenza</p>
+              <p class="meta">iOS y Android · para técnicos</p>
             </div>
           </div>
 
@@ -666,127 +470,83 @@
             <li><svg fill="none" stroke-width="1.8" viewBox="0 0 20 20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5l4 4 8-9"/></svg> Funciona sin conexión — se sincroniza al reconectarse</li>
           </ul>
 
-          <a href="#cta" class="btn btn-brass">Descargar la app →</a>
+          <a href="#waitlist" class="btn btn-brass">Unirme a la lista de espera →</a>
         </div>
 
       </div>
     </div>
   </section>
 
-  <!-- ─── CÓMO FUNCIONA ─────────────────────────────────────────────────── -->
-  <section id="how" class="section">
+  <!-- ─── ACCESO ANTICIPADO (teaser) ────────────────────────────────────── -->
+  <section id="early-access" class="section">
     <div class="container">
       <div class="section-head">
-        <p class="overline">Cómo funciona</p>
-        <h2 class="display">En marcha <em>en minutos.</em></h2>
-        <p class="section-sub">Sin capacitaciones. Sin consultores. Regístrate y listo.</p>
+        <p class="overline">Acceso anticipado</p>
+        <h2 class="display">Precio de fundador para <em>empresas fundadoras.</em></h2>
+        <p class="section-sub">Aún no publicamos los planes. Las empresas de piscinas que se unan desde el inicio ayudan a dar forma a Cadenza — y obtienen precio de miembro fundador cuando lancemos.</p>
       </div>
 
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <h3>Crea tu cuenta</h3>
-          <p>Regístrate como propietario, configura tu empresa y agrega tus propiedades. Toma unos 5 minutos.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <h3>Invita a tus técnicos</h3>
-          <p>Envía enlaces de invitación a tu equipo. Descargan la app, se registran con su código y quedan listos para trabajar.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <h3>Comienza a gestionar trabajos</h3>
-          <p>Programa rutas, recibe actualizaciones en tiempo real y revisa los reportes de servicio completados — todo desde tu panel.</p>
-        </div>
+      <div class="teaser-card">
+        <p class="tier">Beta privada</p>
+        <h3>Los planes están en camino.</h3>
+        <p>Sé el primero en ver los precios — y el primero en usarlos. Solicita una invitación y te integramos al abrir la beta.</p>
+        <a href="#waitlist" class="btn btn-brass btn-lg">Solicitar acceso anticipado</a>
       </div>
     </div>
   </section>
 
-  <!-- ─── CIFRAS ────────────────────────────────────────────────────────── -->
-  <section class="stats bg-dark">
-    <div class="container">
-      <div class="stats-grid">
-        <div>
-          <p class="stat-num">5 min</p>
-          <div class="stat-rule" aria-hidden="true"></div>
-          <p class="stat-label">Tiempo promedio para completar un reporte de servicio</p>
-        </div>
-        <div>
-          <p class="stat-num">100%</p>
-          <div class="stat-rule" aria-hidden="true"></div>
-          <p class="stat-label">Datos aislados por empresa — totalmente multiempresa</p>
-        </div>
-        <div>
-          <p class="stat-num">iOS + Android</p>
-          <div class="stat-rule" aria-hidden="true"></div>
-          <p class="stat-label">App nativa para cada técnico en campo</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ─── PRECIOS ───────────────────────────────────────────────────────── -->
-  <section id="pricing" class="section">
-    <div class="container">
-      <div class="section-head">
-        <p class="overline">Precios</p>
-        <h2 class="display">Precios simples <em>y honestos.</em></h2>
-        <p class="section-sub">Sin tarifas por usuario. Sin cargos sorpresa. Un plan que crece contigo.</p>
-      </div>
-
-      <div class="pricing-grid">
-
-        <!-- Starter -->
-        <div class="price-card light">
-          <h3>Starter</h3>
-          <p class="plan-sub">Para cuadrillas pequeñas que están comenzando</p>
-          <p class="price"><span class="amount">$99</span> <span class="per">/ mes</span></p>
-          <ul>
-            <li><svg fill="none" stroke-width="1.8" viewBox="0 0 20 20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5l4 4 8-9"/></svg> Hasta 5 técnicos</li>
-            <li><svg fill="none" stroke-width="1.8" viewBox="0 0 20 20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5l4 4 8-9"/></svg> Trabajos y reportes ilimitados</li>
-            <li><svg fill="none" stroke-width="1.8" viewBox="0 0 20 20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5l4 4 8-9"/></svg> Hasta 100 propiedades</li>
-            <li><svg fill="none" stroke-width="1.8" viewBox="0 0 20 20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5l4 4 8-9"/></svg> App para iOS y Android</li>
-            <li><svg fill="none" stroke-width="1.8" viewBox="0 0 20 20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5l4 4 8-9"/></svg> Exportación a CSV y PDF</li>
-          </ul>
-          <a href="#cta" class="btn btn-outline">Inicia tu prueba gratis</a>
-        </div>
-
-        <!-- Pro -->
-        <div class="price-card dark">
-          <span class="popular-pill">Más popular</span>
-          <h3>Pro</h3>
-          <p class="plan-sub">Para empresas de servicio en crecimiento</p>
-          <p class="price"><span class="amount">$249</span> <span class="per">/ mes</span></p>
-          <ul>
-            <li><svg fill="none" stroke-width="1.8" viewBox="0 0 20 20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5l4 4 8-9"/></svg> Técnicos ilimitados</li>
-            <li><svg fill="none" stroke-width="1.8" viewBox="0 0 20 20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5l4 4 8-9"/></svg> Trabajos, reportes y propiedades ilimitados</li>
-            <li><svg fill="none" stroke-width="1.8" viewBox="0 0 20 20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5l4 4 8-9"/></svg> Programación y optimización de rutas</li>
-            <li><svg fill="none" stroke-width="1.8" viewBox="0 0 20 20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5l4 4 8-9"/></svg> Soporte prioritario</li>
-            <li><svg fill="none" stroke-width="1.8" viewBox="0 0 20 20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5l4 4 8-9"/></svg> Portal para clientes (próximamente)</li>
-          </ul>
-          <a href="#cta" class="btn btn-brass">Inicia tu prueba gratis</a>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ─── CTA ───────────────────────────────────────────────────────────── -->
-  <section id="cta" class="section bg-white cta" style="border-top:1px solid var(--hairline);">
+  <!-- ─── LISTA DE ESPERA ───────────────────────────────────────────────── -->
+  <section id="waitlist" class="section bg-white cta" style="border-top:1px solid var(--hairline);">
     <div class="container">
       <div class="cta-monogram" aria-hidden="true">C</div>
 
-      <h2 class="display">¿Listo para modernizar <em class="u-brass">tu negocio de piscinas?</em></h2>
+      <h2 class="display">Sé el primero <em class="u-brass">en la fila.</em></h2>
       <p class="section-sub" style="max-width:560px; margin:0 auto;">
-        Únete a las empresas de servicio de piscinas que dejaron atrás las hojas de cálculo y los formularios en papel. Comienza tu prueba gratuita de 14 días — sin tarjeta de crédito.
+        Estamos invitando a un grupo reducido de empresas de piscinas fundadoras para dar forma a Cadenza antes del lanzamiento. Déjanos tus datos y te contactaremos con tu invitación.
       </p>
 
-      <form class="cta-form" onsubmit="return false;">
-        <input type="email" placeholder="tu@empresa.com" aria-label="Correo de trabajo" />
-        <button type="submit" class="btn btn-brass btn-lg">Comienza gratis</button>
+      <form id="waitlist-form" class="waitlist" novalidate>
+        <div class="field-row">
+          <div class="field">
+            <label for="wl-name">Tu nombre</label>
+            <input id="wl-name" name="name" type="text" autocomplete="name" placeholder="Ana Rivera" required />
+          </div>
+          <div class="field">
+            <label for="wl-email">Correo de trabajo</label>
+            <input id="wl-email" name="email" type="email" autocomplete="email" placeholder="ana@tupiscina.com" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="wl-company">Nombre de la empresa <span class="opt">(opcional)</span></label>
+          <input id="wl-company" name="company_name" type="text" autocomplete="organization" placeholder="Tu Empresa de Piscinas" />
+        </div>
+
+        <div class="field">
+          <label for="wl-size">Tamaño del equipo <span class="opt">(opcional)</span></label>
+          <select id="wl-size" name="employee_count">
+            <option value="">Selecciona…</option>
+            <option value="just me">Solo yo</option>
+            <option value="2-5">2–5 técnicos</option>
+            <option value="6-15">6–15 técnicos</option>
+            <option value="16-50">16–50 técnicos</option>
+            <option value="50+">50+ técnicos</option>
+          </select>
+        </div>
+
+        <button id="waitlist-submit" type="submit" class="btn btn-brass btn-lg">Solicitar acceso anticipado</button>
+        <p id="form-status" class="form-status" role="alert" aria-live="polite"></p>
       </form>
 
-      <p class="cta-note">Prueba gratis de 14 días · Sin tarjeta de crédito · Cancela cuando quieras</p>
+      <div id="waitlist-success" class="waitlist-success" role="status" aria-live="polite">
+        <div class="ok" aria-hidden="true">
+          <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h3>Estás en la lista.</h3>
+        <p>Gracias — te enviaremos un correo cuando tu invitación de acceso anticipado esté lista.</p>
+      </div>
+
+      <p class="cta-note">Sin spam. Solo te escribiremos sobre tu invitación de acceso anticipado.</p>
     </div>
   </section>
 
@@ -799,16 +559,83 @@
 
       <nav class="footer-nav" aria-label="Pie de página">
         <a href="#features">Funciones</a>
-        <a href="#pricing">Precios</a>
+        <a href="#early-access">Acceso anticipado</a>
         <a href="privacy.html">Privacidad</a>
         <a href="terms.html">Términos</a>
-        <a href="mailto:hello@cadenza.com">Contacto</a>
+        <a href="mailto:hello@cadenzaops.com">Contacto</a>
         <a href="../index.html" lang="en" hreflang="en">English</a>
       </nav>
 
       <p class="footer-copy">© 2026 Cadenza. Todos los derechos reservados.</p>
     </div>
   </footer>
+
+  <!-- ─── ENVÍO DEL FORMULARIO DE LISTA DE ESPERA ───────────────────────── -->
+  <script>
+    (function () {
+      var WEBHOOK = "https://n8n.aga.social/webhook/688fb998-2fd3-4f74-a334-2de48e613b15";
+
+      var form = document.getElementById("waitlist-form");
+      if (!form) return;
+
+      var statusEl  = document.getElementById("form-status");
+      var successEl = document.getElementById("waitlist-success");
+      var btn       = document.getElementById("waitlist-submit");
+      var btnLabel  = btn.textContent;
+
+      var elName    = document.getElementById("wl-name");
+      var elEmail   = document.getElementById("wl-email");
+      var elCompany = document.getElementById("wl-company");
+      var elSize    = document.getElementById("wl-size");
+
+      function emailValid(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+      function showError(msg, field) {
+        statusEl.textContent = msg;
+        statusEl.classList.add("error");
+        if (field) field.focus();
+      }
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        statusEl.textContent = "";
+        statusEl.classList.remove("error");
+
+        var name    = elName.value.trim();
+        var email   = elEmail.value.trim();
+        var company = elCompany.value.trim();
+        var size    = elSize.value;
+
+        if (!name)              return showError("Por favor ingresa tu nombre.", elName);
+        if (!emailValid(email)) return showError("Por favor ingresa un correo electrónico válido.", elEmail);
+
+        var payload = { name: name, email: email, source: "website" };
+        if (company) payload.company_name = company;
+        if (size)    payload.employee_count = size;
+
+        btn.disabled = true;
+        btn.textContent = "Enviando…";
+
+        fetch(WEBHOOK, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        })
+          .then(function (res) {
+            if (!res.ok) throw new Error("Request failed: " + res.status);
+            form.style.display = "none";
+            successEl.classList.add("show");
+            successEl.scrollIntoView({ behavior: "smooth", block: "center" });
+          })
+          .catch(function (err) {
+            btn.disabled = false;
+            btn.textContent = btnLabel;
+            showError("Algo salió mal. Inténtalo de nuevo o escríbenos a hello@cadenzaops.com.");
+            console.error(err);
+          });
+      });
+    })();
+  </script>
 
 </body>
 </html>

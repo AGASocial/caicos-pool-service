@@ -83,7 +83,7 @@ When assigned a feature:
 
 ```
 1. CONTEXT GATHERING (5 min)
-   ├─ Read feature spec (FEATURE-ADMIN-PORTAL.md)
+   ├─ Read feature spec (`docs/specs/FEATURE-ADMIN-PORTAL.md`)
    ├─ Review database schema
    ├─ Check existing patterns
    └─ Identify dependencies
@@ -210,7 +210,7 @@ Feature: Jobs Management Page
 Status: Starting implementation
 
 Analyzing:
-  ✓ Feature spec (FEATURE-ADMIN-PORTAL.md)
+  ✓ Feature spec (`docs/specs/FEATURE-ADMIN-PORTAL.md`)
   ✓ Database schema (service_jobs table)
   ✓ Existing patterns (dashboard.tsx)
   ✓ RLS policies (jobs-specific access rules)

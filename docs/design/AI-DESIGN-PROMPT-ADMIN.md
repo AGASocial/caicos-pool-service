@@ -521,7 +521,7 @@ Sidebar Bottom:
 - [ ] Card: Sarah Johnson
   - Avatar: "SJ" (circular, 40x40px, blue background)
   - Name: "Sarah Johnson" (bold, 14px)
-  - Email: "sarah@cadenza.com" (gray, 13px)
+  - Email: "sarah@cadenzaops.com" (gray, 13px)
   - Role badge: "👑 OWNER" (gold/yellow pill, 12px)
   - Status: "🟢 Active" (green, 12px)
   - Joined: "Jan 2024" (gray, 11px)
@@ -556,7 +556,7 @@ Sidebar Bottom:
 - [ ] Text: "Share this link with the technician:" (12px, gray)
 - [ ] Link display (read-only):
   - [ ] Box with gray background (light gray #F5F5F5)
-  - [ ] Text: "https://app.cadenza.com/join?code=ABC123XYZ" (monospace, 12px)
+  - [ ] Text: "https://app.cadenzaops.com/join?code=ABC123XYZ" (monospace, 12px)
   - [ ] [Copy] button (blue, inside right side of box)
 - [ ] Instructions: "Expires in 7 days" (gray, 11px)
 
@@ -577,7 +577,7 @@ Sidebar Bottom:
 **Top Section:**
 - [ ] Avatar: "JT" (circular, 60x60px)
 - [ ] Name: "John Technician" (24px, bold)
-- [ ] Email: "john@cadenza.com" (gray, 14px)
+- [ ] Email: "john@cadenzaops.com" (gray, 14px)
 - [ ] Phone: "(555) 987-6543" (gray, 14px)
 - [ ] Role: "🔧 Technician" (badge, blue pill)
 - [ ] Status: "🟢 Active" (green text, 12px)
@@ -720,7 +720,7 @@ Sidebar Bottom:
 - [ ] Section heading: "Company Information" (16px, bold)
 - [ ] Fields:
   - Company Name: [Cadenza Pool Service] (full width input)
-  - Email: [admin@cadenza.com] (full width input)
+  - Email: [admin@cadenzaops.com] (full width input)
   - Phone: [(305) 555-1234] (full width input)
   - Address: [123 Main St, Miami, FL 33101] (full width input)
 - [ ] [SAVE CHANGES] button (secondary blue, 40px)
@@ -734,7 +734,7 @@ Sidebar Bottom:
   - [Manage Billing →] link (blue, 12px)
 
 **Account Section (tab):**
-- [ ] Email: admin@cadenza.com (read-only gray input, 13px)
+- [ ] Email: admin@cadenzaops.com (read-only gray input, 13px)
 - [ ] Password: •••••••• (read-only, gray input)
   - [CHANGE PASSWORD] button (secondary blue, 40px)
 - [ ] Two-Factor Authentication: [Off] (toggle switch, 14px)

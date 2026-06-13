@@ -3,7 +3,11 @@
 ## Folder Structure Overview
 
 ```
-/sessions/adoring-youthful-wozniak/mnt/cadenza/
+cadenza/
+├── README.md                        # Project overview
+├── START-HERE.md                    # Onboarding guide
+├── AGENTS.md                        # AI dev agent roles
+│
 ├── admin-portal/                    # Next.js web app for admins
 │   ├── src/
 │   │   ├── app/                    # Next.js pages (routes)
@@ -12,34 +16,36 @@
 │   │   ├── models/                 # Data models
 │   │   └── context/                # React context
 │   ├── public/                     # Static assets
-│   ├── package.json                # Dependencies
-│   └── node_modules/               # Installed packages
+│   └── package.json
 │
 ├── technician-app/                  # Expo/React Native mobile app
 │   ├── app/                        # Expo Router pages
-│   │   ├── (app)/(tabs)/           # Tabbed navigation
-│   │   ├── (app)/job/              # Job detail screens
-│   │   └── (auth)/                 # Auth screens
-│   ├── components/                 # Reusable components
-│   ├── lib/                        # Utilities
-│   ├── constants/                  # Color, strings, config
-│   ├── assets/                     # Images, icons
-│   ├── package.json
-│   └── node_modules/
+│   ├── components/
+│   ├── lib/
+│   ├── constants/
+│   └── package.json
 │
-├── docs/                           # Business documentation & WhatsApp chats
-├── FEATURE-ADMIN-PORTAL.md         # ✅ Updated spec (Feb 28)
-├── FEATURE-TECHNICIAN-APP.md       # ✅ Updated spec (Feb 28)
-├── IMPLEMENTATION-ROADMAP.md       # Implementation guide
-├── BUSINESS-LOGIC-ANALYSIS.md      # Gap analysis
-└── SPEC-UPDATES-SUMMARY.md         # Change summary
+└── docs/                           # All documentation (organized by category)
+    ├── README.md                   # Categorized index
+    ├── INDEX.md                    # Reading guide & roadmap
+    ├── architecture/SOLUTION.md
+    ├── specs/FEATURE-*.md
+    ├── business/                   # Workflow analysis, roadmaps
+    ├── cost/                       # Financial & scaling analysis
+    ├── branding/                   # Brand identity & rebrand notes
+    ├── design/                     # AI design prompts
+    ├── development/                # Checklists & this guide
+    ├── setup/                      # Supabase, auth setup
+    ├── testing/
+    ├── schema.sql
+    └── example-app/
 ```
 
 ## How to Work with Folders
 
 ### Option 1: Work on Admin Portal
 ```bash
-cd /sessions/adoring-youthful-wozniak/mnt/cadenza/admin-portal
+cd admin-portal
 npm install    # If needed
 npm run dev    # Start development server
 ```
@@ -50,7 +56,7 @@ Key files to check:
 
 ### Option 2: Work on Technician App
 ```bash
-cd /sessions/adoring-youthful-wozniak/mnt/cadenza/technician-app
+cd technician-app
 npm install    # If needed
 npm run start  # or `npx expo start`
 ```
@@ -61,8 +67,8 @@ Key files to check:
 
 ### Option 3: Work on Documentation
 Read and update the feature specs:
-- `/sessions/adoring-youthful-wozniak/mnt/cadenza/FEATURE-ADMIN-PORTAL.md`
-- `/sessions/adoring-youthful-wozniak/mnt/cadenza/FEATURE-TECHNICIAN-APP.md`
+- `docs/specs/FEATURE-ADMIN-PORTAL.md`
+- `docs/specs/FEATURE-TECHNICIAN-APP.md`
 
 ## Current Implementation Status
 
@@ -203,8 +209,8 @@ These are required buttons in the service form:
 ## Files to Review First
 
 Start by reviewing these in order:
-1. **FEATURE-ADMIN-PORTAL.md** — Understand admin requirements
-2. **FEATURE-TECHNICIAN-APP.md** — Understand technician requirements
-3. **IMPLEMENTATION-ROADMAP.md** — See how it all connects
+1. **docs/specs/FEATURE-ADMIN-PORTAL.md** — Understand admin requirements
+2. **docs/specs/FEATURE-TECHNICIAN-APP.md** — Understand technician requirements
+3. **docs/business/IMPLEMENTATION-ROADMAP.md** — See how it all connects
 4. **admin-portal/src/app/** — Check current page structure
 5. **technician-app/app/** — Check current screen structure

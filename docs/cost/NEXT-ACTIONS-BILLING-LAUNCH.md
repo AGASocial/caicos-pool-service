@@ -432,6 +432,6 @@ Good luck! 🎉
 **Questions?** Reference these files:
 - Database implementation → BILLING-PLANS-SCHEMA.sql
 - App code → BILLING-PLANS-IMPLEMENTATION.md
-- Business model → COST-ANALYSIS-PILOT.md
+- Business model → `docs/cost/COST-ANALYSIS-PILOT.md`
 
 *Last updated: 2026-03-01*

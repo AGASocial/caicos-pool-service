@@ -171,7 +171,7 @@ chipText: '#00D9FF'
 │                                 │
 │ ┌───────────────────────────┐   │
 │ │ John Technician           │   │ ← White card
-│ │ john@cadenza.com        │   │
+│ │ john@cadenzaops.com        │   │
 │ │ Role: Technician          │   │ ← Deep Teal text
 │ └───────────────────────────┘   │
 │                                 │

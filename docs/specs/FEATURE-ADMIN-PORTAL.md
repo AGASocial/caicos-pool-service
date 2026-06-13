@@ -578,7 +578,7 @@ Other Notes: [_____________]
 │  OWNER                               │
 │  ┌──────────────────────────────┐    │
 │  │ Sarah Johnson                │    │
-│  │ sarah@cadenza.com             │    │
+│  │ sarah@cadenzaops.com             │    │
 │  │ 👑 OWNER                     │    │
 │  │ Status: 🟢 Active            │    │
 │  │ Joined: Jan 2024             │    │
@@ -588,7 +588,7 @@ Other Notes: [_____________]
 │  ADMINS                              │
 │  ┌──────────────────────────────┐    │
 │  │ Mike Wilson                  │    │
-│  │ mike@cadenza.com              │    │
+│  │ mike@cadenzaops.com              │    │
 │  │ 👮 ADMIN                     │    │
 │  │ Status: 🟢 Active            │    │
 │  │ Joined: Mar 2024             │    │
@@ -598,7 +598,7 @@ Other Notes: [_____________]
 │  TECHNICIANS                         │
 │  ┌──────────────────────────────┐    │
 │  │ John Technician              │    │
-│  │ john@cadenza.com              │    │
+│  │ john@cadenzaops.com              │    │
 │  │ 🔧 TECHNICIAN               │    │
 │  │ Status: 🟢 Active            │    │
 │  │ Jobs completed: 42           │    │
@@ -607,7 +607,7 @@ Other Notes: [_____________]
 │                                      │
 │  ┌──────────────────────────────┐    │
 │  │ Maria Garcia                 │    │
-│  │ maria@cadenza.com             │    │
+│  │ maria@cadenzaops.com             │    │
 │  │ 🔧 TECHNICIAN               │    │
 │  │ Status: 🟡 Inactive          │    │
 │  │ Jobs completed: 156          │    │
@@ -634,7 +634,7 @@ Full Name: [_____________]
 Role: [Technician ▼]
 
 Invite Link:
-https://app.cadenza.com/join?code=ABC123XYZ
+https://app.cadenzaops.com/join?code=ABC123XYZ
 (Auto-generated)
 
 [ Copy Link ]
@@ -658,7 +658,7 @@ John Technician
 ────────────────────────────
 
 Status: 🟢 Active
-Email: john@cadenza.com
+Email: john@cadenzaops.com
 Phone: (555) 987-6543
 Role: Technician
 Joined: Mar 15, 2024
@@ -805,7 +805,7 @@ Change Role:
 │  [Cadenza Pool Service]               │
 │                                      │
 │  Email:                              │
-│  [admin@cadenza.com]                  │
+│  [admin@cadenzaops.com]                  │
 │                                      │
 │  Phone:                              │
 │  [(305) 555-1234]                    │
@@ -826,7 +826,7 @@ Change Role:
 │  ────────────────────────────        │
 │                                      │
 │  Account                             │
-│  Email: admin@cadenza.com             │
+│  Email: admin@cadenzaops.com             │
 │  Password: ••••••••                  │
 │  [Change Password]                   │
 │  [Two-Factor Auth] Off               │

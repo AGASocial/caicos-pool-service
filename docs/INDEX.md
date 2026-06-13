@@ -1,12 +1,16 @@
 # Cadenza Platform - Complete Solution Documentation
 
-This folder contains the comprehensive solution design for Cadenza, a multi-tenant pool service platform. All documents are in Markdown format for easy iteration and version control.
+> **Location:** `docs/INDEX.md` (formerly `README-SOLUTION.md` at repo root)
+
+This document is the comprehensive solution index for Cadenza. See also [README.md](./README.md) for the categorized documentation map.
+
+**Business questions & strategy?** Start with [business/BUSINESS-CONTEXT.md](./business/BUSINESS-CONTEXT.md) instead.
 
 ---
 
 ## 📋 Document Index
 
-### 1. **SOLUTION.md** ⭐ START HERE
+### 1. **docs/architecture/SOLUTION.md** ⭐ START HERE
 **Overview & Architecture (10 min read)**
 - Executive summary & MVP scope
 - Technology stack & system architecture
@@ -24,7 +28,7 @@ This folder contains the comprehensive solution design for Cadenza, a multi-tena
 
 ---
 
-### 2. **FEATURE-TECHNICIAN-APP.md**
+### 2. **docs/specs/FEATURE-TECHNICIAN-APP.md**
 **Mobile App Detailed Specification (30 min read)**
 - Complete user journeys
 - Screen-by-screen mockups & layouts
@@ -50,7 +54,7 @@ This folder contains the comprehensive solution design for Cadenza, a multi-tena
 
 ---
 
-### 3. **FEATURE-ADMIN-PORTAL.md**
+### 3. **docs/specs/FEATURE-ADMIN-PORTAL.md**
 **Web Admin Portal Detailed Specification (30 min read)**
 - User types & permission matrix
 - Complete user journeys
@@ -438,7 +442,7 @@ A: Phase 2 (estimated Week 12-16). MVP focuses on internal operations.
 ## 🤝 Next Steps for Team
 
 1. **This Week:**
-   - [ ] Read SOLUTION.md (architecture overview)
+   - [ ] Read docs/architecture/SOLUTION.md (architecture overview)
    - [ ] Review database schema
    - [ ] Discuss tech stack buy-in
    - [ ] Set up Supabase project
@@ -460,7 +464,7 @@ A: Phase 2 (estimated Week 12-16). MVP focuses on internal operations.
 
 - **Questions?** Add to this document or create GitHub issues
 - **Want to iterate?** All .md files can be edited and version-controlled
-- **Ready to convert to Word?** Run: `markdown-to-docx SOLUTION.md`
+- **Ready to convert to Word?** Run: `markdown-to-docx docs/architecture/SOLUTION.md`
 
 ---
 
@@ -469,10 +473,10 @@ A: Phase 2 (estimated Week 12-16). MVP focuses on internal operations.
 | Date | Version | Changes |
 |------|---------|---------|
 | Feb 21, 2026 | 1.0 | Initial solution layout |
-| | | - SOLUTION.md (architecture) |
-| | | - FEATURE-TECHNICIAN-APP.md (mobile spec) |
-| | | - FEATURE-ADMIN-PORTAL.md (web spec) |
-| | | - README-SOLUTION.md (this index) |
+| | | - docs/architecture/SOLUTION.md (architecture) |
+| | | - docs/specs/FEATURE-TECHNICIAN-APP.md (mobile spec) |
+| | | - docs/specs/FEATURE-ADMIN-PORTAL.md (web spec) |
+| | | - docs/INDEX.md (this index) |
 
 ---
 
