@@ -1,0 +1,15 @@
+---
+description: Require admin-portal production build to pass before committing changes
+globs: admin-portal/**/*
+alwaysApply: false
+---
+
+# Admin portal build gate
+
+Before committing any change under `admin-portal/`:
+
+1. Run `npm run build` from the `admin-portal/` directory.
+2. Fix all TypeScript and build errors before staging or committing.
+3. Do not push admin-portal changes if the production build fails locally.
+
+Vercel runs `next build` on deploy; a passing local build prevents failed deployments.

@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
 /**
  * List technicians (and admins/owners) for the current user's company.
  * Used for route assignment and job assignment.
- * Adds email_confirmed from auth (service role) so the team UI can show pending confirmation.
+ * email_confirmed is read from denormalized cadenza_profiles.email_confirmed_at (US-B-005).
  */
 export async function GET() {
   const { supabase, user } = await createAuthenticatedRouteClient();
@@ -17,8 +16,7 @@ export async function GET() {
 
   const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
     .from('cadenza_profiles')
-    .select('id, full_name, role, is_active')
-    // .eq('is_active', true)
+    .select('id, full_name, role, is_active, email_confirmed_at')
     .order('full_name', { ascending: true });
 
   if (error) {
@@ -26,20 +24,13 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const profiles = data || [];
-  const enriched = await Promise.all(
-    profiles.map(async (row) => {
-      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.getUserById(row.id);
-      if (authError || !authData?.user) {
-        console.error('admin.getUserById failed for team member', row.id, authError?.message);
-        return { ...row };
-      }
-      return {
-        ...row,
-        email_confirmed: authData.user.email_confirmed_at != null,
-      };
-    }),
-  );
+  const enriched = (data ?? []).map((row) => ({
+    id: row.id,
+    full_name: row.full_name,
+    role: row.role,
+    is_active: row.is_active,
+    email_confirmed: row.email_confirmed_at != null,
+  }));
 
   return NextResponse.json(enriched);
 }

@@ -1,18 +1,20 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-fetch";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface TeamMember {
   id: string;
   full_name: string;
   role?: string;
   is_active?: boolean;
-  /** From Supabase Auth; false when the user has not confirmed their email yet. */
+  /** From denormalized cadenza_profiles.email_confirmed_at. */
   email_confirmed?: boolean;
 }
 
 async function fetchTeam(): Promise<TeamMember[]> {
-  const res = await fetch("/api/team");
+  const res = await apiFetch("/api/team");
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error ?? "Failed to fetch team members");
@@ -27,16 +29,16 @@ async function fetchTeam(): Promise<TeamMember[]> {
  */
 export function useTeam() {
   return useQuery({
-    queryKey: ["team"],
+    queryKey: queryKeys.team.all,
     queryFn: fetchTeam,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 }
 
 export type SetActivePayload = { id: string; is_active: boolean };
 
 async function setTeamMemberActive({ id, is_active }: SetActivePayload): Promise<{ ok: boolean; is_active: boolean }> {
-  const res = await fetch(`/api/team/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`/api/team/${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ is_active }),
@@ -54,7 +56,7 @@ export function useSetTeamMemberActive() {
   return useMutation({
     mutationFn: setTeamMemberActive,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["team"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.team.all });
     },
   });
 }

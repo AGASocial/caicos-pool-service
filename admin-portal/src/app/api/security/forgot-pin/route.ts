@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { createAuthenticatedRouteClient } from "@/lib/supabase-server";
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) throw new Error('Missing RESEND_API_KEY');
+  return new Resend(apiKey);
+}
 
 export async function POST() {
     try {
@@ -37,7 +41,7 @@ export async function POST() {
         }
 
         // Send Email via Resend
-        const { error: emailError } = await resend.emails.send({
+        const { error: emailError } = await getResend().emails.send({
             from: 'Cadenza Security <security@security.cadenzaops.com>',
             to: [user.email],
             subject: 'Your Security PIN Reset Code',

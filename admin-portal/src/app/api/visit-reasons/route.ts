@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
+import { jsonWithCache } from '@/lib/api-timing';
 
-/** List active visit reasons for the current user's company (for dispatcher / job forms). */
+/** List active visit reasons — edge-cacheable per company (US-B-013). */
 export async function GET() {
   const { supabase, user } = await createAuthenticatedRouteClient();
 
@@ -21,5 +22,7 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data ?? []);
+  return jsonWithCache(data ?? [], {
+    cacheControl: 'private, s-maxage=3600, stale-while-revalidate=86400',
+  });
 }

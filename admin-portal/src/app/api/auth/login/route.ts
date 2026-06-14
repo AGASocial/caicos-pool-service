@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
+import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+    const rl = checkRateLimit(`auth:login:${ip}`, RATE_LIMITS.auth.limit, RATE_LIMITS.auth.windowMs);
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfterSec);
+
     const { email, password } = await request.json();
 
     if (!email || !password) {

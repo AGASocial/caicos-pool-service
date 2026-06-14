@@ -27,11 +27,10 @@ describe('ProtectedRoute', () => {
     mockUseAuth.mockReturnValue({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       user: { id: '1', email: 'test@example.com' } as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      session: {} as any,
       loading: false,
       error: null,
       signOut: jest.fn(),
+      refreshSession: jest.fn(),
       isAuthenticated: true,
     });
 
@@ -47,10 +46,10 @@ describe('ProtectedRoute', () => {
   it('should show loading state when checking authentication', () => {
     mockUseAuth.mockReturnValue({
       user: null,
-      session: null,
       loading: true,
       error: null,
       signOut: jest.fn(),
+      refreshSession: jest.fn(),
       isAuthenticated: false,
     });
 
@@ -67,10 +66,10 @@ describe('ProtectedRoute', () => {
   it('should redirect to login when user is not authenticated', () => {
     mockUseAuth.mockReturnValue({
       user: null,
-      session: null,
       loading: false,
       error: null,
       signOut: jest.fn(),
+      refreshSession: jest.fn(),
       isAuthenticated: false,
     });
 
@@ -87,10 +86,10 @@ describe('ProtectedRoute', () => {
   it('should render custom fallback when provided', () => {
     mockUseAuth.mockReturnValue({
       user: null,
-      session: null,
       loading: true,
       error: null,
       signOut: jest.fn(),
+      refreshSession: jest.fn(),
       isAuthenticated: false,
     });
 

@@ -6,6 +6,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
+import { getCachedUserId } from '@/lib/auth-session';
+import { getSignedUrls } from '@/lib/signed-url-cache';
 import { getPhotoOverlayInfo, type PhotoOverlayInfo } from '@/lib/photoOverlay';
 import { PhotoWithOverlay } from '@/components/PhotoWithOverlay';
 import { getUploadBodyFromUri } from '@/lib/uploadPhoto';
@@ -73,7 +75,8 @@ export default function JobDetailScreen() {
     cadenza_properties?: { customer_name: string; address: string; gate_code: string | null; lat: number | null; lng: number | null } | null;
   } | null>(null);
   const [started, setStarted] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [jobLoaded, setJobLoaded] = useState(false);
+  const [reportLoaded, setReportLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [distanceMeters, setDistanceMeters] = useState<number | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -362,38 +365,47 @@ export default function JobDetailScreen() {
 
   useEffect(() => {
     if (!id) return;
-    supabase
-      .from('cadenza_service_jobs')
-      .select('id, status, property_id, company_id, technician_id, scheduled_date, cadenza_properties(customer_name, address, gate_code, lat, lng)')
-      .eq('id', id)
-      .single()
-      .then(({ data }) => {
-        setJob(data as typeof job);
-        const status = (data as { status?: string })?.status;
-        setStarted(status === 'in_progress' || status === 'completed');
-      })
-      .then(() => setLoading(false), () => setLoading(false));
-  }, [id]);
-
-  useEffect(() => {
-    if (!id || !job || !started) return;
     let cancelled = false;
+    setJobLoaded(false);
+    setReportLoaded(false);
+
     (async () => {
-      const { data: reportRow } = await supabase
-        .from('cadenza_service_reports')
-        .select('id, ph_level, chlorine_level, alkalinity, calcium_hardness, cyanuric_acid, salt_level, water_temp_f, skimmed, vacuumed, brushed, emptied_baskets, backwashed, cleaned_filter, pump_ok, filter_ok, heater_ok, cleaner_ok, notes, follow_up_needed, follow_up_notes')
-        .eq('job_id', id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const [jobRes, reportRes] = await Promise.all([
+        supabase
+          .from('cadenza_service_jobs')
+          .select('id, status, property_id, company_id, technician_id, scheduled_date, cadenza_properties(customer_name, address, gate_code, lat, lng)')
+          .eq('id', id)
+          .single(),
+        supabase
+          .from('cadenza_service_reports')
+          .select('id, ph_level, chlorine_level, alkalinity, calcium_hardness, cyanuric_acid, salt_level, water_temp_f, skimmed, vacuumed, brushed, emptied_baskets, backwashed, cleaned_filter, pump_ok, filter_ok, heater_ok, cleaner_ok, notes, follow_up_needed, follow_up_notes')
+          .eq('job_id', id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+
       if (cancelled) return;
+
+      const jobData = jobRes.data;
+      if (jobData) {
+        setJob(jobData as typeof job);
+        const status = (jobData as { status?: string }).status;
+        setStarted(status === 'in_progress' || status === 'completed');
+      }
+      setJobLoaded(true);
+
+      const reportRow = reportRes.data;
       if (!reportRow) {
         setExistingReportId(null);
         setPhotos([]);
+        setReportLoaded(true);
         return;
       }
+
       const r = reportRow as Record<string, unknown>;
-      setExistingReportId(r.id as string);
+      const reportId = r.id as string;
+      setExistingReportId(reportId);
       setChemicals({
         ph_level: r.ph_level != null ? String(r.ph_level) : '',
         chlorine_level: r.chlorine_level != null ? String(r.chlorine_level) : '',
@@ -420,34 +432,34 @@ export default function JobDetailScreen() {
       setNotes((r.notes as string) ?? '');
       setFollowUp(Boolean(r.follow_up_needed));
       setFollowUpNotes((r.follow_up_notes as string) ?? '');
+      setReportLoaded(true);
 
       const { data: photoRows } = await supabase
         .from('cadenza_report_photos')
         .select('id, storage_path')
-        .eq('report_id', r.id);
+        .eq('report_id', reportId);
       if (cancelled) return;
       if (!photoRows?.length) {
         setPhotos([]);
         return;
       }
+
       const paths = photoRows.map((p: { storage_path: string }) => p.storage_path);
-      const { data: signedData, error: signedError } = await supabase.storage
-        .from('report-photos')
-        .createSignedUrls(paths, 3600);
+      const signedUrls = await getSignedUrls(paths);
       if (cancelled) return;
-      if (signedError || !signedData?.length) {
-        setPhotos([]);
-        return;
-      }
-      const photoList = photoRows.map((p: { id: string; storage_path: string }, i: number) => ({
-        uri: signedData[i]?.signedUrl ?? '',
-        id: p.id,
-        storage_path: p.storage_path,
-      })).filter((x) => x.uri);
+
+      const photoList = photoRows
+        .map((p: { id: string; storage_path: string }, i: number) => ({
+          uri: signedUrls[i] ?? '',
+          id: p.id,
+          storage_path: p.storage_path,
+        }))
+        .filter((x) => x.uri);
       setPhotos(photoList);
     })();
+
     return () => { cancelled = true; };
-  }, [id, job?.id, started]);
+  }, [id]);
 
   useLayoutEffect(() => {
     if (!started) {
@@ -500,8 +512,7 @@ export default function JobDetailScreen() {
 
   async function handleStart() {
     if (!id) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!getCachedUserId()) return;
     const { error } = await supabase
       .from('cadenza_service_jobs')
       .update({ status: 'in_progress' })
@@ -577,14 +588,14 @@ export default function JobDetailScreen() {
 
   async function handleComplete() {
     if (!id || !job) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const userId = getCachedUserId();
+    if (!userId) return;
     setSaving(true);
     try {
       const reportPayload = {
         job_id: id,
         company_id: job.company_id,
-        technician_id: user.id,
+        technician_id: userId,
         ph_level: chemicals.ph_level ? parseFloat(chemicals.ph_level) : null,
         chlorine_level: chemicals.chlorine_level ? parseFloat(chemicals.chlorine_level) : null,
         alkalinity: chemicals.alkalinity ? parseFloat(chemicals.alkalinity) : null,
@@ -701,7 +712,7 @@ export default function JobDetailScreen() {
     router.back();
   }
 
-  if (loading || !job) {
+  if (!jobLoaded || !job) {
     return (
       <View style={styles.center}>
         <Text style={{ color: themeColors.text }}>Loading job...</Text>
@@ -777,6 +788,10 @@ export default function JobDetailScreen() {
               <Text style={styles.cantServiceButtonText}>Can't service</Text>
             </Pressable>
           </>
+        ) : !reportLoaded ? (
+          <View style={styles.center}>
+            <Text style={{ color: themeColors.text }}>Loading report...</Text>
+          </View>
         ) : (
           <>
             {/* Service Tasks */}

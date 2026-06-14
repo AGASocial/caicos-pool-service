@@ -52,13 +52,15 @@ export type EnsureRouteJobsResult = {
   dateCount: number;
   startDate: string;
   endDate: string;
+  companyId?: string;
 };
 
 /**
- * Idempotently inserts route-sourced `cadenza_service_jobs` for every matching stop in [startDate, endDate] (YYYY-MM-DD, inclusive).
+ * Idempotently inserts route-sourced jobs for one company in [startDate, endDate] (inclusive).
  */
-export async function ensureRouteJobsForDateRange(
+export async function ensureRouteJobsForCompany(
   client: CadenzaSupabaseClient,
+  companyId: string,
   startDate: string,
   endDate: string
 ): Promise<EnsureRouteJobsResult> {
@@ -71,15 +73,17 @@ export async function ensureRouteJobsForDateRange(
       dateCount: 0,
       startDate,
       endDate,
+      companyId,
     };
   }
 
   const { data: routes, error: routesErr } = await client
     .from('cadenza_routes')
-    .select('id, company_id, technician_id');
+    .select('id, company_id, technician_id')
+    .eq('company_id', companyId);
 
   if (routesErr) {
-    throw new Error(`Failed to load routes: ${routesErr.message}`);
+    throw new Error(`Failed to load routes for company ${companyId}: ${routesErr.message}`);
   }
 
   const routeList = (routes ?? []) as RouteRow[];
@@ -91,6 +95,7 @@ export async function ensureRouteJobsForDateRange(
       dateCount: dates.length,
       startDate,
       endDate,
+      companyId,
     };
   }
 
@@ -101,7 +106,7 @@ export async function ensureRouteJobsForDateRange(
     .in('route_id', routeIds);
 
   if (stopsErr) {
-    throw new Error(`Failed to load route stops: ${stopsErr.message}`);
+    throw new Error(`Failed to load route stops for company ${companyId}: ${stopsErr.message}`);
   }
 
   const stopList = (stops ?? []) as StopRow[];
@@ -124,6 +129,7 @@ export async function ensureRouteJobsForDateRange(
     const { data: page, error: exErr } = await client
       .from('cadenza_service_jobs')
       .select('route_id, property_id, scheduled_date')
+      .eq('company_id', companyId)
       .eq('job_source', 'route')
       .not('route_id', 'is', null)
       .gte('scheduled_date', startDate)
@@ -131,7 +137,7 @@ export async function ensureRouteJobsForDateRange(
       .range(offset, offset + pageSize - 1);
 
     if (exErr) {
-      throw new Error(`Failed to load existing jobs: ${exErr.message}`);
+      throw new Error(`Failed to load existing jobs for company ${companyId}: ${exErr.message}`);
     }
     const rows = page ?? [];
     for (const row of rows) {
@@ -195,7 +201,7 @@ export async function ensureRouteJobsForDateRange(
     const chunk = toInsert.slice(i, i + chunkSize);
     const { error: insErr } = await client.from('cadenza_service_jobs').insert(chunk);
     if (insErr) {
-      throw new Error(`Failed to insert jobs: ${insErr.message}`);
+      throw new Error(`Failed to insert jobs for company ${companyId}: ${insErr.message}`);
     }
     created += chunk.length;
   }
@@ -207,5 +213,96 @@ export async function ensureRouteJobsForDateRange(
     dateCount: dates.length,
     startDate,
     endDate,
+    companyId,
   };
+}
+
+export async function fetchDistinctRouteCompanyIds(
+  client: CadenzaSupabaseClient
+): Promise<string[]> {
+  const { data, error } = await client.from('cadenza_routes').select('company_id');
+  if (error) {
+    throw new Error(`Failed to load company ids: ${error.message}`);
+  }
+  const ids = new Set<string>();
+  for (const row of data ?? []) {
+    const companyId = row.company_id as string;
+    if (companyId) ids.add(companyId);
+  }
+  return [...ids];
+}
+
+export function aggregateEnsureRouteJobsResults(
+  results: EnsureRouteJobsResult[],
+  startDate: string,
+  endDate: string
+): EnsureRouteJobsResult {
+  return results.reduce(
+    (acc, r) => ({
+      created: acc.created + r.created,
+      routeCount: acc.routeCount + r.routeCount,
+      stopCount: acc.stopCount + r.stopCount,
+      dateCount: r.dateCount || acc.dateCount,
+      startDate,
+      endDate,
+    }),
+    {
+      created: 0,
+      routeCount: 0,
+      stopCount: 0,
+      dateCount: 0,
+      startDate,
+      endDate,
+    }
+  );
+}
+
+export async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  if (items.length === 0) return [];
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    for (;;) {
+      const index = nextIndex;
+      nextIndex += 1;
+      if (index >= items.length) break;
+      results[index] = await fn(items[index], index);
+    }
+  }
+
+  const workers = Math.min(Math.max(1, concurrency), items.length);
+  await Promise.all(Array.from({ length: workers }, () => worker()));
+  return results;
+}
+
+/**
+ * Idempotently inserts route-sourced `cadenza_service_jobs` for every matching stop in [startDate, endDate] (YYYY-MM-DD, inclusive).
+ */
+export async function ensureRouteJobsForDateRange(
+  client: CadenzaSupabaseClient,
+  startDate: string,
+  endDate: string
+): Promise<EnsureRouteJobsResult> {
+  const companyIds = await fetchDistinctRouteCompanyIds(client);
+  if (companyIds.length === 0) {
+    const dates = ymdInRange(startDate, endDate);
+    return {
+      created: 0,
+      routeCount: 0,
+      stopCount: 0,
+      dateCount: dates.length,
+      startDate,
+      endDate,
+    };
+  }
+
+  const results = await mapWithConcurrency(companyIds, 3, (companyId) =>
+    ensureRouteJobsForCompany(client, companyId, startDate, endDate)
+  );
+  return aggregateEnsureRouteJobsResults(results, startDate, endDate);
 }

@@ -11,7 +11,7 @@ Migrations live at repo root: `supabase/migrations/`
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Medium |
 | **Phase** | 0 |
 | **Source findings** | D-1 |
@@ -32,9 +32,9 @@ Schema defines `idx_cadenza_service_jobs_tech_date` (mobile path) but admin quer
 
 | ID | Task | Status |
 |----|------|--------|
-| T-D-001-1 | Add migration idx_jobs_company_date on (company_id, scheduled_date DESC) | PENDING |
-| T-D-001-2 | Add idx_jobs_company_status_date on (company_id, status, scheduled_date) | PENDING |
-| T-D-001-3 | Run EXPLAIN ANALYZE on jobs list and reports queries | PENDING |
+| T-D-001-1 | Add migration idx_jobs_company_date on (company_id, scheduled_date DESC) | DONE |
+| T-D-001-2 | Add idx_jobs_company_status_date on (company_id, status, scheduled_date) | DONE |
+| T-D-001-3 | Run EXPLAIN ANALYZE on jobs list and reports queries | DONE |
 
 ---
 
@@ -42,7 +42,7 @@ Schema defines `idx_cadenza_service_jobs_tech_date` (mobile path) but admin quer
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Medium |
 | **Phase** | 1 |
 | **Source findings** | D-2 |
@@ -63,9 +63,9 @@ GET `/api/dashboard` runs four `count: 'exact', head: true` queries on full tabl
 
 | ID | Task | Status |
 |----|------|--------|
-| T-D-002-1 | Design counter columns or cadenza_company_stats table | PENDING |
-| T-D-002-2 | Add triggers or periodic refresh to maintain counts | PENDING |
-| T-D-002-3 | Update GET /api/dashboard to read from stats source | PENDING |
+| T-D-002-1 | Design counter columns or cadenza_company_stats table | DONE |
+| T-D-002-2 | Add triggers or periodic refresh to maintain counts | DONE |
+| T-D-002-3 | Update GET /api/dashboard to read from stats source | DONE |
 
 ---
 
@@ -73,7 +73,7 @@ GET `/api/dashboard` runs four `count: 'exact', head: true` queries on full tabl
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Critical |
 | **Phase** | 0 |
 | **Source findings** | A-6 |
@@ -94,10 +94,10 @@ As the **platform**, I want email confirmation status on `cadenza_profiles` so t
 
 | ID | Task | Status |
 |----|------|--------|
-| T-D-003-1 | Add email_confirmed_at TIMESTAMPTZ column to cadenza_profiles | PENDING |
-| T-D-003-2 | Backfill from auth.users via one-time script | PENDING |
-| T-D-003-3 | Add trigger on auth user update to sync confirmed_at | PENDING |
-| T-D-003-4 | Unblocks US-B-005 team endpoint fix | PENDING |
+| T-D-003-1 | Add email_confirmed_at TIMESTAMPTZ column to cadenza_profiles | DONE |
+| T-D-003-2 | Backfill from auth.users via one-time script | DONE |
+| T-D-003-3 | Add trigger on auth user update to sync confirmed_at | DONE |
+| T-D-003-4 | Unblocks US-B-005 team endpoint fix | DONE |
 
 ---
 
@@ -105,7 +105,7 @@ As the **platform**, I want email confirmation status on `cadenza_profiles` so t
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 1 |
 | **Source findings** | D-4 |
@@ -124,9 +124,9 @@ As the **platform**, I want serverless functions to use a connection pooler so t
 
 | ID | Task | Status |
 |----|------|--------|
-| T-D-004-1 | Enable Supavisor transaction mode on Supabase project | PENDING |
-| T-D-004-2 | Update connection strings for Vercel serverless (pooler URL) | PENDING |
-| T-D-004-3 | Document pool size limits and monitoring in plan/database | PENDING |
+| T-D-004-1 | Enable Supavisor transaction mode on Supabase project | DONE |
+| T-D-004-2 | Update connection strings for Vercel serverless (pooler URL) | DONE |
+| T-D-004-3 | Document pool size limits and monitoring in plan/database | DONE |
 
 ---
 
@@ -134,7 +134,7 @@ As the **platform**, I want serverless functions to use a connection pooler so t
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Medium |
 | **Phase** | 1 |
 | **Source findings** | D-3 |
@@ -153,9 +153,9 @@ As the **platform**, I want RLS policies to add minimal per-query overhead so th
 
 | ID | Task | Status |
 |----|------|--------|
-| T-D-005-1 | Verify get_my_company_id is STABLE and uses indexed lookup | PENDING |
-| T-D-005-2 | Review RLS policies for redundant subqueries | PENDING |
-| T-D-005-3 | Benchmark RLS overhead before/after on hot tables | PENDING |
+| T-D-005-1 | Verify get_my_company_id is STABLE and uses indexed lookup | DONE |
+| T-D-005-2 | Review RLS policies for redundant subqueries | DONE |
+| T-D-005-3 | Benchmark RLS overhead before/after on hot tables | DONE |
 
 ---
 
@@ -163,7 +163,7 @@ As the **platform**, I want RLS policies to add minimal per-query overhead so th
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 2 |
 | **Source findings** | A-5, D-2 |
@@ -183,6 +183,6 @@ As an **admin running reports**, I want pre-aggregated daily stats so that repor
 
 | ID | Task | Status |
 |----|------|--------|
-| T-D-006-1 | Create cadenza_job_stats_daily (company_id, date, status counts) | PENDING |
-| T-D-006-2 | Add nightly pg_cron or queue job to populate rollups | PENDING |
-| T-D-006-3 | Point reports API to rollup for ranges > 7 days | PENDING |
+| T-D-006-1 | Create cadenza_job_stats_daily (company_id, date, status counts) | DONE |
+| T-D-006-2 | Add nightly pg_cron or queue job to populate rollups | DONE |
+| T-D-006-3 | Point reports API to rollup for ranges > 7 days | DONE |
