@@ -502,7 +502,14 @@ export default function JobDetailScreen() {
     if (!id) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    await supabase.from('cadenza_service_jobs').update({ status: 'in_progress' }).eq('id', id);
+    const { error } = await supabase
+      .from('cadenza_service_jobs')
+      .update({ status: 'in_progress' })
+      .eq('id', id);
+    if (error) {
+      Alert.alert('Could not start job', error.message ?? 'You may not be assigned to this job.');
+      return;
+    }
     setStarted(true);
   }
 

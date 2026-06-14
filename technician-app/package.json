@@ -6,6 +6,9 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "ios:sim": "expo run:ios --device 'iPhone 16 Pro Max'",
+    "ios:screenshots": "expo run:ios --configuration Release --device '6460BBC2-8F26-4C77-B16A-6CE6E33CB8C4'",
+    "screenshot": "bash scripts/capture-screenshot.sh",
     "web": "expo start --web"
   },
   "dependencies": {

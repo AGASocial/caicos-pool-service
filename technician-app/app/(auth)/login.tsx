@@ -24,6 +24,7 @@ import {
   isBiometricLoginEnabled,
   signInWithBiometrics,
 } from '@/lib/biometric-auth';
+import { LegalFooter } from '@/components/LegalFooter';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -197,6 +198,7 @@ export default function LoginScreen() {
         divider: { height: 1, backgroundColor: c.border, marginVertical: 24 },
         footerText: { fontSize: 14, color: c.muted, textAlign: 'center' },
         footerLink: { fontWeight: '700', color: c.link },
+        forgotLink: { fontSize: 13, color: c.link, fontWeight: '600', textAlign: 'right', marginTop: -8 },
       }),
     [c]
   );
@@ -266,6 +268,11 @@ export default function LoginScreen() {
                 secureTextEntry
                 editable={!loading && !biometricLoading}
               />
+              <Link href="/(auth)/forgot-password" asChild>
+                <Pressable>
+                  <Text style={styles.forgotLink}>Forgot password?</Text>
+                </Pressable>
+              </Link>
             </View>
 
             {error && <Text style={styles.error}>❌ {error}</Text>}
@@ -285,15 +292,12 @@ export default function LoginScreen() {
 
           <View style={styles.divider} />
 
-          <Link href="/(auth)/register" asChild>
-            <Pressable>
-              <Text style={styles.footerText}>
-                Don't have an account?{' '}
-                <Text style={styles.footerLink}>Create one</Text>
-              </Text>
-            </Pressable>
-          </Link>
+          <Text style={styles.footerText}>
+            New technician? Ask your administrator for an invite link.
+          </Text>
         </View>
+
+        <LegalFooter compact />
       </ScrollView>
     </LinearGradient>
   );

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { disableBiometricLogin } from '@/lib/biometric-auth';
 import Colors from '@/constants/Colors';
+import { LegalFooter } from '@/components/LegalFooter';
 
 export default function SettingsScreen() {
   const [fullName, setFullName] = useState('');
@@ -312,6 +313,7 @@ export default function SettingsScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Cadenza Technician App{'\n'}Version 1.0.0</Text>
+          <LegalFooter compact />
         </View>
       </View>
     </ScrollView>

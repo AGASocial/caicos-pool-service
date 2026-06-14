@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support — Cadenza</title>
+  <meta name="description" content="Support for Cadenza — get help with the Cadenza app and platform, or contact our team." />
+  <meta name="theme-color" content="#FAF7F2" />
+
+  <link rel="canonical" href="https://cadenzaops.com/support.html" />
+  <link rel="alternate" hreflang="en" href="https://cadenzaops.com/support.html" />
+  <link rel="alternate" hreflang="es" href="https://cadenzaops.com/es/support.html" />
+  <link rel="alternate" hreflang="x-default" href="https://cadenzaops.com/support.html" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='17' fill='%23FAF7F2'/%3E%3Crect width='63' height='63' x='0.5' y='0.5' rx='16.5' fill='none' stroke='%23ECE6DB'/%3E%3Ctext x='32' y='45' font-family='Bodoni Moda,Didot,Georgia,serif' font-size='42' font-weight='600' text-anchor='middle' fill='%230F1419'%3EC%3C/text%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;0,6..96,700;1,6..96,400;1,6..96,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root{
+      --ink:#0F1419; --brass:#C7A85F; --brass-ink:#1a1407; --brass-soft:#b3a07a; --brass-deep:#8a6d2f;
+      --linen:#FAF7F2; --white:#FFFFFF; --ink-deep:#15191F; --cream:#F3EEE4;
+      --hairline:#ECE6DB; --muted:#6B7280; --body:#3F4650;
+      --ease:cubic-bezier(0.22, 1, 0.36, 1);
+      --serif:'Bodoni Moda', Didot, Georgia, serif;
+      --sans:'Inter', system-ui, sans-serif;
+      --mono:'JetBrains Mono', ui-monospace, monospace;
+    }
+    *,*::before,*::after{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0; background:var(--linen); color:var(--ink);
+      font-family:var(--sans); font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased;
+    }
+    a{ color:inherit; }
+    .container{ max-width:1120px; margin:0 auto; padding:0 24px; }
+
+    .site-header{
+      position:fixed; top:0; left:0; right:0; z-index:50;
+      background:rgba(250,247,242,.88); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--hairline);
+    }
+    .header-inner{ height:64px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    .brand{ display:flex; align-items:baseline; gap:9px; text-decoration:none; color:var(--ink); }
+    .brand-c{ font-family:var(--serif); font-weight:600; font-size:23px; line-height:1; }
+    .brand .wm{ font-family:var(--serif); font-weight:500; letter-spacing:.3px; line-height:1; font-size:20px; }
+    .header-actions{ display:flex; align-items:center; gap:18px; }
+    .back-link{ font-size:13.5px; color:#5B6470; text-decoration:none; transition:color 240ms var(--ease); }
+    .back-link:hover{ color:var(--ink); }
+    .lang-switch{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; letter-spacing:.06em; }
+    .lang-switch .sep{ width:1px; height:12px; background:#D8D3C8; }
+    .lang-current{ color:var(--ink); }
+    .lang-link{ color:var(--muted); text-decoration:none; padding-bottom:2px; border-bottom:1px solid transparent; transition:color 240ms var(--ease), border-color 240ms var(--ease); }
+    .lang-link:hover{ color:var(--ink); border-bottom-color:var(--brass); }
+
+    main{ padding:130px 0 96px; }
+    .legal{ max-width:720px; margin:0 auto; }
+    .legal-head{ margin-bottom:48px; }
+    .overline{ font-size:11px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--brass-soft); margin:0 0 14px; }
+    .legal-head h1{
+      font-family:var(--serif); font-weight:500; letter-spacing:.2px;
+      font-size:clamp(34px, 5vw, 46px); line-height:1.1; color:var(--ink); margin:0 0 14px;
+    }
+    .legal-head h1 em{ font-style:italic; }
+    .legal-meta{ font-size:13px; color:var(--muted); margin:0; }
+    .head-rule{ width:54px; height:2px; border-radius:2px; background:var(--brass); margin-top:22px; }
+
+    .prose h2{ color:var(--ink); font-size:20px; font-weight:600; margin:2.5rem 0 .75rem; }
+    .prose h3{ color:#2B313A; font-size:16px; font-weight:600; margin:1.5rem 0 .5rem; }
+    .prose p{ color:var(--body); font-size:15px; line-height:1.75; margin:0 0 1rem; }
+    .prose ul{ list-style:disc; padding-left:1.5rem; margin:0 0 1rem; }
+    .prose ul li{ color:var(--body); font-size:15px; line-height:1.75; margin-bottom:.35rem; }
+    .prose a{
+      color:var(--ink); text-decoration:underline; text-decoration-color:var(--brass);
+      text-decoration-thickness:1.5px; text-underline-offset:3px;
+      transition:color 240ms var(--ease);
+    }
+    .prose a:hover{ color:var(--brass-deep); }
+    .prose strong{ color:var(--ink); font-weight:600; }
+    .section-divider{ border-top:1px solid var(--hairline); margin-top:2rem; padding-top:.25rem; }
+
+    /* contact cards */
+    .contact-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:0 0 1rem; }
+    .contact-card{
+      background:var(--white); border:1px solid var(--hairline); border-radius:14px;
+      padding:22px 24px;
+    }
+    .contact-card .k{ font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--brass-soft); margin:0 0 8px; }
+    .contact-card .v{ font-size:16px; color:var(--ink); margin:0; }
+    .contact-card .v a{ color:var(--ink); text-decoration:underline; text-decoration-color:var(--brass); text-decoration-thickness:1.5px; text-underline-offset:3px; }
+    .contact-card .v a:hover{ color:var(--brass-deep); }
+    @media (max-width:560px){ .contact-grid{ grid-template-columns:1fr; } }
+
+    .site-footer{ background:var(--ink-deep); padding:36px 0; }
+    .footer-inner{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; max-width:720px; margin:0 auto; padding:0 24px; }
+    .footer-copy{ font-size:12.5px; color:#5d6470; margin:0; }
+    .footer-nav{ display:flex; flex-wrap:wrap; gap:20px; }
+    .footer-nav a{
+      font-size:13px; color:#9aa0a8; text-decoration:none; padding-bottom:2px;
+      border-bottom:1px solid transparent;
+      transition:color 240ms var(--ease), border-color 240ms var(--ease);
+    }
+    .footer-nav a:hover{ color:var(--cream); border-bottom-color:var(--brass); }
+    .footer-nav a[aria-current="page"]{ color:var(--brass); }
+
+    @media (prefers-reduced-motion: reduce){
+      *{ animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand" aria-label="Cadenza — home">
+        <span class="brand-c" aria-hidden="true">C</span>
+        <span class="wm">Cadenza</span>
+      </a>
+      <div class="header-actions">
+        <nav class="lang-switch" aria-label="Language">
+          <span class="lang-current" aria-current="true">EN</span>
+          <span class="sep" aria-hidden="true"></span>
+          <a class="lang-link" href="es/support.html" lang="es" hreflang="es" title="Versión en español">ES</a>
+        </nav>
+        <a href="index.html" class="back-link">← Back to home</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main>
+    <div class="container">
+      <div class="legal">
+
+        <div class="legal-head">
+          <p class="overline">Support</p>
+          <h1>Help &amp; <em>Support</em></h1>
+          <p class="legal-meta">We're here to help you get the most out of Cadenza.</p>
+          <div class="head-rule" aria-hidden="true"></div>
+        </div>
+
+        <div class="prose">
+
+          <p>Cadenza is field-service software for pool, lawn, and home-service teams. Whether you're an owner setting up routes or a technician logging jobs in the field, this page will help you get unstuck — and reach us when you need a hand.</p>
+
+          <!-- Contact -->
+          <div class="section-divider">
+            <h2>Contact us</h2>
+          </div>
+
+          <div class="contact-grid">
+            <div class="contact-card">
+              <p class="k">Email</p>
+              <p class="v"><a href="mailto:support@cadenzaops.com">support@cadenzaops.com</a></p>
+            </div>
+            <div class="contact-card">
+              <p class="k">Response time</p>
+              <p class="v">Within 1 business day</p>
+            </div>
+          </div>
+
+          <p>For privacy or data requests, email <a href="mailto:privacy@cadenzaops.com">privacy@cadenzaops.com</a>. See also our <a href="privacy.html">Privacy Policy</a> and <a href="terms.html">Terms of Service</a>.</p>
+
+          <!-- Getting started -->
+          <div class="section-divider">
+            <h2>Getting started</h2>
+          </div>
+
+          <h3>How do I get an account?</h3>
+          <p>Cadenza accounts are created by your company's owner or admin in the Cadenza web portal. Owners can sign up and create their company directly; technicians and admins join by invitation. If you're a technician, ask your manager to send you an invite link.</p>
+
+          <h3>I didn't receive my invite link</h3>
+          <p>Invite links expire after 7 days. Ask your admin to resend the invite from the Team section of the portal. If it still doesn't arrive, check your spam folder or email us and we'll help.</p>
+
+          <h3>How do I reset my password?</h3>
+          <p>Use the "Forgot password?" link on the sign-in screen to receive a reset email, or ask your company admin to assist.</p>
+
+          <!-- Using the app -->
+          <div class="section-divider">
+            <h2>Using the app</h2>
+          </div>
+
+          <h3>Does the app work without internet?</h3>
+          <p>Yes. The Cadenza technician app works offline at job sites and automatically syncs your photos, readings, and reports once you're back online — so nothing is ever lost.</p>
+
+          <h3>How do I log a service?</h3>
+          <p>Open today's route, tap the job you're working on, and complete the service report: capture photos, enter chemical readings and equipment checks, run the task checklist, and add any notes or follow-up flags. Submit when you're done and it syncs to your office automatically.</p>
+
+          <h3>Why can't I see other companies' data?</h3>
+          <p>Cadenza isolates every company's data at the database level. You'll only ever see information that belongs to your own company and your role.</p>
+
+          <!-- Account & data -->
+          <div class="section-divider">
+            <h2>Account &amp; data</h2>
+          </div>
+
+          <h3>How do I delete my account or data?</h3>
+          <p>Email us at <a href="mailto:support@cadenzaops.com">support@cadenzaops.com</a> and we'll process your request. Company owners can also remove team members directly from the portal.</p>
+
+          <h3>Still need help?</h3>
+          <p>Reach out any time at <a href="mailto:support@cadenzaops.com">support@cadenzaops.com</a> — we read every message.</p>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p class="footer-copy">© 2026 Cadenza. All rights reserved.</p>
+      <nav class="footer-nav" aria-label="Footer">
+        <a href="support.html" aria-current="page">Support</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="index.html">Home</a>
+      </nav>
+    </div>
+  </footer>
+
+</body>
+</html>
