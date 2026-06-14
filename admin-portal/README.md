@@ -50,8 +50,8 @@ pnpm dev
 - **Internationalization**: Support for English and Spanish
 - **Authentication**: Supabase Auth with email/password and OAuth (Google, Apple)
 - **Protected Routes**: Automatic redirect to login for unauthenticated users
-- **Digital Assets Management**: Secure storage and management of digital assets
-- **Beneficiary Management**: Add and manage beneficiaries for your assets
+- **Pool service operations**: Jobs, routes, properties, team, and reports for multi-tenant companies
+- **Onboarding wizard**: First-time setup flow at `/wizard` (extendable for company setup)
 
 ## Authentication Flow
 

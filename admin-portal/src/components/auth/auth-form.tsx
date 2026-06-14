@@ -95,23 +95,7 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
 
         window.dispatchEvent(new Event('auth-changed'))
         toast.success("Login successful!")
-
-        // Check if user has any assets via API
-        try {
-          const res = await fetch('/api/assets');
-          if (res.ok) {
-            const assets = await res.json();
-            if (!assets || assets.length === 0) {
-              router.push(`/${locale}/dashboard`); /// wizard
-            } else {
-              router.push(`/${locale}/dashboard`);
-            }
-          } else {
-            router.push(`/${locale}/dashboard`);
-          }
-        } catch {
-          router.push(`/${locale}/dashboard`);
-        }
+        router.push(`/${locale}/dashboard`)
       }
     } catch (error) {
       console.error('Auth error:', error)

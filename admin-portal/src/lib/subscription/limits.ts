@@ -5,8 +5,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
 export interface SubscriptionLimits {
-  maxAssets: number;
-  maxBeneficiaries: number;
   maxStorageMb: number;
   maxFileSizeMb: number;
   prioritySupport: boolean;
@@ -14,8 +12,6 @@ export interface SubscriptionLimits {
 }
 
 export interface UsageStats {
-  assetsCount: number;
-  beneficiariesCount: number;
   storageUsedMb: number;
 }
 
@@ -26,7 +22,6 @@ export async function getSubscriptionLimits(
   supabase: SupabaseClient,
   userId: string
 ): Promise<SubscriptionLimits> {
-  // Get active subscription with plan details
   const { data: subscription } = await supabase
     .from('cadenza_billing_subscriptions')
     .select(`
@@ -37,7 +32,6 @@ export async function getSubscriptionLimits(
     .eq('status', 'active')
     .single();
 
-  // If no active subscription, get the Free plan from database
   if (!subscription || !subscription.plan) {
     const { data: freePlan } = await supabase
       .from('cadenza_billing_plans')
@@ -48,8 +42,6 @@ export async function getSubscriptionLimits(
     if (freePlan) {
       const features = freePlan.features as Record<string, unknown>;
       return {
-        maxAssets: (features.max_assets as number) || 3,
-        maxBeneficiaries: (features.max_beneficiaries as number) || 2,
         maxStorageMb: (features.max_storage_mb as number) || 50,
         maxFileSizeMb: (features.max_file_size_mb as number) || 10,
         prioritySupport: false,
@@ -57,7 +49,6 @@ export async function getSubscriptionLimits(
       };
     }
 
-    // Fallback to hardcoded limits if Free plan not found
     return getFreeTrialLimits();
   }
 
@@ -65,8 +56,6 @@ export async function getSubscriptionLimits(
   const features = plan.features as Record<string, unknown>;
 
   return {
-    maxAssets: (features.max_assets as number) || 0,
-    maxBeneficiaries: (features.max_beneficiaries as number) || 0,
     maxStorageMb: (features.max_storage_mb as number) || 100,
     maxFileSizeMb: (features.max_file_size_mb as number) || 10,
     prioritySupport: (features.priority_support as boolean) || false,
@@ -79,8 +68,6 @@ export async function getSubscriptionLimits(
  */
 export function getFreeTrialLimits(): SubscriptionLimits {
   return {
-    maxAssets: 3,
-    maxBeneficiaries: 2,
     maxStorageMb: 50,
     maxFileSizeMb: 10,
     prioritySupport: false,
@@ -92,88 +79,13 @@ export function getFreeTrialLimits(): SubscriptionLimits {
  * Get user's current usage statistics
  */
 export async function getUsageStats(
-  supabase: SupabaseClient,
-  userId: string
+  _supabase: SupabaseClient,
+  _userId: string
 ): Promise<UsageStats> {
-  // Get assets count
-  const { count: assetsCount } = await supabase
-    .from('digital_assets')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId);
-
-  // Get beneficiaries count
-  const { count: beneficiariesCount } = await supabase
-    .from('beneficiaries')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId);
-
-  // For now, we'll set storage to 0 - this can be calculated from file sizes
-  // when we implement actual file storage tracking
-  const storageUsedMb = 0;
-
+  // Storage tracking can be wired to cadenza file usage when implemented
   return {
-    assetsCount: assetsCount || 0,
-    beneficiariesCount: beneficiariesCount || 0,
-    storageUsedMb,
+    storageUsedMb: 0,
   };
-}
-
-/**
- * Check if user can create a new asset
- */
-export async function canCreateAsset(
-  supabase: SupabaseClient,
-  userId: string
-): Promise<{ allowed: boolean; reason?: string; limit?: number; current?: number }> {
-  const [limits, usage] = await Promise.all([
-    getSubscriptionLimits(supabase, userId),
-    getUsageStats(supabase, userId),
-  ]);
-
-  // -1 means unlimited
-  if (limits.maxAssets === -1) {
-    return { allowed: true };
-  }
-
-  if (usage.assetsCount >= limits.maxAssets) {
-    return {
-      allowed: false,
-      reason: 'assetLimitReached',
-      limit: limits.maxAssets,
-      current: usage.assetsCount,
-    };
-  }
-
-  return { allowed: true };
-}
-
-/**
- * Check if user can create a new beneficiary
- */
-export async function canCreateBeneficiary(
-  supabase: SupabaseClient,
-  userId: string
-): Promise<{ allowed: boolean; reason?: string; limit?: number; current?: number }> {
-  const [limits, usage] = await Promise.all([
-    getSubscriptionLimits(supabase, userId),
-    getUsageStats(supabase, userId),
-  ]);
-
-  // -1 means unlimited
-  if (limits.maxBeneficiaries === -1) {
-    return { allowed: true };
-  }
-
-  if (usage.beneficiariesCount >= limits.maxBeneficiaries) {
-    return {
-      allowed: false,
-      reason: 'beneficiaryLimitReached',
-      limit: limits.maxBeneficiaries,
-      current: usage.beneficiariesCount,
-    };
-  }
-
-  return { allowed: true };
 }
 
 /**

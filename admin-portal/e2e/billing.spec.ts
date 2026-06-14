@@ -21,8 +21,6 @@ test.describe('Billing', () => {
                 currency: 'USD',
                 interval: 'month',
                 features: {
-                  max_assets: -1,
-                  max_beneficiaries: -1,
                   max_storage_mb: 10000,
                   priority_support: true
                 }
@@ -78,8 +76,6 @@ test.describe('Billing', () => {
                 currency: 'USD',
                 interval: 'month',
                 features: {
-                  max_assets: -1,
-                  max_beneficiaries: -1,
                   max_storage_mb: 10000,
                   priority_support: true
                 }
@@ -128,8 +124,6 @@ test.describe('Billing', () => {
                 currency: 'USD',
                 interval: 'month',
                 features: {
-                  max_assets: -1,
-                  max_beneficiaries: -1,
                   max_storage_mb: 10000,
                   priority_support: true
                 }

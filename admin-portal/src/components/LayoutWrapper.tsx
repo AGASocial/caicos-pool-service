@@ -22,8 +22,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { User, LogOut, Languages, ChevronUp, CreditCard } from "lucide-react";
 import { Link, useRouter, usePathname } from '@/i18n/navigation';
-import SecurityPinModal from './security/SecurityPinModal';
-import { useSecurity } from '@/context/SecurityContext';
 import { useAuth } from '@/lib/auth';
 import { SessionBillingPrefetch } from '@/lib/billing-queries';
 
@@ -58,7 +56,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const t = useTranslations();
   const router = useRouter();
   const locale = useLocale();
-  const securityState = useSecurity();
   const { user } = useAuth();
   const firstName = getFirstName(user);
   const isAdmin = user?.profile?.role === 'admin';
@@ -287,13 +284,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         </div>
       </main>
       <Toaster richColors closeButton position="top-right" />
-      <SecurityPinModal
-        isOpen={isAuthPage ? false : (pathname?.includes('/digital-assets') || pathname?.includes('/beneficiaries')) && (securityState.locked || !securityState.hasPin)}
-        mode={!securityState.hasPin ? "setup" : "verify"}
-        forceOpen={true}
-        onSuccess={() => securityState.checkStatus()}
-        onCancel={() => router.push('/dashboard')}
-      />
     </div>
   );
 } 

@@ -70,7 +70,7 @@ describe('AuthForm', () => {
       });
     });
 
-    it('should redirect to the dashboard after login without fetching /api/assets', async () => {
+    it('should redirect to the dashboard after login', async () => {
       const user = userEvent.setup();
       const mockRouter = {
         push: jest.fn(),
@@ -95,7 +95,6 @@ describe('AuthForm', () => {
       await waitFor(() => {
         expect(mockRouter.push).toHaveBeenCalledWith('/en/dashboard');
       });
-      expect(mockFetch).not.toHaveBeenCalledWith('/api/assets');
     });
 
     it('should show error toast on login failure', async () => {

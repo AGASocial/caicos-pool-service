@@ -19,47 +19,28 @@ describe('LocalePage', () => {
     jest.spyOn(require('@/i18n/navigation'), 'useRouter').mockReturnValue(mockRouter);
   });
 
-  const mockAuthenticatedSession = () => {
-    mockFetch.mockImplementation(async (url: string) => {
-      if (url === '/api/auth/session') {
-        return { ok: true, json: async () => ({ authenticated: true }) };
-      }
-      // Legacy /api/assets used to drive a wizard redirect when it returned []
-      return { ok: true, json: async () => [] };
-    });
-  };
-
   it('redirects authenticated users to the dashboard', async () => {
-    mockAuthenticatedSession();
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ authenticated: true }),
+    });
 
     render(<LocalePage />);
 
     await waitFor(() => {
       expect(mockRouter.replace).toHaveBeenCalledWith('/dashboard');
     });
-    expect(mockRouter.replace).not.toHaveBeenCalledWith('/wizard');
-  });
-
-  it('does not fetch /api/assets when signed in', async () => {
-    mockAuthenticatedSession();
-
-    render(<LocalePage />);
-
-    await waitFor(() => {
-      expect(mockRouter.replace).toHaveBeenCalled();
-    });
-    expect(mockFetch).not.toHaveBeenCalledWith('/api/assets');
   });
 
   it('shows the landing page for unauthenticated visitors', async () => {
-    mockFetch.mockResolvedValue({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ authenticated: false }),
     });
 
     render(<LocalePage />);
 
-    expect(await screen.findByText(/get started/i)).toBeInTheDocument();
+    expect(await screen.findByText(/start for free/i)).toBeInTheDocument();
     expect(mockRouter.replace).not.toHaveBeenCalled();
   });
 });

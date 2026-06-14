@@ -1,21 +1,17 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button } from "@/components/ui/button";
-
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
-
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { toast } from 'sonner';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { getAvailableAssetTypes, getAssetType, type AssetType as DatabaseAssetType } from '@/lib/assetTypes';
+import { Building2, Users, Route } from 'lucide-react';
 
-type WizardStep = 'welcome' | 'asset-type' | 'asset-details' | 'beneficiary' | 'final';
+type WizardStep = 'welcome' | 'overview' | 'final';
+
+const STEPS: WizardStep[] = ['welcome', 'overview', 'final'];
 
 export default function WizardPage() {
   const t = useTranslations();
@@ -23,221 +19,34 @@ export default function WizardPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<WizardStep>('welcome');
   const [loading, setLoading] = useState(false);
-  const [assetTypesLoading, setAssetTypesLoading] = useState(true);
-  const [relationships, setRelationships] = useState<Array<{ id: number, key: string }>>([]);
-  const [assetTypes, setAssetTypes] = useState<DatabaseAssetType[]>([]);
-  const [currentAssetType, setCurrentAssetType] = useState<DatabaseAssetType | null>(null);
 
-  // Asset form data
-  const [assetData, setAssetData] = useState({
-    assetType: '',
-    assetName: '',
-    description: '',
-    website: '',
-    validUntil: '',
-    email: '',
-    password: '',
-    files: [] as File[],
-    customFields: {} as Record<string, string | number | boolean | string[]>,
-  });
-
-  // Beneficiary form data
-  const [beneficiaryData, setBeneficiaryData] = useState({
-    fullName: '',
-    email: '',
-    relationshipId: null as number | null,
-    phoneNumber: '',
-    notes: ''
-  });
-
-  // Fetch relationships and asset types from database
-  useEffect(() => {
-    async function fetchRelationships() {
-      try {
-        const res = await fetch('/api/relationships?minGenerationLevel=3');
-        if (res.ok) {
-          const data = await res.json();
-          setRelationships(data);
-        }
-      } catch (error) {
-        console.error('Error fetching relationships:', error);
-      }
-    }
-
-    async function fetchAssetTypes() {
-      try {
-        setAssetTypesLoading(true);
-        const availableAssetTypes = await getAvailableAssetTypes();
-        setAssetTypes(availableAssetTypes);
-      } catch (error) {
-        console.error('Error fetching asset types:', error);
-        toast.error('Failed to load asset types');
-      } finally {
-        setAssetTypesLoading(false);
-      }
-    }
-
-    fetchRelationships();
-    fetchAssetTypes();
-  }, []);
-
-  // Fetch current asset type when asset type changes
-  useEffect(() => {
-    async function fetchCurrentAssetType() {
-      if (assetData.assetType) {
-        try {
-          const assetTypeData = await getAssetType(assetData.assetType);
-          setCurrentAssetType(assetTypeData || null);
-        } catch (error) {
-          console.error('Error fetching asset type:', error);
-          setCurrentAssetType(null);
-        }
-      } else {
-        setCurrentAssetType(null);
-      }
-    }
-
-    fetchCurrentAssetType();
-  }, [assetData.assetType]);
+  const stepIndex = STEPS.indexOf(currentStep);
 
   const handleNext = () => {
-    switch (currentStep) {
-      case 'welcome':
-        setCurrentStep('asset-type');
-        break;
-      case 'asset-type':
-        setCurrentStep('asset-details');
-        break;
-      case 'asset-details':
-        setCurrentStep('beneficiary');
-        break;
-      case 'beneficiary':
-        setCurrentStep('final');
-        break;
-      case 'final':
-        handleFinish();
-        break;
-    }
+    const next = STEPS[stepIndex + 1];
+    if (next) setCurrentStep(next);
   };
 
   const handleBack = () => {
-    switch (currentStep) {
-      case 'asset-type':
-        setCurrentStep('welcome');
-        break;
-      case 'asset-details':
-        setCurrentStep('asset-type');
-        break;
-      case 'beneficiary':
-        setCurrentStep('asset-details');
-        break;
-      case 'final':
-        setCurrentStep('beneficiary');
-        break;
-    }
-  };
-
-  // Helper function to check if a field should be shown
-  const shouldShowField = (fieldName: string): boolean => {
-    if (!currentAssetType) return true;
-
-    const isRequired = currentAssetType.requiredFields?.includes(fieldName);
-    const isOptional = currentAssetType.optionalFields?.includes(fieldName);
-
-    return isRequired || isOptional || false;
-  };
-
-  // Helper function to check if a field is required
-  const isFieldRequired = (fieldName: string): boolean => {
-    if (!currentAssetType) return false;
-    return currentAssetType.requiredFields?.includes(fieldName) || false;
-  };
-
-  const handleCustomFieldChange = (fieldKey: string, value: string | number | boolean | string[]) => {
-    setAssetData(prev => ({
-      ...prev,
-      customFields: {
-        ...prev.customFields,
-        [fieldKey]: value
-      }
-    }));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files).slice(0, 5);
-      setAssetData(prev => ({ ...prev, files }));
-    }
+    const prev = STEPS[stepIndex - 1];
+    if (prev) setCurrentStep(prev);
   };
 
   const handleFinish = async () => {
     setLoading(true);
     try {
-      // Upload files if any
-      const fileUrls: string[] = [];
-      const fileMetadata: { path: string; fileName: string; fileType: string; fileSize: number }[] = [];
-      if (assetData.files.length > 0) {
-        for (const file of assetData.files) {
-          const formData = new FormData();
-          formData.append('file', file);
-          const uploadRes = await fetch('/api/storage/upload', {
-            method: 'POST',
-            body: formData,
-          });
-          if (!uploadRes.ok) {
-            const err = await uploadRes.json();
-            throw new Error(err.error || 'Upload failed');
-          }
-          const uploadData = await uploadRes.json();
-          fileUrls.push(uploadData.path);
-          fileMetadata.push({
-            path: uploadData.path,
-            fileName: uploadData.fileName,
-            fileType: uploadData.fileType,
-            fileSize: uploadData.fileSize,
-          });
-        }
-      }
-
-      // Create asset + beneficiary + link via composite API
-      const res = await fetch('/api/wizard/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          asset: {
-            assetType: assetData.assetType,
-            assetName: assetData.assetName,
-            description: assetData.description,
-            website: assetData.website,
-            validUntil: assetData.validUntil,
-            email: assetData.email,
-            password: assetData.password,
-            customFields: assetData.customFields,
-          },
-          beneficiary: {
-            fullName: beneficiaryData.fullName,
-            email: beneficiaryData.email,
-            relationshipId: beneficiaryData.relationshipId,
-            phoneNumber: beneficiaryData.phoneNumber,
-            notes: beneficiaryData.notes,
-          },
-          fileUrls,
-          fileMetadata,
-        }),
-      });
-
+      const res = await fetch('/api/wizard/complete', { method: 'POST' });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || err.error || 'Failed to complete wizard');
+        throw new Error(err.error || 'Failed to complete setup');
       }
 
       toast.success(t('wizard-final-congrats'));
       router.push('/dashboard');
     } catch (error) {
-      console.error('Error creating asset and beneficiary:', error);
+      console.error('Wizard completion error:', error);
       const message = error instanceof Error ? error.message : null;
-      const localized = message ? (t(message) !== message ? t(message) : message) : null;
-      toast.error(localized || t('errorSavingAsset') || 'An error occurred while creating your asset and beneficiary.');
+      toast.error(message || t('errorSavingAsset') || 'An error occurred while completing setup.');
     } finally {
       setLoading(false);
     }
@@ -252,7 +61,7 @@ export default function WizardPage() {
               {t('wizard-welcome-title', { name: user?.user_metadata?.full_name || user?.email || 'User' })}
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mb-6">
-              {t('wizard-welcome-description')}
+              {t('wizard-cadenza-welcome-description')}
             </p>
             <Button onClick={handleNext} className="w-full sm:w-auto px-8">
               {t('wizard-continue')}
@@ -260,283 +69,43 @@ export default function WizardPage() {
           </div>
         );
 
-      case 'asset-type':
+      case 'overview':
         return (
           <div className="px-4 sm:px-0">
-            <h1 className="text-xl sm:text-2xl font-bold mb-4 text-foreground">{t('wizard-create-asset-title')}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold mb-4 text-foreground">
+              {t('wizard-cadenza-overview-title')}
+            </h1>
             <p className="text-sm sm:text-base text-muted-foreground mb-6">
-              {t('wizard-create-asset-description')}
+              {t('wizard-cadenza-overview-description')}
             </p>
-            <div className="space-y-4">
-              <Label className="text-sm sm:text-base text-foreground">{t('wizard-select-asset-type')}</Label>
-              <Select value={assetData.assetType} onValueChange={(value: string) => setAssetData({ ...assetData, assetType: value })}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t('wizard-select-asset-type')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {assetTypesLoading ? (
-                    <SelectItem value="" disabled>
-                      Loading asset types...
-                    </SelectItem>
-                  ) : (
-                    assetTypes.map((type) => (
-                      <SelectItem key={type.key} value={type.key}>
-                        {t(type.label)}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 mt-6">
+            <ul className="space-y-4 mb-6">
+              <li className="flex items-start gap-3 rounded-lg border p-4">
+                <Building2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium text-foreground">{t('properties')}</p>
+                  <p className="text-sm text-muted-foreground">{t('wizard-cadenza-properties-hint')}</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3 rounded-lg border p-4">
+                <Users className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium text-foreground">{t('team')}</p>
+                  <p className="text-sm text-muted-foreground">{t('wizard-cadenza-team-hint')}</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3 rounded-lg border p-4">
+                <Route className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium text-foreground">{t('routes')}</p>
+                  <p className="text-sm text-muted-foreground">{t('wizard-cadenza-routes-hint')}</p>
+                </div>
+              </li>
+            </ul>
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button variant="outline" onClick={handleBack} className="flex-1">
                 {t('back')}
               </Button>
-              <Button onClick={handleNext} disabled={!assetData.assetType} className="flex-1">
-                {t('wizard-next')}
-              </Button>
-            </div>
-          </div>
-        );
-
-      case 'asset-details':
-        return (
-          <div className="px-4 sm:px-0">
-            <h1 className="text-xl sm:text-2xl font-bold mb-4 text-foreground">{t('wizard-complete-asset-title')}</h1>
-            <p className="text-sm sm:text-base text-muted-foreground mb-6">
-              {t('wizard-complete-asset-description')}
-            </p>
-            <div className="space-y-4">
-              {/* Asset Name - always required */}
-              <div>
-                <Label className="text-sm sm:text-base text-foreground">{t('assetName')} *</Label>
-                <Input
-                  value={assetData.assetName}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAssetData({ ...assetData, assetName: e.target.value })}
-                  placeholder={t('wizard-enter-asset-name')}
-                  className="w-full"
-                  required
-                />
-              </div>
-
-              {/* Conditional fields based on asset type */}
-              {shouldShowField('email') && (
-                <div>
-                  <Label className="text-sm sm:text-base text-foreground">
-                    {t('email')}{isFieldRequired('email') ? ' *' : ''}
-                  </Label>
-                  <Input
-                    value={assetData.email}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAssetData({ ...assetData, email: e.target.value })}
-                    placeholder={t('wizard-enter-email')}
-                    type="email"
-                    className="w-full"
-                    required={isFieldRequired('email')}
-                  />
-                </div>
-              )}
-
-              {shouldShowField('password') && (
-                <div>
-                  <Label className="text-sm sm:text-base text-foreground">
-                    {t('password')}{isFieldRequired('password') ? ' *' : ''}
-                  </Label>
-                  <Input
-                    value={assetData.password}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAssetData({ ...assetData, password: e.target.value })}
-                    placeholder="••••••••"
-                    type="password"
-                    className="w-full"
-                    required={isFieldRequired('password')}
-                  />
-                </div>
-              )}
-
-              {shouldShowField('website') && (
-                <div>
-                  <Label className="text-sm sm:text-base text-foreground">
-                    {t('website')}{isFieldRequired('website') ? ' *' : ''}
-                  </Label>
-                  <Input
-                    value={assetData.website}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAssetData({ ...assetData, website: e.target.value })}
-                    placeholder={t('wizard-enter-website')}
-                    className="w-full"
-                    required={isFieldRequired('website')}
-                  />
-                </div>
-              )}
-
-              {shouldShowField('valid_until') && (
-                <div>
-                  <Label className="text-sm sm:text-base text-foreground">
-                    {t('validUntil')}{isFieldRequired('valid_until') ? ' *' : ''}
-                  </Label>
-                  <Input
-                    type="date"
-                    value={assetData.validUntil}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAssetData({ ...assetData, validUntil: e.target.value })}
-                    className="w-full"
-                    required={isFieldRequired('valid_until')}
-                  />
-                </div>
-              )}
-
-              {shouldShowField('description') && (
-                <div>
-                  <Label className="text-sm sm:text-base text-foreground">
-                    {t('description')}{isFieldRequired('description') ? ' *' : ''}
-                  </Label>
-                  <Textarea
-                    value={assetData.description}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAssetData({ ...assetData, description: e.target.value })}
-                    placeholder={t('wizard-describe-asset')}
-                    className="w-full"
-                    required={isFieldRequired('description')}
-                  />
-                </div>
-              )}
-
-              {/* Custom fields for new asset types */}
-              {currentAssetType?.customFields?.map((field) => (
-                <div key={field.key}>
-                  <Label className="text-sm sm:text-base text-foreground">
-                    {t(field.label)}{field.required ? ' *' : ''}
-                  </Label>
-                  {field.type === 'text' && (
-                    <Input
-                      type="text"
-                      value={String(assetData.customFields[field.key] || '')}
-                      onChange={(e) => handleCustomFieldChange(field.key, e.target.value)}
-                      required={field.required}
-                      className="w-full"
-                    />
-                  )}
-                  {field.type === 'textarea' && (
-                    <Textarea
-                      value={String(assetData.customFields[field.key] || '')}
-                      onChange={(e) => handleCustomFieldChange(field.key, e.target.value)}
-                      required={field.required}
-                      className="w-full"
-                      rows={3}
-                    />
-                  )}
-                  {field.type === 'select' && (
-                    <Select
-                      value={String(assetData.customFields[field.key] || '')}
-                      onValueChange={(value) => handleCustomFieldChange(field.key, value)}
-                      required={field.required}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Seleccionar..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {field.options?.map((option) => (
-                          <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-              ))}
-
-              {/* File upload for assets that support it */}
-              {currentAssetType?.fileAccept && (
-                <div>
-                  <Label className="text-sm sm:text-base text-foreground">
-                    {assetData.assetType === 'letter' ? t('attachAnImage') :
-                      assetData.assetType === 'photo' ? t('cameraPhotos') :
-                        assetData.assetType === 'video' ? t('cameraVideos') :
-                          assetData.assetType === 'audio' ? t('recordHereOrUpload') :
-                            assetData.assetType === 'document' ? t('uploadFiles') :
-                              t('uploadFiles')}
-                  </Label>
-                  <input
-                    type="file"
-                    multiple
-                    accept={currentAssetType?.fileAccept || '*'}
-                    onChange={handleFileChange}
-                    className="w-full rounded border px-3 py-2"
-                  />
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 mt-6">
-              <Button variant="outline" onClick={handleBack} className="flex-1">
-                {t('back')}
-              </Button>
-              <Button onClick={handleNext} disabled={!assetData.assetName} className="flex-1">
-                {t('wizard-next')}
-              </Button>
-            </div>
-          </div>
-        );
-
-      case 'beneficiary':
-        return (
-          <div className="px-4 sm:px-0">
-            <h1 className="text-xl sm:text-2xl font-bold mb-4 text-foreground">{t('wizard-beneficiary-title')}</h1>
-            <p className="text-sm sm:text-base text-muted-foreground mb-6">
-              {t('wizard-beneficiary-description')}
-            </p>
-            <div className="space-y-4">
-              <div>
-                <Label className="text-sm sm:text-base text-foreground">{t('name')} *</Label>
-                <Input
-                  value={beneficiaryData.fullName}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBeneficiaryData({ ...beneficiaryData, fullName: e.target.value })}
-                  placeholder={t('wizard-enter-beneficiary-name')}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label className="text-sm sm:text-base text-foreground">{t('email')}</Label>
-                <Input
-                  value={beneficiaryData.email}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBeneficiaryData({ ...beneficiaryData, email: e.target.value })}
-                  placeholder="email@example.com"
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label className="text-sm sm:text-base text-foreground">{t('relationship')} *</Label>
-                <Select value={beneficiaryData.relationshipId?.toString() || ''} onValueChange={(value: string) => setBeneficiaryData({ ...beneficiaryData, relationshipId: value ? parseInt(value) : null })}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('wizard-select-relationship')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {relationships.map((rel) => (
-                      <SelectItem key={rel.id} value={rel.id.toString()}>
-                        {t(`relationships.${rel.key}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm sm:text-base text-foreground">{t('phoneNumber')}</Label>
-                <Input
-                  value={beneficiaryData.phoneNumber}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBeneficiaryData({ ...beneficiaryData, phoneNumber: e.target.value })}
-                  placeholder="+1 (555) 123-4567"
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label className="text-sm sm:text-base text-foreground">{t('notes')}</Label>
-                <Textarea
-                  value={beneficiaryData.notes}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBeneficiaryData({ ...beneficiaryData, notes: e.target.value })}
-                  placeholder={t('wizard-enter-beneficiary-notes')}
-                  className="w-full"
-                />
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 mt-6">
-              <Button variant="outline" onClick={handleBack} className="flex-1">
-                {t('back')}
-              </Button>
-              <Button onClick={handleNext} disabled={!beneficiaryData.fullName || !beneficiaryData.relationshipId} className="flex-1">
+              <Button onClick={handleNext} className="flex-1">
                 {t('wizard-next')}
               </Button>
             </div>
@@ -546,20 +115,12 @@ export default function WizardPage() {
       case 'final':
         return (
           <div className="text-center px-4 sm:px-0 text-foreground">
-            <h1 className="text-xl sm:text-2xl font-bold mb-4 text-foreground">{t('wizard-final-title')}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold mb-4 text-foreground">
+              {t('wizard-cadenza-final-title')}
+            </h1>
             <p className="text-sm sm:text-base text-muted-foreground mb-6">
-              {t('wizard-final-congrats')}
+              {t('wizard-cadenza-final-description')}
             </p>
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6 text-left">
-              <h3 className="font-semibold mb-2 text-sm sm:text-base">{t('wizard-asset-summary')}:</h3>
-              <div className="space-y-1 text-sm">
-                <p><strong>{t('assetType')}:</strong> {assetTypes.find(t => t.key === assetData.assetType)?.label ? t(assetTypes.find(t => t.key === assetData.assetType)!.label) : assetData.assetType}</p>
-                <p><strong>{t('assetName')}:</strong> {assetData.assetName}</p>
-                <p><strong>{t('description')}:</strong> {assetData.description}</p>
-                <p><strong>{t('website')}:</strong> {assetData.website}</p>
-                <p><strong>{t('assignedBeneficiary')}:</strong> {beneficiaryData.fullName}</p>
-              </div>
-            </div>
             <div className="flex flex-col sm:flex-row gap-2">
               <Button variant="outline" onClick={handleBack} className="flex-1">
                 {t('back')}
@@ -577,38 +138,40 @@ export default function WizardPage() {
     <ProtectedRoute>
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-8">
         <div className="mb-6 sm:mb-8">
-          {/* Mobile: Current step indicator only */}
           <div className="block sm:hidden mb-6">
             <div className="flex items-center justify-center">
               <div className="text-center">
                 <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-medium mx-auto mb-2">
-                  {['welcome', 'asset-type', 'asset-details', 'beneficiary', 'final'].indexOf(currentStep) + 1}
+                  {stepIndex + 1}
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Step {['welcome', 'asset-type', 'asset-details', 'beneficiary', 'final'].indexOf(currentStep) + 1} of 5
+                  Step {stepIndex + 1} of {STEPS.length}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Desktop: Horizontal step indicator */}
           <div className="hidden sm:flex items-center justify-center mb-4">
             <div className="flex items-center space-x-6">
-              {['welcome', 'asset-type', 'asset-details', 'beneficiary', 'final'].map((step, index) => (
+              {STEPS.map((step, index) => (
                 <div key={step} className="flex items-center">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-base font-medium ${currentStep === step
-                    ? 'bg-blue-600 text-white'
-                    : index < ['welcome', 'asset-type', 'asset-details', 'beneficiary', 'final'].indexOf(currentStep)
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-200 text-gray-600'
-                    }`}>
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center text-base font-medium ${
+                      currentStep === step
+                        ? 'bg-blue-600 text-white'
+                        : index < stepIndex
+                          ? 'bg-green-600 text-white'
+                          : 'bg-gray-200 text-gray-600'
+                    }`}
+                  >
                     {index + 1}
                   </div>
-                  {index < 4 && (
-                    <div className={`w-24 h-1 mx-3 ${index < ['welcome', 'asset-type', 'asset-details', 'beneficiary', 'final'].indexOf(currentStep)
-                      ? 'bg-green-600'
-                      : 'bg-gray-200'
-                      }`} />
+                  {index < STEPS.length - 1 && (
+                    <div
+                      className={`w-24 h-1 mx-3 ${
+                        index < stepIndex ? 'bg-green-600' : 'bg-gray-200'
+                      }`}
+                    />
                   )}
                 </div>
               ))}

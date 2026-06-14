@@ -1,208 +1,151 @@
-### cadenza: Technical Business Overview
+# Cadenza Admin Portal — Technical Overview
 
-This document gives an AI engineer all essential context to build and ship new features across the cadenza platform. The platform has two codebases in this monorepo:
+This document describes the **admin portal** in the Cadenza monorepo: the web app pool-service companies use to manage operations, technicians, properties, routes, jobs, reports, and billing.
 
-- cadenza application: `cadenza-app/` — Next.js 15 app for authenticated users to manage digital assets and beneficiaries.
-- marketing site: `cadenza-site/` — Jekyll site for public marketing pages and acquisition.
+For the full platform scope, see `docs/architecture/SOLUTION.md` at the repo root. For day-to-day development commands and architecture notes, see `CLAUDE.md` in this directory.
 
-### Product Summary
+> **Historical note:** The portal was bootstrapped from a donor app (digital assets / beneficiaries). That product surface has been removed. The archived donor-app overview lives at `docs/archive/ABOUT-donor-app.md`.
 
-- Purpose: Securely store a user’s vital digital information and designate beneficiaries who will receive access at the right moment.
-- Core entities: Users, Digital Assets, Beneficiaries, Relationships.
-- Primary flows:
-  - User onboarding and authentication
-  - First-time setup (wizard)
-  - Ongoing asset CRUD and attachment management
-  - Beneficiary CRUD and status tracking
-  - Localized UX (English/Spanish)
+---
 
-### Architecture
+## Product summary
 
-- Frontend app: Next.js 15, React 19, TypeScript, next-intl for i18n, Radix UI primitives and shadcn-like UI wrappers, Tailwind CSS 4.
-- Auth and data: Supabase (Auth, Postgres, RLS policies). Client SDK created via `@supabase/auth-helpers-nextjs`.
-- State/form libs: React Hook Form + Zod; TanStack Query available; Sonner for toasts.
-- Marketing site: Jekyll 4 with Liquid templates, Tailwind CDN, GTM + Consent Mode, Google Analytics tag, cookie preferences banner.
+- **Audience:** Company owners, admins, and operations staff at pool-service companies.
+- **Core workflows:** Manage customer properties, recurring routes, scheduled service jobs, technician team, job reports, and subscription billing.
+- **Companion app:** `technician-app/` (Expo) — field technicians use it for daily jobs, service forms, and photos.
+- **Multi-tenant model:** Every row is scoped by `company_id` via Postgres RLS on `cadenza_*` tables.
 
-### Repos and Responsibilities
+---
 
-- `cadenza-app/` (product app)
-  - Auth, session enforcement, and locale negotiation via middleware
-  - Views: auth pages, wizard, dashboard, digital assets, beneficiaries
-  - Shared UI components and form controls
-  - Supabase client and type definitions
-  - i18n routing and translations scaffolding
+## Stack
 
-- `cadenza-site/` (marketing site)
-  - Jekyll config and layouts
-  - SEO tags, GTM (`GT-MK5DRWPX`), GA (`G-WQ020FXKLE`), and cookie consent banner with Consent Mode enforcement
-  - Alternate languages supported at the URL level (`es` default with `/en/` alternate)
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 16 App Router (Turbopack) |
+| UI | React 19, Tailwind CSS v4, Radix/shadcn-style components |
+| i18n | next-intl (`en`, `es`; default `es`) |
+| Auth & data | Supabase Auth + Postgres + Storage |
+| Billing | Provider-agnostic layer (Stripe / PayU) in `src/lib/billing/` |
+| Deploy | Vercel (`vercel.json` includes cron for route job generation) |
 
-### Environments and Configuration (app)
+---
 
-- Required env vars for the app (`.env.local`):
-  - `NEXT_PUBLIC_SUPABASE_URL` — must be an `https://*.supabase.co` URL; validated at startup.
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — anon key for the Supabase project.
-- Images: `next.config.ts` allows `localhost`, `appleid.cdn-apple.com`, `www.gstatic.com`.
-- i18n locales: `en`, `es` (default `es`) via `next-intl`.
+## Repository layout (this app)
 
-### Authentication and Authorization
+```
+admin-portal/
+├── src/app/[locale]/          # Localized pages (dashboard, jobs, routes, …)
+├── src/app/api/               # REST handlers (auth, jobs, routes, billing, …)
+├── src/components/            # UI and feature components
+├── src/lib/                   # Supabase clients, billing, scheduling, encryption
+├── messages/en.json           # English translations
+├── messages/es.json           # Spanish translations
+├── e2e/                       # Playwright tests
+└── scripts/                   # Maintenance and setup helpers
+```
 
-- Auth: Supabase Auth via `@supabase/auth-helpers-nextjs`.
-- Session handling:
-  - Client: `src/lib/auth.ts` exposes `useAuth()` hook to track `user`, `session`, `loading`, `error`, and `signOut()`.
-  - Middleware: `src/middleware.ts` combines locale negotiation and Supabase session validation.
-    - If no session and path is not `/[locale]/auth/*`, redirect to `/[locale]/auth/login?redirectedFrom=<previous>`.
-    - If session and visiting `/[locale]/auth/*`, check if the user has digital assets; redirect to `/[locale]/wizard` (no assets) or `/[locale]/dashboard` (has assets).
-- Row-Level Security (RLS): enforced on `users`, `digital_assets`, and `beneficiaries`. Users can only select/insert/update/delete their own rows, checked via `auth.uid()` policies.
+**Database migrations** live at the monorepo root: `../supabase/migrations/`. Run Supabase CLI from the repo root, not from `admin-portal/`.
 
-### Data Model (Supabase)
+---
 
-- `public.users`
-  - id (uuid, PK) — must equal `auth.uid()`
-  - email (text, unique)
-  - full_name (text)
-  - created_at, updated_at (timestamptz)
-  - RLS: allows insert/select for individual user only.
+## Main routes
 
-- `public.beneficiaries`
-  - id (uuid, PK)
-  - user_id (uuid, FK → users.id)
-  - full_name (text)
-  - email (text|null)
-  - phone_number (text|null)
-  - notes (text|null)
-  - relationship_id (integer|null, FK → relationships.id) — relationship lookup defined elsewhere
-  - status (text, default `active`)
-  - last_notified_at (timestamp|null), notified (boolean, default false), email_verified (boolean, default false)
-  - created_at, updated_at (timestamptz)
-  - RLS: select/insert/update/delete only if `auth.uid() = user_id`.
+| Area | Path | Purpose |
+|------|------|---------|
+| Landing | `/[locale]/` | Marketing-style landing; redirects signed-in users to dashboard |
+| Auth | `/[locale]/auth/*` | Login, register, OAuth callback |
+| Dashboard | `/[locale]/dashboard` | Ops summary (jobs, routes, team, properties counts) |
+| Jobs | `/[locale]/jobs` | Service job list, detail, ad-hoc creation |
+| Routes | `/[locale]/routes` | Recurring routes, stops, schedules, job generation |
+| Properties | `/[locale]/properties` | Customer pool/property CRUD |
+| Team | `/[locale]/team` | Technicians and admins; invite flow |
+| Reports | `/[locale]/reports` | Job completion and technician stats |
+| Billing | `/[locale]/billing` | Plans, subscription, invoices |
+| Settings | `/[locale]/settings/*` | Profile, security PIN, preferences |
+| Wizard | `/[locale]/wizard` | Onboarding shell (extend `api/wizard/complete` for setup data) |
 
-- `public.digital_assets`
-  - id (uuid, PK)
-  - user_id (uuid, FK → users.id)
-  - asset_type (text)
-  - asset_name (text)
-  - beneficiary_id (uuid|null, FK → beneficiaries.id)
-  - status (text, default `unassigned`)
-  - email, password, website (text|null)
-  - valid_until (date|null)
-  - description (text|null)
-  - files (jsonb|null) and number_of_files (int, default 0)
-  - created_at, updated_at (timestamptz)
-  - RLS: select/insert/update/delete only if `auth.uid() = user_id`.
+Navigation is defined in `src/components/Navigation.tsx` (sidebar). Legacy donor routes (`digital-assets`, `beneficiaries`) no longer exist.
 
-TypeScript types: `src/lib/supabase.ts` declares a `Database` type that matches these tables for typed queries.
+---
 
-### Internationalization
+## Authentication
 
-- Library: `next-intl`.
-- Routing: `src/i18n/routing.ts` defines `locales = ['en','es']`, `defaultLocale = 'es'`.
-- Middleware: negotiates locale from URL and enforces redirects.
-- Content: translation message files are present under `cadenza-app/messages/` and `cadenza-app/cadenza-app/src/messages/`. The user prefers lowercase hyphen-separated keys in `@en.json` and `@es.json` [[memory:3376191]].
+- **Client:** `src/lib/auth.ts` — `useAuth()` hook.
+- **Middleware:** `src/middleware.ts` — locale negotiation + Supabase session refresh; unauthenticated page requests redirect to `/[locale]/auth/login`.
+- **API routes:** Matcher excludes `/api`; each handler calls `createAuthenticatedRouteClient()` and returns 401 when unauthenticated.
+- **Post-login:** Users go to `/[locale]/dashboard` (see `auth-form.tsx`).
 
-### App Navigation and Pages (high level)
+---
 
-- Auth area: `src/app/[locale]/auth/`
-  - `login`, `register`, `callback`, test route
-  - `auth-form.tsx` supports email/password and social sign-ins (Google/Apple functions present as stubs)
+## Data model (Cadenza)
 
-- Wizard: `src/app/[locale]/wizard/`
-  - Multi-step flow (`welcome` → `asset-type` → `asset-details` → `beneficiary` → `final`)
-  - Fetches relationship options, collects initial asset data, and persists when finishing.
+Primary tables (all prefixed `cadenza_`):
 
-- Dashboard: `src/app/[locale]/dashboard/`
-  - Summary of user status (assets, beneficiaries) and quick actions.
+- `cadenza_companies` — tenant root
+- `cadenza_profiles` — user ↔ company, role, `encrypted_storage_key`
+- `cadenza_properties` — customer pools / service addresses
+- `cadenza_routes`, `cadenza_route_stops`, `cadenza_route_stop_schedules` — recurring service routes
+- `cadenza_service_jobs` — scheduled or ad-hoc jobs (`job_source`: `route` | `ad_hoc`)
+- `cadenza_visit_reasons`, `cadenza_invite_codes`
+- `cadenza_billing_plans`, `cadenza_billing_subscriptions`, invoices/payment methods
 
-- Digital Assets: `src/app/[locale]/digital-assets/`
-  - List, filter, create, edit, delete assets
-  - Assign beneficiary to asset; manage attachments via `AssetAttachmentsModal`
-  - `AddAssetModal` uses `AddAssetForm` which is driven by `constants/assetTypes.ts` for dynamic fields and validation hints
+Typed loosely via `CadenzaSupabaseClient` in `src/lib/supabase-cadenza.ts` (cast from the Supabase client in API routes). Legacy `Database` type in `src/lib/supabase.ts` covers auth/billing helper tables only.
 
-- Beneficiaries: `src/app/[locale]/beneficiaries/`
-  - List, create, update, delete beneficiaries; track verification and notification status
+Full schema reference: `docs/schema.sql`.
 
-### UI System
+---
 
-- Built on Radix primitives with small wrapper components under `src/components/ui/`:
-  - `button`, `card`, `dialog`, `dropdown-menu`, `form`, `input`, `label`, `select`, `scroll-area`, `textarea`, `sonner` toaster
-- Composition utilities: `cn` helper; `class-variance-authority` and `tailwind-merge` for styling.
-- Icons: `lucide-react`.
+## Key backend flows
 
-### Middleware Behavior (detailed)
+### Route → job generation
 
-1) Run `next-intl` middleware for locale negotiation.
-2) Build Supabase middleware client with request/response.
-3) Fetch session and inspect the current pathname.
-4) If no session and not under `/[locale]/auth/*`, redirect to `/[locale]/auth/login` with `redirectedFrom` param.
-5) If session and currently under `/[locale]/auth/*`, query for one `digital_assets` row by `user_id`. Redirect:
-   - To `/[locale]/wizard` if 0 assets;
-   - To `/[locale]/dashboard` otherwise.
+Daily cron (`/api/cron/generate-route-jobs`, 06:00 UTC) materializes jobs from route stop schedules into `cadenza_service_jobs`. Logic: `src/lib/generate-route-jobs-cron.ts`, `schedule.ts`, `reconcile-route-jobs.ts`.
 
-### File Attachments (overview)
+### Encrypted uploads
 
-- Asset attachments managed via `AssetAttachmentsModal`:
-  - Builds a list of files (with type inference and icons), supports preview and download behaviors, and upload/delete operations.
-  - The `files` array is stored in the `digital_assets.files` JSONB field and `number_of_files` is kept in sync.
+`POST /api/storage/upload` encrypts files with a per-user DEK (stored encrypted on `cadenza_profiles`). Master key: `STORAGE_MASTER_KEY`. Do not change the HKDF salt documented in `CLAUDE.md`.
 
-### Marketing Site Highlights (`cadenza-site/`)
+### Billing
 
-- `_config.yml` sets `lang: es`, `url: https://cadenzaops.com`, and `alternate_languages: en`.
-- `_layouts/default.html` includes:
-  - GTM snippet with container `GT-MK5DRWPX` and Google Analytics `G-WQ020FXKLE` (through `analytics.html`).
-  - Consent banner (`_includes/consent-banner.html`) that sets a `cookie_preferences` cookie, toggles `gtag('consent','update', ...)`, and pushes a `consent_update` event to dataLayer.
-  - Navigation links to the app (`https://app.cadenzaops.com/es/auth/login` and `/register`).
-- SEO tags: `_includes/tags.html` configures og/twitter/canonical and structured data for the organization.
+Webhooks: `/api/webhooks/stripe`, `/api/webhooks/payu`. Plan limits: `src/lib/subscription/limits.ts` (storage/file-size; no legacy asset/beneficiary gating).
 
-### Deployment and Hosting (assumptions)
+---
 
-- App (`cadenza-app/`):
-  - Deploy to a Next.js-compatible host (Vercel or similar). Ensure env vars for Supabase are set in the deployment environment.
-  - Image domains configured in `next.config.ts` must be whitelisted.
-  - Middleware requires Edge Runtime compatibility for best performance (default Next.js middleware environment is fine).
+## Internationalization
 
-- Site (`cadenza-site/`):
-  - Jekyll 4 site: build via `bundle exec jekyll build` and serve via static hosting or GitHub Pages.
-  - Ensure GTM/GA IDs are kept in secrets if templating is added later.
+- Message files: `messages/en.json`, `messages/es.json` (kept in parity).
+- Use `useTranslations()` with full keys (e.g. `t('settings.profile')`) or `useTranslations('settings')` + `t('profile')`.
+- Dynamic keys: `poolType_*`, `poolSurface_*`, `status_*`, `roles.*`, `subscription*`, `invoice*`.
 
-### Coding Conventions
+---
 
-- TypeScript with explicit types on exported APIs; avoid `any`.
-- UI code aims for readability; prefer descriptive variable names.
-- Minimal try/catch; real handling only (avoid swallowing errors).
-- I18n keys: lowercase hyphen-separated per user preference [[memory:3376191]].
+## Environment variables
 
-### Adding New Features (playbook)
+See `.env.example` and `CLAUDE.md`. Minimum:
 
-1) Define the data needs:
-   - If new columns/tables are required, add a Supabase migration in `cadenza-app/supabase/migrations/` with RLS policies mirroring existing patterns.
-   - Update `Database` types in `src/lib/supabase.ts` to match the new schema.
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`
+- `STORAGE_MASTER_KEY`, `CRON_SECRET`, `RESEND_API_KEY` (PIN reset)
+- Payment provider keys when billing is enabled
 
-2) Wire product surfaces:
-   - Add new routes under `src/app/[locale]/...` using the existing structure.
-   - Use `middleware.ts` rules to decide if new routes require auth or public access.
+---
 
-3) Build UX with existing UI primitives:
-   - Favor `src/components/ui/*` components and follow layout patterns in pages like digital assets and beneficiaries.
-   - For multi-step setup, mirror `wizard` UX flow patterns.
+## Adding features (checklist)
 
-4) Localize content:
-   - Add keys to `messages/en.json` and `messages/es.json` with lowercase hyphen-separated naming.
-   - Use `next-intl` hooks/components to load messages per locale.
+1. **Schema** — Add migration under `../supabase/migrations/` with RLS scoped by `company_id`.
+2. **API** — Follow `api/jobs/route.ts`: authenticate → load profile → query via `CadenzaSupabaseClient`.
+3. **UI** — Page under `src/app/[locale]/(dashboard)/`; reuse `components/ui/*`.
+4. **i18n** — Add keys to both `messages/en.json` and `messages/es.json`.
+5. **QA** — Verify RLS isolation between companies; run `npm test` and `npm run build`.
 
-5) Validate and test:
-   - Ensure RLS policies allow only owners to read/write their data.
-   - Confirm middleware redirects and session checks still behave as intended.
-   - Add form validation with Zod and surface errors through the existing form components.
+---
 
-### Known IDs and Integrations
+## Related docs
 
-- Google Tag Manager container: `GT-MK5DRWPX` (marketing site)
-- Google Analytics measurement ID: `G-WQ020FXKLE` (marketing site)
-
-### Glossary
-
-- Asset: A digital record (credentials, instructions, documents) that the user wants to manage and potentially share with beneficiaries.
-- Beneficiary: A designated person who may receive access to specific assets.
-- Wizard: First-time flow to guide users through creating their first asset and configuring beneficiaries.
-
-
+| Document | Location |
+|----------|----------|
+| MVP scope & architecture | `docs/architecture/SOLUTION.md` |
+| Admin feature spec | `docs/specs/FEATURE-ADMIN-PORTAL.md` |
+| Database schema | `docs/schema.sql` |
+| Donor app overview (archived) | `docs/archive/ABOUT-donor-app.md` |
+| Agent/dev guide | `CLAUDE.md` |

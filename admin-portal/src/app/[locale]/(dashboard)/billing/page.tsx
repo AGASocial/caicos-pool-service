@@ -30,9 +30,7 @@ interface PlanFeatures {
   real_time_gps_tracking?: boolean;
   sso_saml?: boolean;
   dedicated_account_manager?: boolean;
-  /** Legacy keys (optional) */
-  max_assets?: number;
-  max_beneficiaries?: number;
+  /** Legacy keys ignored at runtime (optional) */
   max_storage_mb?: number;
   [key: string]: number | boolean | undefined;
 }

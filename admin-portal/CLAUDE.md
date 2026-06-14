@@ -10,14 +10,11 @@ Stack: Next.js 16 App Router (Turbopack), React 19, TypeScript strict, Tailwind 
 
 ## Legacy Code Warning
 
-This app was bootstrapped by copying a digital-assets/beneficiaries starter product (see `ADMIN-PORTAL-PLAN.md`). Leftovers from that donor app still compile and run but are **not the product**:
+The admin portal was bootstrapped from a donor app. The only remaining donor-era surface is:
 
-- Pages `[locale]/(dashboard)/digital-assets`, `beneficiaries`, `wizard`; APIs `api/assets/*`, `api/beneficiaries/*`, `api/wizard/*`
-- `src/models/`, `src/constants/assetTypes.ts`, `src/lib/assetTypes.ts`, and the `Database` type in `src/lib/supabase.ts` (users/digital_assets/beneficiaries)
-- `[locale]/page.tsx` still sends signed-in users with no "assets" to `/wizard`
-- `ABOUT.md` and most `e2e/*.spec.ts` skeletons describe the donor product
+- `[locale]/(dashboard)/wizard` and `api/wizard/complete` — Cadenza onboarding shell (extend when wizard collects real setup data)
 
-Do not model new features on these. The real domain is the `cadenza_*` tables and the jobs/routes/properties/team code.
+Do not reintroduce digital-assets/beneficiaries flows. The product domain is `cadenza_*` tables and jobs/routes/properties/team code.
 
 ## Commands
 
@@ -72,7 +69,7 @@ Routes have stops with weekly schedules (`cadenza_route_stop_schedules`). Jobs a
 
 ### Encrypted file storage
 
-Envelope encryption in `src/lib/encryption.ts`: `STORAGE_MASTER_KEY` env → HKDF → KEK; a random per-user DEK is stored AES-256-GCM-encrypted in `cadenza_profiles.encrypted_storage_key`; files are encrypted/decrypted as streams (`api/storage/upload`, `api/assets/attachments/[id]`). The HKDF salt string `'cadenza-master-key-v1'` is historical — **never change it**, or every stored key becomes undecryptable. Rotation: `scripts/rotate-keys.ts` (master key), `scripts/rotate-user-key.ts` (single user).
+Envelope encryption in `src/lib/encryption.ts`: `STORAGE_MASTER_KEY` env → HKDF → KEK; a random per-user DEK is stored AES-256-GCM-encrypted in `cadenza_profiles.encrypted_storage_key`; files are encrypted/decrypted as streams via `api/storage/upload`. The HKDF salt string `'cadenza-master-key-v1'` is historical — **never change it**, or every stored key becomes undecryptable. Rotation: `scripts/rotate-keys.ts` (master key), `scripts/rotate-user-key.ts` (single user).
 
 ### Security PIN
 
@@ -80,7 +77,7 @@ A second factor separate from login: bcrypt-hashed PIN in `users.security_pin_ha
 
 ### Billing
 
-Provider-agnostic gateway layer in `src/lib/billing/` (adapters + webhook normalizers) supporting Stripe and PayU; the active gateway is selected by `NEXT_PUBLIC_PAYMENT_GATEWAY`. Webhooks: `api/webhooks/stripe`, `api/webhooks/payu`; PayU return page at `[locale]/payments/payu/return`. Plan gating reads `cadenza_billing_plans` via `src/lib/subscription/limits.ts` (parts of it still gate donor-app concepts like assets/beneficiaries).
+Provider-agnostic gateway layer in `src/lib/billing/` (adapters + webhook normalizers) supporting Stripe and PayU; the active gateway is selected by `NEXT_PUBLIC_PAYMENT_GATEWAY`. Webhooks: `api/webhooks/stripe`, `api/webhooks/payu`; PayU return page at `[locale]/payments/payu/return`. Plan gating reads `cadenza_billing_plans` via `src/lib/subscription/limits.ts` (storage/file-size limits).
 
 ### Frontend data layer
 

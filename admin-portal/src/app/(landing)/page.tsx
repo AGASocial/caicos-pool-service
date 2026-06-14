@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Users, ArrowRight, Lock, Zap, Heart } from "lucide-react"
+import { Users, ArrowRight, Briefcase, Building2, Route, Heart } from "lucide-react"
 
 export default function Home() {
   return (
@@ -45,15 +45,14 @@ export default function Home() {
             </div>
 
             <h1 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70 drop-shadow-sm">
-              Secure Your <br className="hidden sm:block" />
+              Run Your <br className="hidden sm:block" />
               <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-violet-500">
-                Digital Legacy
+                Pool Service
               </span>
             </h1>
 
             <p className="max-w-[42rem] leading-normal text-muted-foreground text-lg sm:text-xl sm:leading-8">
-              cadenza helps you manage styling, securely store assets, and ensure your digital presence is handled exactly how you want.
-              The future of digital inheritance is here.
+              Cadenza helps pool service companies schedule jobs, manage routes, coordinate technicians, and track service history from one admin portal.
             </p>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:space-x-4 w-full sm:w-auto pt-4">
@@ -75,10 +74,10 @@ export default function Home() {
         <section className="container space-y-6 py-8 md:py-12 lg:py-24 px-4 sm:px-6 relative">
           <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center mb-10">
             <h2 className="font-heading text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
-              Features built for peace of mind
+              Built for field service teams
             </h2>
             <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-              We&apos;ve redesigned the experience to be intuitive, secure, and beautiful.
+              Schedule recurring routes, assign technicians, and keep every property service record in one place.
             </p>
           </div>
 
@@ -86,18 +85,18 @@ export default function Home() {
             <Card className="glass-card hover:-translate-y-1 transition-transform duration-300">
               <CardHeader>
                 <div className="p-2 w-fit rounded-lg bg-primary/10 mb-2">
-                  <Lock className="h-6 w-6 text-primary" />
+                  <Briefcase className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Digital Vault</CardTitle>
+                <CardTitle>Jobs & Scheduling</CardTitle>
                 <CardDescription>
-                  Securely store assets with military-grade encryption.
+                  Create ad-hoc jobs or generate them from recurring routes.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
-                  <li>256-bit encryption</li>
-                  <li>Biometric access</li>
-                  <li>Cloud redundancy</li>
+                  <li>Daily job lists for technicians</li>
+                  <li>Route-based automation</li>
+                  <li>Service history per property</li>
                 </ul>
               </CardContent>
             </Card>
@@ -105,18 +104,18 @@ export default function Home() {
             <Card className="glass-card hover:-translate-y-1 transition-transform duration-300">
               <CardHeader>
                 <div className="p-2 w-fit rounded-lg bg-primary/10 mb-2">
-                  <Users className="h-6 w-6 text-primary" />
+                  <Building2 className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Beneficiaries</CardTitle>
+                <CardTitle>Properties</CardTitle>
                 <CardDescription>
-                  Assign specific trusted contacts for each asset.
+                  Manage customer pools, access notes, and service preferences.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
-                  <li>Multi-user access</li>
-                  <li>Role-based permissions</li>
-                  <li>Instant notifications</li>
+                  <li>Centralized property records</li>
+                  <li>Equipment and chemical history</li>
+                  <li>Photo documentation</li>
                 </ul>
               </CardContent>
             </Card>
@@ -124,18 +123,18 @@ export default function Home() {
             <Card className="glass-card hover:-translate-y-1 transition-transform duration-300">
               <CardHeader>
                 <div className="p-2 w-fit rounded-lg bg-primary/10 mb-2">
-                  <Zap className="h-6 w-6 text-primary" />
+                  <Route className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Smart Transfer</CardTitle>
+                <CardTitle>Routes & Team</CardTitle>
                 <CardDescription>
-                  Automated protocols to release information when needed.
+                  Organize technicians, routes, and stops across your service area.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
-                  <li>Inactivity detection</li>
-                  <li>Verifier confirmation</li>
-                  <li>Scheduled release</li>
+                  <li>Weekly stop schedules</li>
+                  <li>Role-based team access</li>
+                  <li>Multi-tenant by company</li>
                 </ul>
               </CardContent>
             </Card>
@@ -149,7 +148,7 @@ export default function Home() {
               Trusted by thousands
             </h2>
             <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-              Join the growing community of people securing their digital future.
+              Join pool service companies using Cadenza to run operations in the field and the office.
             </p>
             <div className="flex w-full items-center justify-center gap-8 pt-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
               {/* Placeholders for logos */}

@@ -36,8 +36,6 @@ export interface PlanDefinition {
  * -1 indicates unlimited
  */
 export interface PlanFeatures {
-  max_assets: number;
-  max_beneficiaries: number;
   max_file_size_mb: number;
   max_storage_mb: number;
   priority_support: boolean;

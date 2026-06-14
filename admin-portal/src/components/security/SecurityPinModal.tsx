@@ -172,7 +172,7 @@ export default function SecurityPinModal({ isOpen, mode, onSuccess, onCancel, fo
 
     const getDescription = () => {
         if (step === "enter") return t("enterPinDescription") !== "enterPinDescription" ? t("enterPinDescription") : "Please enter your 6-digit PIN to access this section.";
-        if (step === "create") return t("createPinDescription") !== "createPinDescription" ? t("createPinDescription") : "Set a 6-digit PIN to secure your assets and beneficiaries.";
+        if (step === "create") return t("createPinDescription") !== "createPinDescription" ? t("createPinDescription") : "Set a 6-digit PIN to secure sensitive settings.";
         if (step === "confirm") return t("confirmPinDescription") !== "confirmPinDescription" ? t("confirmPinDescription") : "Re-enter your PIN to confirm.";
         if (step === "reset-request") return "We will send a 6-digit verification code to your email address.";
         if (step === "reset-verify") return "Enter the verification code sent to your email.";
