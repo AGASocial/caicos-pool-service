@@ -82,11 +82,14 @@ export async function GET(request: NextRequest) {
   const fieldsParam = searchParams.get('fields');
   const { limit, cursor } = parsePaginationParams(searchParams);
 
-  const jobSelect = fieldsParam === 'detail' ? JOB_DETAIL_SELECT : JOB_LIST_SELECT;
+  const client = supabase as unknown as CadenzaSupabaseClient;
+  const useDetailFields = fieldsParam === 'detail';
 
-  let query = (supabase as unknown as CadenzaSupabaseClient)
-    .from('cadenza_service_jobs')
-    .select(jobSelect)
+  let query = useDetailFields
+    ? client.from('cadenza_service_jobs').select(JOB_DETAIL_SELECT)
+    : client.from('cadenza_service_jobs').select(JOB_LIST_SELECT);
+
+  query = query
     .order('scheduled_date', { ascending: true })
     .order('scheduled_time', { ascending: true, nullsFirst: false })
     .order('id', { ascending: true });
@@ -133,7 +136,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const rows = (data ?? []) as JobRow[];
+  const rows = (data ?? []) as unknown as JobRow[];
   return NextResponse.json(buildPaginatedResponse(rows, limit, jobSortKey));
 }
 

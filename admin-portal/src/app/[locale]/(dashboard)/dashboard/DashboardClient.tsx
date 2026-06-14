@@ -6,17 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Briefcase, MapPin, Users, Building2, ChevronRight, Route as RouteIcon } from "lucide-react";
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
-
-type DashboardJob = {
-  id: string;
-  scheduled_date: string;
-  scheduled_time: string | null;
-  status: string;
-  created_at: string;
-  property: { id: string; customer_name: string; address: string } | null;
-  technician: { id: string; full_name: string } | null;
-  route: { id: string; name: string } | null;
-};
+import type { DashboardJob } from '@/lib/server-data';
 
 type DashboardStats = {
   totalJobs: number;

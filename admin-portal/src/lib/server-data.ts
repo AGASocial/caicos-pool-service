@@ -4,6 +4,37 @@ import { buildPaginatedResponse } from '@/lib/pagination';
 
 /** Server-side data helpers for RSC pages (US-F-001). */
 
+export type DashboardJob = {
+  id: string;
+  scheduled_date: string;
+  scheduled_time: string | null;
+  status: string;
+  created_at: string;
+  property: { id: string; customer_name: string; address: string } | null;
+  technician: { id: string; full_name: string } | null;
+  route: { id: string; name: string } | null;
+};
+
+type Relation<T> = T | T[] | null | undefined;
+
+function firstRelation<T>(value: Relation<T>): T | null {
+  if (value == null) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+function normalizeDashboardJob(row: Record<string, unknown>): DashboardJob {
+  return {
+    id: row.id as string,
+    scheduled_date: row.scheduled_date as string,
+    scheduled_time: (row.scheduled_time as string | null) ?? null,
+    status: row.status as string,
+    created_at: row.created_at as string,
+    property: firstRelation(row.property as Relation<DashboardJob['property']>),
+    technician: firstRelation(row.technician as Relation<DashboardJob['technician']>),
+    route: firstRelation(row.route as Relation<DashboardJob['route']>),
+  };
+}
+
 export async function fetchDashboardServerData() {
   const supabase = await createRouteClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -51,8 +82,8 @@ export async function fetchDashboardServerData() {
       totalTeamMembers: statsRow?.total_team_members ?? 0,
       totalProperties: statsRow?.total_properties ?? 0,
     },
-    completedJobs: completedRes.data ?? [],
-    pendingJobs: pendingRes.data ?? [],
+    completedJobs: (completedRes.data ?? []).map(normalizeDashboardJob),
+    pendingJobs: (pendingRes.data ?? []).map(normalizeDashboardJob),
   };
 }
 
