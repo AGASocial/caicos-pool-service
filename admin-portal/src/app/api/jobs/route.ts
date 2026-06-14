@@ -1,10 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
+import {
+  buildPaginatedResponse,
+  decodeCursor,
+  parsePaginationParams,
+} from '@/lib/pagination';
+
+/** Local YYYY-MM-DD without UTC drift. */
+function localDateParts(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * Dates in [from, to] matching JS getDay() (0=Sun … 6=Sat), pushed to SQL via IN filter.
+ * Equivalent to EXTRACT(DOW FROM scheduled_date) = dow within the bounded range.
+ */
+function datesMatchingDayOfWeek(from: string, to: string, dow: number): string[] {
+  const fromParts = from.split('-').map(Number);
+  const toParts = to.split('-').map(Number);
+  if (fromParts.length !== 3 || toParts.length !== 3) return [];
+  const start = new Date(fromParts[0], fromParts[1] - 1, fromParts[2]);
+  const end = new Date(toParts[0], toParts[1] - 1, toParts[2]);
+  const dates: string[] = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    if (d.getDay() === dow) dates.push(localDateParts(d));
+  }
+  return dates;
+}
+
+type JobRow = {
+  id: string;
+  scheduled_date: string;
+  scheduled_time: string | null;
+};
+
+function jobSortKey(row: JobRow): string {
+  return `${row.scheduled_date}|${row.scheduled_time ?? ''}|${row.id}`;
+}
+
+const JOB_LIST_SELECT = `
+  id, property_id, technician_id, route_id, scheduled_date, scheduled_time, status,
+  job_source, visit_kind_id,
+  property:cadenza_properties!property_id(id, customer_name, address),
+  technician:cadenza_profiles!technician_id(id, full_name),
+  route:cadenza_routes!route_id(id, name),
+  visit_kind:cadenza_visit_reasons!visit_kind_id(id, slug, label)
+`;
+
+const JOB_DETAIL_SELECT = `
+  id, property_id, technician_id, route_id, scheduled_date, scheduled_time, status,
+  route_order, notes, job_source, visit_kind_id, created_at, estimated_duration_min,
+  property:cadenza_properties!property_id(id, customer_name, address),
+  technician:cadenza_profiles!technician_id(id, full_name),
+  route:cadenza_routes!route_id(id, name),
+  visit_kind:cadenza_visit_reasons!visit_kind_id(id, slug, label)
+`;
 
 /**
  * List jobs for the current user's company.
- * Query: date_from, date_to (YYYY-MM-DD), technician_id, status
+ * Query: date_from, date_to, technician_id, status, day_of_week, limit, cursor
  */
 export async function GET(request: NextRequest) {
   const { supabase, user } = await createAuthenticatedRouteClient();
@@ -21,29 +79,17 @@ export async function GET(request: NextRequest) {
   const jobSource = searchParams.get('job_source');
   const routeId = searchParams.get('route_id');
   const dayOfWeekParam = searchParams.get('day_of_week');
+  const fieldsParam = searchParams.get('fields');
+  const { limit, cursor } = parsePaginationParams(searchParams);
+
+  const jobSelect = fieldsParam === 'detail' ? JOB_DETAIL_SELECT : JOB_LIST_SELECT;
 
   let query = (supabase as unknown as CadenzaSupabaseClient)
     .from('cadenza_service_jobs')
-    .select(`
-      id,
-      property_id,
-      technician_id,
-      route_id,
-      scheduled_date,
-      scheduled_time,
-      status,
-      route_order,
-      notes,
-      job_source,
-      visit_kind_id,
-      created_at,
-      property:cadenza_properties!property_id(id, customer_name, address),
-      technician:cadenza_profiles!technician_id(id, full_name),
-      route:cadenza_routes!route_id(id, name),
-      visit_kind:cadenza_visit_reasons!visit_kind_id(id, slug, label)
-    `)
+    .select(jobSelect)
     .order('scheduled_date', { ascending: true })
-    .order('scheduled_time', { ascending: true, nullsFirst: false });
+    .order('scheduled_time', { ascending: true, nullsFirst: false })
+    .order('id', { ascending: true });
 
   if (dateFrom) query = query.gte('scheduled_date', dateFrom);
   if (dateTo) query = query.lte('scheduled_date', dateTo);
@@ -52,6 +98,34 @@ export async function GET(request: NextRequest) {
   if (jobSource === 'route' || jobSource === 'ad_hoc') query = query.eq('job_source', jobSource);
   if (routeId) query = query.eq('route_id', routeId);
 
+  if (dayOfWeekParam !== null && dayOfWeekParam !== '') {
+    const dow = Number(dayOfWeekParam);
+    if (!Number.isNaN(dow) && dow >= 0 && dow <= 6) {
+      if (dateFrom && dateTo) {
+        const matchingDates = datesMatchingDayOfWeek(dateFrom, dateTo, dow);
+        if (matchingDates.length === 0) {
+          return NextResponse.json(
+            buildPaginatedResponse([], limit, jobSortKey),
+          );
+        }
+        query = query.in('scheduled_date', matchingDates);
+      }
+    }
+  }
+
+  if (cursor) {
+    const decoded = decodeCursor(cursor);
+    if (decoded) {
+      const [cursorDate, , cursorId] = decoded.sortKey.split('|');
+      const id = cursorId || decoded.id;
+      query = query.or(
+        `scheduled_date.gt.${cursorDate},and(scheduled_date.eq.${cursorDate},id.gt.${id})`,
+      );
+    }
+  }
+
+  query = query.limit(limit + 1);
+
   const { data, error } = await query;
 
   if (error) {
@@ -59,20 +133,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  let rows = data || [];
-  if (dayOfWeekParam !== null && dayOfWeekParam !== '') {
-    const dow = Number(dayOfWeekParam);
-    if (!Number.isNaN(dow) && dow >= 0 && dow <= 6) {
-      rows = rows.filter((row: { scheduled_date: string }) => {
-        const parts = row.scheduled_date?.split('-').map(Number);
-        if (!parts || parts.length !== 3) return false;
-        const [y, m, d] = parts;
-        return new Date(y, m - 1, d).getDay() === dow;
-      });
-    }
-  }
-
-  return NextResponse.json(rows);
+  const rows = (data ?? []) as JobRow[];
+  return NextResponse.json(buildPaginatedResponse(rows, limit, jobSortKey));
 }
 
 /**
@@ -145,7 +207,6 @@ export async function POST(request: NextRequest) {
     const validStatuses = ['pending', 'in_progress', 'completed', 'skipped', 'cancelled'];
     const jobStatus = validStatuses.includes(status) ? status : 'pending';
 
-    /** Route from pattern (cadenza_route_stops) so ad-hoc jobs still link to the property's route for reporting. */
     const { data: stopRow, error: stopErr } = await (supabase as unknown as CadenzaSupabaseClient)
       .from('cadenza_route_stops')
       .select('route_id')

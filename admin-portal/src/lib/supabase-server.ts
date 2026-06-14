@@ -3,6 +3,17 @@ import { cookies } from 'next/headers';
 import type { Database } from '@/lib/supabase';
 import { verifySecuritySessionToken } from '@/lib/security';
 
+const SUPABASE_FETCH_TIMEOUT_MS = 10_000;
+
+function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), SUPABASE_FETCH_TIMEOUT_MS);
+    const signal = init?.signal
+        ? AbortSignal.any([init.signal, controller.signal])
+        : controller.signal;
+    return fetch(input, { ...init, signal }).finally(() => clearTimeout(timeoutId));
+}
+
 /**
  * Creates an authenticated Supabase server client for use in API routes.
  * Eliminates the repeated boilerplate of setting up cookie handling.
@@ -14,6 +25,7 @@ export async function createRouteClient() {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
+            global: { fetch: fetchWithTimeout },
             cookies: {
                 getAll() {
                     return cookieStore.getAll();

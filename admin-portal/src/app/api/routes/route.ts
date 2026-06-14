@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
+import {
+  buildPaginatedResponse,
+  decodeCursor,
+  parsePaginationParams,
+} from '@/lib/pagination';
 
-export async function GET() {
+type RouteRow = { id: string; name: string; technician_id: string; stops?: unknown[] };
+
+function routeSortKey(row: RouteRow): string {
+  return `${row.name}|${row.id}`;
+}
+
+export async function GET(request: NextRequest) {
   const { supabase, user } = await createAuthenticatedRouteClient();
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: routes, error } = await (supabase as unknown as CadenzaSupabaseClient)
+  const { searchParams } = new URL(request.url);
+  const { limit, cursor } = parsePaginationParams(searchParams);
+
+  let query = (supabase as unknown as CadenzaSupabaseClient)
     .from('cadenza_routes')
     .select(`
       id,
@@ -21,20 +35,38 @@ export async function GET() {
       technician:cadenza_profiles!technician_id(id, full_name),
       stops:cadenza_route_stops(id)
     `)
-    .order('name', { ascending: true });
+    .order('name', { ascending: true })
+    .order('id', { ascending: true });
+
+  if (cursor) {
+    const decoded = decodeCursor(cursor);
+    if (decoded) {
+      const [cursorName, cursorId] = decoded.sortKey.split('|');
+      const id = cursorId || decoded.id;
+      query = query.or(
+        `name.gt.${cursorName},and(name.eq.${cursorName},id.gt.${id})`,
+      );
+    }
+  }
+
+  query = query.limit(limit + 1);
+
+  const { data: routes, error } = await query;
 
   if (error) {
     console.error('Supabase error fetching routes:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  type RouteRow = { id: string; name: string; technician_id: string; stops?: unknown[] };
   const withCount = (routes || []).map((r: RouteRow) => ({
     ...r,
     stop_count: Array.isArray(r.stops) ? r.stops.length : 0,
+    stops: undefined,
   }));
 
-  return NextResponse.json(withCount);
+  return NextResponse.json(
+    buildPaginatedResponse(withCount as RouteRow[], limit, routeSortKey),
+  );
 }
 
 export async function POST(request: NextRequest) {

@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { ArrowLeft, Trash2, Plus, Calendar, MapPin } from 'lucide-react';
 import { formatLocalYmd } from '@/lib/date-week';
+import { unwrapPaginated } from '@/lib/pagination';
 
 type Property = { id: string; customer_name: string; address?: string };
 type ScheduleSeg = {
@@ -78,15 +79,21 @@ export default function RouteDetailPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/routes/${id}`);
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          setError(data.error || res.statusText);
-          setLoading(false);
+        const [routeRes, propsRes] = await Promise.all([
+          fetch(`/api/routes/${id}`),
+          fetch('/api/properties?unassigned=1'),
+        ]);
+        if (!routeRes.ok) {
+          const data = await routeRes.json().catch(() => ({}));
+          setError(data.error || routeRes.statusText);
           return;
         }
-        const data = await res.json();
-        if (!cancelled) setRoute(data);
+        const routeData = await routeRes.json();
+        if (!cancelled) setRoute(routeData);
+        if (propsRes.ok) {
+          const propsData = await propsRes.json();
+          if (!cancelled) setProperties(unwrapPaginated(propsData));
+        }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load');
       } finally {
@@ -98,23 +105,6 @@ export default function RouteDetailPage() {
     };
   }, [id]);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/properties?unassigned=true');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!cancelled) setProperties(Array.isArray(data) ? data : []);
-      } catch {
-        // ignore
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   async function refreshRoute() {
     if (!id) return;
     const [routeRes, propsRes] = await Promise.all([
@@ -124,7 +114,7 @@ export default function RouteDetailPage() {
     if (routeRes.ok) setRoute(await routeRes.json());
     if (propsRes.ok) {
       const data = await propsRes.json();
-      setProperties(Array.isArray(data) ? data : []);
+      setProperties(unwrapPaginated(data));
     }
   }
 
@@ -248,6 +238,24 @@ export default function RouteDetailPage() {
         body: JSON.stringify({ date: generateDate }),
       });
       const data = await res.json().catch(() => ({}));
+      if (res.status === 202 && data.generation_id) {
+        let status = data.status as string;
+        for (let i = 0; i < 60 && (status === 'pending' || status === 'processing'); i++) {
+          await new Promise((r) => setTimeout(r, 1000));
+          const poll = await fetch(`/api/jobs/generation-status/${data.generation_id}`);
+          if (!poll.ok) break;
+          const pollData = await poll.json();
+          status = pollData.status;
+          if (status === 'failed') {
+            setError(pollData.result?.error ?? 'Job generation failed');
+            setGenerating(false);
+            return;
+          }
+        }
+        setGenerating(false);
+        router.push(`/jobs?date=${generateDate}`);
+        return;
+      }
       if (!res.ok) {
         setError(data.error || res.statusText);
         setGenerating(false);

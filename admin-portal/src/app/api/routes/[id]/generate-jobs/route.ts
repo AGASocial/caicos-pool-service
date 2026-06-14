@@ -1,9 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { after } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
+import { generateRouteJobsForDate } from '@/lib/generate-route-jobs-for-date';
 import { pickSegmentForDate, toScheduleRow } from '@/lib/route-stop-schedule';
 import { loadSchedulesByStopId } from '@/lib/route-stop-schedules-db';
 import { stopMatchesDate } from '@/lib/schedule';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+
+const ASYNC_JOB_THRESHOLD = 25;
+
+async function processJobGenerationRun(runId: string, routeId: string, dateOnly: string) {
+  const client = supabaseAdmin as unknown as CadenzaSupabaseClient;
+
+  await client
+    .from('cadenza_job_generation_runs')
+    .update({ status: 'processing' })
+    .eq('id', runId);
+
+  try {
+    const result = await generateRouteJobsForDate(client, routeId, dateOnly);
+    await client
+      .from('cadenza_job_generation_runs')
+      .update({ status: 'completed', result })
+      .eq('id', runId);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Internal server error';
+    console.error(`Job generation run ${runId} failed:`, e);
+    await client
+      .from('cadenza_job_generation_runs')
+      .update({
+        status: 'failed',
+        result: { error: message },
+      })
+      .eq('id', runId);
+  }
+}
 
 export async function POST(
   request: NextRequest,
@@ -36,8 +68,9 @@ export async function POST(
     }
 
     const dateOnly = dateStr.slice(0, 10);
+    const client = supabase as unknown as CadenzaSupabaseClient;
 
-    const { data: route, error: routeError } = await (supabase as unknown as CadenzaSupabaseClient)
+    const { data: route, error: routeError } = await client
       .from('cadenza_routes')
       .select('id, company_id, technician_id')
       .eq('id', routeId)
@@ -50,7 +83,7 @@ export async function POST(
       );
     }
 
-    const { data: stops, error: stopsError } = await (supabase as unknown as CadenzaSupabaseClient)
+    const { data: stops, error: stopsError } = await client
       .from('cadenza_route_stops')
       .select('id, property_id, stop_order')
       .eq('route_id', routeId)
@@ -63,7 +96,6 @@ export async function POST(
       );
     }
 
-    const client = supabase as unknown as CadenzaSupabaseClient;
     const stopRows = stops as Array<{ id: string; property_id: string; stop_order: number }>;
     const scheduleByStop = await loadSchedulesByStopId(
       client,
@@ -102,43 +134,43 @@ export async function POST(
     const already = new Set(
       (existingRows ?? []).map((r: { property_id: string }) => r.property_id)
     );
-    const skippedAlready = matchingStops.filter((s) => already.has(s.property_id)).length;
+    const jobsToCreate = matchingStops.filter((stop) => !already.has(stop.property_id)).length;
 
-    const jobs = matchingStops
-      .filter((stop) => !already.has(stop.property_id))
-      .map((stop) => ({
-        company_id: route.company_id,
-        property_id: stop.property_id,
-        technician_id: route.technician_id,
-        route_id: routeId,
-        scheduled_date: dateOnly,
-        status: 'pending',
-        route_order: stop.stop_order,
-        job_source: 'route',
-        visit_kind_id: null,
-      }));
+    if (jobsToCreate > ASYNC_JOB_THRESHOLD) {
+      const { data: run, error: runError } = await client
+        .from('cadenza_job_generation_runs')
+        .insert({
+          route_id: routeId,
+          scheduled_date: dateOnly,
+          status: 'pending',
+        })
+        .select('id')
+        .single();
 
-    let inserted: unknown[] = [];
-    if (jobs.length > 0) {
-      const { data: ins, error: insertError } = await client
-        .from('cadenza_service_jobs')
-        .insert(jobs)
-        .select('id, property_id, scheduled_date, route_order');
-
-      if (insertError) {
-        console.error('Supabase error creating jobs:', insertError);
-        return NextResponse.json({ error: insertError.message }, { status: 500 });
+      if (runError || !run) {
+        console.error('Failed to create job generation run:', runError);
+        return NextResponse.json(
+          { error: runError?.message ?? 'Failed to queue job generation' },
+          { status: 500 }
+        );
       }
-      inserted = ins ?? [];
+
+      const generationId = run.id as string;
+      after(() => processJobGenerationRun(generationId, routeId, dateOnly));
+
+      return NextResponse.json(
+        {
+          generation_id: generationId,
+          status: 'pending',
+          date: dateOnly,
+          jobs_to_create: jobsToCreate,
+        },
+        { status: 202 }
+      );
     }
 
-    return NextResponse.json({
-      created: inserted.length,
-      skipped_already_scheduled: skippedAlready,
-      skipped_no_pattern_match: stops.length - matchingStops.length,
-      date: dateOnly,
-      jobs: inserted,
-    });
+    const result = await generateRouteJobsForDate(client, routeId, dateOnly);
+    return NextResponse.json(result);
   } catch (e) {
     console.error('POST /api/routes/[id]/generate-jobs error:', e);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

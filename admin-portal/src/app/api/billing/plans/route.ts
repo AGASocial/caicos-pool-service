@@ -1,8 +1,3 @@
-/**
- * GET /api/billing/plans
- * Get all available billing plans
- */
-
 import { createClient } from '@supabase/supabase-js';
 import { errorResponse, successResponse } from '@/lib/billing/server';
 
@@ -39,7 +34,13 @@ export async function GET() {
       active: plan.active,
     }));
 
-    return successResponse({ plans: transformedPlans || [] });
+    return NextResponse.json(
+      { plans: transformedPlans || [] },
+      {
+        status: 200,
+        headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' },
+      },
+    );
   } catch (error) {
     console.error('Error fetching plans:', error);
     return errorResponse(

@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
+import {
+  buildPaginatedResponse,
+  decodeCursor,
+  parsePaginationParams,
+} from '@/lib/pagination';
 
 const PROPERTY_BASE_FIELDS =
   'id, customer_name, customer_email, customer_phone, address, city, state, zip, gate_code, pool_type, pool_surface, notes, is_active, created_at';
 
 function attachRouteFromStopRow(row: Record<string, unknown>): Record<string, unknown> {
-  const stops = row.cadenza_route_stops;
-  const { cadenza_route_stops: _, ...rest } = row;
+  const stops = row.cadenza_route_stops ?? row.stops;
+  const rest = { ...row };
+  delete rest.cadenza_route_stops;
+  delete rest.stops;
   let stop: Record<string, unknown> | undefined;
   if (Array.isArray(stops)) {
     stop = stops[0] as Record<string, unknown> | undefined;
@@ -27,9 +34,15 @@ function attachRouteFromStopRow(row: Record<string, unknown>): Record<string, un
   return { ...rest, route };
 }
 
+type PropertyRow = { id: string; customer_name: string };
+
+function propertySortKey(row: PropertyRow): string {
+  return `${row.customer_name}|${row.id}`;
+}
+
 /**
  * List properties for the current user's company.
- * Query: active_only=false to include inactive; include_route=1 to add route { id, name } | null (from cadenza_route_stops).
+ * Query: active_only, include_route, unassigned, limit, cursor
  */
 export async function GET(request: NextRequest) {
   const { supabase, user } = await createAuthenticatedRouteClient();
@@ -44,30 +57,40 @@ export async function GET(request: NextRequest) {
     searchParams.get('include_route') === '1' || searchParams.get('include_route') === 'true';
   const unassignedOnly =
     searchParams.get('unassigned') === '1' || searchParams.get('unassigned') === 'true';
+  const { limit, cursor } = parsePaginationParams(searchParams);
 
   const select = includeRoute
-    ? `${PROPERTY_BASE_FIELDS}, cadenza_route_stops(route_id, cadenza_routes(id, name))`
-    : PROPERTY_BASE_FIELDS;
+    ? `${PROPERTY_BASE_FIELDS}, stops:cadenza_route_stops!left(route_id, cadenza_routes(id, name))`
+    : unassignedOnly
+      ? `${PROPERTY_BASE_FIELDS}, stops:cadenza_route_stops!left(id)`
+      : PROPERTY_BASE_FIELDS;
 
   let query = (supabase as unknown as CadenzaSupabaseClient)
     .from('cadenza_properties')
     .select(select)
-    .order('customer_name', { ascending: true });
+    .order('customer_name', { ascending: true })
+    .order('id', { ascending: true });
 
   if (activeOnly) {
     query = query.eq('is_active', true);
   }
 
   if (unassignedOnly) {
-    // Exclude properties that already have a stop on any route
-    const { data: assignedStops } = await (supabase as unknown as CadenzaSupabaseClient)
-      .from('cadenza_route_stops')
-      .select('property_id');
-    const assignedIds = (assignedStops ?? []).map((s) => s.property_id);
-    if (assignedIds.length > 0) {
-      query = query.not('id', 'in', `(${assignedIds.join(',')})`);
+    query = query.is('stops', null);
+  }
+
+  if (cursor) {
+    const decoded = decodeCursor(cursor);
+    if (decoded) {
+      const [cursorName, cursorId] = decoded.sortKey.split('|');
+      const id = cursorId || decoded.id;
+      query = query.or(
+        `customer_name.gt.${cursorName},and(customer_name.eq.${cursorName},id.gt.${id})`,
+      );
     }
   }
+
+  query = query.limit(limit + 1);
 
   const { data, error } = await query;
 
@@ -76,13 +99,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const rows = (data ?? []) as unknown[];
-  if (!includeRoute) {
-    return NextResponse.json(rows);
-  }
+  const rows = (data ?? []) as unknown as Record<string, unknown>[];
+  const mapped = includeRoute
+    ? rows.map((r) => attachRouteFromStopRow(r))
+    : rows.map((r) => {
+        const copy = { ...r };
+        delete copy.stops;
+        return copy;
+      });
 
   return NextResponse.json(
-    rows.map((r) => attachRouteFromStopRow(r as Record<string, unknown>))
+    buildPaginatedResponse(mapped as PropertyRow[], limit, propertySortKey),
   );
 }
 

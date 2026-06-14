@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { FileText, Calendar, AlertCircle, Loader2, Users } from 'lucide-react';
@@ -8,8 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import PaymentMethodsList from '@/components/billing/PaymentMethodsList';
 import { useTeam } from '@/lib/team';
+
+const PaymentMethodsList = dynamic(() => import('@/components/billing/PaymentMethodsList'), {
+  ssr: false,
+  loading: () => <div className="py-8 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>,
+});
 
 /** Plan features from cadenza_billing_plans (JSONB). -1 = unlimited. */
 interface PlanFeatures {

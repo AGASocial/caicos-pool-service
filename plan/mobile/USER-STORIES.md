@@ -9,7 +9,7 @@ Default agent: **React Native Developer**
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Medium |
 | **Phase** | 0 |
 | **Source findings** | Mobile assessment |
@@ -30,9 +30,9 @@ Today `app/(app)/(tabs)/index.tsx` fetches on both `useEffect` mount and `useFoc
 
 | ID | Task | Status |
 |----|------|--------|
-| T-M-001-1 | Remove redundant useFocusEffect fetch when useEffect already loaded | PENDING |
-| T-M-001-2 | Use staleTime or lastFetchedAt guard before refetch on focus | PENDING |
-| T-M-001-3 | Keep pull-to-refresh as explicit user-triggered refetch | PENDING |
+| T-M-001-1 | Remove redundant useFocusEffect fetch when useEffect already loaded | DONE |
+| T-M-001-2 | Use staleTime or lastFetchedAt guard before refetch on focus | DONE |
+| T-M-001-3 | Keep pull-to-refresh as explicit user-triggered refetch | DONE |
 
 ### Tech refinement notes
 
@@ -44,7 +44,7 @@ Consider Zustand store or TanStack Query if adopted in mobile app later.
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Medium |
 | **Phase** | 0 |
 | **Source findings** | Mobile assessment |
@@ -65,9 +65,9 @@ As a **technician**, I want job queries to use my cached session so that every l
 
 | ID | Task | Status |
 |----|------|--------|
-| T-M-002-1 | Subscribe to supabase.auth.onAuthStateChange for session user id | PENDING |
-| T-M-002-2 | Replace getUser() in fetchJobs with cached session user id | PENDING |
-| T-M-002-3 | Handle signed-out state without extra round-trip | PENDING |
+| T-M-002-1 | Subscribe to supabase.auth.onAuthStateChange for session user id | DONE |
+| T-M-002-2 | Replace getUser() in fetchJobs with cached session user id | DONE |
+| T-M-002-3 | Handle signed-out state without extra round-trip | DONE |
 
 ---
 
@@ -75,7 +75,7 @@ As a **technician**, I want job queries to use my cached session so that every l
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Medium |
 | **Phase** | 0 |
 | **Source findings** | Mobile assessment |
@@ -96,9 +96,9 @@ Current waterfall: job → report → photos → signed URLs (sequential effects
 
 | ID | Task | Status |
 |----|------|--------|
-| T-M-003-1 | Combine job + report fetch into single Promise.all where possible | PENDING |
-| T-M-003-2 | Defer photo signed URL batch until report id is known | PENDING |
-| T-M-003-3 | Show progressive loading states per section | PENDING |
+| T-M-003-1 | Combine job + report fetch into single Promise.all where possible | DONE |
+| T-M-003-2 | Defer photo signed URL batch until report id is known | DONE |
+| T-M-003-3 | Show progressive loading states per section | DONE |
 
 ---
 
@@ -106,7 +106,7 @@ Current waterfall: job → report → photos → signed URLs (sequential effects
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Low |
 | **Phase** | 1 |
 | **Source findings** | N-3 |
@@ -127,6 +127,6 @@ Signed URLs expire in 3600s; regenerated on each job detail load today.
 
 | ID | Task | Status |
 |----|------|--------|
-| T-M-004-1 | Store signed URLs with expiry timestamp in component or Zustand | PENDING |
-| T-M-004-2 | Refresh URLs only when within 5min of expiry | PENDING |
-| T-M-004-3 | Verify no stale URL display after report update | PENDING |
+| T-M-004-1 | Store signed URLs with expiry timestamp in component or Zustand | DONE |
+| T-M-004-2 | Refresh URLs only when within 5min of expiry | DONE |
+| T-M-004-3 | Verify no stale URL display after report update | DONE |

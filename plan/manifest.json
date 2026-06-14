@@ -2,14 +2,18 @@
   "version": "1.0.0",
   "created": "2026-06-13",
   "source": "Performance & Scalability Review — June 2026",
-  "statusValues": ["PENDING", "IN-PROGRESS", "DONE"],
+  "statusValues": [
+    "PENDING",
+    "IN-PROGRESS",
+    "DONE"
+  ],
   "summary": {
-    "totalStories": 30,
-    "totalTasks": 113,
+    "totalStories": 32,
+    "totalTasks": 116,
     "byStatus": {
-      "PENDING": 143,
+      "PENDING": 0,
       "IN-PROGRESS": 0,
-      "DONE": 0
+      "DONE": 116
     }
   },
   "stories": [
@@ -17,506 +21,1054 @@
       "id": "US-F-001",
       "domain": "frontend",
       "title": "Migrate read-heavy pages to React Server Components",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Critical",
       "phase": 1,
       "agent": "NextJS Developer",
-      "sourceFindings": ["F-1", "A-1"],
+      "sourceFindings": [
+        "F-1",
+        "A-1"
+      ],
       "tasks": [
-        { "id": "T-F-001-1", "title": "Audit dashboard/jobs/properties/routes pages for RSC candidacy", "status": "PENDING" },
-        { "id": "T-F-001-2", "title": "Create server-side data fetch helpers using createRouteClient", "status": "PENDING" },
-        { "id": "T-F-001-3", "title": "Migrate dashboard page to RSC with client islands for interactivity", "status": "PENDING" },
-        { "id": "T-F-001-4", "title": "Migrate jobs list page to RSC + client filter bar island", "status": "PENDING" },
-        { "id": "T-F-001-5", "title": "Migrate properties list page to RSC", "status": "PENDING" },
-        { "id": "T-F-001-6", "title": "Verify LCP and eliminate post-hydration fetch waterfall on migrated pages", "status": "PENDING" }
+        {
+          "id": "T-F-001-1",
+          "title": "Audit dashboard/jobs/properties/routes pages for RSC candidacy",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-001-2",
+          "title": "Create server-side data fetch helpers using createRouteClient",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-001-3",
+          "title": "Migrate dashboard page to RSC with client islands for interactivity",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-001-4",
+          "title": "Migrate jobs list page to RSC + client filter bar island",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-001-5",
+          "title": "Migrate properties list page to RSC",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-001-6",
+          "title": "Verify LCP and eliminate post-hydration fetch waterfall on migrated pages",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-F-002",
       "domain": "frontend",
       "title": "Standardize TanStack Query across admin data layer",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 0,
       "agent": "NextJS Developer",
-      "sourceFindings": ["F-2"],
+      "sourceFindings": [
+        "F-2"
+      ],
       "tasks": [
-        { "id": "T-F-002-1", "title": "Define shared query keys module (jobs, properties, routes, dashboard)", "status": "PENDING" },
-        { "id": "T-F-002-2", "title": "Create useJobs, useProperties, useRoutes hooks mirroring team.ts pattern", "status": "PENDING" },
-        { "id": "T-F-002-3", "title": "Replace raw fetch+useState on jobs page with useJobs", "status": "PENDING" },
-        { "id": "T-F-002-4", "title": "Replace raw fetch on properties and routes pages", "status": "PENDING" },
-        { "id": "T-F-002-5", "title": "Add mutation invalidation for create/update/delete flows", "status": "PENDING" }
+        {
+          "id": "T-F-002-1",
+          "title": "Define shared query keys module (jobs, properties, routes, dashboard)",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-002-2",
+          "title": "Create useJobs, useProperties, useRoutes hooks mirroring team.ts pattern",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-002-3",
+          "title": "Replace raw fetch+useState on jobs page with useJobs",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-002-4",
+          "title": "Replace raw fetch on properties and routes pages",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-002-5",
+          "title": "Add mutation invalidation for create/update/delete flows",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-F-003",
       "domain": "frontend",
       "title": "Reduce layout shell API fan-out on navigation",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 0,
       "agent": "NextJS Developer",
-      "sourceFindings": ["F-3"],
+      "sourceFindings": [
+        "F-3"
+      ],
       "tasks": [
-        { "id": "T-F-003-1", "title": "Remove pathname dependency from SecurityContext checkStatus effect", "status": "PENDING" },
-        { "id": "T-F-003-2", "title": "Move useAuth session to React Query with 5min staleTime", "status": "PENDING" },
-        { "id": "T-F-003-3", "title": "Move security check-session to React Query; revalidate on PIN success only", "status": "PENDING" },
-        { "id": "T-F-003-4", "title": "Deduplicate SessionBillingPrefetch with existing billing query hooks", "status": "PENDING" },
-        { "id": "T-F-003-5", "title": "Verify single network call per resource per session on route navigation", "status": "PENDING" }
+        {
+          "id": "T-F-003-1",
+          "title": "Remove pathname dependency from SecurityContext checkStatus effect",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-003-2",
+          "title": "Move useAuth session to React Query with 5min staleTime",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-003-3",
+          "title": "Move security check-session to React Query; revalidate on PIN success only",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-003-4",
+          "title": "Deduplicate SessionBillingPrefetch with existing billing query hooks",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-003-5",
+          "title": "Verify single network call per resource per session on route navigation",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-F-004",
       "domain": "frontend",
       "title": "Code-split heavy and legacy routes",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Medium",
       "phase": 1,
       "agent": "NextJS Developer",
-      "sourceFindings": ["F-5"],
+      "sourceFindings": [
+        "F-5"
+      ],
       "tasks": [
-        { "id": "T-F-004-1", "title": "Add next/dynamic for billing pages (Stripe components)", "status": "PENDING" },
-        { "id": "T-F-004-2", "title": "Lazy-load legacy wizard/digital-assets/beneficiaries pages", "status": "PENDING" },
-        { "id": "T-F-004-3", "title": "Remove unused framer-motion dependency if confirmed unused", "status": "PENDING" },
-        { "id": "T-F-004-4", "title": "Measure initial JS bundle size before/after with next build analyze", "status": "PENDING" }
+        {
+          "id": "T-F-004-1",
+          "title": "Add next/dynamic for billing pages (Stripe components)",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-004-2",
+          "title": "Lazy-load legacy wizard/digital-assets/beneficiaries pages",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-004-3",
+          "title": "Remove unused framer-motion dependency if confirmed unused",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-004-4",
+          "title": "Measure initial JS bundle size before/after with next build analyze",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-F-005",
       "domain": "frontend",
       "title": "Eliminate form page API waterfalls",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Medium",
       "phase": 0,
       "agent": "NextJS Developer",
-      "sourceFindings": ["F-6"],
+      "sourceFindings": [
+        "F-6"
+      ],
       "tasks": [
-        { "id": "T-F-005-1", "title": "Refactor jobs/new to parallel fetch (Promise.all or composite hook)", "status": "PENDING" },
-        { "id": "T-F-005-2", "title": "Refactor route detail page initial load to parallel fetch", "status": "PENDING" },
-        { "id": "T-F-005-3", "title": "Optional: consume GET /api/jobs/form-data composite endpoint when US-B-014 ready", "status": "PENDING" }
+        {
+          "id": "T-F-005-1",
+          "title": "Refactor jobs/new to parallel fetch (Promise.all or composite hook)",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-005-2",
+          "title": "Refactor route detail page initial load to parallel fetch",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-005-3",
+          "title": "Optional: consume GET /api/jobs/form-data composite endpoint when US-B-014 ready",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-F-006",
       "domain": "frontend",
       "title": "Client fetch utilities with timeout and abort",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Medium",
       "phase": 0,
       "agent": "NextJS Developer",
-      "sourceFindings": ["A-7"],
+      "sourceFindings": [
+        "A-7"
+      ],
       "tasks": [
-        { "id": "T-F-006-1", "title": "Create lib/api-fetch.ts with 10s AbortSignal timeout wrapper", "status": "PENDING" },
-        { "id": "T-F-006-2", "title": "Replace direct fetch calls in hooks with apiFetch", "status": "PENDING" },
-        { "id": "T-F-006-3", "title": "Document retry policy alignment with QueryClient defaults", "status": "PENDING" }
+        {
+          "id": "T-F-006-1",
+          "title": "Create lib/api-fetch.ts with 10s AbortSignal timeout wrapper",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-006-2",
+          "title": "Replace direct fetch calls in hooks with apiFetch",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-006-3",
+          "title": "Document retry policy alignment with QueryClient defaults",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-001",
       "domain": "backend",
       "title": "Cursor pagination on list endpoints",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Critical",
       "phase": 0,
       "agent": "NextJS Developer",
-      "sourceFindings": ["A-4"],
-      "handoffs": ["T-B-001-5 updates admin-portal list UI (same agent)"],
+      "sourceFindings": [
+        "A-4"
+      ],
+      "handoffs": [
+        "T-B-001-5 updates admin-portal list UI (same agent)"
+      ],
       "tasks": [
-        { "id": "T-B-001-1", "title": "Define pagination contract (limit, cursor, hasMore, total optional)", "status": "PENDING" },
-        { "id": "T-B-001-2", "title": "Add pagination to GET /api/jobs (default limit=50)", "status": "PENDING" },
-        { "id": "T-B-001-3", "title": "Add pagination to GET /api/properties", "status": "PENDING" },
-        { "id": "T-B-001-4", "title": "Add pagination to GET /api/routes list response if needed", "status": "PENDING" },
-        { "id": "T-B-001-5", "title": "Update frontend list pages to support load-more or paged UI", "status": "PENDING" },
-        { "id": "T-B-001-6", "title": "Add API route tests for pagination edge cases", "status": "PENDING" }
+        {
+          "id": "T-B-001-1",
+          "title": "Define pagination contract (limit, cursor, hasMore, total optional)",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-001-2",
+          "title": "Add pagination to GET /api/jobs (default limit=50)",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-001-3",
+          "title": "Add pagination to GET /api/properties",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-001-4",
+          "title": "Add pagination to GET /api/routes list response if needed",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-001-5",
+          "title": "Update frontend list pages to support load-more or paged UI",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-001-6",
+          "title": "Add API route tests for pagination edge cases",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-002",
       "domain": "backend",
       "title": "Push jobs day-of-week filter to SQL",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 0,
       "agent": "NextJS Developer",
-      "sourceFindings": ["A-2"],
+      "sourceFindings": [
+        "A-2"
+      ],
       "tasks": [
-        { "id": "T-B-002-1", "title": "Add Postgres filter using EXTRACT(DOW FROM scheduled_date) in jobs route", "status": "PENDING" },
-        { "id": "T-B-002-2", "title": "Remove in-memory day_of_week filter from route handler", "status": "PENDING" },
-        { "id": "T-B-002-3", "title": "Add unit test for day_of_week query param", "status": "PENDING" }
+        {
+          "id": "T-B-002-1",
+          "title": "Add Postgres filter using EXTRACT(DOW FROM scheduled_date) in jobs route",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-002-2",
+          "title": "Remove in-memory day_of_week filter from route handler",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-002-3",
+          "title": "Add unit test for day_of_week query param",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-003",
       "domain": "backend",
       "title": "Rewrite unassigned properties as SQL anti-join",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 0,
       "agent": "NextJS Developer",
-      "sourceFindings": ["A-3"],
+      "sourceFindings": [
+        "A-3"
+      ],
       "tasks": [
-        { "id": "T-B-003-1", "title": "Replace load-all-stops + NOT IN with NOT EXISTS or LEFT JOIN IS NULL", "status": "PENDING" },
-        { "id": "T-B-003-2", "title": "Verify RLS still scopes results to company", "status": "PENDING" },
-        { "id": "T-B-003-3", "title": "Benchmark with 1000+ properties fixture", "status": "PENDING" }
+        {
+          "id": "T-B-003-1",
+          "title": "Replace load-all-stops + NOT IN with NOT EXISTS or LEFT JOIN IS NULL",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-003-2",
+          "title": "Verify RLS still scopes results to company",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-003-3",
+          "title": "Benchmark with 1000+ properties fixture",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-004",
       "domain": "backend",
       "title": "SQL aggregation for reports endpoint",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 1,
       "agent": "NextJS Developer",
-      "sourceFindings": ["A-5"],
+      "sourceFindings": [
+        "A-5"
+      ],
       "tasks": [
-        { "id": "T-B-004-1", "title": "Replace full-row fetch with GROUP BY status aggregation query", "status": "PENDING" },
-        { "id": "T-B-004-2", "title": "Add technician breakdown via SQL GROUP BY technician_id", "status": "PENDING" },
-        { "id": "T-B-004-3", "title": "Maintain existing JSON response shape for frontend compatibility", "status": "PENDING" },
-        { "id": "T-B-004-4", "title": "Add tests for date range and empty result sets", "status": "PENDING" }
+        {
+          "id": "T-B-004-1",
+          "title": "Replace full-row fetch with GROUP BY status aggregation query",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-004-2",
+          "title": "Add technician breakdown via SQL GROUP BY technician_id",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-004-3",
+          "title": "Maintain existing JSON response shape for frontend compatibility",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-004-4",
+          "title": "Add tests for date range and empty result sets",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-005",
       "domain": "backend",
       "title": "Fix team endpoint N+1 Auth Admin calls",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Critical",
       "phase": 0,
       "agent": "NextJS Developer",
-      "sourceFindings": ["A-6", "S-1"],
-      "dependsOn": ["US-D-003"],
+      "sourceFindings": [
+        "A-6",
+        "S-1"
+      ],
+      "dependsOn": [
+        "US-D-003"
+      ],
       "tasks": [
-        { "id": "T-B-005-1", "title": "Read email_confirmed from cadenza_profiles after US-D-003 migration", "status": "PENDING" },
-        { "id": "T-B-005-2", "title": "Remove Promise.all getUserById loop from GET /api/team", "status": "PENDING" },
-        { "id": "T-B-005-3", "title": "Verify team page UI unchanged", "status": "PENDING" }
+        {
+          "id": "T-B-005-1",
+          "title": "Read email_confirmed from cadenza_profiles after US-D-003 migration",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-005-2",
+          "title": "Remove Promise.all getUserById loop from GET /api/team",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-005-3",
+          "title": "Verify team page UI unchanged",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-006",
       "domain": "backend",
       "title": "API response caching layer",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 1,
       "agent": "NextJS Developer",
-      "sourceFindings": ["B-4", "N-1"],
+      "sourceFindings": [
+        "B-4",
+        "N-1"
+      ],
       "tasks": [
-        { "id": "T-B-006-1", "title": "Select cache backend (Vercel KV or unstable_cache for MVP)", "status": "PENDING" },
-        { "id": "T-B-006-2", "title": "Cache GET visit-reasons, routes list with company-scoped keys", "status": "PENDING" },
-        { "id": "T-B-006-3", "title": "Add cache invalidation on relevant mutations", "status": "PENDING" },
-        { "id": "T-B-006-4", "title": "Document TTL policy in plan/backend notes", "status": "PENDING" }
+        {
+          "id": "T-B-006-1",
+          "title": "Select cache backend (Vercel KV or unstable_cache for MVP)",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-006-2",
+          "title": "Cache GET visit-reasons, routes list with company-scoped keys",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-006-3",
+          "title": "Add cache invalidation on relevant mutations",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-006-4",
+          "title": "Document TTL policy in plan/backend notes",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-007",
       "domain": "backend",
       "title": "Rate limiting on API routes",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 1,
       "agent": "NextJS Developer",
-      "sourceFindings": ["B-5"],
+      "sourceFindings": [
+        "B-5"
+      ],
       "tasks": [
-        { "id": "T-B-007-1", "title": "Implement rate limit middleware/helper keyed by user.id", "status": "PENDING" },
-        { "id": "T-B-007-2", "title": "Apply to auth, security, and write endpoints first", "status": "PENDING" },
-        { "id": "T-B-007-3", "title": "Return 429 with Retry-After header", "status": "PENDING" },
-        { "id": "T-B-007-4", "title": "Configure stricter limits on /api/storage/upload", "status": "PENDING" }
+        {
+          "id": "T-B-007-1",
+          "title": "Implement rate limit middleware/helper keyed by user.id",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-007-2",
+          "title": "Apply to auth, security, and write endpoints first",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-007-3",
+          "title": "Return 429 with Retry-After header",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-007-4",
+          "title": "Configure stricter limits on /api/storage/upload",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-008",
       "domain": "backend",
       "title": "Queue-based sharded job generation cron",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Critical",
       "phase": 2,
       "agent": "NextJS Developer",
-      "sourceFindings": ["B-1"],
-      "dependsOn": ["US-D-006"],
+      "sourceFindings": [
+        "B-1"
+      ],
+      "dependsOn": [
+        "US-D-006"
+      ],
       "tasks": [
-        { "id": "T-B-008-1", "title": "Design queue worker contract (company_id shard, idempotent upsert)", "status": "PENDING" },
-        { "id": "T-B-008-2", "title": "Refactor cron to enqueue per-company jobs instead of global loop", "status": "PENDING" },
-        { "id": "T-B-008-3", "title": "Implement worker endpoint or Edge Function with CRON_SECRET auth", "status": "PENDING" },
-        { "id": "T-B-008-4", "title": "Add dead-letter and retry with exponential backoff", "status": "PENDING" },
-        { "id": "T-B-008-5", "title": "Load test cron for 500+ companies within timeout budget", "status": "PENDING" }
+        {
+          "id": "T-B-008-1",
+          "title": "Design queue worker contract (company_id shard, idempotent upsert)",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-008-2",
+          "title": "Refactor cron to enqueue per-company jobs instead of global loop",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-008-3",
+          "title": "Implement worker endpoint or Edge Function with CRON_SECRET auth",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-008-4",
+          "title": "Add dead-letter and retry with exponential backoff",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-008-5",
+          "title": "Load test cron for 500+ companies within timeout budget",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-009",
       "domain": "backend",
       "title": "Async 202 pattern for bulk job generation",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 2,
       "agent": "NextJS Developer",
-      "sourceFindings": ["B-2"],
-      "dependsOn": ["US-B-008"],
-      "handoffs": ["T-B-009-3 updates route detail poll UI in admin-portal"],
+      "sourceFindings": [
+        "B-2"
+      ],
+      "dependsOn": [
+        "US-B-008"
+      ],
+      "handoffs": [
+        "T-B-009-3 updates route detail poll UI in admin-portal"
+      ],
       "tasks": [
-        { "id": "T-B-009-1", "title": "POST /api/routes/[id]/generate-jobs returns 202 + job_id for large batches", "status": "PENDING" },
-        { "id": "T-B-009-2", "title": "Add GET /api/jobs/generation-status/:id polling endpoint", "status": "PENDING" },
-        { "id": "T-B-009-3", "title": "Update route detail UI to poll generation status", "status": "PENDING" }
+        {
+          "id": "T-B-009-1",
+          "title": "POST /api/routes/[id]/generate-jobs returns 202 + job_id for large batches",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-009-2",
+          "title": "Add GET /api/jobs/generation-status/:id polling endpoint",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-009-3",
+          "title": "Update route detail UI to poll generation status",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-010",
       "domain": "backend",
       "title": "Presigned direct-to-storage uploads",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 2,
       "agent": "NextJS Developer",
-      "sourceFindings": ["B-3"],
-      "handoffs": ["T-B-010-3 updates admin-portal upload components"],
+      "sourceFindings": [
+        "B-3"
+      ],
+      "handoffs": [
+        "T-B-010-3 updates admin-portal upload components"
+      ],
       "tasks": [
-        { "id": "T-B-010-1", "title": "Add POST /api/storage/presign returning signed upload URL + path", "status": "PENDING" },
-        { "id": "T-B-010-2", "title": "Move encryption off hot path or document client-side envelope for report photos", "status": "PENDING" },
-        { "id": "T-B-010-3", "title": "Update admin upload components to use presigned flow", "status": "PENDING" },
-        { "id": "T-B-010-4", "title": "Deprecate streaming encrypt-through-Vercel for large files", "status": "PENDING" }
+        {
+          "id": "T-B-010-1",
+          "title": "Add POST /api/storage/presign returning signed upload URL + path",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-010-2",
+          "title": "Move encryption off hot path or document client-side envelope for report photos",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-010-3",
+          "title": "Update admin upload components to use presigned flow",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-010-4",
+          "title": "Deprecate streaming encrypt-through-Vercel for large files",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-011",
       "domain": "backend",
       "title": "Server-side timeouts and resilience patterns",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Medium",
       "phase": 1,
       "agent": "NextJS Developer",
-      "sourceFindings": ["A-7", "R-1"],
+      "sourceFindings": [
+        "A-7",
+        "R-1"
+      ],
       "tasks": [
-        { "id": "T-B-011-1", "title": "Configure Supabase client fetch with 10s timeout in supabase-server.ts", "status": "PENDING" },
-        { "id": "T-B-011-2", "title": "Add structured error responses for timeout vs 500", "status": "PENDING" },
-        { "id": "T-B-011-3", "title": "Document circuit breaker approach for Supabase outages", "status": "PENDING" }
+        {
+          "id": "T-B-011-1",
+          "title": "Configure Supabase client fetch with 10s timeout in supabase-server.ts",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-011-2",
+          "title": "Add structured error responses for timeout vs 500",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-011-3",
+          "title": "Document circuit breaker approach for Supabase outages",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-012",
       "domain": "backend",
       "title": "Single-pass auth validation",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 1,
       "agent": "NextJS Developer",
-      "sourceFindings": ["S-1", "F-4"],
+      "sourceFindings": [
+        "S-1",
+        "F-4"
+      ],
       "tasks": [
-        { "id": "T-B-012-1", "title": "Evaluate JWT local verify in middleware for routing-only decisions", "status": "PENDING" },
-        { "id": "T-B-012-2", "title": "Pass verified claims to API routes via signed header or cookie to skip redundant getUser", "status": "PENDING" },
-        { "id": "T-B-012-3", "title": "Measure Auth API call reduction in staging", "status": "PENDING" }
+        {
+          "id": "T-B-012-1",
+          "title": "Evaluate JWT local verify in middleware for routing-only decisions",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-012-2",
+          "title": "Pass verified claims to API routes via signed header or cookie to skip redundant getUser",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-012-3",
+          "title": "Measure Auth API call reduction in staging",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-013",
       "domain": "backend",
       "title": "Edge-cache reference data endpoints",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Medium",
       "phase": 1,
       "agent": "NextJS Developer",
-      "sourceFindings": ["S-2", "N-1"],
+      "sourceFindings": [
+        "S-2",
+        "N-1"
+      ],
       "tasks": [
-        { "id": "T-B-013-1", "title": "Add Cache-Control s-maxage=3600 to GET /api/billing/plans", "status": "PENDING" },
-        { "id": "T-B-013-2", "title": "Add stale-while-revalidate for visit-reasons per company", "status": "PENDING" },
-        { "id": "T-B-013-3", "title": "Verify cache headers do not leak user-specific data", "status": "PENDING" }
+        {
+          "id": "T-B-013-1",
+          "title": "Add Cache-Control s-maxage=3600 to GET /api/billing/plans",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-013-2",
+          "title": "Add stale-while-revalidate for visit-reasons per company",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-013-3",
+          "title": "Verify cache headers do not leak user-specific data",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-014",
       "domain": "backend",
       "title": "Sparse fieldsets and payload optimization",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Medium",
       "phase": 1,
       "agent": "NextJS Developer",
-      "sourceFindings": ["N-2"],
+      "sourceFindings": [
+        "N-2"
+      ],
       "tasks": [
-        { "id": "T-B-014-1", "title": "Add fields= query param support to GET /api/jobs for list vs detail shapes", "status": "PENDING" },
-        { "id": "T-B-014-2", "title": "Create GET /api/jobs/form-data composite endpoint for new job page", "status": "PENDING" },
-        { "id": "T-B-014-3", "title": "Reduce nested join payload on list views", "status": "PENDING" }
+        {
+          "id": "T-B-014-1",
+          "title": "Add fields= query param support to GET /api/jobs for list vs detail shapes",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-014-2",
+          "title": "Create GET /api/jobs/form-data composite endpoint for new job page",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-014-3",
+          "title": "Reduce nested join payload on list views",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-015",
       "domain": "backend",
       "title": "Production observability instrumentation",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 1,
       "agent": "NextJS Developer",
-      "sourceFindings": ["Review §6 metrics"],
+      "sourceFindings": [
+        "Review §6 metrics"
+      ],
       "tasks": [
-        { "id": "T-B-015-1", "title": "Add request duration logging with route label in API middleware wrapper", "status": "PENDING" },
-        { "id": "T-B-015-2", "title": "Integrate Vercel Observability or OpenTelemetry exporter", "status": "PENDING" },
-        { "id": "T-B-015-3", "title": "Define alert thresholds document in plan/README or runbook", "status": "PENDING" },
-        { "id": "T-B-015-4", "title": "Add slow query logging hook for Supabase errors", "status": "PENDING" }
+        {
+          "id": "T-B-015-1",
+          "title": "Add request duration logging with route label in API middleware wrapper",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-015-2",
+          "title": "Integrate Vercel Observability or OpenTelemetry exporter",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-015-3",
+          "title": "Define alert thresholds document in plan/README or runbook",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-015-4",
+          "title": "Add slow query logging hook for Supabase errors",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-B-016",
       "domain": "backend",
       "title": "Load testing harness and performance baseline",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 2,
       "agent": "QA Specialist",
-      "sourceFindings": ["Review §4 Load Testing"],
+      "sourceFindings": [
+        "Review §4 Load Testing"
+      ],
       "tasks": [
-        { "id": "T-B-016-1", "title": "Create k6 scripts for dashboard, jobs list, team, mobile job fetch", "status": "PENDING" },
-        { "id": "T-B-016-2", "title": "Run baseline against staging and record p50/p95/p99", "status": "PENDING" },
-        { "id": "T-B-016-3", "title": "Add spike and soak scenarios to CI or manual runbook", "status": "PENDING" },
-        { "id": "T-B-016-4", "title": "Publish baseline report in plan/ or docs/", "status": "PENDING" }
+        {
+          "id": "T-B-016-1",
+          "title": "Create k6 scripts for dashboard, jobs list, team, mobile job fetch",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-016-2",
+          "title": "Run baseline against staging and record p50/p95/p99",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-016-3",
+          "title": "Add spike and soak scenarios to CI or manual runbook",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-016-4",
+          "title": "Publish baseline report in plan/ or docs/",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-M-001",
       "domain": "mobile",
       "title": "Deduplicate job list fetches on tab focus",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Medium",
       "phase": 0,
       "agent": "React Native Developer",
-      "sourceFindings": ["Mobile assessment"],
+      "sourceFindings": [
+        "Mobile assessment"
+      ],
       "tasks": [
-        { "id": "T-M-001-1", "title": "Remove redundant useFocusEffect fetch when useEffect already loaded", "status": "PENDING" },
-        { "id": "T-M-001-2", "title": "Use staleTime or lastFetchedAt guard before refetch on focus", "status": "PENDING" },
-        { "id": "T-M-001-3", "title": "Keep pull-to-refresh as explicit user-triggered refetch", "status": "PENDING" }
+        {
+          "id": "T-M-001-1",
+          "title": "Remove redundant useFocusEffect fetch when useEffect already loaded",
+          "status": "DONE"
+        },
+        {
+          "id": "T-M-001-2",
+          "title": "Use staleTime or lastFetchedAt guard before refetch on focus",
+          "status": "DONE"
+        },
+        {
+          "id": "T-M-001-3",
+          "title": "Keep pull-to-refresh as explicit user-triggered refetch",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-M-002",
       "domain": "mobile",
       "title": "Session-aware fetch without getUser per request",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Medium",
       "phase": 0,
       "agent": "React Native Developer",
-      "sourceFindings": ["Mobile assessment"],
+      "sourceFindings": [
+        "Mobile assessment"
+      ],
       "tasks": [
-        { "id": "T-M-002-1", "title": "Subscribe to supabase.auth.onAuthStateChange for session user id", "status": "PENDING" },
-        { "id": "T-M-002-2", "title": "Replace getUser() in fetchJobs with cached session user id", "status": "PENDING" },
-        { "id": "T-M-002-3", "title": "Handle signed-out state without extra round-trip", "status": "PENDING" }
+        {
+          "id": "T-M-002-1",
+          "title": "Subscribe to supabase.auth.onAuthStateChange for session user id",
+          "status": "DONE"
+        },
+        {
+          "id": "T-M-002-2",
+          "title": "Replace getUser() in fetchJobs with cached session user id",
+          "status": "DONE"
+        },
+        {
+          "id": "T-M-002-3",
+          "title": "Handle signed-out state without extra round-trip",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-M-003",
       "domain": "mobile",
       "title": "Parallelize job detail data loading",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Medium",
       "phase": 0,
       "agent": "React Native Developer",
-      "sourceFindings": ["Mobile assessment"],
+      "sourceFindings": [
+        "Mobile assessment"
+      ],
       "tasks": [
-        { "id": "T-M-003-1", "title": "Combine job + report fetch into single Promise.all where possible", "status": "PENDING" },
-        { "id": "T-M-003-2", "title": "Defer photo signed URL batch until report id is known", "status": "PENDING" },
-        { "id": "T-M-003-3", "title": "Show progressive loading states per section", "status": "PENDING" }
+        {
+          "id": "T-M-003-1",
+          "title": "Combine job + report fetch into single Promise.all where possible",
+          "status": "DONE"
+        },
+        {
+          "id": "T-M-003-2",
+          "title": "Defer photo signed URL batch until report id is known",
+          "status": "DONE"
+        },
+        {
+          "id": "T-M-003-3",
+          "title": "Show progressive loading states per section",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-M-004",
       "domain": "mobile",
       "title": "Cache signed photo URLs client-side",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Low",
       "phase": 1,
       "agent": "React Native Developer",
-      "sourceFindings": ["N-3"],
+      "sourceFindings": [
+        "N-3"
+      ],
       "tasks": [
-        { "id": "T-M-004-1", "title": "Store signed URLs with expiry timestamp in component or Zustand", "status": "PENDING" },
-        { "id": "T-M-004-2", "title": "Refresh URLs only when within 5min of expiry", "status": "PENDING" },
-        { "id": "T-M-004-3", "title": "Verify no stale URL display after report update", "status": "PENDING" }
+        {
+          "id": "T-M-004-1",
+          "title": "Store signed URLs with expiry timestamp in component or Zustand",
+          "status": "DONE"
+        },
+        {
+          "id": "T-M-004-2",
+          "title": "Refresh URLs only when within 5min of expiry",
+          "status": "DONE"
+        },
+        {
+          "id": "T-M-004-3",
+          "title": "Verify no stale URL display after report update",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-D-001",
       "domain": "database",
       "title": "Composite indexes for admin query patterns",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Medium",
       "phase": 0,
       "agent": "NextJS Developer",
-      "sourceFindings": ["D-1"],
+      "sourceFindings": [
+        "D-1"
+      ],
       "tasks": [
-        { "id": "T-D-001-1", "title": "Add migration idx_jobs_company_date on (company_id, scheduled_date DESC)", "status": "PENDING" },
-        { "id": "T-D-001-2", "title": "Add idx_jobs_company_status_date on (company_id, status, scheduled_date)", "status": "PENDING" },
-        { "id": "T-D-001-3", "title": "Run EXPLAIN ANALYZE on jobs list and reports queries", "status": "PENDING" }
+        {
+          "id": "T-D-001-1",
+          "title": "Add migration idx_jobs_company_date on (company_id, scheduled_date DESC)",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-001-2",
+          "title": "Add idx_jobs_company_status_date on (company_id, status, scheduled_date)",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-001-3",
+          "title": "Run EXPLAIN ANALYZE on jobs list and reports queries",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-D-002",
       "domain": "database",
       "title": "Company stats counters for dashboard",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Medium",
       "phase": 1,
       "agent": "NextJS Developer",
-      "sourceFindings": ["D-2"],
+      "sourceFindings": [
+        "D-2"
+      ],
       "tasks": [
-        { "id": "T-D-002-1", "title": "Design counter columns or cadenza_company_stats table", "status": "PENDING" },
-        { "id": "T-D-002-2", "title": "Add triggers or periodic refresh to maintain counts", "status": "PENDING" },
-        { "id": "T-D-002-3", "title": "Update GET /api/dashboard to read from stats source", "status": "PENDING" }
+        {
+          "id": "T-D-002-1",
+          "title": "Design counter columns or cadenza_company_stats table",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-002-2",
+          "title": "Add triggers or periodic refresh to maintain counts",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-002-3",
+          "title": "Update GET /api/dashboard to read from stats source",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-D-003",
       "domain": "database",
       "title": "Denormalize email_confirmed_at on cadenza_profiles",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Critical",
       "phase": 0,
       "agent": "NextJS Developer",
-      "sourceFindings": ["A-6", "D-3"],
+      "sourceFindings": [
+        "A-6",
+        "D-3"
+      ],
       "tasks": [
-        { "id": "T-D-003-1", "title": "Add email_confirmed_at TIMESTAMPTZ column to cadenza_profiles", "status": "PENDING" },
-        { "id": "T-D-003-2", "title": "Backfill from auth.users via one-time script", "status": "PENDING" },
-        { "id": "T-D-003-3", "title": "Add trigger on auth user update to sync confirmed_at", "status": "PENDING" },
-        { "id": "T-D-003-4", "title": "Unblocks US-B-005 team endpoint fix", "status": "PENDING" }
+        {
+          "id": "T-D-003-1",
+          "title": "Add email_confirmed_at TIMESTAMPTZ column to cadenza_profiles",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-003-2",
+          "title": "Backfill from auth.users via one-time script",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-003-3",
+          "title": "Add trigger on auth user update to sync confirmed_at",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-003-4",
+          "title": "Unblocks US-B-005 team endpoint fix",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-D-004",
       "domain": "database",
       "title": "Supavisor connection pool configuration",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 1,
       "agent": "NextJS Developer",
-      "sourceFindings": ["D-4"],
+      "sourceFindings": [
+        "D-4"
+      ],
       "tasks": [
-        { "id": "T-D-004-1", "title": "Enable Supavisor transaction mode on Supabase project", "status": "PENDING" },
-        { "id": "T-D-004-2", "title": "Update connection strings for Vercel serverless (pooler URL)", "status": "PENDING" },
-        { "id": "T-D-004-3", "title": "Document pool size limits and monitoring in plan/database", "status": "PENDING" }
+        {
+          "id": "T-D-004-1",
+          "title": "Enable Supavisor transaction mode on Supabase project",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-004-2",
+          "title": "Update connection strings for Vercel serverless (pooler URL)",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-004-3",
+          "title": "Document pool size limits and monitoring in plan/database",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-D-005",
       "domain": "database",
       "title": "Optimize RLS get_my_company_id helper",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "Medium",
       "phase": 1,
       "agent": "NextJS Developer",
-      "sourceFindings": ["D-3"],
+      "sourceFindings": [
+        "D-3"
+      ],
       "tasks": [
-        { "id": "T-D-005-1", "title": "Verify get_my_company_id is STABLE and uses indexed lookup", "status": "PENDING" },
-        { "id": "T-D-005-2", "title": "Review RLS policies for redundant subqueries", "status": "PENDING" },
-        { "id": "T-D-005-3", "title": "Benchmark RLS overhead before/after on hot tables", "status": "PENDING" }
+        {
+          "id": "T-D-005-1",
+          "title": "Verify get_my_company_id is STABLE and uses indexed lookup",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-005-2",
+          "title": "Review RLS policies for redundant subqueries",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-005-3",
+          "title": "Benchmark RLS overhead before/after on hot tables",
+          "status": "DONE"
+        }
       ]
     },
     {
       "id": "US-D-006",
       "domain": "database",
       "title": "Daily job stats rollup table",
-      "status": "PENDING",
+      "status": "DONE",
       "priority": "High",
       "phase": 2,
       "agent": "NextJS Developer",
-      "sourceFindings": ["A-5", "D-2"],
+      "sourceFindings": [
+        "A-5",
+        "D-2"
+      ],
       "tasks": [
-        { "id": "T-D-006-1", "title": "Create cadenza_job_stats_daily (company_id, date, status counts)", "status": "PENDING" },
-        { "id": "T-D-006-2", "title": "Add nightly pg_cron or queue job to populate rollups", "status": "PENDING" },
-        { "id": "T-D-006-3", "title": "Point reports API to rollup for ranges > 7 days", "status": "PENDING" }
+        {
+          "id": "T-D-006-1",
+          "title": "Create cadenza_job_stats_daily (company_id, date, status counts)",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-006-2",
+          "title": "Add nightly pg_cron or queue job to populate rollups",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-006-3",
+          "title": "Point reports API to rollup for ranges > 7 days",
+          "status": "DONE"
+        }
       ]
     }
   ]

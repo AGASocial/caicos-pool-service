@@ -1,8 +1,8 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, useColorScheme } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { getCachedUserId } from '@/lib/auth-session';
 import type { ServiceJob } from '@/lib/database.types';
 import Colors from '@/constants/Colors';
 
@@ -14,6 +14,8 @@ function getLocalDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+const FOCUS_STALE_MS = 60_000;
+
 type JobWithProperty = ServiceJob & { cadenza_properties?: { customer_name: string; address: string } | null };
 
 export default function JobsScreen() {
@@ -21,6 +23,7 @@ export default function JobsScreen() {
   const [overdueJobs, setOverdueJobs] = useState<JobWithProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const lastFetchedAt = useRef<number>(0);
   const router = useRouter();
   const theme = useColorScheme() ?? 'light';
   const c = Colors[theme];
@@ -28,37 +31,32 @@ export default function JobsScreen() {
   const today = getLocalDateString(new Date());
 
   const fetchJobs = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const userId = getCachedUserId();
+    if (!userId) return;
     const [todayRes, overdueRes] = await Promise.all([
       supabase
         .from('cadenza_service_jobs')
         .select('id, status, scheduled_date, scheduled_time, route_order, estimated_duration_min, cadenza_properties(customer_name, address)')
         .eq('scheduled_date', today)
-        .eq('technician_id', user.id)
+        .eq('technician_id', userId)
         .order('route_order', { nullsFirst: false }),
       supabase
         .from('cadenza_service_jobs')
         .select('id, status, scheduled_date, scheduled_time, route_order, estimated_duration_min, cadenza_properties(customer_name, address)')
         .lt('scheduled_date', today)
-        .eq('technician_id', user.id)
+        .eq('technician_id', userId)
         .in('status', ['pending', 'in_progress'])
         .order('scheduled_date', { ascending: false })
         .order('route_order', { nullsFirst: false }),
     ]);
     setJobs((todayRes.data ?? []) as unknown as JobWithProperty[]);
     setOverdueJobs((overdueRes.data ?? []) as unknown as JobWithProperty[]);
+    lastFetchedAt.current = Date.now();
   }, [today]);
 
   useEffect(() => {
     fetchJobs().finally(() => setLoading(false));
   }, [fetchJobs]);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchJobs();
-    }, [fetchJobs])
-  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -289,7 +287,7 @@ export default function JobsScreen() {
             </View>
             {overdueJobs.map((item) => {
               const prop = Array.isArray(item.cadenza_properties) ? item.cadenza_properties[0] : item.cadenza_properties;
-              const dateLabel = item.scheduled_date
+              const overdueDateLabel = item.scheduled_date
                 ? new Date(item.scheduled_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
                 : '';
               return (
@@ -303,7 +301,7 @@ export default function JobsScreen() {
                         </View>
                       </View>
                       <View style={styles.overdueDateBadge}>
-                        <Text style={styles.overdueDateText}>{dateLabel}</Text>
+                        <Text style={styles.overdueDateText}>{overdueDateLabel}</Text>
                       </View>
                     </View>
                     <View style={styles.cardFooter}>

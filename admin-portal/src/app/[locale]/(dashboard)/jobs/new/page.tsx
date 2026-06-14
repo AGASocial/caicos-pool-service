@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useTeam } from '@/lib/team';
+import { useInvalidateListQueries } from '@/lib/data-queries';
+import { unwrapPaginated } from '@/lib/pagination';
 
 const STATUSES = ['pending', 'in_progress', 'completed', 'skipped', 'cancelled'] as const;
 
@@ -35,6 +37,7 @@ export default function NewJobPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { data: teamMembers = [] } = useTeam();
+  const { invalidateJobs } = useInvalidateListQueries();
   const [form, setForm] = useState({
     property_id: '',
     technician_id: '',
@@ -50,48 +53,28 @@ export default function NewJobPage() {
     let cancelled = false;
     (async () => {
       try {
-        const url = dispatchMode ? '/api/properties?include_route=1' : '/api/properties';
-        const res = await fetch(url);
-        if (!cancelled && res.ok) {
-          const data = await res.json();
-          setProperties(Array.isArray(data) ? data : []);
+        const propertiesUrl = dispatchMode ? '/api/properties?include_route=1' : '/api/properties';
+        const [propertiesRes, routesRes, reasonsRes] = await Promise.all([
+          fetch(propertiesUrl),
+          dispatchMode ? fetch('/api/routes') : Promise.resolve(null),
+          fetch('/api/visit-reasons'),
+        ]);
+        if (cancelled) return;
+        if (propertiesRes.ok) {
+          const data = await propertiesRes.json();
+          setProperties(unwrapPaginated(data));
         }
-      } catch {
-        // ignore
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [dispatchMode]);
-
-  useEffect(() => {
-    if (!dispatchMode) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/routes');
-        if (!cancelled && res.ok) {
-          const data = await res.json();
-          const list = Array.isArray(data) ? data : [];
+        if (dispatchMode && routesRes && routesRes.ok) {
+          const data = await routesRes.json();
+          const list = unwrapPaginated(data) as { id: string; name: string }[];
           setRoutes(
             list
-              .map((r: { id: string; name: string }) => ({ id: r.id, name: r.name }))
-              .sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name))
+              .map((r) => ({ id: r.id, name: r.name }))
+              .sort((a, b) => a.name.localeCompare(b.name)),
           );
         }
-      } catch {
-        // ignore
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [dispatchMode]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/visit-reasons');
-        if (!cancelled && res.ok) {
-          const data = await res.json();
+        if (reasonsRes.ok) {
+          const data = await reasonsRes.json();
           setVisitReasons(Array.isArray(data) ? data : []);
         }
       } catch {
@@ -99,7 +82,7 @@ export default function NewJobPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [dispatchMode]);
 
   function update(key: string, value: string | number) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -159,8 +142,10 @@ export default function NewJobPage() {
         setLoading(false);
         return;
       }
-      if (data.id) router.push(`/jobs/${data.id}`);
-      else setLoading(false);
+      if (data.id) {
+        invalidateJobs();
+        router.push(`/jobs/${data.id}`);
+      } else setLoading(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to create');
       setLoading(false);

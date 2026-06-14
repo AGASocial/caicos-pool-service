@@ -9,7 +9,7 @@ Default agent: **NextJS Developer**
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Critical |
 | **Phase** | 1 |
 | **Source findings** | F-1, A-1 |
@@ -31,12 +31,12 @@ Today all dashboard pages are `'use client'` with post-mount `fetch('/api/*')`, 
 
 | ID | Task | Status |
 |----|------|--------|
-| T-F-001-1 | Audit dashboard/jobs/properties/routes pages for RSC candidacy | PENDING |
-| T-F-001-2 | Create server-side data fetch helpers using createRouteClient | PENDING |
-| T-F-001-3 | Migrate dashboard page to RSC with client islands for interactivity | PENDING |
-| T-F-001-4 | Migrate jobs list page to RSC + client filter bar island | PENDING |
-| T-F-001-5 | Migrate properties list page to RSC | PENDING |
-| T-F-001-6 | Verify LCP and eliminate post-hydration fetch waterfall on migrated pages | PENDING |
+| T-F-001-1 | Audit dashboard/jobs/properties/routes pages for RSC candidacy | DONE |
+| T-F-001-2 | Create server-side data fetch helpers using createRouteClient | DONE |
+| T-F-001-3 | Migrate dashboard page to RSC with client islands for interactivity | DONE |
+| T-F-001-4 | Migrate jobs list page to RSC + client filter bar island | DONE |
+| T-F-001-5 | Migrate properties list page to RSC | DONE |
+| T-F-001-6 | Verify LCP and eliminate post-hydration fetch waterfall on migrated pages | DONE |
 
 ### Tech refinement notes
 
@@ -48,7 +48,7 @@ _(Add during refinement)_
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 0 |
 | **Source findings** | F-2 |
@@ -69,11 +69,11 @@ Only `lib/team.ts` and `lib/billing-queries.ts` use React Query today; jobs, pro
 
 | ID | Task | Status |
 |----|------|--------|
-| T-F-002-1 | Define shared query keys module (jobs, properties, routes, dashboard) | PENDING |
-| T-F-002-2 | Create useJobs, useProperties, useRoutes hooks mirroring team.ts pattern | PENDING |
-| T-F-002-3 | Replace raw fetch+useState on jobs page with useJobs | PENDING |
-| T-F-002-4 | Replace raw fetch on properties and routes pages | PENDING |
-| T-F-002-5 | Add mutation invalidation for create/update/delete flows | PENDING |
+| T-F-002-1 | Define shared query keys module (jobs, properties, routes, dashboard) | DONE |
+| T-F-002-2 | Create useJobs, useProperties, useRoutes hooks mirroring team.ts pattern | DONE |
+| T-F-002-3 | Replace raw fetch+useState on jobs page with useJobs | DONE |
+| T-F-002-4 | Replace raw fetch on properties and routes pages | DONE |
+| T-F-002-5 | Add mutation invalidation for create/update/delete flows | DONE |
 
 ---
 
@@ -81,7 +81,7 @@ Only `lib/team.ts` and `lib/billing-queries.ts` use React Query today; jobs, pro
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 0 |
 | **Source findings** | F-3 |
@@ -102,11 +102,11 @@ As an **admin user**, I want navigating between pages to feel instant so that th
 
 | ID | Task | Status |
 |----|------|--------|
-| T-F-003-1 | Remove pathname dependency from SecurityContext checkStatus effect | PENDING |
-| T-F-003-2 | Move useAuth session to React Query with 5min staleTime | PENDING |
-| T-F-003-3 | Move security check-session to React Query; revalidate on PIN success only | PENDING |
-| T-F-003-4 | Deduplicate SessionBillingPrefetch with existing billing query hooks | PENDING |
-| T-F-003-5 | Verify single network call per resource per session on route navigation | PENDING |
+| T-F-003-1 | Remove pathname dependency from SecurityContext checkStatus effect | DONE |
+| T-F-003-2 | Move useAuth session to React Query with 5min staleTime | DONE |
+| T-F-003-3 | Move security check-session to React Query; revalidate on PIN success only | DONE |
+| T-F-003-4 | Deduplicate SessionBillingPrefetch with existing billing query hooks | DONE |
+| T-F-003-5 | Verify single network call per resource per session on route navigation | DONE |
 
 ---
 
@@ -114,7 +114,7 @@ As an **admin user**, I want navigating between pages to feel instant so that th
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Medium |
 | **Phase** | 1 |
 | **Source findings** | F-5 |
@@ -133,10 +133,10 @@ As an **admin user on a slow connection**, I want core pages (jobs, properties) 
 
 | ID | Task | Status |
 |----|------|--------|
-| T-F-004-1 | Add next/dynamic for billing pages (Stripe components) | PENDING |
-| T-F-004-2 | Lazy-load legacy wizard/digital-assets/beneficiaries pages | PENDING |
-| T-F-004-3 | Remove unused framer-motion dependency if confirmed unused | PENDING |
-| T-F-004-4 | Measure initial JS bundle size before/after with next build analyze | PENDING |
+| T-F-004-1 | Add next/dynamic for billing pages (Stripe components) | DONE |
+| T-F-004-2 | Lazy-load legacy wizard/digital-assets/beneficiaries pages | DONE |
+| T-F-004-3 | Remove unused framer-motion dependency if confirmed unused | DONE |
+| T-F-004-4 | Measure initial JS bundle size before/after with next build analyze | DONE |
 
 ---
 
@@ -144,7 +144,7 @@ As an **admin user on a slow connection**, I want core pages (jobs, properties) 
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Medium |
 | **Phase** | 0 |
 | **Source findings** | F-6 |
@@ -162,9 +162,9 @@ As an **admin dispatching a job**, I want the new-job form to load all dropdown 
 
 | ID | Task | Status |
 |----|------|--------|
-| T-F-005-1 | Refactor jobs/new to parallel fetch (Promise.all or composite hook) | PENDING |
-| T-F-005-2 | Refactor route detail page initial load to parallel fetch | PENDING |
-| T-F-005-3 | Optional: consume GET /api/jobs/form-data composite endpoint when US-B-014 ready | PENDING |
+| T-F-005-1 | Refactor jobs/new to parallel fetch (Promise.all or composite hook) | DONE |
+| T-F-005-2 | Refactor route detail page initial load to parallel fetch | DONE |
+| T-F-005-3 | Optional: consume GET /api/jobs/form-data composite endpoint when US-B-014 ready | DONE |
 
 ---
 
@@ -172,7 +172,7 @@ As an **admin dispatching a job**, I want the new-job form to load all dropdown 
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Medium |
 | **Phase** | 0 |
 | **Source findings** | A-7 |
@@ -191,6 +191,6 @@ As a **developer**, I want a shared fetch wrapper with timeouts so that hung req
 
 | ID | Task | Status |
 |----|------|--------|
-| T-F-006-1 | Create lib/api-fetch.ts with 10s AbortSignal timeout wrapper | PENDING |
-| T-F-006-2 | Replace direct fetch calls in hooks with apiFetch | PENDING |
-| T-F-006-3 | Document retry policy alignment with QueryClient defaults | PENDING |
+| T-F-006-1 | Create lib/api-fetch.ts with 10s AbortSignal timeout wrapper | DONE |
+| T-F-006-2 | Replace direct fetch calls in hooks with apiFetch | DONE |
+| T-F-006-3 | Document retry policy alignment with QueryClient defaults | DONE |
