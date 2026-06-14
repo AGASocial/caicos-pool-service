@@ -2,6 +2,21 @@
 
 Use these agents to structure development work on the Cadenza pool service platform. Each agent has a clear role; invoke the right one by context or by saying who should handle the task.
 
+## Performance plan backlog (active)
+
+**30 user stories · 113 tasks** in `plan/manifest.json`. Agents execute stories from the plan, not ad-hoc tasks.
+
+| Agent | Stories | Skill | Brief |
+|-------|---------|-------|-------|
+| **Master Agent** | Orchestrates all | `plan-orchestrator` | `plan/agents/master.md` |
+| **NextJS Developer** | US-F-*, US-B-*, US-D-* | `nextjs-performance`, `database-migrations` | `plan/agents/nextjs-developer.md` |
+| **React Native Developer** | US-M-* | `mobile-performance` | `plan/agents/react-native-developer.md` |
+| **QA Specialist** | Validates all; owns US-B-016 | `performance-qa` | `plan/agents/qa-specialist.md` |
+
+**Start autonomous execution:** *"Execute the plan backlog"* or *"You have open card — work plan/manifest.json"*
+
+Skills live in `.cursor/skills/`. Rules in `.cursor/rules/`. See `plan/README.md`.
+
 ## Agent overview
 
 | Agent | Role | When to use |
@@ -24,7 +39,7 @@ Use these agents to structure development work on the Cadenza pool service platf
 
 **How to invoke:** Ask to assign a task, check status, validate scope, or report blockers. Example: *"Assign the jobs dashboard to the right team"* or *"What's blocking the admin dashboard?"*
 
-**Reference:** `cadenza-team-plugin/agents/master-agent.md`, `cadenza-team-plugin/skills/master-agent/SKILL.md`
+**Reference:** `plan/agents/master.md`, `.cursor/skills/plan-orchestrator/SKILL.md`, `.cursor/rules/cadenza-master-agent.mdc`
 
 ---
 
@@ -40,7 +55,7 @@ Use these agents to structure development work on the Cadenza pool service platf
 
 **How to invoke:** Work in admin/Next.js code or ask for web feature implementation. Example: *"Build the jobs management page"* or *"Add an API route for creating service jobs"*.
 
-**Reference:** `cadenza-team-plugin/agents/nextjs-developer-agent.md`, `cadenza-team-plugin/skills/nextjs-developer/SKILL.md`
+**Reference:** `plan/agents/nextjs-developer.md`, `.cursor/skills/nextjs-performance/SKILL.md`, `.cursor/rules/cadenza-nextjs-developer.mdc`
 
 ---
 
@@ -56,7 +71,7 @@ Use these agents to structure development work on the Cadenza pool service platf
 
 **How to invoke:** Work in mobile app code or ask for a mobile feature. Example: *"Build the service form with chemical readings"* or *"Implement photo upload with offline sync"*.
 
-**Reference:** `cadenza-team-plugin/agents/react-native-developer-agent.md`, `cadenza-team-plugin/skills/react-native-developer/SKILL.md`
+**Reference:** `plan/agents/react-native-developer.md`, `.cursor/skills/mobile-performance/SKILL.md`, `.cursor/rules/cadenza-react-native-developer.mdc`
 
 ---
 
@@ -72,7 +87,7 @@ Use these agents to structure development work on the Cadenza pool service platf
 
 **How to invoke:** Ask for QA, validation, or tests. Example: *"Run QA on the jobs page"* or *"Validate the service form code"*.
 
-**Reference:** `cadenza-team-plugin/agents/qa-specialist-agent.md`, `cadenza-team-plugin/skills/qa-specialist/SKILL.md`
+**Reference:** `plan/agents/qa-specialist.md`, `.cursor/skills/performance-qa/SKILL.md`, `.cursor/rules/cadenza-qa-specialist.mdc`
 
 ---
 
@@ -86,7 +101,7 @@ If you use the **cadenza-team-plugin** in Cowork, you have slash commands:
 - `/review-code` — Developer review before QA
 - `/status team|sprint|blockers|all` — Master Agent status
 
-In Cursor, **rules** in `.cursor/rules/` apply the same agent behavior by context (e.g. NextJS rule when editing admin app, QA when validating).
+In Cursor, **rules** in `.cursor/rules/` apply agent behavior by context. For plan work, use `cadenza-plan-development.mdc` or say *"execute the plan backlog"*.
 
 ---
 
@@ -97,9 +112,14 @@ When the user says they give **open card** or **start development by itself**, r
 ### How to start
 
 User says one of:
-- "Start development" / "You have open card to develop" / "Run development autonomously" / "Develop the MVP by yourself"
+- "Execute the plan backlog" / "Work plan/manifest.json" (default — plan has PENDING stories)
+- "Start development" / "You have open card to develop" / "Run development autonomously"
 
-Then:
+**Plan mode (default):**
+1. **Bootstrap (as Master Agent):** Read `plan/manifest.json` and load `plan-orchestrator` skill. Pick stories by phase, priority, and `dependsOn`.
+2. **Track progress:** Update manifest.json and USER-STORIES.md; use todo list for active story.
+
+**MVP mode** (if plan complete or user specifies MVP):
 1. **Bootstrap (as Master Agent):** Read `docs/architecture/SOLUTION.md` and `docs/specs/FEATURE-ADMIN-PORTAL.md` / `docs/specs/FEATURE-TECHNICIAN-APP.md`. Build an ordered task list of MVP features (respect dependencies: auth & schema first, then core flows).
 2. **Track progress:** Use a todo list (e.g. Cursor todo tool). Mark tasks: pending → in progress → QA → done.
 3. **Per task loop:**
@@ -125,7 +145,7 @@ Then:
 
 ### Rule for Cursor
 
-The rule **Autonomous development** (`.cursor/rules/cadenza-autonomous-development.mdc`) applies when the user asks for autonomous or open-card development. Follow it so the loop runs consistently.
+Rules: **Plan development** (`.cursor/rules/cadenza-plan-development.mdc`) for plan backlog; **Autonomous development** (`.cursor/rules/cadenza-autonomous-development.mdc`) for either plan or MVP mode.
 
 ---
 
@@ -138,3 +158,5 @@ The rule **Autonomous development** (`.cursor/rules/cadenza-autonomous-developme
 - **docs/schema.sql** — Database schema
 - **docs/example-app** — Next.js reference implementation
 - **docs/README.md** — Full categorized documentation index
+- **plan/manifest.json** — Performance backlog (30 stories, 113 tasks)
+- **plan/agents/** — Per-agent queues and invoke prompts

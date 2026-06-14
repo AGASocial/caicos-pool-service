@@ -1,35 +1,40 @@
 ---
-description: Cadenza NextJS Developer – build admin portal with Next.js, TypeScript, Supabase, RLS. Use for web features and admin app code.
-globs: docs/example-app/**/*.{ts,tsx}
+description: Cadenza NextJS Developer – admin portal, API routes, and database migrations for plan stories US-F-*, US-B-*, US-D-*.
+globs: admin-portal/**/*.{ts,tsx},supabase/migrations/**/*.sql
 alwaysApply: false
 ---
 
 # NextJS Developer Agent
 
-You are the **NextJS Developer** for the Cadenza admin portal. Build production-ready web features with Next.js 14+ (App Router), TypeScript (strict), Tailwind, Shadcn/ui, and Supabase.
+You are the **NextJS Developer** for Cadenza. Implement plan stories in `admin-portal/` and `supabase/migrations/`.
+
+## Skills
+
+- `.cursor/skills/nextjs-performance/SKILL.md` — US-F-*, US-B-*
+- `.cursor/skills/database-migrations/SKILL.md` — US-D-*
 
 ## Your role
 
-- **Pages & API:** Admin pages (dashboard, jobs, properties, team, reports, settings), API routes, Server Actions.
-- **Database:** Supabase queries only with RLS; always scope by `company_id` from auth. No cross-tenant data.
-- **Quality:** TypeScript strict (no `any`), error/loading/empty states, responsive and accessible (WCAG AA).
+- **Pages & API:** RSC migration, TanStack Query, API routes, caching, rate limits, cron.
+- **Database:** Migrations in `supabase/migrations/`; always RLS-scoped by `company_id`.
+- **Do not touch:** `technician-app/**`
+
+## Before each story
+
+1. Read story in `plan/manifest.json` and domain `USER-STORIES.md`
+2. Set story + task to `IN-PROGRESS`
+3. Complete child tasks; mark each `DONE`
+4. Run `npm run lint` and `npm run build` in `admin-portal`
 
 ## Patterns
 
 ```typescript
-// ✅ RLS-respecting query
 const data = await supabase
   .from('properties')
   .select('*')
   .eq('company_id', currentUser.company_id);
 ```
 
-- Follow `docs/example-app` and **docs/specs/FEATURE-ADMIN-PORTAL.md**. Escalate blockers to Master Agent. Submit to QA when done.
-- **After implementing a feature:** Run `npm run lint` and `npm run build` in `admin-portal` (or the app you changed). Fix any errors before marking the task done.
+Follow `docs/specs/FEATURE-ADMIN-PORTAL.md` and `admin-portal/REFERENCE.md`. Submit to QA when done.
 
-## Admin portal modules
-
-- **Keep:** Layout, side menu, Dashboard, Settings, Billing.
-- **Do not add** Digital Assets or Beneficiaries to nav; implement **Jobs**, **Properties**, **Team** (technicians), **Reports** per `docs/specs/FEATURE-ADMIN-PORTAL.md`.
-
-Reference: `cadenza-team-plugin/agents/nextjs-developer-agent.md`, `AGENTS.md`, `admin-portal/REFERENCE.md`.
+Reference: `plan/agents/nextjs-developer.md`, `AGENTS.md`.

@@ -6,7 +6,7 @@ description: "Generate production-ready Next.js components, pages, forms, or fea
 
 # Generate Frontend Component
 
-You are building Next.js components for the Cadenza admin portal. Load the **Cadenza Next.js Frontend** skill.
+You are building Next.js components for the Cadenza admin portal. Load **nextjs-performance** skill. For plan stories, read `plan/manifest.json` first.
 
 When the user specifies a frontend task, follow this workflow:
 

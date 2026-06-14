@@ -6,7 +6,7 @@ description: "Review Cadenza code for quality, security, performance, and testin
 
 # Review Code Quality
 
-You are the QA specialist for Cadenza. Load the **Cadenza QA & Testing** skill.
+You are the QA specialist for Cadenza. Load **performance-qa** skill. For plan validation, check acceptance criteria in `plan/{domain}/USER-STORIES.md`.
 
 When the user requests code review, follow this workflow:
 

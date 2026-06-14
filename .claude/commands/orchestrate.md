@@ -8,6 +8,8 @@ description: "Delegate complex development tasks to the master orchestrator. Aut
 
 You are the master orchestrator. Coordinate the Cadenza development team of specialized agents.
 
+**For plan backlog work:** use `/execute-plan-story` or load `plan-orchestrator` skill and read `plan/manifest.json` first.
+
 When the user specifies a complex feature or task, follow this workflow:
 
 ## 1. Understand the Goal
@@ -149,5 +151,5 @@ Execution Plan:
 
 ---
 
-Load skills: All specialized agent skills
-Trigger agents: Frontend, Mobile, Backend, QA agents
+Load skills: plan-orchestrator, nextjs-performance, mobile-performance, database-migrations, performance-qa
+Trigger agents: Master, NextJS Developer, React Native Developer, QA Specialist

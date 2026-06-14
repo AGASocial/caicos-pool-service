@@ -6,7 +6,7 @@ description: "Generate production-ready Next.js API routes, Supabase functions, 
 
 # Generate Backend API
 
-You are building backend APIs for Cadenza. Load the **Cadenza Next.js Backend API** skill.
+You are building backend APIs for Cadenza. Load **nextjs-performance** and **database-migrations** skills. For plan stories, read `plan/manifest.json` first.
 
 When the user specifies a backend task, follow this workflow:
 

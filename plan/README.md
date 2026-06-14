@@ -8,10 +8,40 @@ Backlog derived from the [Performance & Scalability Review](../docs/) (June 2026
 plan/
 ├── README.md                 ← You are here
 ├── manifest.json             ← Machine-readable index (status, tasks, agents)
+├── agents/                   ← Per-agent queues and invoke prompts
+│   ├── master.md
+│   ├── nextjs-developer.md
+│   ├── react-native-developer.md
+│   └── qa-specialist.md
 ├── frontend/USER-STORIES.md
 ├── backend/USER-STORIES.md
 ├── mobile/USER-STORIES.md
 └── database/USER-STORIES.md
+```
+
+## Agent team
+
+Skills in `.cursor/skills/`. Rules in `.cursor/rules/`. See `AGENTS.md`.
+
+| Agent | Brief | Skill(s) |
+|-------|-------|----------|
+| Master Agent | `agents/master.md` | `plan-orchestrator` |
+| NextJS Developer | `agents/nextjs-developer.md` | `nextjs-performance`, `database-migrations` |
+| React Native Developer | `agents/react-native-developer.md` | `mobile-performance` |
+| QA Specialist | `agents/qa-specialist.md` | `performance-qa` |
+
+### Invoke an agent
+
+```
+You are the NextJS Developer. Implement US-D-003 from plan/manifest.json.
+```
+
+```
+Execute the plan backlog autonomously.
+```
+
+```
+You are the Master Agent. What is the next story to assign?
 ```
 
 ## Status values

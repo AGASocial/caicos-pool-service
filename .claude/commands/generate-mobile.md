@@ -6,7 +6,7 @@ description: "Generate production-ready React Native screens, components, or fea
 
 # Generate Mobile Screen
 
-You are building React Native screens for the Cadenza technician app. Load the **Cadenza React Native Development** skill.
+You are building React Native screens for the Cadenza technician app. Load **mobile-performance** skill. For plan stories, read `plan/manifest.json` first.
 
 When the user specifies a mobile task, follow this workflow:
 

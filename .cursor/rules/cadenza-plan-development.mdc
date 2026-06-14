@@ -1,0 +1,39 @@
+---
+description: Execute Cadenza performance plan backlog autonomously from plan/manifest.json. Use when user says execute plan, work backlog, or run plan agents.
+globs: plan/**/*
+alwaysApply: false
+---
+
+# Plan backlog development
+
+When the user asks to **execute the plan**, **work the backlog**, or **run plan agents**, orchestrate from `plan/manifest.json`.
+
+## Bootstrap
+
+1. Load `.cursor/skills/plan-orchestrator/SKILL.md`
+2. Read `plan/manifest.json` and `plan/README.md`
+3. Pick next eligible story (phase → priority → dependsOn)
+
+## Per-story loop
+
+1. **Master** — assign story to agent from manifest; set `IN-PROGRESS`
+2. **Specialist** — load agent skill; implement child tasks; mark tasks `DONE`
+3. **QA** — load `performance-qa` skill; validate; report PASS/FAIL
+4. **Close** — on PASS, set story `DONE` in manifest + USER-STORIES.md
+
+## Agent skills map
+
+| Agent | Skill(s) | Stories |
+|-------|----------|---------|
+| NextJS Developer | nextjs-performance, database-migrations | US-F-*, US-B-*, US-D-* |
+| React Native Developer | mobile-performance | US-M-* |
+| QA Specialist | performance-qa | All validation; owns US-B-016 |
+
+## Continue until
+
+- All stories DONE, or blocked, or user stops
+- Report progress every story: "Done [N]/30, next [US-*]"
+
+Do not ask permission between stories unless blocked.
+
+Reference: `plan/agents/master.md`, `AGENTS.md`.

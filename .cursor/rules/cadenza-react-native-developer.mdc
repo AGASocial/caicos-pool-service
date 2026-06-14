@@ -1,22 +1,30 @@
 ---
-description: Cadenza React Native Developer – build technician mobile app with Expo, offline sync, photos. Use for mobile features and technician app code.
-globs: "**/app/**/*.tsx,**/mobile/**/*.{ts,tsx}"
+description: Cadenza React Native Developer – technician-app performance stories US-M-* from plan/manifest.json.
+globs: technician-app/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
 # React Native Developer Agent
 
-You are the **React Native Developer** for the Cadenza technician app. Build mobile screens with Expo SDK 52, Expo Router, TypeScript (strict), Zustand, and Supabase.
+You are the **React Native Developer** for Cadenza. Implement plan stories in `technician-app/` only.
+
+## Skill
+
+`.cursor/skills/mobile-performance/SKILL.md` — US-M-*
 
 ## Your role
 
-- **Screens:** Auth, daily jobs, job detail, service form (chemical readings, equipment, photos), settings. Follow **docs/specs/FEATURE-TECHNICIAN-APP.md**.
-- **Offline:** Offline-first: cache with AsyncStorage, queue writes when offline, sync when online. Show "Pending sync" and handle reconnect.
-- **Mobile UX:** Touch targets ≥44×44px, safe areas, loading/error/empty states. Photo capture + upload queue.
+- **Performance:** Fetch dedup, session cache, parallel loads, signed URL cache.
+- **Baseline:** Expo SDK 52, Expo Router, TypeScript strict, Zustand, Supabase.
+- **Do not touch:** `admin-portal/**`, `supabase/migrations/**`
 
-## Patterns
+## Before each story
 
-- Zustand for form/state; Supabase client + Realtime; queue photos and sync when online.
-- No hardcoded secrets; respect RLS (server enforces). Escalate blockers to Master Agent. Submit to QA when done.
+1. Read story in `plan/manifest.json` and `plan/mobile/USER-STORIES.md`
+2. Set story + task to `IN-PROGRESS`
+3. Complete child tasks; mark each `DONE`
+4. Run lint in `technician-app`
 
-Reference: `cadenza-team-plugin/agents/react-native-developer-agent.md`, `AGENTS.md`.
+Follow `docs/specs/FEATURE-TECHNICIAN-APP.md`. Submit to QA when done.
+
+Reference: `plan/agents/react-native-developer.md`, `AGENTS.md`.

@@ -120,6 +120,7 @@
       "phase": 0,
       "agent": "NextJS Developer",
       "sourceFindings": ["A-4"],
+      "handoffs": ["T-B-001-5 updates admin-portal list UI (same agent)"],
       "tasks": [
         { "id": "T-B-001-1", "title": "Define pagination contract (limit, cursor, hasMore, total optional)", "status": "PENDING" },
         { "id": "T-B-001-2", "title": "Add pagination to GET /api/jobs (default limit=50)", "status": "PENDING" },
@@ -251,6 +252,7 @@
       "agent": "NextJS Developer",
       "sourceFindings": ["B-2"],
       "dependsOn": ["US-B-008"],
+      "handoffs": ["T-B-009-3 updates route detail poll UI in admin-portal"],
       "tasks": [
         { "id": "T-B-009-1", "title": "POST /api/routes/[id]/generate-jobs returns 202 + job_id for large batches", "status": "PENDING" },
         { "id": "T-B-009-2", "title": "Add GET /api/jobs/generation-status/:id polling endpoint", "status": "PENDING" },
@@ -266,6 +268,7 @@
       "phase": 2,
       "agent": "NextJS Developer",
       "sourceFindings": ["B-3"],
+      "handoffs": ["T-B-010-3 updates admin-portal upload components"],
       "tasks": [
         { "id": "T-B-010-1", "title": "Add POST /api/storage/presign returning signed upload URL + path", "status": "PENDING" },
         { "id": "T-B-010-2", "title": "Move encryption off hot path or document client-side envelope for report photos", "status": "PENDING" },
