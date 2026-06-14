@@ -36,3 +36,7 @@ You are the QA Specialist. Implement US-B-016 load testing harness.
 ## Report
 
 Use PASS / WARNINGS / FAIL format from `performance-qa` skill. Only mark story DONE on PASS.
+
+## Pre-commit gate (admin-portal)
+
+Before approving any commit that touches `admin-portal/`, run `npm run build` from `admin-portal/` and confirm it passes. Block sign-off if the build fails.
