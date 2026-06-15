@@ -23,7 +23,7 @@ You can find these values in your Supabase project dashboard under Settings > AP
 
 ### Installation
 
-1. Install dependencies:
+1. Install dependencies (also installs the git `commit-msg` hook via `prepare`):
 
 ```bash
 npm install
@@ -33,7 +33,13 @@ yarn install
 pnpm install
 ```
 
-2. Run the development server:
+2. If you cloned the repo before hooks were added, or hooks did not install, run manually from `admin-portal/`:
+
+```bash
+sh scripts/install-git-hooks.sh
+```
+
+3. Run the development server:
 
 ```bash
 npm run dev
@@ -43,7 +49,9 @@ yarn dev
 pnpm dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+The login page shows the app version as `semver-build` (for example `1.0.0-12`). The build number increments automatically on every commit; see [Git hooks](#git-hooks) below.
 
 ## Features
 
@@ -89,19 +97,30 @@ To learn more about the technologies used:
 
 ## Development
 
-### Git Hooks
+### Git hooks
 
-This project includes a pre-commit hook that automatically runs quality checks before each commit:
+`npm install` runs `scripts/install-git-hooks.sh`, which copies `scripts/hooks/commit-msg` into the repository’s `.git/hooks/` directory.
 
-- **Linting**: Runs `npm run lint` to check for code style and potential issues
-- **Building**: Runs `npm run build` to ensure the code compiles successfully
+On every commit, the hook:
 
-The hook will prevent commits if either check fails, ensuring code quality.
+1. Increments the build number in `version.json`
+2. Amends that file into the same commit (shown on the login/register footer as `1.0.0-{build}`)
 
-To manually test the pre-commit hook:
+Optional semver bumps — include one of these in the commit message:
+
+| Marker | Example result |
+|--------|----------------|
+| `[major]` or `version: major` | `2.0.0-{build}` |
+| `[minor]` or `version: minor` | `1.1.0-{build}` |
+| `[patch]` or `version: patch` | `1.0.1-{build}` |
+
+Reinstall the hook manually:
+
 ```bash
-.git/hooks/pre-commit
+sh scripts/install-git-hooks.sh
 ```
+
+Before committing admin-portal changes, run `npm run build` locally (see `.cursor/rules/admin-portal-build-before-commit.mdc`).
 
 ### Available Scripts
 

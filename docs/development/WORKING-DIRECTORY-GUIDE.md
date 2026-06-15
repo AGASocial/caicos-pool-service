@@ -46,7 +46,8 @@ cadenza/
 ### Option 1: Work on Admin Portal
 ```bash
 cd admin-portal
-npm install    # If needed
+npm install    # Installs deps + git commit-msg hook (version bump)
+# If hooks are missing: sh scripts/install-git-hooks.sh
 npm run dev    # Start development server
 ```
 Key files to check:

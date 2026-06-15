@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { useTranslations, useLocale } from "next-intl"
+import { APP_VERSION } from "@/lib/app-version"
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -296,7 +297,7 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
       </p>
 
       <p className="px-8 text-center text-xs text-muted-foreground">
-        {t("version")} 1.0.0
+        {t("version")} {APP_VERSION}
         <br />
         Copyright © 2026
       </p>
