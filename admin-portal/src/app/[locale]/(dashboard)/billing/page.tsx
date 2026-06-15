@@ -44,6 +44,7 @@ interface Subscription {
   id: string;
   planId: string;
   status: string;
+  quantity?: number;
   currentPeriodEnd?: Date;
   cancelAtPeriodEnd: boolean;
   plan: {
@@ -76,6 +77,8 @@ export default function BillingPage() {
   const [provider, setProvider] = useState<string | null>(null);
   const { data: teamMembers = [] } = useTeam();
   const userCount = teamMembers.filter(member => member.role === 'technician').length;
+
+  const seatCount = subscription?.quantity ?? 1;
 
   const fetchBillingData = async () => {
     try {
@@ -291,6 +294,11 @@ export default function BillingPage() {
               </h3>
               <p className="text-lg">
                 {t('usersCount', { count: userCount })}
+                {!isFreePlan && seatCount > 0 && (
+                  <span className="text-sm text-muted-foreground block mt-1">
+                    {t('billedTechnicians', { count: seatCount })}
+                  </span>
+                )}
               </p>
               {effectivePlan?.features && (
                 <p className="text-sm text-muted-foreground mt-1">
@@ -307,7 +315,7 @@ export default function BillingPage() {
                   ? t('noPaymentRequired')
                   : subscription?.currentPeriodEnd
                     ? t('nextPaymentOn', {
-                        amount: formatPrice((effectivePlan?.amountCents ?? 0) * userCount || 0, effectivePlan?.currency || 'USD'),
+                        amount: formatPrice((effectivePlan?.amountCents ?? 0) * seatCount || 0, effectivePlan?.currency || 'USD'),
                         date: format(new Date(subscription.currentPeriodEnd), 'PPP'),
                       })
                     : formatPrice(effectivePlan?.amountCents || 0, effectivePlan?.currency || 'USD')}

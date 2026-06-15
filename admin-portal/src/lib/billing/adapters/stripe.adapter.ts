@@ -184,21 +184,23 @@ export class StripeAdapter implements PaymentGateway {
 
   async updateSubscription(
     providerSubscriptionId: string,
-    params: { planId?: string; cancelAtPeriodEnd?: boolean }
+    params: { planId?: string; quantity?: number; cancelAtPeriodEnd?: boolean }
   ): Promise<SubscriptionResult> {
     try {
       const updateParams: Stripe.SubscriptionUpdateParams = {};
+      const existing = await this.stripe.subscriptions.retrieve(providerSubscriptionId);
+      const itemId = existing.items.data[0]?.id;
 
-      // Update plan if provided
-      if (params.planId) {
-        // Note: planId here should be the Stripe price ID
+      if (params.planId && itemId) {
         updateParams.items = [
           {
-            id: (await this.stripe.subscriptions.retrieve(providerSubscriptionId)).items
-              .data[0].id,
+            id: itemId,
             price: params.planId,
+            ...(params.quantity != null ? { quantity: params.quantity } : {}),
           },
         ];
+      } else if (params.quantity != null && itemId) {
+        updateParams.items = [{ id: itemId, quantity: params.quantity }];
       }
 
       // Update cancel at period end if provided

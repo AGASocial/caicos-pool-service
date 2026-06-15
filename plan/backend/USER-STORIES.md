@@ -448,3 +448,36 @@ As a **QA engineer**, I want repeatable load tests so that we can prove scalabil
 | T-B-016-2 | Run baseline against staging and record p50/p95/p99 | DONE |
 | T-B-016-3 | Add spike and soak scenarios to CI or manual runbook | DONE |
 | T-B-016-4 | Publish baseline report in plan/ or docs/ | DONE |
+
+---
+
+## US-B-017 — Billing subscription lifecycle and webhooks
+
+| Field | Value |
+|-------|-------|
+| **Status** | `DONE` |
+| **Priority** | Critical |
+| **Phase** | 3 |
+| **Depends on** | US-D-007 |
+| **Source** | `plan/billing/BILLING-ASSESSMENT.md` |
+
+### Description
+
+As a **paying customer**, I want subscription quantity, expiry, and invoices to match Stripe so billing is accurate at **$14.99 × technicians**.
+
+### Acceptance criteria
+
+- [ ] Quantity saved on create and webhook sync
+- [ ] Stale subscriptions canceled before new checkout
+- [ ] Expired periods downgrade to Free in API and limits
+- [ ] Webhook upserts succeed; failures return 5xx for Stripe retry
+- [ ] Invoice handler does not overwrite subscription periods
+
+### Child tasks
+
+| ID | Task | Status |
+|----|------|--------|
+| T-B-017-1 | Persist quantity; cancel stale subs before create | DONE |
+| T-B-017-2 | Expiry in getUserSubscription and limits.ts | DONE |
+| T-B-017-3 | Webhook upserts + 5xx on failure; no invoice period overwrite | DONE |
+| T-B-017-4 | Stripe normalizer maps metadata, price, quantity | DONE |

@@ -146,6 +146,7 @@ export default function PlansPage() {
           body: JSON.stringify({
             subscriptionId: currentSubscription.id,
             planId,
+            quantity,
           }),
         });
       } else {
@@ -210,7 +211,6 @@ export default function PlansPage() {
   };
 
   const formatFeatureValue = (key: string, value: number | boolean) => {
-    console.log('key', key, value);
     if (typeof value === 'boolean') {
       return value ? t('yes') : t('no');
     }
@@ -220,11 +220,12 @@ export default function PlansPage() {
     if (key.includes('storage') || key.includes('file_size')) {
       return `${value} MB`;
     }
-    
+
     return value.toString().replace('-1', t('unlimited'));
   };
 
   const filteredPlans = plans.filter(plan => plan.interval === billingCycle);
+  const hasActiveYearlyPlans = plans.some((plan) => plan.interval === 'year' && plan.active);
 
   if (loading) {
     return (
@@ -243,6 +244,7 @@ export default function PlansPage() {
         </p>
 
         {/* Billing Cycle Toggle */}
+        {hasActiveYearlyPlans && (
         <div className="inline-flex items-center gap-4 p-1 bg-muted rounded-lg">
           <button
             onClick={() => setBillingCycle('month')}
@@ -268,6 +270,7 @@ export default function PlansPage() {
             </span>
           </button>
         </div>
+        )}
 
         {/* Number of technicians (seats) */}
         <div className="mt-6 flex items-center justify-center gap-3">
@@ -289,7 +292,7 @@ export default function PlansPage() {
       {/* Plan Cards */}
       <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4 justify-center items-center">
         {filteredPlans.map((plan) => {
-          const isPremium = plan.name === 'Necessary';
+          const isStandard = plan.id === 'plan_necessary_month';
           const isActive = plan.active;
           const isCurrentPlan = currentSubscription?.planId === plan.id;
 
@@ -297,10 +300,10 @@ export default function PlansPage() {
             <Card
               key={plan.id}
               className={`relative min-h-[600px] ${isActive ? '' : 'opacity-60'} ${
-                isPremium ? 'border-primary shadow-lg' : ''
+                isStandard ? 'border-primary shadow-lg' : ''
               }`}
             >
-              {isPremium && (
+              {isStandard && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-600 text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold">
                   {t('popular')}
                 </div>
@@ -383,7 +386,7 @@ export default function PlansPage() {
                 {isActive && (
                 <Button
                   className="w-full"
-                  variant={isPremium ? 'default' : 'outline'}
+                  variant={isStandard ? 'default' : 'outline'}
                   disabled={subscribing === plan.id || isCurrentPlan}
                   onClick={() => handleSubscribe(plan.id)}
                 >

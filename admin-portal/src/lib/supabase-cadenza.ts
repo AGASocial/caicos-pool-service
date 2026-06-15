@@ -19,6 +19,8 @@ export type CadenzaSupabaseClient = SupabaseClient<{
       cadenza_properties: TableShape;
       cadenza_profiles: TableShape;
       cadenza_service_jobs: TableShape;
+      cadenza_service_reports: TableShape;
+      cadenza_report_photos: TableShape;
       cadenza_job_generation_runs: TableShape;
       cadenza_invite_codes: TableShape;
       cadenza_visit_reasons: TableShape;

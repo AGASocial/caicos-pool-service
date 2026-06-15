@@ -1,6 +1,6 @@
 # NextJS Developer — Plan Queue
 
-**Skills:** `nextjs-performance` · `database-migrations` (for US-D-*)  
+**Skills:** `nextjs-performance` · `database-migrations` (for US-D-*) · `supabase-server-client` (API routes & RSC)  
 **Rule:** `.cursor/rules/cadenza-nextjs-developer.mdc`
 
 ## Codebase
@@ -64,7 +64,7 @@
 
 ```
 You are the NextJS Developer. Implement US-D-003 from plan/manifest.json.
-Load nextjs-performance and database-migrations skills.
+Load nextjs-performance, supabase-server-client, and database-migrations skills.
 ```
 
 ## Done criteria

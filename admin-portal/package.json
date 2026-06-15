@@ -1,8 +1,9 @@
 {
   "name": "cadenza-app",
-  "version": "2.2.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
+    "prepare": "sh scripts/install-git-hooks.sh",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",

@@ -13,6 +13,7 @@ export type JobFilters = {
   job_source?: string;
   route_id?: string;
   day_of_week?: string;
+  needs_follow_up?: boolean;
   cursor?: string;
   limit?: number;
 };
@@ -36,6 +37,7 @@ function buildJobsQuery(filters: JobFilters): string {
   if (filters.day_of_week !== undefined && filters.day_of_week !== "") {
     params.set("day_of_week", filters.day_of_week);
   }
+  if (filters.needs_follow_up) params.set("needs_follow_up", "true");
   if (filters.cursor) params.set("cursor", filters.cursor);
   if (filters.limit) params.set("limit", String(filters.limit));
   return params.toString();

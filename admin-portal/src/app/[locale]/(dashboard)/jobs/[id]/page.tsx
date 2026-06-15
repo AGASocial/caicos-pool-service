@@ -19,6 +19,8 @@ import {
 } from '@/components/ui/dialog';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { useTeam } from '@/lib/team';
+import { ServiceReportCard } from '@/components/jobs/ServiceReportCard';
+import type { ServiceReport } from '@/lib/service-report';
 
 const STATUSES = ['pending', 'in_progress', 'completed', 'skipped', 'cancelled'] as const;
 
@@ -52,6 +54,7 @@ type JobDetail = {
   technician?: TechnicianRef | null;
   route?: RouteRef;
   visit_kind?: VisitKindRef;
+  service_report?: ServiceReport | null;
   report_photos?: ReportPhoto[];
 };
 
@@ -263,13 +266,22 @@ export default function JobDetailPage() {
         </CardContent>
       </Card>
 
+      <ServiceReportCard report={job.service_report ?? null} />
+
       <Card>
         <CardHeader>
-          <CardTitle>{t('photos', { defaultValue: 'Photos' })}</CardTitle>
+          <CardTitle>
+            {t('photos', { defaultValue: 'Photos' })}
+            {job.report_photos?.length ? (
+              <span className="ml-2 text-base font-normal text-muted-foreground">
+                ({job.report_photos.length})
+              </span>
+            ) : null}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {job.report_photos?.length ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
               {job.report_photos
                 .filter((photo) => photo.url)
                 .map((photo) => (
@@ -283,17 +295,9 @@ export default function JobDetailPage() {
                     <img
                       src={photo.url ?? ''}
                       alt={photo.caption || t('jobPhoto', { defaultValue: 'Job photo' })}
-                      className="h-44 w-full object-cover transition-transform group-hover:scale-[1.02]"
+                      className="aspect-square w-full object-cover transition-transform group-hover:scale-[1.02]"
                       loading="lazy"
                     />
-                    <div className="space-y-1 p-2 text-xs">
-                      {photo.caption ? <p className="text-foreground">{photo.caption}</p> : null}
-                      {photo.photo_type ? (
-                        <p className="text-muted-foreground">
-                          {t('type', { defaultValue: 'Type' })}: {photo.photo_type}
-                        </p>
-                      ) : null}
-                    </div>
                   </button>
                 ))}
             </div>
@@ -304,7 +308,8 @@ export default function JobDetailPage() {
           )}
         </CardContent>
       </Card>
-            <Card>
+
+      <Card>
         <CardHeader>
           <CardTitle>{t('editJob')}</CardTitle>
         </CardHeader>

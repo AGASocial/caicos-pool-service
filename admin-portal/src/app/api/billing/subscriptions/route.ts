@@ -37,6 +37,7 @@ export async function GET() {
           id: 'free',
           userId,
           planId: 'plan_free',
+          quantity: 1,
           status: 'active',
           currentPeriodStart: new Date(),
           currentPeriodEnd: null, // Free plan never expires
@@ -115,7 +116,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { subscriptionId, planId, cancelAtPeriodEnd } = body;
+    const { subscriptionId, planId, quantity, cancelAtPeriodEnd } = body;
 
     if (!subscriptionId) {
       return errorResponse('Subscription ID is required', 400);
@@ -132,6 +133,7 @@ export async function PATCH(request: NextRequest) {
     const updateRequest: UpdateSubscriptionRequest = {
       subscriptionId,
       planId,
+      quantity: quantity != null ? Number(quantity) : undefined,
       cancelAtPeriodEnd,
     };
 

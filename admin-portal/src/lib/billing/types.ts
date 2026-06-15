@@ -74,6 +74,8 @@ export interface Subscription {
   provider: PaymentProvider;
   providerSubscriptionId: string;
   providerCustomerId?: string;
+  /** Billable technician seats (per-technician pricing). Default 1. */
+  quantity: number;
   currentPeriodStart?: Date;
   currentPeriodEnd?: Date;
   cancelAtPeriodEnd: boolean;
@@ -161,6 +163,8 @@ export interface SubscriptionEventData {
   subscriptionId: string;
   customerId: string;
   planId?: string;
+  stripePriceId?: string;
+  quantity?: number;
   status: SubscriptionStatus;
   currentPeriodStart?: string;
   currentPeriodEnd?: string;
@@ -226,6 +230,7 @@ export interface CheckoutSessionDetails {
 export interface UpdateSubscriptionRequest {
   subscriptionId: string;
   planId?: string;
+  quantity?: number;
   cancelAtPeriodEnd?: boolean;
 }
 

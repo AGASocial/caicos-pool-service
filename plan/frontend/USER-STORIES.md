@@ -194,3 +194,34 @@ As a **developer**, I want a shared fetch wrapper with timeouts so that hung req
 | T-F-006-1 | Create lib/api-fetch.ts with 10s AbortSignal timeout wrapper | DONE |
 | T-F-006-2 | Replace direct fetch calls in hooks with apiFetch | DONE |
 | T-F-006-3 | Document retry policy alignment with QueryClient defaults | DONE |
+
+---
+
+## US-F-007 — Billing UI alignment
+
+| Field | Value |
+|-------|-------|
+| **Status** | `DONE` |
+| **Priority** | High |
+| **Phase** | 3 |
+| **Depends on** | US-B-017 |
+| **Source** | `plan/billing/BILLING-ASSESSMENT.md` |
+
+### Description
+
+As an **admin**, I want the billing dashboard and plans page to show the correct charge (**$14.99 × billed technicians**) and reflect the Standard tier.
+
+### Acceptance criteria
+
+- [ ] Next payment uses subscription `quantity`, not team headcount
+- [ ] Plans page shows Standard as featured; yearly toggle hidden when no active yearly plans
+- [ ] Quantity passed on plan change PATCH
+- [ ] Plans API unit test matches `{ plans }` response shape
+
+### Child tasks
+
+| ID | Task | Status |
+|----|------|--------|
+| T-F-007-1 | Fix next payment calculation on billing dashboard | DONE |
+| T-F-007-2 | Plans page Standard badge, yearly toggle, quantity on PATCH | DONE |
+| T-F-007-3 | Fix plans route unit test; quantity on subscription API | DONE |

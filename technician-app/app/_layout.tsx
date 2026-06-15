@@ -9,6 +9,7 @@ import 'react-native-url-polyfill/auto';
 
 import { initAuthSessionCache } from '@/lib/auth-session';
 import { useColorScheme } from '@/components/useColorScheme';
+import Colors from '@/constants/Colors';
 
 export { ErrorBoundary } from 'expo-router';
 

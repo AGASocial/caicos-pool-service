@@ -190,6 +190,7 @@ CREATE TABLE cadenza_service_reports (
   notes TEXT,
   follow_up_needed BOOLEAN DEFAULT FALSE,
   follow_up_notes TEXT,
+  issue_categories TEXT[] NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

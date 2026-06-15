@@ -111,6 +111,7 @@ export interface PaymentGateway {
     providerSubscriptionId: string,
     params: {
       planId?: string;
+      quantity?: number;
       cancelAtPeriodEnd?: boolean;
     }
   ): Promise<SubscriptionResult>;

@@ -47,8 +47,9 @@ export async function createRouteClient() {
 
 /**
  * Creates an authenticated Supabase server client and validates the user.
- * Returns { supabase, user } or throws if not authenticated.
- * Use this when you need to guarantee the user is authenticated.
+ * Returns `{ supabase, user }` — check `user` and return 401 in API routes if null.
+ *
+ * Pattern: `.cursor/skills/supabase-server-client/SKILL.md`
  */
 export async function createAuthenticatedRouteClient() {
     const supabase = await createRouteClient();

@@ -79,11 +79,88 @@ export async function GET(request: NextRequest) {
   const jobSource = searchParams.get('job_source');
   const routeId = searchParams.get('route_id');
   const dayOfWeekParam = searchParams.get('day_of_week');
+  const needsFollowUp = searchParams.get('needs_follow_up') === 'true';
   const fieldsParam = searchParams.get('fields');
   const { limit, cursor } = parsePaginationParams(searchParams);
 
   const client = supabase as unknown as CadenzaSupabaseClient;
   const useDetailFields = fieldsParam === 'detail';
+
+  if (needsFollowUp) {
+    const { data: flaggedReports, error: reportErr } = await client
+      .from('cadenza_service_reports')
+      .select('job_id, follow_up_needed, issue_categories')
+      .or('follow_up_needed.eq.true,issue_categories.neq.{}');
+
+    if (reportErr) {
+      console.error('Supabase error fetching follow-up reports:', reportErr);
+      return NextResponse.json({ error: reportErr.message }, { status: 500 });
+    }
+
+    const followUpJobIds = [
+      ...new Set(
+        (flaggedReports ?? [])
+          .filter((row) => {
+            const record = row as { follow_up_needed?: boolean; issue_categories?: string[] | null };
+            if (record.follow_up_needed) return true;
+            return Array.isArray(record.issue_categories) && record.issue_categories.length > 0;
+          })
+          .map((row) => String((row as { job_id: string }).job_id)),
+      ),
+    ];
+
+    if (followUpJobIds.length === 0) {
+      return NextResponse.json(buildPaginatedResponse([], limit, jobSortKey));
+    }
+
+    let query = useDetailFields
+      ? client.from('cadenza_service_jobs').select(JOB_DETAIL_SELECT)
+      : client.from('cadenza_service_jobs').select(JOB_LIST_SELECT);
+
+    query = query
+      .in('id', followUpJobIds)
+      .order('scheduled_date', { ascending: true })
+      .order('scheduled_time', { ascending: true, nullsFirst: false })
+      .order('id', { ascending: true });
+
+    if (dateFrom) query = query.gte('scheduled_date', dateFrom);
+    if (dateTo) query = query.lte('scheduled_date', dateTo);
+    if (technicianId) query = query.eq('technician_id', technicianId);
+    if (status) query = query.eq('status', status);
+    if (jobSource === 'route' || jobSource === 'ad_hoc') query = query.eq('job_source', jobSource);
+    if (routeId) query = query.eq('route_id', routeId);
+
+    if (dayOfWeekParam !== null && dayOfWeekParam !== '') {
+      const dow = Number(dayOfWeekParam);
+      if (!Number.isNaN(dow) && dow >= 0 && dow <= 6 && dateFrom && dateTo) {
+        const matchingDates = datesMatchingDayOfWeek(dateFrom, dateTo, dow);
+        if (matchingDates.length === 0) {
+          return NextResponse.json(buildPaginatedResponse([], limit, jobSortKey));
+        }
+        query = query.in('scheduled_date', matchingDates);
+      }
+    }
+
+    if (cursor) {
+      const decoded = decodeCursor(cursor);
+      if (decoded) {
+        const [cursorDate, , cursorId] = decoded.sortKey.split('|');
+        const id = cursorId || decoded.id;
+        query = query.or(
+          `scheduled_date.gt.${cursorDate},and(scheduled_date.eq.${cursorDate},id.gt.${id})`,
+        );
+      }
+    }
+
+    query = query.limit(limit + 1);
+    const { data, error } = await query;
+    if (error) {
+      console.error('Supabase error fetching follow-up jobs:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    const rows = (data ?? []) as unknown as JobRow[];
+    return NextResponse.json(buildPaginatedResponse(rows, limit, jobSortKey));
+  }
 
   let query = useDetailFields
     ? client.from('cadenza_service_jobs').select(JOB_DETAIL_SELECT)

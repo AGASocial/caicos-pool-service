@@ -186,3 +186,33 @@ As an **admin running reports**, I want pre-aggregated daily stats so that repor
 | T-D-006-1 | Create cadenza_job_stats_daily (company_id, date, status counts) | DONE |
 | T-D-006-2 | Add nightly pg_cron or queue job to populate rollups | DONE |
 | T-D-006-3 | Point reports API to rollup for ranges > 7 days | DONE |
+
+---
+
+## US-D-007 — Billing schema hardening
+
+| Field | Value |
+|-------|-------|
+| **Status** | `DONE` |
+| **Priority** | Critical |
+| **Phase** | 3 |
+| **Source** | `plan/billing/BILLING-ASSESSMENT.md` |
+
+### Description
+
+As the **platform**, I need billing tables to store per-technician seat count and enforce provider idempotency so charges and webhooks stay consistent.
+
+### Acceptance criteria
+
+- [ ] `cadenza_billing_subscriptions.quantity` column (default 1)
+- [ ] `cadenza_billing_plans.active` column
+- [ ] Unique indexes on `provider_subscription_id` and `provider_invoice_id`
+- [ ] Expired subscriptions marked `canceled`
+
+### Child tasks
+
+| ID | Task | Status |
+|----|------|--------|
+| T-D-007-1 | Add quantity column to cadenza_billing_subscriptions | DONE |
+| T-D-007-2 | Add active column + unique provider indexes | DONE |
+| T-D-007-3 | Data-fix expired subscriptions to canceled | DONE |

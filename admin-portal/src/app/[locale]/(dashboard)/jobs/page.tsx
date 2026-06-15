@@ -68,6 +68,7 @@ export default function JobsPage() {
   const [jobSourceFilter, setJobSourceFilter] = useState('');
   const [routeFilter, setRouteFilter] = useState('');
   const [dayOfWeekFilter, setDayOfWeekFilter] = useState('');
+  const [needsFollowUpFilter, setNeedsFollowUpFilter] = useState(false);
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({
     dateFrom: week.to,
@@ -77,6 +78,7 @@ export default function JobsPage() {
     jobSourceFilter: '',
     routeFilter: '',
     dayOfWeekFilter: '',
+    needsFollowUpFilter: false,
   });
 
   const { data: teamMembers = [] } = useTeam();
@@ -95,6 +97,7 @@ export default function JobsPage() {
           : undefined,
       route_id: appliedFilters.routeFilter || undefined,
       day_of_week: appliedFilters.dayOfWeekFilter,
+      needs_follow_up: appliedFilters.needsFollowUpFilter || undefined,
     }),
     [appliedFilters],
   );
@@ -112,6 +115,7 @@ export default function JobsPage() {
       jobSourceFilter,
       routeFilter,
       dayOfWeekFilter,
+      needsFollowUpFilter,
     });
   }
 
@@ -265,6 +269,15 @@ export default function JobsPage() {
                   <option value="ad_hoc">{t('jobSource_ad_hoc')}</option>
                 </select>
               </div>
+              <label className="flex items-center gap-2 text-sm h-9 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={needsFollowUpFilter}
+                  onChange={(e) => setNeedsFollowUpFilter(e.target.checked)}
+                  className="rounded border-input"
+                />
+                {t('filterNeedsFollowUp')}
+              </label>
             </div>
           )}
         </CardContent>

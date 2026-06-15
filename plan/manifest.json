@@ -8,12 +8,12 @@
     "DONE"
   ],
   "summary": {
-    "totalStories": 32,
-    "totalTasks": 116,
+    "totalStories": 35,
+    "totalTasks": 125,
     "byStatus": {
       "PENDING": 0,
       "IN-PROGRESS": 0,
-      "DONE": 116
+      "DONE": 125
     }
   },
   "stories": [
@@ -1067,6 +1067,105 @@
         {
           "id": "T-D-006-3",
           "title": "Point reports API to rollup for ranges > 7 days",
+          "status": "DONE"
+        }
+      ]
+    },
+    {
+      "id": "US-D-007",
+      "domain": "database",
+      "title": "Billing schema hardening (quantity, active, provider indexes)",
+      "status": "DONE",
+      "priority": "Critical",
+      "phase": 3,
+      "agent": "NextJS Developer",
+      "sourceFindings": [
+        "BILLING-ASSESSMENT"
+      ],
+      "dependsOn": [],
+      "tasks": [
+        {
+          "id": "T-D-007-1",
+          "title": "Add quantity column to cadenza_billing_subscriptions",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-007-2",
+          "title": "Add active column to cadenza_billing_plans + unique provider indexes",
+          "status": "DONE"
+        },
+        {
+          "id": "T-D-007-3",
+          "title": "Data-fix expired subscriptions to canceled status",
+          "status": "DONE"
+        }
+      ]
+    },
+    {
+      "id": "US-B-017",
+      "domain": "backend",
+      "title": "Billing subscription lifecycle, webhooks, and quantity persistence",
+      "status": "DONE",
+      "priority": "Critical",
+      "phase": 3,
+      "agent": "NextJS Developer",
+      "sourceFindings": [
+        "BILLING-ASSESSMENT"
+      ],
+      "dependsOn": [
+        "US-D-007"
+      ],
+      "tasks": [
+        {
+          "id": "T-B-017-1",
+          "title": "Persist quantity on create; cancel stale subs before new checkout",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-017-2",
+          "title": "Enforce subscription period expiry in getUserSubscription and limits",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-017-3",
+          "title": "Fix webhook upserts, 5xx on failure, remove invoice period overwrite",
+          "status": "DONE"
+        },
+        {
+          "id": "T-B-017-4",
+          "title": "Map Stripe metadata/price/quantity in subscription webhook normalizer",
+          "status": "DONE"
+        }
+      ]
+    },
+    {
+      "id": "US-F-007",
+      "domain": "frontend",
+      "title": "Billing UI — next payment, plans page, API alignment",
+      "status": "DONE",
+      "priority": "High",
+      "phase": 3,
+      "agent": "NextJS Developer",
+      "sourceFindings": [
+        "BILLING-ASSESSMENT"
+      ],
+      "dependsOn": [
+        "US-B-017"
+      ],
+      "tasks": [
+        {
+          "id": "T-F-007-1",
+          "title": "Next payment = unit price × subscription quantity (not team headcount)",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-007-2",
+          "title": "Plans page Standard badge, hide yearly toggle when inactive, pass quantity on PATCH",
+          "status": "DONE"
+        },
+        {
+          "id": "T-F-007-3",
+          "title": "Fix plans API unit test; expose quantity on subscription API response",
           "status": "DONE"
         }
       ]

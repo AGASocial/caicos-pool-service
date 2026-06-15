@@ -3,6 +3,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { isPaidSubscriptionEffective } from '@/lib/billing/subscription-utils';
 
 export interface SubscriptionLimits {
   maxStorageMb: number;
@@ -13,6 +14,12 @@ export interface SubscriptionLimits {
 
 export interface UsageStats {
   storageUsedMb: number;
+}
+
+function storageGbToMb(features: Record<string, unknown>): number {
+  const storageGb = features.storage_gb as number | undefined;
+  if (storageGb != null && storageGb > 0) return storageGb * 1024;
+  return (features.max_storage_mb as number) || 50;
 }
 
 /**
@@ -29,8 +36,10 @@ export async function getSubscriptionLimits(
       plan:cadenza_billing_plans(*)
     `)
     .eq('user_id', userId)
-    .eq('status', 'active')
-    .single();
+    .in('status', ['active', 'trialing', 'past_due'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   if (!subscription || !subscription.plan) {
     const { data: freePlan } = await supabase
@@ -42,7 +51,7 @@ export async function getSubscriptionLimits(
     if (freePlan) {
       const features = freePlan.features as Record<string, unknown>;
       return {
-        maxStorageMb: (features.max_storage_mb as number) || 50,
+        maxStorageMb: storageGbToMb(features),
         maxFileSizeMb: (features.max_file_size_mb as number) || 10,
         prioritySupport: false,
         advancedSecurity: false,
@@ -52,11 +61,36 @@ export async function getSubscriptionLimits(
     return getFreeTrialLimits();
   }
 
+  const effective = isPaidSubscriptionEffective({
+    planId: subscription.plan_id as string,
+    status: subscription.status as string,
+    currentPeriodEnd: subscription.current_period_end as string | null,
+  });
+
+  if (!effective) {
+    const { data: freePlan } = await supabase
+      .from('cadenza_billing_plans')
+      .select('*')
+      .eq('id', 'plan_free')
+      .single();
+
+    if (freePlan) {
+      const features = freePlan.features as Record<string, unknown>;
+      return {
+        maxStorageMb: storageGbToMb(features),
+        maxFileSizeMb: (features.max_file_size_mb as number) || 10,
+        prioritySupport: false,
+        advancedSecurity: false,
+      };
+    }
+    return getFreeTrialLimits();
+  }
+
   const plan = Array.isArray(subscription.plan) ? subscription.plan[0] : subscription.plan;
   const features = plan.features as Record<string, unknown>;
 
   return {
-    maxStorageMb: (features.max_storage_mb as number) || 100,
+    maxStorageMb: storageGbToMb(features),
     maxFileSizeMb: (features.max_file_size_mb as number) || 10,
     prioritySupport: (features.priority_support as boolean) || false,
     advancedSecurity: (features.advanced_security as boolean) || false,
@@ -82,14 +116,13 @@ export async function getUsageStats(
   _supabase: SupabaseClient,
   _userId: string
 ): Promise<UsageStats> {
-  // Storage tracking can be wired to cadenza file usage when implemented
   return {
     storageUsedMb: 0,
   };
 }
 
 /**
- * Check if user's subscription is active
+ * Check if user's subscription is active and within billing period
  */
 export async function hasActiveSubscription(
   supabase: SupabaseClient,
@@ -97,12 +130,19 @@ export async function hasActiveSubscription(
 ): Promise<boolean> {
   const { data: subscription } = await supabase
     .from('cadenza_billing_subscriptions')
-    .select('id')
+    .select('plan_id, status, current_period_end')
     .eq('user_id', userId)
-    .eq('status', 'active')
-    .single();
+    .in('status', ['active', 'trialing', 'past_due'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  return !!subscription;
+  if (!subscription) return false;
+  return isPaidSubscriptionEffective({
+    planId: subscription.plan_id as string,
+    status: subscription.status as string,
+    currentPeriodEnd: subscription.current_period_end as string | null,
+  });
 }
 
 /**
@@ -125,15 +165,25 @@ export async function getSubscriptionStatus(
       plan:cadenza_billing_plans(*)
     `)
     .eq('user_id', userId)
-    .eq('status', 'active')
-    .single();
+    .in('status', ['active', 'trialing', 'past_due'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   const [limits, usage] = await Promise.all([
     getSubscriptionLimits(supabase, userId),
     getUsageStats(supabase, userId),
   ]);
 
-  if (!subscription) {
+  const effective = subscription
+    ? isPaidSubscriptionEffective({
+        planId: subscription.plan_id as string,
+        status: subscription.status as string,
+        currentPeriodEnd: subscription.current_period_end as string | null,
+      })
+    : false;
+
+  if (!subscription || !effective) {
     return {
       hasSubscription: false,
       limits,

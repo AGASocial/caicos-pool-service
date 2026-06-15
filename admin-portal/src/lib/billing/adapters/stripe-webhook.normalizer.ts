@@ -167,12 +167,17 @@ export class StripeWebhookNormalizer implements WebhookNormalizer {
       ? subscription.customer
       : subscription.customer?.id || '';
 
-    // Access properties as any since Stripe webhook data might use snake_case
     const subData = subscription as unknown as Record<string, unknown>;
+    const metadata = subscription.metadata ?? {};
+    const firstItem = subscription.items?.data?.[0];
 
     return {
       subscriptionId: subscription.id,
       customerId,
+      userId: metadata.user_id || undefined,
+      planId: metadata.plan_id || undefined,
+      stripePriceId: firstItem?.price?.id,
+      quantity: firstItem?.quantity ?? 1,
       status: this.mapSubscriptionStatus(subscription.status),
       currentPeriodStart: new Date((subData.current_period_start as number || subData.currentPeriodStart as number) * 1000).toISOString(),
       currentPeriodEnd: new Date((subData.current_period_end as number || subData.currentPeriodEnd as number) * 1000).toISOString(),
