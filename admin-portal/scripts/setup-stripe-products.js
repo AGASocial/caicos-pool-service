@@ -72,7 +72,7 @@ async function main() {
     console.log('📦 Creating Necessary Plan...');
     const necessaryProductId = await createStripeProduct(
       'Necessary Plan',
-      'Essential features for managing your digital legacy'
+      'Essential features for managing your pool service business'
     );
     const necessaryMonthlyPriceId = await createStripePrice(necessaryProductId, 999, 'month');
     const necessaryYearlyPriceId = await createStripePrice(necessaryProductId, 9999, 'year');

@@ -8,14 +8,6 @@ Cadenza admin portal — the web app of a field-service operations platform for 
 
 Stack: Next.js 16 App Router (Turbopack), React 19, TypeScript strict, Tailwind CSS v4, shadcn-style UI (`components.json`, Radix primitives in `src/components/ui/`), next-intl, Supabase (Auth + Postgres + Storage).
 
-## Legacy Code Warning
-
-The admin portal was bootstrapped from a donor app. The only remaining donor-era surface is:
-
-- `[locale]/(dashboard)/wizard` and `api/wizard/complete` — Cadenza onboarding shell (extend when wizard collects real setup data)
-
-Do not reintroduce digital-assets/beneficiaries flows. The product domain is `cadenza_*` tables and jobs/routes/properties/team code.
-
 ## Commands
 
 ```bash
@@ -46,7 +38,7 @@ All pages live under `src/app/[locale]/` with locales `en`/`es` — **default is
 
 | File | Use |
 |---|---|
-| `supabase.ts` | Browser client (`createBrowserClient`) + legacy `Database` type |
+| `supabase.ts` | Browser client (`createBrowserClient`) + `Database` type for billing tables |
 | `supabase-server.ts` | `createRouteClient()` / `createAuthenticatedRouteClient()` for API routes (cookie-based; returns `{ supabase, user }`) |
 | `supabase-admin.ts` | `supabaseAdmin` service-role client — bypasses RLS, server-only |
 | `supabase-cadenza.ts` | `CadenzaSupabaseClient` type for `cadenza_*` tables; used via cast `(supabase as unknown as CadenzaSupabaseClient)` |
@@ -71,10 +63,6 @@ Routes have stops with weekly schedules (`cadenza_route_stop_schedules`). Jobs a
 
 Envelope encryption in `src/lib/encryption.ts`: `STORAGE_MASTER_KEY` env → HKDF → KEK; a random per-user DEK is stored AES-256-GCM-encrypted in `cadenza_profiles.encrypted_storage_key`; files are encrypted/decrypted as streams via `api/storage/upload`. The HKDF salt string `'cadenza-master-key-v1'` is historical — **never change it**, or every stored key becomes undecryptable. Rotation: `scripts/rotate-keys.ts` (master key), `scripts/rotate-user-key.ts` (single user).
 
-### Security PIN
-
-A second factor separate from login: bcrypt-hashed PIN in `users.security_pin_hash`, managed by `api/security/*`. Successful verification issues a 15-minute JWT (jose, signed with `SUPABASE_JWT_SECRET`) in the `security_session` cookie; check server-side with `checkSecuritySession()` from `supabase-server.ts`, client state in `src/context/SecurityContext.tsx`. PIN reset emails an OTP via Resend (`api/security/forgot-pin`).
-
 ### Billing
 
 Provider-agnostic gateway layer in `src/lib/billing/` (adapters + webhook normalizers) supporting Stripe and PayU; the active gateway is selected by `NEXT_PUBLIC_PAYMENT_GATEWAY`. Webhooks: `api/webhooks/stripe`, `api/webhooks/payu`; PayU return page at `[locale]/payments/payu/return`. Plan gating reads `cadenza_billing_plans` via `src/lib/subscription/limits.ts` (storage/file-size limits).
@@ -89,10 +77,8 @@ Client components fetch through the API routes with TanStack Query — `src/lib/
 
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — required everywhere
 - `SUPABASE_SERVICE_ROLE_KEY` — admin client
-- `SUPABASE_JWT_SECRET` — security-PIN session JWTs
 - `STORAGE_MASTER_KEY` — file-encryption KEK
 - `CRON_SECRET` — cron endpoint auth
-- `RESEND_API_KEY` — OTP email
 - Payments: `NEXT_PUBLIC_PAYMENT_GATEWAY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `PAYU_*`
 
 ## Gotchas

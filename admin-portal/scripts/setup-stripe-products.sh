@@ -21,7 +21,7 @@ echo "📦 Creating Necessary Plan (Monthly)..."
 NECESSARY_PRODUCT_ID=$(curl -s https://api.stripe.com/v1/products \
   -u "$STRIPE_SECRET_KEY:" \
   -d name="Necessary Plan" \
-  -d description="Essential features for managing your digital legacy" \
+  -d description="Essential features for managing your pool service business" \
   | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
 
 NECESSARY_MONTHLY_PRICE_ID=$(curl -s https://api.stripe.com/v1/prices \
