@@ -44,7 +44,6 @@ export function rateLimitResponse(retryAfterSec: number): Response {
 /** Default limits by route class */
 export const RATE_LIMITS = {
   auth: { limit: 20, windowMs: 60_000 },
-  security: { limit: 30, windowMs: 60_000 },
   write: { limit: 60, windowMs: 60_000 },
   upload: { limit: 10, windowMs: 60_000 },
 } as const;

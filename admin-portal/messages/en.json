@@ -259,6 +259,7 @@
   "routeStopsScheduleDescription": "Set weekday and weekly or monthly (1st–4th weekday) for each stop. Job generation uses these patterns.",
   "routes": "Routes",
   "routesDescription": "Recurring routes: same technician, same houses week after week.",
+  "routesCardDescription": "All routes configured for your company.",
   "save": "Save",
   "saveWithYearly": "Save 17% with yearly",
   "saving": "Saving...",

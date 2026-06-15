@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
-import { User, Shield, Settings } from 'lucide-react';
+import { User, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 
@@ -17,11 +17,6 @@ export function SettingsNav({ className, ...props }: SettingsNavProps) {
             title: t('profile'),
             href: '/settings',
             icon: User,
-        },
-        {
-            title: t('security'),
-            href: '/settings/security',
-            icon: Shield,
         },
         {
             title: t('preferences'),
