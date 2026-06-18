@@ -7,9 +7,13 @@ ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
 }
 
 HOOKS_DIR="$ROOT/.git/hooks"
-SRC="$ROOT/admin-portal/scripts/hooks/commit-msg"
+SRC_DIR="$ROOT/admin-portal/scripts/hooks"
 
 mkdir -p "$HOOKS_DIR"
-cp "$SRC" "$HOOKS_DIR/commit-msg"
-chmod +x "$HOOKS_DIR/commit-msg"
-echo "Installed commit-msg hook → $HOOKS_DIR/commit-msg"
+cp "$SRC_DIR/pre-commit" "$HOOKS_DIR/pre-commit"
+cp "$SRC_DIR/prepare-commit-msg" "$HOOKS_DIR/prepare-commit-msg"
+chmod +x "$HOOKS_DIR/pre-commit" "$HOOKS_DIR/prepare-commit-msg"
+
+rm -f "$HOOKS_DIR/commit-msg"
+
+echo "Installed git hooks → $HOOKS_DIR/pre-commit, $HOOKS_DIR/prepare-commit-msg"

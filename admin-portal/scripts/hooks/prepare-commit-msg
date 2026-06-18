@@ -1,25 +1,32 @@
 #!/bin/sh
-# Bumps admin-portal/version.json and amends it into the current commit.
+# Applies optional semver bump from the final commit message (build bumped in pre-commit).
 set -e
 
 ROOT=$(git rev-parse --show-toplevel)
 VERSION_FILE="$ROOT/admin-portal/version.json"
+MESSAGE_FILE=$1
+SOURCE=$2
 
-if [ ! -f "$VERSION_FILE" ]; then
+if [ ! -f "$VERSION_FILE" ] || [ -z "$MESSAGE_FILE" ]; then
   exit 0
 fi
 
-# GUI clients (Cursor, VS Code, etc.) run hooks with a minimal PATH — resolve node explicitly.
+case "$SOURCE" in
+  merge|squash|commit) exit 0 ;;
+esac
+
+GIT_DIR=$(git rev-parse --git-dir)
+if [ -f "$GIT_DIR/MERGE_HEAD" ] || [ -d "$GIT_DIR/rebase-merge" ] || [ -d "$GIT_DIR/rebase-apply" ]; then
+  exit 0
+fi
+
 resolve_node() {
   if command -v node >/dev/null 2>&1; then
     command -v node
     return 0
   fi
 
-  for candidate in \
-    /opt/homebrew/bin/node \
-    /usr/local/bin/node
-  do
+  for candidate in /opt/homebrew/bin/node /usr/local/bin/node; do
     if [ -x "$candidate" ]; then
       echo "$candidate"
       return 0
@@ -45,17 +52,7 @@ resolve_node() {
   return 1
 }
 
-NODE=$(resolve_node) || {
-  echo "commit-msg hook: node not found. Install Node.js or run commits from a shell with nvm loaded." >&2
-  exit 1
-}
+NODE=$(resolve_node) || exit 0
 
-GIT_DIR=$(git rev-parse --git-dir)
-if [ -f "$GIT_DIR/MERGE_HEAD" ] || [ -d "$GIT_DIR/rebase-merge" ] || [ -d "$GIT_DIR/rebase-apply" ]; then
-  # Tree is fixed before commit-msg runs; skip bump/amend during merge/rebase.
-  exit 0
-fi
-
-"$NODE" "$ROOT/admin-portal/scripts/bump-version.mjs" "$1"
+"$NODE" "$ROOT/admin-portal/scripts/bump-version.mjs" --semver-only "$MESSAGE_FILE"
 git add "$VERSION_FILE"
-git commit --amend --no-edit --no-verify

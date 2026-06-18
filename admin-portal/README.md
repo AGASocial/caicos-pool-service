@@ -99,12 +99,14 @@ To learn more about the technologies used:
 
 ### Git hooks
 
-`npm install` runs `scripts/install-git-hooks.sh`, which copies `scripts/hooks/commit-msg` into the repository’s `.git/hooks/` directory.
+`npm install` runs `scripts/install-git-hooks.sh`, which installs `pre-commit` and `prepare-commit-msg` hooks into the repository’s `.git/hooks/` directory.
 
-On every commit, the hook:
+On every commit, the hooks:
 
-1. Increments the build number in `version.json`
-2. Amends that file into the same commit (shown on the login/register footer as `1.0.0-{build}`)
+1. **pre-commit** — increment the build number in `version.json` and stage it
+2. **prepare-commit-msg** — apply optional semver markers from the commit message
+
+The login/register footer shows `1.0.0-{build}`. Merge and rebase commits skip the bump.
 
 Optional semver bumps — include one of these in the commit message:
 
