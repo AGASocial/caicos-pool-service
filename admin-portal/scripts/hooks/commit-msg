@@ -50,6 +50,12 @@ NODE=$(resolve_node) || {
   exit 1
 }
 
+GIT_DIR=$(git rev-parse --git-dir)
+if [ -f "$GIT_DIR/MERGE_HEAD" ] || [ -d "$GIT_DIR/rebase-merge" ] || [ -d "$GIT_DIR/rebase-apply" ]; then
+  # Tree is fixed before commit-msg runs; skip bump/amend during merge/rebase.
+  exit 0
+fi
+
 "$NODE" "$ROOT/admin-portal/scripts/bump-version.mjs" "$1"
 git add "$VERSION_FILE"
 git commit --amend --no-edit --no-verify
