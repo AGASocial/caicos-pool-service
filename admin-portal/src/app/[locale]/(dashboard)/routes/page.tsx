@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 import { Plus, Route, ChevronRight } from 'lucide-react';
 import { useRoutes } from '@/lib/data-queries';
+import { LoadingState } from '@/components/ui/loading-state';
 
 type RouteRow = {
   id: string;
@@ -42,7 +43,7 @@ export default function RoutesPage() {
           <CardDescription>{t('routesCardDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading && <p className="text-sm text-muted-foreground">{t('loading', { defaultValue: 'Loading…' })}</p>}
+          {isLoading && <LoadingState size="sm" padded={false} className="py-8" />}
           {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
           {!isLoading && !errorMessage && routes.length === 0 && (
             <p className="text-sm text-muted-foreground">{t('noRoutesYet')}</p>

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { PropertyForm } from '@/components/properties/PropertyForm';
 import type { PropertyFormValues } from '@/components/properties/PropertyForm';
 import { ArrowLeft } from 'lucide-react';
+import { LoadingState } from '@/components/ui/loading-state';
 
 type Property = PropertyFormValues & {
   id: string;
@@ -44,7 +45,7 @@ export default function EditPropertyPage() {
     return () => { cancelled = true; };
   }, [id]);
 
-  if (loading) return <p className="text-muted-foreground">{t('loading', { defaultValue: 'Loading…' })}</p>;
+  if (loading) return <LoadingState />;
   if (error || !property) {
     return (
       <div className="space-y-4">

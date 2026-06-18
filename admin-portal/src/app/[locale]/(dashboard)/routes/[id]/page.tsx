@@ -20,6 +20,7 @@ import {
 import { ArrowLeft, Trash2, Plus, Calendar, MapPin } from 'lucide-react';
 import { formatLocalYmd } from '@/lib/date-week';
 import { unwrapPaginated } from '@/lib/pagination';
+import { LoadingState } from '@/components/ui/loading-state';
 
 type Property = { id: string; customer_name: string; address?: string };
 type ScheduleSeg = {
@@ -305,11 +306,7 @@ export default function RouteDetailPage() {
     filteredAvailable.every((p) => selectedPropertyIds.includes(p.id));
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <p className="text-muted-foreground">{t('loading', { defaultValue: 'Loading…' })}</p>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (error && !route) {

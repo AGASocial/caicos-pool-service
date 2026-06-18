@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import StripeProvider from './StripeProvider';
 import AddPaymentMethodForm from './AddPaymentMethodForm';
+import { LoadingState } from '@/components/ui/loading-state';
 
 interface PaymentMethod {
   id: string;
@@ -109,7 +110,7 @@ export default function PaymentMethodsList() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-muted-foreground">{t('loading')}</p>
+          <LoadingState size="sm" padded={false} className="py-4" />
         </CardContent>
       </Card>
     );

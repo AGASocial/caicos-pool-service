@@ -13,6 +13,7 @@ import { useTeam } from '@/lib/team';
 import { useJobs, useRoutes } from '@/lib/data-queries';
 import { monthBoundsCalendar, weekBoundsMonday } from '@/lib/date-week';
 import { cn } from '@/lib/utils';
+import { LoadingState } from '@/components/ui/loading-state';
 
 type PropertyRef = { id: string; customer_name: string; address?: string };
 type TechnicianRef = { id: string; full_name: string };
@@ -289,7 +290,7 @@ export default function JobsPage() {
           <CardDescription>{t('jobsCardDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading && <p className="text-sm text-muted-foreground">{t('loading', { defaultValue: 'Loading…' })}</p>}
+          {isLoading && <LoadingState size="sm" padded={false} className="py-8" />}
           {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
           {!isLoading && !errorMessage && jobs.length === 0 && (
             <p className="text-sm text-muted-foreground">{t('noJobsYet')}</p>

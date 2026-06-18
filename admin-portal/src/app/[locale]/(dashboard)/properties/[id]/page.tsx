@@ -7,6 +7,7 @@ import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Pencil } from 'lucide-react';
+import { LoadingState } from '@/components/ui/loading-state';
 
 type Property = {
   id: string;
@@ -56,7 +57,7 @@ export default function PropertyDetailPage() {
     return () => { cancelled = true; };
   }, [id]);
 
-  if (loading) return <p className="text-muted-foreground">{t('loading', { defaultValue: 'Loading…' })}</p>;
+  if (loading) return <LoadingState />;
   if (error || !property) {
     return (
       <div className="space-y-4">

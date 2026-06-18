@@ -6,6 +6,7 @@ import { Link } from '@/i18n/navigation'; // Use locale-aware Link
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Users, ArrowRight, Briefcase, Building2, Route, Heart } from "lucide-react"
+import { LoadingState } from '@/components/ui/loading-state';
 
 export default function LocalePage() {
   const router = useRouter();
@@ -28,11 +29,7 @@ export default function LocalePage() {
   }, [router]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
-      </div>
-    );
+    return <LoadingState fullScreen className="bg-background" />;
   }
 
   return (

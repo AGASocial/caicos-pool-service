@@ -20,6 +20,7 @@ import {
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { useTeam } from '@/lib/team';
 import { ServiceReportCard } from '@/components/jobs/ServiceReportCard';
+import { LoadingState } from '@/components/ui/loading-state';
 import type { ServiceReport } from '@/lib/service-report';
 
 const STATUSES = ['pending', 'in_progress', 'completed', 'skipped', 'cancelled'] as const;
@@ -165,7 +166,7 @@ export default function JobDetailPage() {
     }
   }
 
-  if (loading) return <p className="text-muted-foreground">{t('loading', { defaultValue: 'Loading…' })}</p>;
+  if (loading) return <LoadingState />;
   if (error && !job) {
     return (
       <div className="space-y-4">

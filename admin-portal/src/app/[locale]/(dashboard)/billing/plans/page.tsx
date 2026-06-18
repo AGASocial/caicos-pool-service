@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import type { Subscription, PlanDefinition, CheckoutSessionDetails } from '@/lib/billing/types';
+import { LoadingState } from '@/components/ui/loading-state';
 
 const PAYMENT_GATEWAY = process.env.NEXT_PUBLIC_PAYMENT_GATEWAY || 'payu';
 
@@ -230,7 +231,7 @@ export default function PlansPage() {
   if (loading) {
     return (
       <div className="container mx-auto py-10">
-        <div className="text-center">{t('loadingPlans')}</div>
+        <LoadingState label={t('loadingPlans')} />
       </div>
     );
   }

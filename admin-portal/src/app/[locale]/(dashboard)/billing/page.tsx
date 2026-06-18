@@ -4,16 +4,17 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { FileText, Calendar, AlertCircle, Loader2, Users } from 'lucide-react';
+import { FileText, Calendar, AlertCircle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useTeam } from '@/lib/team';
+import { LoadingState } from '@/components/ui/loading-state';
 
 const PaymentMethodsList = dynamic(() => import('@/components/billing/PaymentMethodsList'), {
   ssr: false,
-  loading: () => <div className="py-8 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>,
+  loading: () => <LoadingState padded={false} className="py-8" />,
 });
 
 /** Plan features from cadenza_billing_plans (JSONB). -1 = unlimited. */
@@ -210,10 +211,7 @@ export default function BillingPage() {
   if (loading) {
     return (
       <div className="container mx-auto py-10">
-        <div className="flex items-center justify-center gap-2 py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          <span className="text-muted-foreground">{t('loadingSubscription')}</span>
-        </div>
+        <LoadingState label={t('loadingSubscription')} />
       </div>
     );
   }
