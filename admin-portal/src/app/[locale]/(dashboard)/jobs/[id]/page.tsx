@@ -64,7 +64,6 @@ export default function JobDetailPage() {
   const router = useRouter();
   const id = params?.id as string;
   const [job, setJob] = useState<JobDetail | null>(null);
-  const [properties, setProperties] = useState<{ id: string; customer_name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const { data: teamMembers = [] } = useTeam();
   const [saving, setSaving] = useState(false);
@@ -73,7 +72,6 @@ export default function JobDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<ReportPhoto | null>(null);
   const [edit, setEdit] = useState({
-    property_id: '',
     technician_id: '',
     scheduled_date: '',
     scheduled_time: '',
@@ -98,7 +96,6 @@ export default function JobDetailPage() {
         if (!cancelled) {
           setJob(data);
           setEdit({
-            property_id: data.property_id,
             technician_id: data.technician_id ?? '',
             scheduled_date: data.scheduled_date?.slice(0, 10) ?? '',
             scheduled_time: data.scheduled_time ?? '',
@@ -116,22 +113,6 @@ export default function JobDetailPage() {
     return () => { cancelled = true; };
   }, [id]);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/properties');
-        if (!cancelled && res.ok) {
-          const data = await res.json();
-          setProperties(Array.isArray(data) ? data : []);
-        }
-      } catch {
-        // ignore
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
   async function handleSave() {
     if (!id) return;
     setSaving(true);
@@ -141,7 +122,6 @@ export default function JobDetailPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          property_id: edit.property_id,
           technician_id: edit.technician_id || null,
           scheduled_date: edit.scheduled_date,
           scheduled_time: edit.scheduled_time || null,
@@ -316,15 +296,15 @@ export default function JobDetailPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>{t('properties')}</Label>
-            <select
-              value={edit.property_id}
-              onChange={(e) => setEdit((p) => ({ ...p, property_id: e.target.value }))}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.customer_name}</option>
-              ))}
-            </select>
+            <Input
+              value={
+                job.property?.customer_name
+                  ? [job.property.customer_name, job.property.address].filter(Boolean).join(' · ')
+                  : job.property_id
+              }
+              disabled
+              readOnly
+            />
           </div>
           <div className="space-y-2">
             <Label>{t('technician')}</Label>
