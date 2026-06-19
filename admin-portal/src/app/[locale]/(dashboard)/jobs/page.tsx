@@ -1,7 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,8 +11,10 @@ import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
 import { Briefcase, ChevronRight, Radio, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { useTeam } from '@/lib/team';
+import { useJobs, useRoutes } from '@/lib/data-queries';
 import { monthBoundsCalendar, weekBoundsMonday } from '@/lib/date-week';
 import { cn } from '@/lib/utils';
+import { LoadingState } from '@/components/ui/loading-state';
 
 type PropertyRef = { id: string; customer_name: string; address?: string };
 type TechnicianRef = { id: string; full_name: string };
@@ -59,122 +62,101 @@ function jobStatusBadgeClassName(status: string) {
 
 export default function JobsPage() {
   const t = useTranslations();
+  const searchParams = useSearchParams();
   const week = weekBoundsMonday();
-  const [jobs, setJobs] = useState<JobRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [dateFrom, setDateFrom] = useState(week.to); // I want to show today by default
-  const [dateTo, setDateTo] = useState(week.to); // I want to show today by default
+  const followUpFromUrl = searchParams.get('needs_follow_up') === '1';
+  const [dateFrom, setDateFrom] = useState(week.to);
+  const [dateTo, setDateTo] = useState(week.to);
   const [teamMemberId, setTeamMemberId] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [jobSourceFilter, setJobSourceFilter] = useState('');
   const [routeFilter, setRouteFilter] = useState('');
   const [dayOfWeekFilter, setDayOfWeekFilter] = useState('');
-  const [routes, setRoutes] = useState<{ id: string; name: string }[]>([]);
-  const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
+  const [needsFollowUpFilter, setNeedsFollowUpFilter] = useState(followUpFromUrl);
+  const [moreFiltersOpen, setMoreFiltersOpen] = useState(followUpFromUrl);
+  const [appliedFilters, setAppliedFilters] = useState({
+    dateFrom: week.to,
+    dateTo: week.to,
+    teamMemberId: '',
+    statusFilter: '',
+    jobSourceFilter: '',
+    routeFilter: '',
+    dayOfWeekFilter: '',
+    needsFollowUpFilter: followUpFromUrl,
+  });
+
+  useEffect(() => {
+    if (followUpFromUrl) {
+      setNeedsFollowUpFilter(true);
+      setMoreFiltersOpen(true);
+      setAppliedFilters((prev) => ({ ...prev, needsFollowUpFilter: true }));
+    }
+  }, [followUpFromUrl]);
+
   const { data: teamMembers = [] } = useTeam();
+  const { data: routesResult } = useRoutes();
+  const routes = (routesResult?.data ?? []) as { id: string; name: string }[];
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/routes');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!cancelled) setRoutes(Array.isArray(data) ? data : []);
-      } catch {
-        // ignore
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const jobFilters = useMemo(
+    () => ({
+      date_from: appliedFilters.needsFollowUpFilter ? undefined : appliedFilters.dateFrom,
+      date_to: appliedFilters.needsFollowUpFilter ? undefined : appliedFilters.dateTo,
+      technician_id: appliedFilters.teamMemberId || undefined,
+      status: appliedFilters.statusFilter || undefined,
+      job_source:
+        appliedFilters.jobSourceFilter === 'route' || appliedFilters.jobSourceFilter === 'ad_hoc'
+          ? appliedFilters.jobSourceFilter
+          : undefined,
+      route_id: appliedFilters.routeFilter || undefined,
+      day_of_week: appliedFilters.dayOfWeekFilter,
+      needs_follow_up: appliedFilters.needsFollowUpFilter || undefined,
+    }),
+    [appliedFilters],
+  );
 
-  function jobsQueryString(dateRange?: { dateFrom?: string; dateTo?: string }) {
-    const params = new URLSearchParams();
-    const from = dateRange?.dateFrom ?? dateFrom;
-    const to = dateRange?.dateTo ?? dateTo;
-    if (from) params.set('date_from', from);
-    if (to) params.set('date_to', to);
-    if (teamMemberId) params.set('technician_id', teamMemberId);
-    if (statusFilter) params.set('status', statusFilter);
-    if (jobSourceFilter === 'route' || jobSourceFilter === 'ad_hoc') {
-      params.set('job_source', jobSourceFilter);
-    }
-    if (routeFilter) params.set('route_id', routeFilter);
-    if (dayOfWeekFilter !== '') params.set('day_of_week', dayOfWeekFilter);
-    return params.toString();
-  }
+  const { data: jobsResult, isLoading, error, refetch, isFetching } = useJobs(jobFilters);
+  const jobs = (jobsResult?.data ?? []) as JobRow[];
+  const hasMore = jobsResult?.pagination.hasMore ?? false;
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/jobs?${jobsQueryString()}`);
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          setError(data.error || res.statusText);
-          setLoading(false);
-          return;
-        }
-        const data = await res.json();
-        if (!cancelled) setJobs(Array.isArray(data) ? data : []);
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- initial load; filters via applyFilters
-  }, []);
-
-  async function applyFilters(dateRange?: { dateFrom?: string; dateTo?: string }) {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/jobs?${jobsQueryString(dateRange)}`);
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || res.statusText);
-        setLoading(false);
-        return;
-      }
-      setJobs(Array.isArray(data) ? data : []);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load');
-    } finally {
-      setLoading(false);
-    }
+  function applyFilters(dateRange?: { dateFrom?: string; dateTo?: string }) {
+    setAppliedFilters({
+      dateFrom: dateRange?.dateFrom ?? dateFrom,
+      dateTo: dateRange?.dateTo ?? dateTo,
+      teamMemberId,
+      statusFilter,
+      jobSourceFilter,
+      routeFilter,
+      dayOfWeekFilter,
+      needsFollowUpFilter,
+    });
   }
 
   function setToday() {
     const today = new Date().toISOString().slice(0, 10);
     setDateFrom(today);
     setDateTo(today);
-    applyFilters({ dateFrom: today, dateTo: today });
+    setAppliedFilters((prev) => ({ ...prev, dateFrom: today, dateTo: today }));
   }
 
   function setThisWeek() {
     const w = weekBoundsMonday();
     setDateFrom(w.from);
     setDateTo(w.to);
-    applyFilters({ dateFrom: w.from, dateTo: w.to });
+    setAppliedFilters((prev) => ({ ...prev, dateFrom: w.from, dateTo: w.to }));
   }
 
   function setThisMonth() {
     const m = monthBoundsCalendar();
     setDateFrom(m.from);
     setDateTo(m.to);
-    applyFilters({ dateFrom: m.from, dateTo: m.to });
+    setAppliedFilters((prev) => ({ ...prev, dateFrom: m.from, dateTo: m.to }));
   }
 
   function statusLabel(s: string) {
     return t(STATUS_KEYS[s] || 'status_pending');
   }
+
+  const errorMessage = error instanceof Error ? error.message : null;
 
   return (
     <div className="space-y-6">
@@ -193,7 +175,6 @@ export default function JobsPage() {
 
       <Card>
         <CardContent className="space-y-3">
-          {/* Primary filter bar */}
           <div className="flex flex-wrap items-center gap-2">
             <Input
               type="date"
@@ -227,7 +208,7 @@ export default function JobsPage() {
                 <option key={s} value={s}>{statusLabel(s)}</option>
               ))}
             </select>
-            <Button type="button" variant="outline" size="sm" onClick={() => void applyFilters()}>
+            <Button type="button" variant="outline" size="sm" onClick={() => applyFilters()}>
               {t('applyFilters')}
             </Button>
             <Button
@@ -243,7 +224,6 @@ export default function JobsPage() {
             </Button>
           </div>
 
-          {/* Expanded filters row */}
           {moreFiltersOpen && (
             <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
               <div className="space-y-1">
@@ -301,6 +281,15 @@ export default function JobsPage() {
                   <option value="ad_hoc">{t('jobSource_ad_hoc')}</option>
                 </select>
               </div>
+              <label className="flex items-center gap-2 text-sm h-9 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={needsFollowUpFilter}
+                  onChange={(e) => setNeedsFollowUpFilter(e.target.checked)}
+                  className="rounded border-input"
+                />
+                {t('filterNeedsFollowUp')}
+              </label>
             </div>
           )}
         </CardContent>
@@ -312,12 +301,12 @@ export default function JobsPage() {
           <CardDescription>{t('jobsCardDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
-          {loading && <p className="text-sm text-muted-foreground">{t('loading', { defaultValue: 'Loading…' })}</p>}
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          {!loading && !error && jobs.length === 0 && (
+          {isLoading && <LoadingState size="sm" padded={false} className="py-8" />}
+          {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
+          {!isLoading && !errorMessage && jobs.length === 0 && (
             <p className="text-sm text-muted-foreground">{t('noJobsYet')}</p>
           )}
-          {!loading && !error && jobs.length > 0 && (
+          {!isLoading && !errorMessage && jobs.length > 0 && (
             <ul className="divide-y divide-border">
               {jobs.map((job) => (
                 <li key={job.id}>
@@ -333,39 +322,27 @@ export default function JobsPage() {
                           {job.scheduled_date}
                           {job.scheduled_time ? ` ${job.scheduled_time}` : ''}
                         </span>
-                        <span className="text-muted-foreground/70" aria-hidden>
-                          ·
-                        </span>
+                        <span className="text-muted-foreground/70" aria-hidden>·</span>
                         <span>{job.technician?.full_name ?? '—'}</span>
-                        <span className="text-muted-foreground/70" aria-hidden>
-                          ·
-                        </span>
-                        <Badge
-                          className={cn('align-middle font-medium', jobStatusBadgeClassName(job.status))}
-                        >
+                        <span className="text-muted-foreground/70" aria-hidden>·</span>
+                        <Badge className={cn('align-middle font-medium', jobStatusBadgeClassName(job.status))}>
                           {statusLabel(job.status)}
                         </Badge>
                         {job.route?.name ? (
                           <>
-                            <span className="text-muted-foreground/70" aria-hidden>
-                              ·
-                            </span>
+                            <span className="text-muted-foreground/70" aria-hidden>·</span>
                             <span>{job.route.name}</span>
                           </>
                         ) : null}
                         {job.job_source === 'ad_hoc' && (
                           <>
-                            <span className="text-muted-foreground/70" aria-hidden>
-                              ·
-                            </span>
+                            <span className="text-muted-foreground/70" aria-hidden>·</span>
                             <span className="text-foreground/80">{t('jobSource_ad_hoc')}</span>
                           </>
                         )}
                         {job.visit_kind?.label && (
                           <>
-                            <span className="text-muted-foreground/70" aria-hidden>
-                              ·
-                            </span>
+                            <span className="text-muted-foreground/70" aria-hidden>·</span>
                             <span>{job.visit_kind.label}</span>
                           </>
                         )}
@@ -376,6 +353,19 @@ export default function JobsPage() {
                 </li>
               ))}
             </ul>
+          )}
+          {hasMore && (
+            <div className="mt-4 flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isFetching}
+                onClick={() => void refetch()}
+              >
+                {t('loadMore', { defaultValue: 'Load more' })}
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>

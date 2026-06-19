@@ -4,6 +4,7 @@ import {
   toScheduleRow,
   type RouteStopScheduleSegment,
 } from '@/lib/route-stop-schedule';
+import { softDeleteRowsForCompany } from '@/lib/soft-delete';
 import { stopMatchesDate } from '@/lib/schedule';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
@@ -22,13 +23,14 @@ export type ReconcileRouteJobsResult = {
 export async function reconcilePendingRouteJobsForStop(
   client: CadenzaSupabaseClient,
   params: {
+    companyId: string;
     routeId: string;
     propertyId: string;
     fromDate: string;
     segments: RouteStopScheduleSegment[];
   }
 ): Promise<ReconcileRouteJobsResult> {
-  const { routeId, propertyId, fromDate, segments } = params;
+  const { companyId, routeId, propertyId, fromDate, segments } = params;
   const sorted = [...segments].sort((a, b) => a.effective_from.localeCompare(b.effective_from));
 
   const { data: jobs, error: jobsErr } = await client
@@ -81,9 +83,11 @@ export async function reconcilePendingRouteJobsForStop(
       : null;
 
     if (clashId && clashId !== job.id) {
-      const { error: delErr } = await client.from('cadenza_service_jobs').delete().eq('id', job.id);
+      const { error: delErr } = await softDeleteRowsForCompany(companyId, 'cadenza_service_jobs', {
+        id: job.id,
+      });
       if (delErr) {
-        throw new Error(`reconcile: failed to delete stale job: ${delErr.message}`);
+        throw new Error(`reconcile: failed to soft-delete stale job: ${delErr.message}`);
       }
       deleted_as_duplicate += 1;
       continue;

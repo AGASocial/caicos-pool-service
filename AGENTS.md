@@ -9,7 +9,7 @@ Use these agents to structure development work on the Cadenza pool service platf
 | Agent | Stories | Skill | Brief |
 |-------|---------|-------|-------|
 | **Master Agent** | Orchestrates all | `plan-orchestrator` | `plan/agents/master.md` |
-| **NextJS Developer** | US-F-*, US-B-*, US-D-* | `nextjs-performance`, `database-migrations` | `plan/agents/nextjs-developer.md` |
+| **NextJS Developer** | US-F-*, US-B-*, US-D-* | `nextjs-performance`, `database-migrations`, `supabase-server-client` | `plan/agents/nextjs-developer.md` |
 | **React Native Developer** | US-M-* | `mobile-performance` | `plan/agents/react-native-developer.md` |
 | **QA Specialist** | Validates all; owns US-B-016 | `performance-qa` | `plan/agents/qa-specialist.md` |
 
@@ -55,7 +55,7 @@ Skills live in `.cursor/skills/`. Rules in `.cursor/rules/`. See `plan/README.md
 
 **How to invoke:** Work in admin/Next.js code or ask for web feature implementation. Example: *"Build the jobs management page"* or *"Add an API route for creating service jobs"*.
 
-**Reference:** `plan/agents/nextjs-developer.md`, `.cursor/skills/nextjs-performance/SKILL.md`, `.cursor/rules/cadenza-nextjs-developer.mdc`
+**Reference:** `plan/agents/nextjs-developer.md`, `.cursor/skills/nextjs-performance/SKILL.md`, `.cursor/skills/supabase-server-client/SKILL.md`, `.cursor/rules/cadenza-nextjs-developer.mdc`
 
 ---
 

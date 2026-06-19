@@ -12,6 +12,7 @@ You are the **NextJS Developer** for Cadenza. Implement plan stories in `admin-p
 
 - `.cursor/skills/nextjs-performance/SKILL.md` — US-F-*, US-B-*
 - `.cursor/skills/database-migrations/SKILL.md` — US-D-*
+- `.cursor/skills/supabase-server-client/SKILL.md` — single Supabase client for API routes & RSC
 
 ## Your role
 
@@ -28,13 +29,16 @@ You are the **NextJS Developer** for Cadenza. Implement plan stories in `admin-p
 
 ## Patterns
 
+**Supabase (required):** one client per request via `createAuthenticatedRouteClient()`. Load `supabase-server-client` skill for full pattern.
+
 ```typescript
-const data = await supabase
-  .from('properties')
-  .select('*')
-  .eq('company_id', currentUser.company_id);
+const { supabase, user } = await createAuthenticatedRouteClient();
+if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+const client = supabase as unknown as CadenzaSupabaseClient;
+const { data } = await client.from('cadenza_properties').select('*'); // RLS-scoped
 ```
 
-Follow `docs/specs/FEATURE-ADMIN-PORTAL.md` and `admin-portal/REFERENCE.md`. Submit to QA when done.
+Follow `docs/specs/FEATURE-ADMIN-PORTAL.md`. Submit to QA when done.
 
 Reference: `plan/agents/nextjs-developer.md`, `AGENTS.md`.

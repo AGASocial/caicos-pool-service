@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, Chrome, Apple } from 'lucide-react';
+import { LoadingState } from '@/components/ui/loading-state';
 
 
 interface UserProfile {
@@ -77,7 +78,7 @@ export function ProfileForm() {
     const isAppleProvider = providers.includes('apple');
 
     if (!user) {
-        return <div className="p-8 text-center text-muted-foreground"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div>;
+        return <LoadingState size="sm" padded={false} className="p-8" />;
     }
 
     return (

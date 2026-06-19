@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LoadingState } from '@/components/ui/loading-state';
 
 type ByStatus = {
   pending: number;
@@ -124,7 +125,7 @@ export default function ReportsPage() {
 
       {/* Stat cards */}
       {loading && !stats ? (
-        <p className="text-muted-foreground">{t('loading')}</p>
+        <LoadingState size="sm" padded={false} className="py-8" />
       ) : stats ? (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

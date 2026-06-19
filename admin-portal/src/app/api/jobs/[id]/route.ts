@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { softDeleteByIdForUser } from '@/lib/soft-delete';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
+import {
+  REPORT_WITH_PHOTOS_SELECT,
+  attachSignedPhotoUrls,
+  extractReportPhotos,
+  mapReportRow,
+} from '@/lib/service-report';
 
 export async function GET(
   _request: NextRequest,
@@ -13,7 +20,9 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+  const client = supabase as unknown as CadenzaSupabaseClient;
+
+  const { data, error } = await client
     .from('cadenza_service_jobs')
     .select(`
       id,
@@ -45,45 +54,32 @@ export async function GET(
     return NextResponse.json({ error: error?.message || 'Not found' }, { status: 500 });
   }
 
-  const { data: report } = await (supabase as unknown as CadenzaSupabaseClient)
+  const { data: reportRow } = await client
     .from('cadenza_service_reports')
-    .select('id')
+    .select(REPORT_WITH_PHOTOS_SELECT)
     .eq('job_id', id)
     .order('created_at', { ascending: false })
+    .order('created_at', { foreignTable: 'cadenza_report_photos', ascending: false })
     .limit(1)
     .maybeSingle();
 
-  if (!report?.id) {
+  if (!reportRow) {
     return NextResponse.json({
       ...data,
+      service_report: null,
       report_photos: [],
     });
   }
 
-  const { data: photoRows } = await (supabase as unknown as CadenzaSupabaseClient)
-    .from('cadenza_report_photos')
-    .select('id, storage_path, caption, photo_type, created_at')
-    .eq('report_id', report.id)
-    .order('created_at', { ascending: false });
-
-  if (!photoRows?.length) {
-    return NextResponse.json({
-      ...data,
-      report_photos: [],
-    });
-  }
-
-  const paths = photoRows.map((photo) => String(photo.storage_path));
-  const { data: signedData } = await supabase.storage.from('report-photos').createSignedUrls(paths, 3600);
-
-  const photosWithUrls = photoRows.map((photo, index) => ({
-    ...photo,
-    url: signedData?.[index]?.signedUrl ?? null,
-  }));
+  const row = reportRow as Record<string, unknown>;
+  const { report_photos: rawPhotos, ...reportFields } = row;
+  const service_report = mapReportRow(reportFields);
+  const report_photos = await attachSignedPhotoUrls(supabase, extractReportPhotos(rawPhotos));
 
   return NextResponse.json({
     ...data,
-    report_photos: photosWithUrls,
+    service_report,
+    report_photos,
   });
 }
 
@@ -97,6 +93,8 @@ export async function PATCH(
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const client = supabase as unknown as CadenzaSupabaseClient;
 
   try {
     const body = await request.json();
@@ -121,7 +119,7 @@ export async function PATCH(
       if (body.visit_kind_id === null || body.visit_kind_id === '') {
         updates.visit_kind_id = null;
       } else {
-        const { data: profile } = await (supabase as unknown as CadenzaSupabaseClient)
+        const { data: profile } = await client
           .from('cadenza_profiles')
           .select('company_id')
           .eq('id', user.id)
@@ -130,7 +128,7 @@ export async function PATCH(
         if (!companyId) {
           return NextResponse.json({ error: 'Company not found' }, { status: 403 });
         }
-        const { data: kindRow, error: kindErr } = await (supabase as unknown as CadenzaSupabaseClient)
+        const { data: kindRow, error: kindErr } = await client
           .from('cadenza_visit_reasons')
           .select('id')
           .eq('id', body.visit_kind_id)
@@ -151,7 +149,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }
 
-    const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+    const { data, error } = await client
       .from('cadenza_service_jobs')
       .update(updates)
       .eq('id', id)
@@ -181,13 +179,21 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { error, count } = await (supabase as unknown as CadenzaSupabaseClient)
-    .from('cadenza_service_jobs')
-    .delete({ count: 'exact' })
-    .eq('id', id);
+  const client = supabase as unknown as CadenzaSupabaseClient;
+
+  const { error, count, forbidden } = await softDeleteByIdForUser(
+    client,
+    user.id,
+    'cadenza_service_jobs',
+    id
+  );
+
+  if (forbidden) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
   if (error) {
-    console.error('Supabase error deleting job:', error);
+    console.error('Supabase error soft-deleting job:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

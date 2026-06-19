@@ -426,10 +426,18 @@
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.6; }
 }
+@keyframes cadenza-flip-y {
+  0%   { transform: perspective(600px) rotateY(0deg); }
+  100% { transform: perspective(600px) rotateY(360deg); }
+}
 
 .animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .animate-fade-in    { animation: fade-in 0.3s ease-out both; }
 .animate-pulse-soft { animation: pulse-soft 2.2s ease-in-out infinite; }
+.animate-cadenza-flip-y {
+  animation: cadenza-flip-y 2s linear infinite;
+  transform-style: preserve-3d;
+}
 
 .delay-100 { animation-delay: 100ms; }
 .delay-200 { animation-delay: 200ms; }

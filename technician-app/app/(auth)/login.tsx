@@ -153,6 +153,13 @@ export default function LoginScreen() {
         form: { gap: 18 },
         fieldWrapper: {},
         fieldLabel: { fontSize: 13, fontWeight: '600', color: c.text, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+        fieldLabelRow: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 8,
+        },
+        fieldLabelInline: { marginBottom: 0 },
         input: {
           borderWidth: 1.5,
           borderColor: c.border,
@@ -198,7 +205,7 @@ export default function LoginScreen() {
         divider: { height: 1, backgroundColor: c.border, marginVertical: 24 },
         footerText: { fontSize: 14, color: c.muted, textAlign: 'center' },
         footerLink: { fontWeight: '700', color: c.link },
-        forgotLink: { fontSize: 13, color: c.link, fontWeight: '600', textAlign: 'right', marginTop: -8 },
+        forgotLink: { fontSize: 13, color: c.link, fontWeight: '600' },
       }),
     [c]
   );
@@ -258,7 +265,14 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.fieldWrapper}>
-              <Text style={styles.fieldLabel}>Password</Text>
+              <View style={styles.fieldLabelRow}>
+                <Text style={[styles.fieldLabel, styles.fieldLabelInline]}>Password</Text>
+                <Link href="/(auth)/forgot-password" asChild>
+                  <Pressable hitSlop={8}>
+                    <Text style={styles.forgotLink}>Forgot password?</Text>
+                  </Pressable>
+                </Link>
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder="Enter your password"
@@ -268,11 +282,6 @@ export default function LoginScreen() {
                 secureTextEntry
                 editable={!loading && !biometricLoading}
               />
-              <Link href="/(auth)/forgot-password" asChild>
-                <Pressable>
-                  <Text style={styles.forgotLink}>Forgot password?</Text>
-                </Pressable>
-              </Link>
             </View>
 
             {error && <Text style={styles.error}>❌ {error}</Text>}

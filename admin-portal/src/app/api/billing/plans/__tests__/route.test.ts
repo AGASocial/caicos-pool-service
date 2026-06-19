@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { GET } from '../route';
 import { createClient } from '@supabase/supabase-js';
 
@@ -28,8 +31,9 @@ describe('/api/billing/plans', () => {
         currency: 'usd',
         amount_cents: 1000,
         interval: 'month',
-        features: ['feature1'],
+        features: { max_technicians: 10 },
         provider_price_map: { stripe: 'price_123' },
+        active: true,
       },
     ];
 
@@ -48,16 +52,16 @@ describe('/api/billing/plans', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
-    expect(data.data.plans).toHaveLength(1);
-    expect(data.data.plans[0]).toEqual({
+    expect(data.plans).toHaveLength(1);
+    expect(data.plans[0]).toEqual({
       id: 'plan-1',
       name: 'Basic',
       currency: 'usd',
       amountCents: 1000,
       interval: 'month',
-      features: ['feature1'],
+      features: { max_technicians: 10 },
       providerPriceMap: { stripe: 'price_123' },
+      active: true,
     });
   });
 
@@ -68,7 +72,6 @@ describe('/api/billing/plans', () => {
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.success).toBe(false);
     expect(data.error).toContain('configuration error');
   });
 
@@ -79,7 +82,7 @@ describe('/api/billing/plans', () => {
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.success).toBe(false);
+    expect(data.error).toBeDefined();
   });
 
   it('should handle database errors', async () => {
@@ -98,7 +101,6 @@ describe('/api/billing/plans', () => {
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.success).toBe(false);
     expect(data.error).toContain('Failed to fetch plans');
   });
 
@@ -118,7 +120,7 @@ describe('/api/billing/plans', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.data.plans).toEqual([]);
+    expect(data.plans).toEqual([]);
   });
 
   it('should sort plans by amount_cents ascending', async () => {
@@ -141,6 +143,3 @@ describe('/api/billing/plans', () => {
     expect(mockOrder).toHaveBeenCalledWith('amount_cents', { ascending: true });
   });
 });
-
-
-

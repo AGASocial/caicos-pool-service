@@ -6,36 +6,19 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
+import { getCachedUserId } from '@/lib/auth-session';
+import { getSignedUrls } from '@/lib/signed-url-cache';
 import { getPhotoOverlayInfo, type PhotoOverlayInfo } from '@/lib/photoOverlay';
 import { PhotoWithOverlay } from '@/components/PhotoWithOverlay';
 import { getUploadBodyFromUri } from '@/lib/uploadPhoto';
 import Colors from '@/constants/Colors';
-
-const CHEMICAL_READINGS = [
-  { key: 'ph_level', label: 'pH', ideal: '7.2-7.6', unit: 'pH' },
-  { key: 'chlorine_level', label: 'Chlorine', ideal: '1-3', unit: 'ppm' },
-  { key: 'alkalinity', label: 'Alkalinity', ideal: '80-120', unit: 'ppm' },
-  { key: 'calcium_hardness', label: 'Calcium Hardness', ideal: '200-400', unit: 'ppm' },
-  { key: 'cyanuric_acid', label: 'CYA', ideal: '30-100', unit: 'ppm' },
-  { key: 'salt_level', label: 'Salt', ideal: '2700-3400', unit: 'ppm' },
-  { key: 'water_temp_f', label: 'Water Temp', ideal: '78-86', unit: '\u00b0F' },
-] as const;
-
-const TASKS = [
-  { key: 'skimmed', label: 'Skim Surface' },
-  { key: 'vacuumed', label: 'Vacuum Pool' },
-  { key: 'brushed', label: 'Brush Walls' },
-  { key: 'emptied_baskets', label: 'Empty Baskets' },
-  { key: 'backwashed', label: 'Backwash Filter' },
-  { key: 'cleaned_filter', label: 'Clean Filter' },
-] as const;
-
-const EQUIPMENT = [
-  { key: 'pump_ok', label: 'Pump' },
-  { key: 'filter_ok', label: 'Filter' },
-  { key: 'heater_ok', label: 'Heater' },
-  { key: 'cleaner_ok', label: 'Cleaner' },
-] as const;
+import {
+  CHEMICAL_READINGS,
+  EQUIPMENT,
+  ISSUE_CATEGORY_OPTIONS,
+  VISIT_EXTRAS,
+  type IssueCategoryKey,
+} from '@/lib/visitForm';
 
 /** Distance in meters between two WGS84 points (Haversine). */
 function haversineMeters(
@@ -73,13 +56,16 @@ export default function JobDetailScreen() {
     cadenza_properties?: { customer_name: string; address: string; gate_code: string | null; lat: number | null; lng: number | null } | null;
   } | null>(null);
   const [started, setStarted] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [jobLoaded, setJobLoaded] = useState(false);
+  const [reportLoaded, setReportLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [distanceMeters, setDistanceMeters] = useState<number | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationChecking, setLocationChecking] = useState(false);
   const [chemicals, setChemicals] = useState<Record<string, string>>({});
-  const [tasks, setTasks] = useState<Record<string, boolean>>({});
+  const [extras, setExtras] = useState<Record<string, boolean>>({});
+  const [issueCategories, setIssueCategories] = useState<IssueCategoryKey[]>([]);
+  const [otherChemicals, setOtherChemicals] = useState('');
   const [equipment, setEquipment] = useState<Record<string, boolean>>(Object.fromEntries(EQUIPMENT.map((e) => [e.key, true])));
   const [notes, setNotes] = useState('');
   const [followUp, setFollowUp] = useState(false);
@@ -266,6 +252,53 @@ export default function JobDetailScreen() {
         },
         taskRowLast: { borderBottomWidth: 0 },
         taskLabel: { fontSize: 16, fontWeight: '500', color: themeColors.text },
+        sectionHint: {
+          fontSize: 13,
+          color: themeColors.muted,
+          paddingHorizontal: 16,
+          paddingBottom: 12,
+          lineHeight: 18,
+        },
+        chipRow: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 8,
+          paddingHorizontal: 16,
+          paddingBottom: 16,
+        },
+        chip: {
+          paddingHorizontal: 14,
+          paddingVertical: 10,
+          borderRadius: 999,
+          borderWidth: 1,
+          borderColor: themeColors.border,
+          backgroundColor: themeColors.chipBgAlt,
+        },
+        chipSelected: {
+          backgroundColor: themeColors.chipBg,
+          borderColor: themeColors.tint,
+        },
+        chipText: { fontSize: 14, fontWeight: '600', color: themeColors.chipText },
+        chipTextSelected: { color: themeColors.text },
+        chemicalNoteInput: {
+          marginHorizontal: 16,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: themeColors.border,
+          borderRadius: 8,
+          paddingHorizontal: 12,
+          paddingVertical: 10,
+          fontSize: 15,
+          color: themeColors.text,
+          backgroundColor: themeColors.inputBg,
+        },
+        photoHint: {
+          fontSize: 13,
+          color: themeColors.muted,
+          paddingHorizontal: 16,
+          paddingTop: 4,
+          paddingBottom: 8,
+        },
         // Equipment section
         equipmentRow: {
           flexDirection: 'row',
@@ -362,38 +395,47 @@ export default function JobDetailScreen() {
 
   useEffect(() => {
     if (!id) return;
-    supabase
-      .from('cadenza_service_jobs')
-      .select('id, status, property_id, company_id, technician_id, scheduled_date, cadenza_properties(customer_name, address, gate_code, lat, lng)')
-      .eq('id', id)
-      .single()
-      .then(({ data }) => {
-        setJob(data as typeof job);
-        const status = (data as { status?: string })?.status;
-        setStarted(status === 'in_progress' || status === 'completed');
-      })
-      .then(() => setLoading(false), () => setLoading(false));
-  }, [id]);
-
-  useEffect(() => {
-    if (!id || !job || !started) return;
     let cancelled = false;
+    setJobLoaded(false);
+    setReportLoaded(false);
+
     (async () => {
-      const { data: reportRow } = await supabase
-        .from('cadenza_service_reports')
-        .select('id, ph_level, chlorine_level, alkalinity, calcium_hardness, cyanuric_acid, salt_level, water_temp_f, skimmed, vacuumed, brushed, emptied_baskets, backwashed, cleaned_filter, pump_ok, filter_ok, heater_ok, cleaner_ok, notes, follow_up_needed, follow_up_notes')
-        .eq('job_id', id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const [jobRes, reportRes] = await Promise.all([
+        supabase
+          .from('cadenza_service_jobs')
+          .select('id, status, property_id, company_id, technician_id, scheduled_date, cadenza_properties(customer_name, address, gate_code, lat, lng)')
+          .eq('id', id)
+          .single(),
+        supabase
+          .from('cadenza_service_reports')
+          .select('id, ph_level, chlorine_level, alkalinity, calcium_hardness, cyanuric_acid, salt_level, water_temp_f, skimmed, vacuumed, brushed, emptied_baskets, backwashed, cleaned_filter, pump_ok, filter_ok, heater_ok, cleaner_ok, notes, follow_up_needed, follow_up_notes, issue_categories, other_chemicals')
+          .eq('job_id', id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+
       if (cancelled) return;
+
+      const jobData = jobRes.data;
+      if (jobData) {
+        setJob(jobData as typeof job);
+        const status = (jobData as { status?: string }).status;
+        setStarted(status === 'in_progress' || status === 'completed');
+      }
+      setJobLoaded(true);
+
+      const reportRow = reportRes.data;
       if (!reportRow) {
         setExistingReportId(null);
         setPhotos([]);
+        setReportLoaded(true);
         return;
       }
+
       const r = reportRow as Record<string, unknown>;
-      setExistingReportId(r.id as string);
+      const reportId = r.id as string;
+      setExistingReportId(reportId);
       setChemicals({
         ph_level: r.ph_level != null ? String(r.ph_level) : '',
         chlorine_level: r.chlorine_level != null ? String(r.chlorine_level) : '',
@@ -403,14 +445,19 @@ export default function JobDetailScreen() {
         salt_level: r.salt_level != null ? String(r.salt_level) : '',
         water_temp_f: r.water_temp_f != null ? String(r.water_temp_f) : '',
       });
-      setTasks({
-        skimmed: Boolean(r.skimmed),
-        vacuumed: Boolean(r.vacuumed),
-        brushed: Boolean(r.brushed),
-        emptied_baskets: Boolean(r.emptied_baskets),
-        backwashed: Boolean(r.backwashed),
+      setExtras({
         cleaned_filter: Boolean(r.cleaned_filter),
+        vacuumed: Boolean(r.vacuumed),
+        salt_chemicals: Boolean(r.other_chemicals),
+        low_water: false,
       });
+      const loadedIssues = Array.isArray(r.issue_categories)
+        ? (r.issue_categories as string[]).filter((k): k is IssueCategoryKey =>
+            ISSUE_CATEGORY_OPTIONS.some((o) => o.key === k)
+          )
+        : [];
+      setIssueCategories(loadedIssues);
+      setOtherChemicals((r.other_chemicals as string) ?? '');
       setEquipment({
         pump_ok: r.pump_ok !== false,
         filter_ok: r.filter_ok !== false,
@@ -420,34 +467,34 @@ export default function JobDetailScreen() {
       setNotes((r.notes as string) ?? '');
       setFollowUp(Boolean(r.follow_up_needed));
       setFollowUpNotes((r.follow_up_notes as string) ?? '');
+      setReportLoaded(true);
 
       const { data: photoRows } = await supabase
         .from('cadenza_report_photos')
         .select('id, storage_path')
-        .eq('report_id', r.id);
+        .eq('report_id', reportId);
       if (cancelled) return;
       if (!photoRows?.length) {
         setPhotos([]);
         return;
       }
+
       const paths = photoRows.map((p: { storage_path: string }) => p.storage_path);
-      const { data: signedData, error: signedError } = await supabase.storage
-        .from('report-photos')
-        .createSignedUrls(paths, 3600);
+      const signedUrls = await getSignedUrls(paths);
       if (cancelled) return;
-      if (signedError || !signedData?.length) {
-        setPhotos([]);
-        return;
-      }
-      const photoList = photoRows.map((p: { id: string; storage_path: string }, i: number) => ({
-        uri: signedData[i]?.signedUrl ?? '',
-        id: p.id,
-        storage_path: p.storage_path,
-      })).filter((x) => x.uri);
+
+      const photoList = photoRows
+        .map((p: { id: string; storage_path: string }, i: number) => ({
+          uri: signedUrls[i] ?? '',
+          id: p.id,
+          storage_path: p.storage_path,
+        }))
+        .filter((x) => x.uri);
       setPhotos(photoList);
     })();
+
     return () => { cancelled = true; };
-  }, [id, job?.id, started]);
+  }, [id]);
 
   useLayoutEffect(() => {
     if (!started) {
@@ -500,8 +547,7 @@ export default function JobDetailScreen() {
 
   async function handleStart() {
     if (!id) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!getCachedUserId()) return;
     const { error } = await supabase
       .from('cadenza_service_jobs')
       .update({ status: 'in_progress' })
@@ -541,7 +587,6 @@ export default function JobDetailScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       quality: 0.4,
       allowsMultipleSelection: true,
-      selectionLimit: 10,
     });
     if (!result.canceled) {
       setPhotos((prev) => [...prev, ...result.assets.map((a) => ({ uri: a.uri }))]);
@@ -557,9 +602,13 @@ export default function JobDetailScreen() {
       if (photo.storage_path) {
         await supabase.storage.from('report-photos').remove([photo.storage_path]);
       }
-      const { error } = await supabase.from('cadenza_report_photos').delete().eq('id', photo.id);
+      const { error } = await supabase
+        .from('cadenza_report_photos')
+        .update({ is_deleted: true })
+        .eq('id', photo.id)
+        .eq('is_deleted', false);
       if (error) {
-        Alert.alert('Could not remove photo', error.message ?? 'Delete failed. The photo was removed from the list\u2014you may need to add a policy for deleting report photos.');
+        Alert.alert('Could not remove photo', error.message ?? 'Delete failed. The photo was removed from the list\u2014you may need to add a policy for updating report photos.');
       }
     }
   }
@@ -577,14 +626,19 @@ export default function JobDetailScreen() {
 
   async function handleComplete() {
     if (!id || !job) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (photos.length === 0) {
+      Alert.alert('Photo required', 'Add at least one photo before completing this visit.');
+      return;
+    }
+    const userId = getCachedUserId();
+    if (!userId) return;
+    const needsFollowUp = followUp || issueCategories.length > 0 || Boolean(extras.low_water);
     setSaving(true);
     try {
       const reportPayload = {
         job_id: id,
         company_id: job.company_id,
-        technician_id: user.id,
+        technician_id: userId,
         ph_level: chemicals.ph_level ? parseFloat(chemicals.ph_level) : null,
         chlorine_level: chemicals.chlorine_level ? parseFloat(chemicals.chlorine_level) : null,
         alkalinity: chemicals.alkalinity ? parseFloat(chemicals.alkalinity) : null,
@@ -592,19 +646,21 @@ export default function JobDetailScreen() {
         cyanuric_acid: chemicals.cyanuric_acid ? parseFloat(chemicals.cyanuric_acid) : null,
         salt_level: chemicals.salt_level ? parseFloat(chemicals.salt_level) : null,
         water_temp_f: chemicals.water_temp_f ? parseFloat(chemicals.water_temp_f) : null,
-        skimmed: tasks.skimmed ?? false,
-        vacuumed: tasks.vacuumed ?? false,
-        brushed: tasks.brushed ?? false,
-        emptied_baskets: tasks.emptied_baskets ?? false,
-        backwashed: tasks.backwashed ?? false,
-        cleaned_filter: tasks.cleaned_filter ?? false,
+        skimmed: false,
+        vacuumed: extras.vacuumed ?? false,
+        brushed: false,
+        emptied_baskets: false,
+        backwashed: extras.cleaned_filter ?? false,
+        cleaned_filter: extras.cleaned_filter ?? false,
         pump_ok: equipment.pump_ok ?? true,
         filter_ok: equipment.filter_ok ?? true,
         heater_ok: equipment.heater_ok ?? true,
         cleaner_ok: equipment.cleaner_ok ?? true,
+        issue_categories: issueCategories,
+        other_chemicals: extras.salt_chemicals && otherChemicals.trim() ? otherChemicals.trim() : null,
         notes: notes || null,
-        follow_up_needed: followUp,
-        follow_up_notes: followUp ? followUpNotes : null,
+        follow_up_needed: needsFollowUp,
+        follow_up_notes: needsFollowUp ? followUpNotes || null : null,
       };
 
       let reportId: string;
@@ -701,7 +757,7 @@ export default function JobDetailScreen() {
     router.back();
   }
 
-  if (loading || !job) {
+  if (!jobLoaded || !job) {
     return (
       <View style={styles.center}>
         <Text style={{ color: themeColors.text }}>Loading job...</Text>
@@ -777,31 +833,13 @@ export default function JobDetailScreen() {
               <Text style={styles.cantServiceButtonText}>Can't service</Text>
             </Pressable>
           </>
+        ) : !reportLoaded ? (
+          <View style={styles.center}>
+            <Text style={{ color: themeColors.text }}>Loading report...</Text>
+          </View>
         ) : (
           <>
-            {/* Service Tasks */}
-            <View style={styles.sectionCard}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionHeaderLeft}>
-                  <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconGreenBg }]}>
-                    <Text style={[styles.sectionIconText, { color: themeColors.sectionIconGreenText }]}>T</Text>
-                  </View>
-                  <Text style={styles.sectionTitle}>Service Tasks</Text>
-                </View>
-              </View>
-              {TASKS.map(({ key, label }, idx) => (
-                <View key={key} style={[styles.taskRow, idx === TASKS.length - 1 && styles.taskRowLast]}>
-                  <Text style={styles.taskLabel}>{label}</Text>
-                  <Switch
-                    value={tasks[key] ?? false}
-                    onValueChange={(v) => setTasks((t) => ({ ...t, [key]: v }))}
-                    trackColor={{ false: themeColors.switchTrack, true: themeColors.switchTrackActive }}
-                  />
-                </View>
-              ))}
-            </View>
-
-            {/* Photos */}
+            {/* Photos — primary proof of visit (WhatsApp workflow) */}
             <View style={styles.sectionCard}>
               <View style={styles.sectionHeader}>
                 <View style={styles.sectionHeaderLeft}>
@@ -811,12 +849,13 @@ export default function JobDetailScreen() {
                   <Text style={styles.sectionTitle}>Photos</Text>
                 </View>
               </View>
+              <Text style={styles.photoHint}>Add as many photos as you need — pool, filter, equipment, etc.</Text>
               <View style={styles.photoActions}>
                 <Pressable style={styles.photoButton} onPress={takePhoto}>
                   <Text style={styles.photoButtonText}>Take Photo</Text>
                 </Pressable>
                 <Pressable style={styles.photoButton} onPress={pickFromGallery}>
-                  <Text style={styles.photoButtonText}>Add Photo(s)</Text>
+                  <Text style={styles.photoButtonText}>From Gallery</Text>
                 </Pressable>
               </View>
               {pendingOverlay != null && (
@@ -843,7 +882,7 @@ export default function JobDetailScreen() {
                         <Image source={{ uri: photo.uri }} style={styles.thumb} />
                       </Pressable>
                       <Pressable style={styles.removeThumb} onPress={() => confirmRemovePhoto(index)}>
-                        <Text style={styles.removeThumbText}>\u00d7</Text>
+                        <Text style={styles.removeThumbText}>{'\u00d7'}</Text>
                       </Pressable>
                     </View>
                   ))}
@@ -865,10 +904,85 @@ export default function JobDetailScreen() {
                   onPress={() => setPhotoFullScreenIndex(null)}
                   hitSlop={16}
                 >
-                  <Text style={styles.photoFullScreenCloseText}>\u00d7</Text>
+                  <Text style={styles.photoFullScreenCloseText}>{'\u00d7'}</Text>
                 </Pressable>
               </View>
             </Modal>
+
+            {/* Issue category — exceptions drive office follow-up */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionHeaderLeft}>
+                  <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconAmberBg }]}>
+                    <Text style={[styles.sectionIconText, { color: themeColors.sectionIconAmberText }]}>!</Text>
+                  </View>
+                  <Text style={styles.sectionTitle}>Issue Found</Text>
+                </View>
+              </View>
+              <Text style={styles.sectionHint}>Tap all that apply. Leave empty if no issues.</Text>
+              <View style={styles.chipRow}>
+                <Pressable
+                  style={[styles.chip, issueCategories.length === 0 && styles.chipSelected]}
+                  onPress={() => setIssueCategories([])}
+                >
+                  <Text style={[styles.chipText, issueCategories.length === 0 && styles.chipTextSelected]}>
+                    No issues
+                  </Text>
+                </Pressable>
+                {ISSUE_CATEGORY_OPTIONS.map(({ key, label }) => {
+                  const selected = issueCategories.includes(key);
+                  return (
+                    <Pressable
+                      key={key}
+                      style={[styles.chip, selected && styles.chipSelected]}
+                      onPress={() => {
+                        setIssueCategories((prev) =>
+                          prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+                        );
+                        if (!selected) setFollowUp(true);
+                      }}
+                    >
+                      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Visit extras — only when beyond standard weekly service */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionHeaderLeft}>
+                  <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconGreenBg }]}>
+                    <Text style={[styles.sectionIconText, { color: themeColors.sectionIconGreenText }]}>+</Text>
+                  </View>
+                  <Text style={styles.sectionTitle}>Visit Extras</Text>
+                </View>
+              </View>
+              <Text style={styles.sectionHint}>Optional. Standard skim/vacuum is assumed unless noted.</Text>
+              {VISIT_EXTRAS.map(({ key, label, promptsFollowUp }, idx) => (
+                <View key={key} style={[styles.taskRow, idx === VISIT_EXTRAS.length - 1 && !extras.salt_chemicals && styles.taskRowLast]}>
+                  <Text style={styles.taskLabel}>{label}</Text>
+                  <Switch
+                    value={extras[key] ?? false}
+                    onValueChange={(v) => {
+                      setExtras((prev) => ({ ...prev, [key]: v }));
+                      if (v && promptsFollowUp) setFollowUp(true);
+                    }}
+                    trackColor={{ false: themeColors.switchTrack, true: themeColors.switchTrackActive }}
+                  />
+                </View>
+              ))}
+              {extras.salt_chemicals && (
+                <TextInput
+                  style={styles.chemicalNoteInput}
+                  value={otherChemicals}
+                  onChangeText={setOtherChemicals}
+                  placeholder="e.g. 1 bag salt, pastillero, shock..."
+                  placeholderTextColor={themeColors.placeholder}
+                />
+              )}
+            </View>
 
             {/* Service Notes */}
             <View style={styles.notesCard}>
@@ -876,7 +990,7 @@ export default function JobDetailScreen() {
                 style={styles.notesInput}
                 value={notes}
                 onChangeText={setNotes}
-                placeholder="Service notes..."
+                placeholder="Notes for the office (water level, circulation, client request)..."
                 placeholderTextColor={themeColors.placeholder}
                 multiline
               />
@@ -951,17 +1065,17 @@ export default function JobDetailScreen() {
             <View style={styles.followUpRow}>
               <Text style={styles.taskLabel}>Follow-up needed?</Text>
               <Switch
-                value={followUp}
+                value={followUp || issueCategories.length > 0 || Boolean(extras.low_water)}
                 onValueChange={setFollowUp}
                 trackColor={{ false: themeColors.switchTrack, true: themeColors.switchTrackActive }}
               />
             </View>
-            {followUp && (
+            {(followUp || issueCategories.length > 0 || extras.low_water) && (
               <TextInput
                 style={styles.followUpInput}
                 value={followUpNotes}
                 onChangeText={setFollowUpNotes}
-                placeholder="Follow-up notes..."
+                placeholder="What should the office do next?"
                 placeholderTextColor={themeColors.placeholder}
                 multiline
               />

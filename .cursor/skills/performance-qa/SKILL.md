@@ -28,6 +28,8 @@ Validate plan story implementations before marking `DONE`.
 | `admin-portal` | `npm run lint` && `npm run build` |
 | `technician-app` | `npm run lint` (and build if available) |
 
+**Admin portal pre-commit gate:** Before any commit that touches `admin-portal/`, run `npm run build` from the `admin-portal/` directory and confirm it passes. Report **FAIL** if the build was not run or did not succeed.
+
 Report **FAIL** on first error with file, line, and severity.
 
 ### Acceptance criteria

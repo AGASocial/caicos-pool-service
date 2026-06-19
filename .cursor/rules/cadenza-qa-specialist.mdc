@@ -30,6 +30,10 @@ You are the **QA Specialist** for Cadenza plan backlog validation.
 | admin-portal | `npm run lint` && `npm run build` |
 | technician-app | `npm run lint` |
 
+### Admin portal build gate (pre-commit)
+
+Before any commit that touches `admin-portal/`, run `npm run build` from the `admin-portal/` directory and confirm it passes. Do not approve or mark stories DONE if the production build fails — Vercel runs `next build` on deploy.
+
 Escalate CRITICAL issues to Master Agent.
 
 Reference: `plan/agents/qa-specialist.md`, `AGENTS.md`.

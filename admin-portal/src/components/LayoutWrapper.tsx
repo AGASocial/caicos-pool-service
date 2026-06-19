@@ -24,6 +24,7 @@ import { User, LogOut, Languages, ChevronUp, CreditCard } from "lucide-react";
 import { Link, useRouter, usePathname } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth';
 import { SessionBillingPrefetch } from '@/lib/billing-queries';
+import { APP_VERSION } from '@/lib/app-version';
 
 function getFirstName(user: {
   profile?: { full_name?: string } | null;
@@ -109,8 +110,18 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           </div>
 
           {/* Navigation */}
-          <div className="flex-1 overflow-y-auto py-6 px-3">
-            <Navigation collapsed={sidebarCollapsed} />
+          <div className="flex flex-1 flex-col min-h-0 bg-sidebar">
+            <div className="flex-1 overflow-y-auto py-6 px-3">
+              <Navigation collapsed={sidebarCollapsed} />
+            </div>
+            <p
+              className={cn(
+                "shrink-0 pb-3 text-[10px] text-sidebar-foreground/40 tabular-nums tracking-wide",
+                sidebarCollapsed ? "text-center px-1" : "px-5"
+              )}
+            >
+              {sidebarCollapsed ? APP_VERSION : `${t('version')} ${APP_VERSION}`}
+            </p>
           </div>
 
           {/* Toggle Button */}
@@ -216,8 +227,13 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 &times;
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              <Navigation closeSidebar={() => setSidebarOpen(false)} />
+            <div className="flex flex-1 flex-col min-h-0 bg-sidebar">
+              <div className="flex-1 overflow-y-auto p-4">
+                <Navigation closeSidebar={() => setSidebarOpen(false)} />
+              </div>
+              <p className="shrink-0 px-5 pb-3 text-[10px] text-sidebar-foreground/40 tabular-nums tracking-wide">
+                {t('version')} {APP_VERSION}
+              </p>
             </div>
             {/* Mobile Footer */}
             <div className="p-4 border-t border-sidebar-border bg-sidebar-accent/40">

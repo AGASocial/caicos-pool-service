@@ -1,0 +1,58 @@
+#!/bin/sh
+# Applies optional semver bump from the final commit message (build bumped in pre-commit).
+set -e
+
+ROOT=$(git rev-parse --show-toplevel)
+VERSION_FILE="$ROOT/admin-portal/version.json"
+MESSAGE_FILE=$1
+SOURCE=$2
+
+if [ ! -f "$VERSION_FILE" ] || [ -z "$MESSAGE_FILE" ]; then
+  exit 0
+fi
+
+case "$SOURCE" in
+  merge|squash|commit) exit 0 ;;
+esac
+
+GIT_DIR=$(git rev-parse --git-dir)
+if [ -f "$GIT_DIR/MERGE_HEAD" ] || [ -d "$GIT_DIR/rebase-merge" ] || [ -d "$GIT_DIR/rebase-apply" ]; then
+  exit 0
+fi
+
+resolve_node() {
+  if command -v node >/dev/null 2>&1; then
+    command -v node
+    return 0
+  fi
+
+  for candidate in /opt/homebrew/bin/node /usr/local/bin/node; do
+    if [ -x "$candidate" ]; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+
+  if [ -f "$HOME/.nvm/alias/default" ]; then
+    nvm_default="$HOME/.nvm/versions/node/$(cat "$HOME/.nvm/alias/default")/bin/node"
+    if [ -x "$nvm_default" ]; then
+      echo "$nvm_default"
+      return 0
+    fi
+  fi
+
+  if [ -d "$HOME/.nvm/versions/node" ]; then
+    latest=$(ls -1 "$HOME/.nvm/versions/node" 2>/dev/null | sort -V | tail -1)
+    if [ -n "$latest" ] && [ -x "$HOME/.nvm/versions/node/$latest/bin/node" ]; then
+      echo "$HOME/.nvm/versions/node/$latest/bin/node"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+NODE=$(resolve_node) || exit 0
+
+"$NODE" "$ROOT/admin-portal/scripts/bump-version.mjs" --semver-only "$MESSAGE_FILE"
+git add "$VERSION_FILE"

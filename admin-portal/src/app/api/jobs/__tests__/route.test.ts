@@ -23,6 +23,22 @@ function makeRequest(url: string, body?: unknown): NextRequest {
   return new NextRequest(url);
 }
 
+function makeJobsQueryMock(data: unknown[] = []) {
+  const mockQuery = {
+    select: jest.fn().mockReturnThis(),
+    order: jest.fn().mockReturnThis(),
+    gte: jest.fn().mockReturnThis(),
+    lte: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    in: jest.fn().mockReturnThis(),
+    or: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    then: (resolve: (v: unknown) => void) =>
+      Promise.resolve({ data, error: null }).then(resolve),
+  };
+  return mockQuery;
+}
+
 describe('GET /api/jobs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -39,26 +55,13 @@ describe('GET /api/jobs', () => {
     expect(body.error).toBe('Unauthorized');
   });
 
-  it('returns jobs array when authenticated', async () => {
+  it('returns paginated jobs when authenticated', async () => {
     const mockJobs = [
-      { id: 'job-1', property_id: 'prop-1', status: 'pending', scheduled_date: '2026-03-10' },
-      { id: 'job-2', property_id: 'prop-2', status: 'completed', scheduled_date: '2026-03-11' },
+      { id: 'job-1', property_id: 'prop-1', status: 'pending', scheduled_date: '2026-03-10', scheduled_time: null },
+      { id: 'job-2', property_id: 'prop-2', status: 'completed', scheduled_date: '2026-03-11', scheduled_time: null },
     ];
 
-    const mockQuery = {
-      select: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lte: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-    };
-    // The route awaits the query directly — make the chain thenable
-    (mockQuery as unknown as Promise<unknown>)[Symbol.toPrimitive] = undefined;
-    Object.assign(mockQuery, {
-      then: (resolve: (v: unknown) => void) =>
-        Promise.resolve({ data: mockJobs, error: null }).then(resolve),
-    });
-
+    const mockQuery = makeJobsQueryMock(mockJobs);
     const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
     mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
 
@@ -67,21 +70,13 @@ describe('GET /api/jobs', () => {
 
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(2);
-    expect(body[0].id).toBe('job-1');
+    expect(body.data).toHaveLength(2);
+    expect(body.data[0].id).toBe('job-1');
+    expect(body.pagination).toMatchObject({ hasMore: false, limit: 50 });
   });
 
   it('applies date_from filter when provided', async () => {
-    const mockQuery = {
-      select: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lte: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      then: (resolve: (v: unknown) => void) =>
-        Promise.resolve({ data: [], error: null }).then(resolve),
-    };
-
+    const mockQuery = makeJobsQueryMock([]);
     const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
     mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
 
@@ -92,16 +87,7 @@ describe('GET /api/jobs', () => {
   });
 
   it('applies status filter when provided', async () => {
-    const mockQuery = {
-      select: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lte: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      then: (resolve: (v: unknown) => void) =>
-        Promise.resolve({ data: [], error: null }).then(resolve),
-    };
-
+    const mockQuery = makeJobsQueryMock([]);
     const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
     mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
 
@@ -109,6 +95,33 @@ describe('GET /api/jobs', () => {
     await GET(req);
 
     expect(mockQuery.eq).toHaveBeenCalledWith('status', 'completed');
+  });
+
+  it('applies day_of_week filter via SQL IN when date range provided', async () => {
+    const mockQuery = makeJobsQueryMock([]);
+    const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
+    mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
+
+    const req = makeRequest(
+      'http://localhost/api/jobs?date_from=2026-03-02&date_to=2026-03-08&day_of_week=1',
+    );
+    await GET(req);
+
+    expect(mockQuery.in).toHaveBeenCalledWith('scheduled_date', expect.any(Array));
+    const dates = mockQuery.in.mock.calls[0][1] as string[];
+    expect(dates.length).toBeGreaterThan(0);
+    expect(dates.every((d) => typeof d === 'string')).toBe(true);
+  });
+
+  it('respects limit query param', async () => {
+    const mockQuery = makeJobsQueryMock([]);
+    const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
+    mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
+
+    const req = makeRequest('http://localhost/api/jobs?limit=10');
+    await GET(req);
+
+    expect(mockQuery.limit).toHaveBeenCalledWith(11);
   });
 });
 

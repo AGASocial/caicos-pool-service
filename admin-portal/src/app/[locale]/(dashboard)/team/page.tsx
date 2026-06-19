@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { useTeam, useSetTeamMemberActive, type TeamMember } from '@/lib/team';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
+import { LoadingState } from '@/components/ui/loading-state';
 
 /** Roles that can appear as team cards. Matches invite/API roles. */
 type RoleKey = 'technician' | 'admin' | 'operations';
@@ -77,7 +78,7 @@ export default function TeamPage() {
         </Button>
       </div>
 
-      {loading && <p className="text-sm text-muted-foreground">{t('loading', { defaultValue: 'Loading…' })}</p>}
+      {loading && <LoadingState size="sm" padded={false} className="py-8" />}
       {error && <p className="text-sm text-destructive">{error}</p>}
       {!loading && !error && teamMembers.length === 0 && (
         <Card>

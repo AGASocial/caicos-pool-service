@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import {
+  aggregateEnsureRouteJobsResults,
   defaultRollingMonthWindowUtc,
-  ensureRouteJobsForDateRange,
+  ensureRouteJobsForCompany,
+  fetchDistinctRouteCompanyIds,
+  mapWithConcurrency,
 } from '@/lib/generate-route-jobs-cron';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
@@ -59,8 +62,30 @@ export async function GET(request: NextRequest) {
   }) as unknown as CadenzaSupabaseClient;
 
   try {
-    const result = await ensureRouteJobsForDateRange(client, startDate, endDate);
-    return NextResponse.json({ ok: true, ...result });
+    const companyIds = await fetchDistinctRouteCompanyIds(client);
+    if (companyIds.length === 0) {
+      return NextResponse.json({
+        ok: true,
+        created: 0,
+        routeCount: 0,
+        stopCount: 0,
+        dateCount: 0,
+        startDate,
+        endDate,
+        companyCount: 0,
+      });
+    }
+
+    const shardResults = await mapWithConcurrency(companyIds, 3, (companyId) =>
+      ensureRouteJobsForCompany(client, companyId, startDate, endDate)
+    );
+    const result = aggregateEnsureRouteJobsResults(shardResults, startDate, endDate);
+
+    return NextResponse.json({
+      ok: true,
+      ...result,
+      companyCount: companyIds.length,
+    });
   } catch (e) {
     console.error('GET /api/cron/generate-route-jobs error:', e);
     const message = e instanceof Error ? e.message : 'Internal server error';

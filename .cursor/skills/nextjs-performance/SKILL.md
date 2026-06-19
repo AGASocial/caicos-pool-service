@@ -26,7 +26,7 @@ Database migrations for US-D-*: load `database-migrations` skill alongside this 
 
 - **App Router** — prefer RSC for read-heavy pages; client islands for interactivity
 - **Data layer** — TanStack Query with shared query keys (`lib/` hooks pattern from `team.ts`, `billing-queries.ts`)
-- **API routes** — `createRouteClient` / server Supabase; always RLS-scoped by `company_id`
+- **API routes** — `createAuthenticatedRouteClient()` once per handler; see `supabase-server-client` skill
 - **Auth** — never bypass multi-tenant rules; validate session in route handlers
 
 ## Story-type guidance
@@ -81,6 +81,6 @@ For each child task:
 
 ## References
 
+- `.cursor/skills/supabase-server-client/SKILL.md` — single Supabase client pattern
 - `docs/specs/FEATURE-ADMIN-PORTAL.md` — feature contracts
-- `admin-portal/REFERENCE.md` — app patterns
 - `plan/agents/nextjs-developer.md` — story queue

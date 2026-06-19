@@ -41,12 +41,12 @@ export default function WizardPage() {
         throw new Error(err.error || 'Failed to complete setup');
       }
 
-      toast.success(t('wizard-final-congrats'));
+      toast.success(t('wizardSetupComplete'));
       router.push('/dashboard');
     } catch (error) {
       console.error('Wizard completion error:', error);
       const message = error instanceof Error ? error.message : null;
-      toast.error(message || t('errorSavingAsset') || 'An error occurred while completing setup.');
+      toast.error(message || t('wizardSetupError'));
     } finally {
       setLoading(false);
     }

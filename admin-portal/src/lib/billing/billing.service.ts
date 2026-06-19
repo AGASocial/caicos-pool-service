@@ -30,6 +30,7 @@ import {
   PlanNotFoundError,
   PaymentGatewayError,
 } from './types';
+import { isPaidSubscriptionEffective } from './subscription-utils';
 
 export class BillingService {
   constructor(
@@ -116,7 +117,18 @@ export class BillingService {
       throw new BillingError('Failed to fetch subscription', 'FETCH_SUBSCRIPTION_FAILED');
     }
 
-    return data ? this.mapSubscriptionFromDb(data) : null;
+    if (!data) return null;
+
+    const mapped = this.mapSubscriptionFromDb(data);
+    if (!isPaidSubscriptionEffective(mapped)) {
+      await this.supabase
+        .from('cadenza_billing_subscriptions')
+        .update({ status: 'canceled', updated_at: new Date().toISOString() })
+        .eq('id', mapped.id);
+      return null;
+    }
+
+    return mapped;
   }
 
   /**
@@ -395,6 +407,8 @@ export class BillingService {
       throw new BillingError('No payment method available', 'PAYMENT_METHOD_REQUIRED');
     }
 
+    await this.cancelStaleSubscriptionsForUser(userId);
+
     // Create subscription via gateway
     const result = await this.gateway.createSubscription({
       customer,
@@ -410,6 +424,7 @@ export class BillingService {
       .insert({
         user_id: userId,
         plan_id: planId,
+        quantity,
         status: result.status as Subscription['status'],
         provider: providerName,
         provider_subscription_id: result.providerSubscriptionId,
@@ -517,7 +532,7 @@ export class BillingService {
    * Update a subscription
    */
   async updateSubscription(request: UpdateSubscriptionRequest): Promise<void> {
-    const { subscriptionId, planId, cancelAtPeriodEnd } = request;
+    const { subscriptionId, planId, quantity, cancelAtPeriodEnd } = request;
 
     // Get existing subscription
     const { data: subscription, error: fetchError } = await this.supabase
@@ -545,6 +560,7 @@ export class BillingService {
     try {
       result = await this.gateway.updateSubscription(subscription.provider_subscription_id, {
         planId: stripePriceId,
+        quantity,
         cancelAtPeriodEnd,
       });
     } catch (error) {
@@ -571,6 +587,7 @@ export class BillingService {
     // Update database with new values from gateway
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (planId) updates.plan_id = planId;
+    if (quantity != null) updates.quantity = quantity;
     if (cancelAtPeriodEnd !== undefined) updates.cancel_at_period_end = cancelAtPeriodEnd;
     if (result?.currentPeriodStart) updates.current_period_start = result.currentPeriodStart.toISOString();
     if (result?.currentPeriodEnd) updates.current_period_end = result.currentPeriodEnd.toISOString();
@@ -705,6 +722,17 @@ export class BillingService {
    * Store webhook event for idempotency and audit
    */
   private async storeWebhookEvent(event: NormalizedEvent): Promise<void> {
+    if (event.id) {
+      const { data: existing } = await this.supabase
+        .from('cadenza_billing_webhook_events')
+        .select('id')
+        .eq('provider', event.provider)
+        .eq('provider_event_id', event.id)
+        .maybeSingle();
+
+      if (existing) return;
+    }
+
     await this.supabase.from('cadenza_billing_webhook_events').insert({
       provider: event.provider,
       type: event.type,
@@ -715,6 +743,64 @@ export class BillingService {
     });
   }
 
+  private async resolveUserIdFromCustomer(customerId: string): Promise<string | null> {
+    const { data: paymentMethod } = await this.supabase
+      .from('cadenza_billing_payment_methods')
+      .select('user_id')
+      .eq('provider_customer_id', customerId)
+      .limit(1)
+      .maybeSingle();
+
+    if (paymentMethod?.user_id) return paymentMethod.user_id;
+
+    const { data: subscription } = await this.supabase
+      .from('cadenza_billing_subscriptions')
+      .select('user_id')
+      .eq('provider_customer_id', customerId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return subscription?.user_id ?? null;
+  }
+
+  private async resolvePlanIdFromStripePrice(stripePriceId: string): Promise<string | undefined> {
+    const { data: plans } = await this.supabase
+      .from('cadenza_billing_plans')
+      .select('id, provider_price_map');
+
+    const match = (plans ?? []).find(
+      (p) => (p.provider_price_map as Record<string, string> | null)?.stripe === stripePriceId,
+    );
+    return match?.id;
+  }
+
+  private async cancelStaleSubscriptionsForUser(userId: string): Promise<void> {
+    const { data: existing } = await this.supabase
+      .from('cadenza_billing_subscriptions')
+      .select('id, provider, provider_subscription_id, status')
+      .eq('user_id', userId)
+      .in('status', ['active', 'trialing', 'past_due', 'incomplete']);
+
+    if (!existing?.length) return;
+
+    for (const sub of existing) {
+      if (sub.provider === this.gateway.getName() && sub.provider_subscription_id) {
+        try {
+          await this.gateway.cancelSubscription(sub.provider_subscription_id, false);
+        } catch (error) {
+          console.warn('Failed to cancel prior subscription in gateway:', error);
+        }
+      }
+    }
+
+    await this.supabase
+      .from('cadenza_billing_subscriptions')
+      .update({ status: 'canceled', updated_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .in('status', ['active', 'trialing', 'past_due', 'incomplete']);
+  }
+
   /**
    * Handle subscription created/updated events
    */
@@ -722,22 +808,18 @@ export class BillingService {
     let userId = data.userId;
 
     if (!userId) {
-      const { data: paymentMethod } = await this.supabase
-        .from('cadenza_billing_payment_methods')
-        .select('user_id')
-        .eq('provider_customer_id', data.customerId)
-        .limit(1)
-        .maybeSingle();
-
-      if (!paymentMethod) {
+      userId = (await this.resolveUserIdFromCustomer(data.customerId)) ?? undefined;
+      if (!userId) {
         console.error('No user found for customer:', data.customerId);
         return;
       }
-
-      userId = paymentMethod.user_id;
     }
 
-    // Upsert subscription
+    let planId = data.planId;
+    if (!planId && data.stripePriceId) {
+      planId = await this.resolvePlanIdFromStripePrice(data.stripePriceId);
+    }
+
     const upsertPayload: Record<string, unknown> = {
       user_id: userId,
       provider_subscription_id: data.subscriptionId,
@@ -747,18 +829,20 @@ export class BillingService {
       cancel_at_period_end: data.cancelAtPeriodEnd || false,
       provider: this.gateway.getName(),
       provider_customer_id: data.customerId,
+      updated_at: new Date().toISOString(),
     };
 
-    if (data.planId) {
-      upsertPayload.plan_id = data.planId;
-    }
+    if (planId) upsertPayload.plan_id = planId;
+    if (data.quantity != null) upsertPayload.quantity = data.quantity;
 
-    await this.supabase
+    const { error } = await this.supabase
       .from('cadenza_billing_subscriptions')
-      .upsert(
-        upsertPayload,
-        { onConflict: 'provider_subscription_id' }
-      );
+      .upsert(upsertPayload, { onConflict: 'provider_subscription_id' });
+
+    if (error) {
+      console.error('Failed to upsert subscription from webhook:', error.message);
+      throw new BillingError('Failed to upsert subscription', 'WEBHOOK_SUBSCRIPTION_FAILED');
+    }
   }
 
   /**
@@ -781,22 +865,13 @@ export class BillingService {
     let userId = data.userId;
 
     if (!userId) {
-      const { data: paymentMethod } = await this.supabase
-        .from('cadenza_billing_payment_methods')
-        .select('user_id')
-        .eq('provider_customer_id', data.customerId)
-        .limit(1)
-        .maybeSingle();
-
-      if (!paymentMethod) {
+      userId = (await this.resolveUserIdFromCustomer(data.customerId)) ?? undefined;
+      if (!userId) {
         console.error('No user found for customer:', data.customerId);
         return;
       }
-
-      userId = paymentMethod.user_id;
     }
 
-    // Find subscription if provided
     let subscriptionId: string | undefined;
     if (data.subscriptionId) {
       const { data: subscription } = await this.supabase
@@ -808,8 +883,7 @@ export class BillingService {
       subscriptionId = subscription?.id;
     }
 
-    // Store invoice
-    await this.supabase.from('cadenza_billing_invoices').upsert(
+    const { error } = await this.supabase.from('cadenza_billing_invoices').upsert(
       {
         user_id: userId,
         subscription_id: subscriptionId,
@@ -821,66 +895,12 @@ export class BillingService {
         issued_at: data.issuedAt,
         paid_at: data.paidAt || new Date().toISOString(),
       },
-      { onConflict: 'provider_invoice_id' }
+      { onConflict: 'provider_invoice_id' },
     );
 
-    if (data.subscriptionId) {
-      const updates: Record<string, unknown> = {
-        status: 'active',
-        updated_at: new Date().toISOString(),
-      };
-
-      if (data.planId) {
-        updates.plan_id = data.planId;
-      }
-
-      // Compute current_period_start and current_period_end based on the plan interval
-      const paidAt = data.paidAt ? new Date(data.paidAt) : new Date();
-      updates.current_period_start = paidAt.toISOString();
-
-      // Determine the plan interval to calculate period end
-      const planId = data.planId;
-      let interval = 'month'; // default to monthly
-      if (planId) {
-        const { data: plan } = await this.supabase
-          .from('cadenza_billing_plans')
-          .select('interval')
-          .eq('id', planId)
-          .single();
-        if (plan?.interval) {
-          interval = plan.interval;
-        }
-      } else {
-        // Try to get the interval from the existing subscription's plan
-        const { data: sub } = await this.supabase
-          .from('cadenza_billing_subscriptions')
-          .select('plan_id')
-          .eq('provider_subscription_id', data.subscriptionId)
-          .single();
-        if (sub?.plan_id) {
-          const { data: plan } = await this.supabase
-            .from('cadenza_billing_plans')
-            .select('interval')
-            .eq('id', sub.plan_id)
-            .single();
-          if (plan?.interval) {
-            interval = plan.interval;
-          }
-        }
-      }
-
-      const periodEnd = new Date(paidAt);
-      if (interval === 'year') {
-        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
-      } else {
-        periodEnd.setMonth(periodEnd.getMonth() + 1);
-      }
-      updates.current_period_end = periodEnd.toISOString();
-
-      await this.supabase
-        .from('cadenza_billing_subscriptions')
-        .update(updates)
-        .eq('provider_subscription_id', data.subscriptionId);
+    if (error) {
+      console.error('Failed to upsert invoice from webhook:', error.message);
+      throw new BillingError('Failed to upsert invoice', 'WEBHOOK_INVOICE_FAILED');
     }
   }
 
@@ -936,6 +956,7 @@ export class BillingService {
       provider: data.provider as Subscription['provider'],
       providerSubscriptionId: data.provider_subscription_id as string,
       providerCustomerId: data.provider_customer_id as string | undefined,
+      quantity: (data.quantity as number | undefined) ?? 1,
       currentPeriodStart: data.current_period_start ? new Date(data.current_period_start as string) : undefined,
       currentPeriodEnd: data.current_period_end ? new Date(data.current_period_end as string) : undefined,
       cancelAtPeriodEnd: data.cancel_at_period_end as boolean,

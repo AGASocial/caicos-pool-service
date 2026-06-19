@@ -14,6 +14,8 @@ plan/
 │   ├── react-native-developer.md
 │   └── qa-specialist.md
 ├── frontend/USER-STORIES.md
+├── admin/                    ← Admin follow-ups outside performance backlog
+│   └── 2026-06-18-technician-visit-admin-sync.md
 ├── backend/USER-STORIES.md
 ├── mobile/USER-STORIES.md
 └── database/USER-STORIES.md

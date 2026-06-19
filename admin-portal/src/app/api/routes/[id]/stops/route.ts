@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { softDeleteForUser } from '@/lib/soft-delete';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
@@ -188,18 +189,25 @@ export async function PATCH(
   try {
     let removedStopIds: string[] = [];
     if (removeStopIds.length > 0) {
-      const { data: deleted, error: deleteError } = await client
-        .from('cadenza_route_stops')
-        .delete()
-        .eq('route_id', routeId)
-        .in('id', removeStopIds)
-        .select('id');
+      const { error: deleteError, ids: deletedIds, forbidden } = await softDeleteForUser(
+        client,
+        user.id,
+        'cadenza_route_stops',
+        {
+          route_id: routeId,
+          id: removeStopIds,
+        }
+      );
+
+      if (forbidden) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
 
       if (deleteError) {
-        console.error('Supabase error bulk removing stops:', deleteError);
+        console.error('Supabase error bulk soft-deleting stops:', deleteError);
         return NextResponse.json({ error: deleteError.message }, { status: 500 });
       }
-      removedStopIds = (deleted ?? []).map((r: { id: string }) => r.id);
+      removedStopIds = deletedIds;
     }
 
     const skippedPropertyIds: string[] = [];

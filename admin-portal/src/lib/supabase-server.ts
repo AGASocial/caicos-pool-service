@@ -1,7 +1,17 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { Database } from '@/lib/supabase';
-import { verifySecuritySessionToken } from '@/lib/security';
+
+const SUPABASE_FETCH_TIMEOUT_MS = 10_000;
+
+function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), SUPABASE_FETCH_TIMEOUT_MS);
+    const signal = init?.signal
+        ? AbortSignal.any([init.signal, controller.signal])
+        : controller.signal;
+    return fetch(input, { ...init, signal }).finally(() => clearTimeout(timeoutId));
+}
 
 /**
  * Creates an authenticated Supabase server client for use in API routes.
@@ -14,6 +24,7 @@ export async function createRouteClient() {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
+            global: { fetch: fetchWithTimeout },
             cookies: {
                 getAll() {
                     return cookieStore.getAll();
@@ -36,8 +47,9 @@ export async function createRouteClient() {
 
 /**
  * Creates an authenticated Supabase server client and validates the user.
- * Returns { supabase, user } or throws if not authenticated.
- * Use this when you need to guarantee the user is authenticated.
+ * Returns `{ supabase, user }` — check `user` and return 401 in API routes if null.
+ *
+ * Pattern: `.cursor/skills/supabase-server-client/SKILL.md`
  */
 export async function createAuthenticatedRouteClient() {
     const supabase = await createRouteClient();
@@ -48,15 +60,4 @@ export async function createAuthenticatedRouteClient() {
     }
 
     return { supabase, user } as const;
-}
-
-/**
- * Checks if the user has a valid security session (PIN verified)
- */
-export async function checkSecuritySession() {
-    const cookieStore = await cookies();
-    const securitySession = cookieStore.get("security_session");
-    if (!securitySession?.value) return false;
-
-    return await verifySecuritySessionToken(securitySession.value);
 }

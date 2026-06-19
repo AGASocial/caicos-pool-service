@@ -7,8 +7,9 @@ import { useEffect, useMemo } from 'react';
 import 'react-native-reanimated';
 import 'react-native-url-polyfill/auto';
 
-import Colors from '@/constants/Colors';
+import { initAuthSessionCache } from '@/lib/auth-session';
 import { useColorScheme } from '@/components/useColorScheme';
+import Colors from '@/constants/Colors';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -32,6 +33,10 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
+
+  useEffect(() => {
+    initAuthSessionCache();
+  }, []);
 
   useEffect(() => {
     if (error) throw error;

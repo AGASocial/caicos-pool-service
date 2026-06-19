@@ -18,7 +18,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ArrowLeft, Trash2 } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { SOFT_DELETE_ROLES } from '@/lib/soft-delete';
 import { useTeam } from '@/lib/team';
+import { ServiceReportCard } from '@/components/jobs/ServiceReportCard';
+import { FollowUpActionsCard } from '@/components/jobs/FollowUpActionsCard';
+import { LoadingState } from '@/components/ui/loading-state';
+import type { ServiceReport } from '@/lib/service-report';
 
 const STATUSES = ['pending', 'in_progress', 'completed', 'skipped', 'cancelled'] as const;
 
@@ -52,6 +58,7 @@ type JobDetail = {
   technician?: TechnicianRef | null;
   route?: RouteRef;
   visit_kind?: VisitKindRef;
+  service_report?: ServiceReport | null;
   report_photos?: ReportPhoto[];
 };
 
@@ -59,9 +66,10 @@ export default function JobDetailPage() {
   const t = useTranslations();
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
+  const canDeleteJob = SOFT_DELETE_ROLES.has(user?.profile?.role ?? '');
   const id = params?.id as string;
   const [job, setJob] = useState<JobDetail | null>(null);
-  const [properties, setProperties] = useState<{ id: string; customer_name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const { data: teamMembers = [] } = useTeam();
   const [saving, setSaving] = useState(false);
@@ -70,7 +78,6 @@ export default function JobDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<ReportPhoto | null>(null);
   const [edit, setEdit] = useState({
-    property_id: '',
     technician_id: '',
     scheduled_date: '',
     scheduled_time: '',
@@ -95,7 +102,6 @@ export default function JobDetailPage() {
         if (!cancelled) {
           setJob(data);
           setEdit({
-            property_id: data.property_id,
             technician_id: data.technician_id ?? '',
             scheduled_date: data.scheduled_date?.slice(0, 10) ?? '',
             scheduled_time: data.scheduled_time ?? '',
@@ -113,22 +119,6 @@ export default function JobDetailPage() {
     return () => { cancelled = true; };
   }, [id]);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/properties');
-        if (!cancelled && res.ok) {
-          const data = await res.json();
-          setProperties(Array.isArray(data) ? data : []);
-        }
-      } catch {
-        // ignore
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
   async function handleSave() {
     if (!id) return;
     setSaving(true);
@@ -138,7 +128,6 @@ export default function JobDetailPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          property_id: edit.property_id,
           technician_id: edit.technician_id || null,
           scheduled_date: edit.scheduled_date,
           scheduled_time: edit.scheduled_time || null,
@@ -182,7 +171,7 @@ export default function JobDetailPage() {
     }
   }
 
-  if (loading) return <p className="text-muted-foreground">{t('loading', { defaultValue: 'Loading…' })}</p>;
+  if (loading) return <LoadingState />;
   if (error && !job) {
     return (
       <div className="space-y-4">
@@ -219,6 +208,7 @@ export default function JobDetailPage() {
             </p>
           </div>
         </div>
+        {canDeleteJob ? (
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="destructive" size="sm">
@@ -241,35 +231,66 @@ export default function JobDetailPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        ) : null}
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
 
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('jobDetails')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {job.property?.address && (
-            <p><span className="text-muted-foreground">{t('address')}:</span> {job.property.address}</p>
-          )}
-          {job.property?.customer_phone && (
-            <p><span className="text-muted-foreground">{t('customerPhone')}:</span> {job.property.customer_phone}</p>
-          )}
-          <p><span className="text-muted-foreground">{t('status')}:</span> {t(`status_${job.status}`)}</p>
-          {job.notes && <p><span className="text-muted-foreground">{t('notes')}:</span> {job.notes}</p>}
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>{t('jobDetails')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {job.property?.address && (
+              <p><span className="text-muted-foreground">{t('address')}:</span> {job.property.address}</p>
+            )}
+            {job.property?.customer_phone && (
+              <p><span className="text-muted-foreground">{t('customerPhone')}:</span> {job.property.customer_phone}</p>
+            )}
+            <p><span className="text-muted-foreground">{t('status')}:</span> {t(`status_${job.status}`)}</p>
+            {job.notes && <p><span className="text-muted-foreground">{t('notes')}:</span> {job.notes}</p>}
+          </CardContent>
+        </Card>
+
+        <ServiceReportCard report={job.service_report ?? null} className="h-full" />
+      </div>
+
+      {(job.service_report?.follow_up_needed ||
+        (job.service_report?.issue_categories?.length ?? 0) > 0 ||
+        job.service_report?.follow_up_status === 'resolved') && (
+        <FollowUpActionsCard
+          jobId={job.id}
+          isResolved={job.service_report?.follow_up_status === 'resolved'}
+          onResolved={() => {
+            setJob((prev) =>
+              prev?.service_report
+                ? {
+                    ...prev,
+                    service_report: { ...prev.service_report, follow_up_status: 'resolved' },
+                  }
+                : prev,
+            );
+          }}
+        />
+      )}
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('photos', { defaultValue: 'Photos' })}</CardTitle>
+          <CardTitle>
+            {t('photos', { defaultValue: 'Photos' })}
+            {job.report_photos?.length ? (
+              <span className="ml-2 text-base font-normal text-muted-foreground">
+                ({job.report_photos.length})
+              </span>
+            ) : null}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {job.report_photos?.length ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
               {job.report_photos
                 .filter((photo) => photo.url)
                 .map((photo) => (
@@ -283,17 +304,9 @@ export default function JobDetailPage() {
                     <img
                       src={photo.url ?? ''}
                       alt={photo.caption || t('jobPhoto', { defaultValue: 'Job photo' })}
-                      className="h-44 w-full object-cover transition-transform group-hover:scale-[1.02]"
+                      className="aspect-square w-full object-cover transition-transform group-hover:scale-[1.02]"
                       loading="lazy"
                     />
-                    <div className="space-y-1 p-2 text-xs">
-                      {photo.caption ? <p className="text-foreground">{photo.caption}</p> : null}
-                      {photo.photo_type ? (
-                        <p className="text-muted-foreground">
-                          {t('type', { defaultValue: 'Type' })}: {photo.photo_type}
-                        </p>
-                      ) : null}
-                    </div>
                   </button>
                 ))}
             </div>
@@ -304,22 +317,23 @@ export default function JobDetailPage() {
           )}
         </CardContent>
       </Card>
-            <Card>
+
+      <Card>
         <CardHeader>
           <CardTitle>{t('editJob')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>{t('properties')}</Label>
-            <select
-              value={edit.property_id}
-              onChange={(e) => setEdit((p) => ({ ...p, property_id: e.target.value }))}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.customer_name}</option>
-              ))}
-            </select>
+            <Input
+              value={
+                job.property?.customer_name
+                  ? [job.property.customer_name, job.property.address].filter(Boolean).join(' · ')
+                  : job.property_id
+              }
+              disabled
+              readOnly
+            />
           </div>
           <div className="space-y-2">
             <Label>{t('technician')}</Label>

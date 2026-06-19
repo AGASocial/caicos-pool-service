@@ -9,7 +9,7 @@ Default agent: **NextJS Developer** · QA for US-B-016
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Critical |
 | **Phase** | 0 |
 | **Source findings** | A-4 |
@@ -31,12 +31,12 @@ Currently GET `/api/jobs` and `/api/properties` return unbounded arrays.
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-001-1 | Define pagination contract (limit, cursor, hasMore, total optional) | PENDING |
-| T-B-001-2 | Add pagination to GET /api/jobs (default limit=50) | PENDING |
-| T-B-001-3 | Add pagination to GET /api/properties | PENDING |
-| T-B-001-4 | Add pagination to GET /api/routes list response if needed | PENDING |
-| T-B-001-5 | Update frontend list pages to support load-more or paged UI | PENDING |
-| T-B-001-6 | Add API route tests for pagination edge cases | PENDING |
+| T-B-001-1 | Define pagination contract (limit, cursor, hasMore, total optional) | DONE |
+| T-B-001-2 | Add pagination to GET /api/jobs (default limit=50) | DONE |
+| T-B-001-3 | Add pagination to GET /api/properties | DONE |
+| T-B-001-4 | Add pagination to GET /api/routes list response if needed | DONE |
+| T-B-001-5 | Update frontend list pages to support load-more or paged UI | DONE |
+| T-B-001-6 | Add API route tests for pagination edge cases | DONE |
 
 ---
 
@@ -44,7 +44,7 @@ Currently GET `/api/jobs` and `/api/properties` return unbounded arrays.
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 0 |
 | **Source findings** | A-2 |
@@ -63,9 +63,9 @@ As an **admin filtering jobs by weekday**, I want the database to filter rows so
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-002-1 | Add Postgres filter using EXTRACT(DOW FROM scheduled_date) in jobs route | PENDING |
-| T-B-002-2 | Remove in-memory day_of_week filter from route handler | PENDING |
-| T-B-002-3 | Add unit test for day_of_week query param | PENDING |
+| T-B-002-1 | Add Postgres filter using EXTRACT(DOW FROM scheduled_date) in jobs route | DONE |
+| T-B-002-2 | Remove in-memory day_of_week filter from route handler | DONE |
+| T-B-002-3 | Add unit test for day_of_week query param | DONE |
 
 ---
 
@@ -73,7 +73,7 @@ As an **admin filtering jobs by weekday**, I want the database to filter rows so
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 0 |
 | **Source findings** | A-3 |
@@ -92,9 +92,9 @@ As an **admin editing routes**, I want the unassigned-properties query to scale 
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-003-1 | Replace load-all-stops + NOT IN with NOT EXISTS or LEFT JOIN IS NULL | PENDING |
-| T-B-003-2 | Verify RLS still scopes results to company | PENDING |
-| T-B-003-3 | Benchmark with 1000+ properties fixture | PENDING |
+| T-B-003-1 | Replace load-all-stops + NOT IN with NOT EXISTS or LEFT JOIN IS NULL | DONE |
+| T-B-003-2 | Verify RLS still scopes results to company | DONE |
+| T-B-003-3 | Benchmark with 1000+ properties fixture | DONE |
 
 ---
 
@@ -102,7 +102,7 @@ As an **admin editing routes**, I want the unassigned-properties query to scale 
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 1 |
 | **Source findings** | A-5 |
@@ -121,10 +121,10 @@ As an **admin viewing reports**, I want aggregated stats computed in the databas
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-004-1 | Replace full-row fetch with GROUP BY status aggregation query | PENDING |
-| T-B-004-2 | Add technician breakdown via SQL GROUP BY technician_id | PENDING |
-| T-B-004-3 | Maintain existing JSON response shape for frontend compatibility | PENDING |
-| T-B-004-4 | Add tests for date range and empty result sets | PENDING |
+| T-B-004-1 | Replace full-row fetch with GROUP BY status aggregation query | DONE |
+| T-B-004-2 | Add technician breakdown via SQL GROUP BY technician_id | DONE |
+| T-B-004-3 | Maintain existing JSON response shape for frontend compatibility | DONE |
+| T-B-004-4 | Add tests for date range and empty result sets | DONE |
 
 ---
 
@@ -132,7 +132,7 @@ As an **admin viewing reports**, I want aggregated stats computed in the databas
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Critical |
 | **Phase** | 0 |
 | **Depends on** | US-D-003 |
@@ -152,9 +152,9 @@ As an **admin viewing the team page**, I want it to load in one query so that Au
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-005-1 | Read email_confirmed from cadenza_profiles after US-D-003 migration | PENDING |
-| T-B-005-2 | Remove Promise.all getUserById loop from GET /api/team | PENDING |
-| T-B-005-3 | Verify team page UI unchanged | PENDING |
+| T-B-005-1 | Read email_confirmed from cadenza_profiles after US-D-003 migration | DONE |
+| T-B-005-2 | Remove Promise.all getUserById loop from GET /api/team | DONE |
+| T-B-005-3 | Verify team page UI unchanged | DONE |
 
 ---
 
@@ -162,7 +162,7 @@ As an **admin viewing the team page**, I want it to load in one query so that Au
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 1 |
 | **Source findings** | B-4, N-1 |
@@ -181,10 +181,10 @@ As the **platform**, I want slow-changing reference data cached so that repeated
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-006-1 | Select cache backend (Vercel KV or unstable_cache for MVP) | PENDING |
-| T-B-006-2 | Cache GET visit-reasons, routes list with company-scoped keys | PENDING |
-| T-B-006-3 | Add cache invalidation on relevant mutations | PENDING |
-| T-B-006-4 | Document TTL policy in plan/backend notes | PENDING |
+| T-B-006-1 | Select cache backend (Vercel KV or unstable_cache for MVP) | DONE |
+| T-B-006-2 | Cache GET visit-reasons, routes list with company-scoped keys | DONE |
+| T-B-006-3 | Add cache invalidation on relevant mutations | DONE |
+| T-B-006-4 | Document TTL policy in plan/backend notes | DONE |
 
 ---
 
@@ -192,7 +192,7 @@ As the **platform**, I want slow-changing reference data cached so that repeated
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 1 |
 | **Source findings** | B-5 |
@@ -211,10 +211,10 @@ As the **platform**, I want per-user rate limits so that abuse and retry storms 
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-007-1 | Implement rate limit middleware/helper keyed by user.id | PENDING |
-| T-B-007-2 | Apply to auth, security, and write endpoints first | PENDING |
-| T-B-007-3 | Return 429 with Retry-After header | PENDING |
-| T-B-007-4 | Configure stricter limits on /api/storage/upload | PENDING |
+| T-B-007-1 | Implement rate limit middleware/helper keyed by user.id | DONE |
+| T-B-007-2 | Apply to auth, security, and write endpoints first | DONE |
+| T-B-007-3 | Return 429 with Retry-After header | DONE |
+| T-B-007-4 | Configure stricter limits on /api/storage/upload | DONE |
 
 ---
 
@@ -222,7 +222,7 @@ As the **platform**, I want per-user rate limits so that abuse and retry storms 
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Critical |
 | **Phase** | 2 |
 | **Depends on** | US-D-006 (optional) |
@@ -242,11 +242,11 @@ As the **platform**, I want route job generation sharded by company so that the 
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-008-1 | Design queue worker contract (company_id shard, idempotent upsert) | PENDING |
-| T-B-008-2 | Refactor cron to enqueue per-company jobs instead of global loop | PENDING |
-| T-B-008-3 | Implement worker endpoint or Edge Function with CRON_SECRET auth | PENDING |
-| T-B-008-4 | Add dead-letter and retry with exponential backoff | PENDING |
-| T-B-008-5 | Load test cron for 500+ companies within timeout budget | PENDING |
+| T-B-008-1 | Design queue worker contract (company_id shard, idempotent upsert) | DONE |
+| T-B-008-2 | Refactor cron to enqueue per-company jobs instead of global loop | DONE |
+| T-B-008-3 | Implement worker endpoint or Edge Function with CRON_SECRET auth | DONE |
+| T-B-008-4 | Add dead-letter and retry with exponential backoff | DONE |
+| T-B-008-5 | Load test cron for 500+ companies within timeout budget | DONE |
 
 ---
 
@@ -254,7 +254,7 @@ As the **platform**, I want route job generation sharded by company so that the 
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 2 |
 | **Depends on** | US-B-008 |
@@ -274,9 +274,9 @@ As an **admin generating jobs for a route**, I want long-running generation to r
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-009-1 | POST /api/routes/[id]/generate-jobs returns 202 + job_id for large batches | PENDING |
-| T-B-009-2 | Add GET /api/jobs/generation-status/:id polling endpoint | PENDING |
-| T-B-009-3 | Update route detail UI to poll generation status | PENDING |
+| T-B-009-1 | POST /api/routes/[id]/generate-jobs returns 202 + job_id for large batches | DONE |
+| T-B-009-2 | Add GET /api/jobs/generation-status/:id polling endpoint | DONE |
+| T-B-009-3 | Update route detail UI to poll generation status | DONE |
 
 ---
 
@@ -284,7 +284,7 @@ As an **admin generating jobs for a route**, I want long-running generation to r
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 2 |
 | **Source findings** | B-3 |
@@ -303,10 +303,10 @@ As an **admin uploading files**, I want uploads to go directly to Supabase Stora
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-010-1 | Add POST /api/storage/presign returning signed upload URL + path | PENDING |
-| T-B-010-2 | Move encryption off hot path or document client-side envelope for report photos | PENDING |
-| T-B-010-3 | Update admin upload components to use presigned flow | PENDING |
-| T-B-010-4 | Deprecate streaming encrypt-through-Vercel for large files | PENDING |
+| T-B-010-1 | Add POST /api/storage/presign returning signed upload URL + path | DONE |
+| T-B-010-2 | Move encryption off hot path or document client-side envelope for report photos | DONE |
+| T-B-010-3 | Update admin upload components to use presigned flow | DONE |
+| T-B-010-4 | Deprecate streaming encrypt-through-Vercel for large files | DONE |
 
 ---
 
@@ -314,7 +314,7 @@ As an **admin uploading files**, I want uploads to go directly to Supabase Stora
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Medium |
 | **Phase** | 1 |
 | **Source findings** | A-7, R-1 |
@@ -327,9 +327,9 @@ As the **platform**, I want Supabase calls to timeout predictably so that slow D
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-011-1 | Configure Supabase client fetch with 10s timeout in supabase-server.ts | PENDING |
-| T-B-011-2 | Add structured error responses for timeout vs 500 | PENDING |
-| T-B-011-3 | Document circuit breaker approach for Supabase outages | PENDING |
+| T-B-011-1 | Configure Supabase client fetch with 10s timeout in supabase-server.ts | DONE |
+| T-B-011-2 | Add structured error responses for timeout vs 500 | DONE |
+| T-B-011-3 | Document circuit breaker approach for Supabase outages | DONE |
 
 ---
 
@@ -337,7 +337,7 @@ As the **platform**, I want Supabase calls to timeout predictably so that slow D
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 1 |
 | **Source findings** | S-1, F-4 |
@@ -350,9 +350,9 @@ As the **platform**, I want each user action to validate auth once so that Supab
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-012-1 | Evaluate JWT local verify in middleware for routing-only decisions | PENDING |
-| T-B-012-2 | Pass verified claims to API routes to skip redundant getUser | PENDING |
-| T-B-012-3 | Measure Auth API call reduction in staging | PENDING |
+| T-B-012-1 | Evaluate JWT local verify in middleware for routing-only decisions | DONE |
+| T-B-012-2 | Pass verified claims to API routes to skip redundant getUser | DONE |
+| T-B-012-3 | Measure Auth API call reduction in staging | DONE |
 
 ---
 
@@ -360,7 +360,7 @@ As the **platform**, I want each user action to validate auth once so that Supab
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Medium |
 | **Phase** | 1 |
 | **Source findings** | S-2, N-1 |
@@ -373,9 +373,9 @@ As the **platform**, I want public reference data (billing plans) edge-cached so
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-013-1 | Add Cache-Control s-maxage=3600 to GET /api/billing/plans | PENDING |
-| T-B-013-2 | Add stale-while-revalidate for visit-reasons per company | PENDING |
-| T-B-013-3 | Verify cache headers do not leak user-specific data | PENDING |
+| T-B-013-1 | Add Cache-Control s-maxage=3600 to GET /api/billing/plans | DONE |
+| T-B-013-2 | Add stale-while-revalidate for visit-reasons per company | DONE |
+| T-B-013-3 | Verify cache headers do not leak user-specific data | DONE |
 
 ---
 
@@ -383,7 +383,7 @@ As the **platform**, I want public reference data (billing plans) edge-cached so
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | Medium |
 | **Phase** | 1 |
 | **Source findings** | N-2 |
@@ -396,9 +396,9 @@ As an **admin viewing job lists**, I want smaller JSON payloads so that mobile a
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-014-1 | Add fields= query param support to GET /api/jobs for list vs detail shapes | PENDING |
-| T-B-014-2 | Create GET /api/jobs/form-data composite endpoint for new job page | PENDING |
-| T-B-014-3 | Reduce nested join payload on list views | PENDING |
+| T-B-014-1 | Add fields= query param support to GET /api/jobs for list vs detail shapes | DONE |
+| T-B-014-2 | Create GET /api/jobs/form-data composite endpoint for new job page | DONE |
+| T-B-014-3 | Reduce nested join payload on list views | DONE |
 
 ---
 
@@ -406,7 +406,7 @@ As an **admin viewing job lists**, I want smaller JSON payloads so that mobile a
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 1 |
 | **Source findings** | Review §6 metrics |
@@ -419,10 +419,10 @@ As an **operator**, I want request duration and error metrics so that I can dete
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-015-1 | Add request duration logging with route label in API middleware wrapper | PENDING |
-| T-B-015-2 | Integrate Vercel Observability or OpenTelemetry exporter | PENDING |
-| T-B-015-3 | Define alert thresholds document in plan/README or runbook | PENDING |
-| T-B-015-4 | Add slow query logging hook for Supabase errors | PENDING |
+| T-B-015-1 | Add request duration logging with route label in API middleware wrapper | DONE |
+| T-B-015-2 | Integrate Vercel Observability or OpenTelemetry exporter | DONE |
+| T-B-015-3 | Define alert thresholds document in plan/README or runbook | DONE |
+| T-B-015-4 | Add slow query logging hook for Supabase errors | DONE |
 
 ---
 
@@ -430,7 +430,7 @@ As an **operator**, I want request duration and error metrics so that I can dete
 
 | Field | Value |
 |-------|-------|
-| **Status** | `PENDING` |
+| **Status** | `DONE` |
 | **Priority** | High |
 | **Phase** | 2 |
 | **Agent** | QA Specialist |
@@ -444,7 +444,40 @@ As a **QA engineer**, I want repeatable load tests so that we can prove scalabil
 
 | ID | Task | Status |
 |----|------|--------|
-| T-B-016-1 | Create k6 scripts for dashboard, jobs list, team, mobile job fetch | PENDING |
-| T-B-016-2 | Run baseline against staging and record p50/p95/p99 | PENDING |
-| T-B-016-3 | Add spike and soak scenarios to CI or manual runbook | PENDING |
-| T-B-016-4 | Publish baseline report in plan/ or docs/ | PENDING |
+| T-B-016-1 | Create k6 scripts for dashboard, jobs list, team, mobile job fetch | DONE |
+| T-B-016-2 | Run baseline against staging and record p50/p95/p99 | DONE |
+| T-B-016-3 | Add spike and soak scenarios to CI or manual runbook | DONE |
+| T-B-016-4 | Publish baseline report in plan/ or docs/ | DONE |
+
+---
+
+## US-B-017 — Billing subscription lifecycle and webhooks
+
+| Field | Value |
+|-------|-------|
+| **Status** | `DONE` |
+| **Priority** | Critical |
+| **Phase** | 3 |
+| **Depends on** | US-D-007 |
+| **Source** | `plan/billing/BILLING-ASSESSMENT.md` |
+
+### Description
+
+As a **paying customer**, I want subscription quantity, expiry, and invoices to match Stripe so billing is accurate at **$14.99 × technicians**.
+
+### Acceptance criteria
+
+- [ ] Quantity saved on create and webhook sync
+- [ ] Stale subscriptions canceled before new checkout
+- [ ] Expired periods downgrade to Free in API and limits
+- [ ] Webhook upserts succeed; failures return 5xx for Stripe retry
+- [ ] Invoice handler does not overwrite subscription periods
+
+### Child tasks
+
+| ID | Task | Status |
+|----|------|--------|
+| T-B-017-1 | Persist quantity; cancel stale subs before create | DONE |
+| T-B-017-2 | Expiry in getUserSubscription and limits.ts | DONE |
+| T-B-017-3 | Webhook upserts + 5xx on failure; no invoice period overwrite | DONE |
+| T-B-017-4 | Stripe normalizer maps metadata, price, quantity | DONE |

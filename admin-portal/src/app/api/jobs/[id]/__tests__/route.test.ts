@@ -4,13 +4,19 @@
 import { NextRequest } from 'next/server';
 import { GET, PATCH, DELETE } from '../route';
 
+jest.mock('@/lib/soft-delete', () => ({
+  softDeleteByIdForUser: jest.fn(),
+}));
+
 jest.mock('@/lib/supabase-server', () => ({
   createAuthenticatedRouteClient: jest.fn(),
 }));
 
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
+import { softDeleteByIdForUser } from '@/lib/soft-delete';
 
 const mockCreateClient = createAuthenticatedRouteClient as jest.Mock;
+const mockSoftDeleteByIdForUser = softDeleteByIdForUser as jest.Mock;
 
 const TEST_ID = 'test-job-id';
 const routeParams = { params: Promise.resolve({ id: TEST_ID }) };
@@ -165,25 +171,40 @@ describe('DELETE /api/jobs/[id]', () => {
   });
 
   it('returns 204 on successful delete', async () => {
-    const mockQuery = {
-      delete: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockResolvedValue({ error: null, count: 1 }),
-    };
-    const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
+    mockSoftDeleteByIdForUser.mockResolvedValue({ count: 1, ids: [TEST_ID], error: null });
+    const mockSupabase = { from: jest.fn() };
     mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
 
     const req = makeRequest(`http://localhost/api/jobs/${TEST_ID}`, 'DELETE');
     const res = await DELETE(req, routeParams);
 
     expect(res.status).toBe(204);
+    expect(mockSoftDeleteByIdForUser).toHaveBeenCalledWith(
+      mockSupabase,
+      'user-1',
+      'cadenza_service_jobs',
+      TEST_ID
+    );
+  });
+
+  it('returns 403 when user cannot soft delete', async () => {
+    mockSoftDeleteByIdForUser.mockResolvedValue({
+      count: 0,
+      ids: [],
+      error: { message: 'Forbidden' },
+      forbidden: true,
+    });
+    mockCreateClient.mockResolvedValue({ supabase: {}, user: { id: 'user-1' } });
+
+    const req = makeRequest(`http://localhost/api/jobs/${TEST_ID}`, 'DELETE');
+    const res = await DELETE(req, routeParams);
+
+    expect(res.status).toBe(403);
   });
 
   it('returns 404 when job not found (count 0)', async () => {
-    const mockQuery = {
-      delete: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockResolvedValue({ error: null, count: 0 }),
-    };
-    const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
+    mockSoftDeleteByIdForUser.mockResolvedValue({ count: 0, ids: [], error: null });
+    const mockSupabase = { from: jest.fn() };
     mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
 
     const req = makeRequest(`http://localhost/api/jobs/${TEST_ID}`, 'DELETE');

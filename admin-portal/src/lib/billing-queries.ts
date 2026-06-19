@@ -19,6 +19,7 @@ export interface TechnicianPlanFeatures {
 
 export interface BillingSubscriptionPayload {
   currentPeriodEnd?: string | Date | null;
+  quantity?: number;
   plan?: { features?: TechnicianPlanFeatures & Record<string, unknown> };
 }
 

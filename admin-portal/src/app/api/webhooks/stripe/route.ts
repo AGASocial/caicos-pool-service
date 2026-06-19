@@ -69,15 +69,10 @@ export async function POST(request: NextRequest) {
     return successResponse({ received: true, processed: true });
   } catch (error) {
     console.error('Error processing webhook:', error);
-
-    // Return 200 to acknowledge receipt even if processing failed
-    // This prevents Stripe from retrying the webhook
-    // Log the error for investigation
-    return successResponse({
-      received: true,
-      processed: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return errorResponse(
+      error instanceof Error ? error.message : 'Webhook processing failed',
+      500,
+    );
   }
 }
 

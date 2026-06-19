@@ -34,35 +34,6 @@ export const supabase = createBrowserClient(
 export type Database = {
   public: {
     Tables: {
-      users: {
-        Row: {
-          id: string
-          email: string
-          full_name: string
-          created_at: string
-          updated_at: string
-          security_pin_hash: string | null
-          security_pin_updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          email: string
-          full_name: string
-          created_at?: string
-          updated_at?: string
-          security_pin_hash?: string | null
-          security_pin_updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          email?: string
-          full_name?: string
-          created_at?: string
-          updated_at?: string
-          security_pin_hash?: string | null
-          security_pin_updated_at?: string | null
-        }
-      }
       billing_plans: {
         Row: {
           id: string

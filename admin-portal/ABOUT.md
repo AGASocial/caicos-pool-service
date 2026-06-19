@@ -4,8 +4,6 @@ This document describes the **admin portal** in the Cadenza monorepo: the web ap
 
 For the full platform scope, see `docs/architecture/SOLUTION.md` at the repo root. For day-to-day development commands and architecture notes, see `CLAUDE.md` in this directory.
 
-> **Historical note:** The portal was bootstrapped from a donor app (digital assets / beneficiaries). That product surface has been removed. The archived donor-app overview lives at `docs/archive/ABOUT-donor-app.md`.
-
 ---
 
 ## Product summary
@@ -61,10 +59,10 @@ admin-portal/
 | Team | `/[locale]/team` | Technicians and admins; invite flow |
 | Reports | `/[locale]/reports` | Job completion and technician stats |
 | Billing | `/[locale]/billing` | Plans, subscription, invoices |
-| Settings | `/[locale]/settings/*` | Profile, security PIN, preferences |
+| Settings | `/[locale]/settings/*` | Profile and preferences |
 | Wizard | `/[locale]/wizard` | Onboarding shell (extend `api/wizard/complete` for setup data) |
 
-Navigation is defined in `src/components/Navigation.tsx` (sidebar). Legacy donor routes (`digital-assets`, `beneficiaries`) no longer exist.
+Navigation is defined in `src/components/Navigation.tsx` (sidebar).
 
 ---
 
@@ -107,7 +105,7 @@ Daily cron (`/api/cron/generate-route-jobs`, 06:00 UTC) materializes jobs from r
 
 ### Billing
 
-Webhooks: `/api/webhooks/stripe`, `/api/webhooks/payu`. Plan limits: `src/lib/subscription/limits.ts` (storage/file-size; no legacy asset/beneficiary gating).
+Webhooks: `/api/webhooks/stripe`, `/api/webhooks/payu`. Plan limits: `src/lib/subscription/limits.ts` (storage/file-size).
 
 ---
 
@@ -124,8 +122,8 @@ Webhooks: `/api/webhooks/stripe`, `/api/webhooks/payu`. Plan limits: `src/lib/su
 See `.env.example` and `CLAUDE.md`. Minimum:
 
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`
-- `STORAGE_MASTER_KEY`, `CRON_SECRET`, `RESEND_API_KEY` (PIN reset)
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `STORAGE_MASTER_KEY`, `CRON_SECRET`
 - Payment provider keys when billing is enabled
 
 ---
@@ -147,5 +145,4 @@ See `.env.example` and `CLAUDE.md`. Minimum:
 | MVP scope & architecture | `docs/architecture/SOLUTION.md` |
 | Admin feature spec | `docs/specs/FEATURE-ADMIN-PORTAL.md` |
 | Database schema | `docs/schema.sql` |
-| Donor app overview (archived) | `docs/archive/ABOUT-donor-app.md` |
 | Agent/dev guide | `CLAUDE.md` |

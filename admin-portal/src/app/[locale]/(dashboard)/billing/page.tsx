@@ -1,15 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { FileText, Calendar, AlertCircle, Loader2, Users } from 'lucide-react';
+import { FileText, Calendar, AlertCircle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import PaymentMethodsList from '@/components/billing/PaymentMethodsList';
 import { useTeam } from '@/lib/team';
+import { LoadingState } from '@/components/ui/loading-state';
+
+const PaymentMethodsList = dynamic(() => import('@/components/billing/PaymentMethodsList'), {
+  ssr: false,
+  loading: () => <LoadingState padded={false} className="py-8" />,
+});
 
 /** Plan features from cadenza_billing_plans (JSONB). -1 = unlimited. */
 interface PlanFeatures {
@@ -39,6 +45,7 @@ interface Subscription {
   id: string;
   planId: string;
   status: string;
+  quantity?: number;
   currentPeriodEnd?: Date;
   cancelAtPeriodEnd: boolean;
   plan: {
@@ -71,6 +78,8 @@ export default function BillingPage() {
   const [provider, setProvider] = useState<string | null>(null);
   const { data: teamMembers = [] } = useTeam();
   const userCount = teamMembers.filter(member => member.role === 'technician').length;
+
+  const seatCount = subscription?.quantity ?? 1;
 
   const fetchBillingData = async () => {
     try {
@@ -202,10 +211,7 @@ export default function BillingPage() {
   if (loading) {
     return (
       <div className="container mx-auto py-10">
-        <div className="flex items-center justify-center gap-2 py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          <span className="text-muted-foreground">{t('loadingSubscription')}</span>
-        </div>
+        <LoadingState label={t('loadingSubscription')} />
       </div>
     );
   }
@@ -286,6 +292,11 @@ export default function BillingPage() {
               </h3>
               <p className="text-lg">
                 {t('usersCount', { count: userCount })}
+                {!isFreePlan && seatCount > 0 && (
+                  <span className="text-sm text-muted-foreground block mt-1">
+                    {t('billedTechnicians', { count: seatCount })}
+                  </span>
+                )}
               </p>
               {effectivePlan?.features && (
                 <p className="text-sm text-muted-foreground mt-1">
@@ -302,7 +313,7 @@ export default function BillingPage() {
                   ? t('noPaymentRequired')
                   : subscription?.currentPeriodEnd
                     ? t('nextPaymentOn', {
-                        amount: formatPrice((effectivePlan?.amountCents ?? 0) * userCount || 0, effectivePlan?.currency || 'USD'),
+                        amount: formatPrice((effectivePlan?.amountCents ?? 0) * seatCount || 0, effectivePlan?.currency || 'USD'),
                         date: format(new Date(subscription.currentPeriodEnd), 'PPP'),
                       })
                     : formatPrice(effectivePlan?.amountCents || 0, effectivePlan?.currency || 'USD')}
