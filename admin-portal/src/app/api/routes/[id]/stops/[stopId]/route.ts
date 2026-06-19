@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { softDeleteForUser } from '@/lib/soft-delete';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 import { reconcilePendingRouteJobsForStop } from '@/lib/reconcile-route-jobs';
@@ -73,6 +74,7 @@ type StopRow = {
 async function persistScheduleSegment(
   client: CadenzaSupabaseClient,
   args: {
+    companyId: string;
     routeStopId: string;
     routeId: string;
     propertyId: string;
@@ -82,7 +84,7 @@ async function persistScheduleSegment(
     week_ordinal: number | null;
   }
 ): Promise<void> {
-  const { routeStopId, routeId, propertyId, effectiveFrom, ...pattern } = args;
+  const { companyId, routeStopId, routeId, propertyId, effectiveFrom, ...pattern } = args;
 
   const { data: atDate, error: selErr } = await client
     .from('cadenza_route_stop_schedules')
@@ -131,6 +133,7 @@ async function persistScheduleSegment(
   const map = await loadSchedulesByStopId(client, [routeStopId]);
   const segments = map.get(routeStopId) ?? [];
   await reconcilePendingRouteJobsForStop(client, {
+    companyId,
     routeId,
     propertyId,
     fromDate: effectiveFrom,
@@ -181,6 +184,21 @@ export async function PATCH(
     }
 
     const stop = row as StopRow;
+
+    const { data: routeRow, error: routeErr } = await client
+      .from('cadenza_routes')
+      .select('company_id')
+      .eq('id', routeId)
+      .single();
+
+    const companyId =
+      routeRow && typeof (routeRow as { company_id?: string }).company_id === 'string'
+        ? (routeRow as { company_id: string }).company_id
+        : null;
+
+    if (routeErr || !companyId) {
+      return NextResponse.json({ error: 'Route not found' }, { status: 404 });
+    }
 
     const hasNestedSchedule =
       scheduleObj &&
@@ -259,6 +277,7 @@ export async function PATCH(
 
       try {
         await persistScheduleSegment(client, {
+          companyId,
           routeStopId: stopId,
           routeId,
           propertyId: stop.property_id,
@@ -322,6 +341,7 @@ export async function PATCH(
 
       try {
         await persistScheduleSegment(client, {
+          companyId,
           routeStopId: stopId,
           routeId,
           propertyId: stop.property_id,
@@ -396,14 +416,19 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { error, count } = await (supabase as unknown as CadenzaSupabaseClient)
-    .from('cadenza_route_stops')
-    .delete({ count: 'exact' })
-    .eq('id', stopId)
-    .eq('route_id', routeId);
+  const client = supabase as unknown as CadenzaSupabaseClient;
+
+  const { error, count, forbidden } = await softDeleteForUser(client, user.id, 'cadenza_route_stops', {
+    id: stopId,
+    route_id: routeId,
+  });
+
+  if (forbidden) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
   if (error) {
-    console.error('Supabase error deleting stop:', error);
+    console.error('Supabase error soft-deleting stop:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

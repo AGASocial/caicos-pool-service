@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 
 type Props = {
   report: ServiceReport | null;
+  className?: string;
 };
 
 function ReadingRow({ label, value, unit }: { label: string; value: number | null; unit?: string }) {
@@ -39,13 +40,13 @@ function EquipmentRow({ label, ok }: { label: string; ok: boolean | null }) {
   );
 }
 
-export function ServiceReportCard({ report }: Props) {
+export function ServiceReportCard({ report, className }: Props) {
   const t = useTranslations();
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   if (!report) {
     return (
-      <Card>
+      <Card className={className}>
         <CardHeader>
           <CardTitle>{t('serviceReport')}</CardTitle>
         </CardHeader>
@@ -60,7 +61,7 @@ export function ServiceReportCard({ report }: Props) {
   const showDetails = hasChemicalReadings(report) || hasEquipmentFlags(report);
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>{t('serviceReport')}</CardTitle>
       </CardHeader>

@@ -21,7 +21,7 @@ export default function SettingsLayout({
                 <aside className="lg:w-1/5">
                     <SettingsNav className="mx-0" />
                 </aside>
-                <div className="flex-1 lg:max-w-2xl">{children}</div>
+                <div className="flex-1 lg:max-w-3xl xl:max-w-4xl">{children}</div>
             </div>
         </div>
     );

@@ -2,15 +2,20 @@
 
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
-import { User, Settings } from 'lucide-react';
+import { User, Settings, Trash2, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth';
 
 type SettingsNavProps = React.HTMLAttributes<HTMLElement>;
+
+const TRASH_ROLES = new Set(['owner', 'admin', 'operations']);
 
 export function SettingsNav({ className, ...props }: SettingsNavProps) {
     const t = useTranslations('settings');
     const pathname = usePathname();
+    const { user } = useAuth();
+    const canViewTrash = TRASH_ROLES.has(user?.profile?.role ?? '');
 
     const items = [
         {
@@ -23,6 +28,20 @@ export function SettingsNav({ className, ...props }: SettingsNavProps) {
             href: '/settings/preferences',
             icon: Settings,
         },
+        ...(canViewTrash
+            ? [
+                  {
+                      title: t('messageTemplates'),
+                      href: '/settings/templates',
+                      icon: Mail,
+                  },
+                  {
+                      title: t('trash'),
+                      href: '/settings/trash',
+                      icon: Trash2,
+                  },
+              ]
+            : []),
     ];
 
     return (

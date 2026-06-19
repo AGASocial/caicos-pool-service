@@ -18,8 +18,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ArrowLeft, Trash2 } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { SOFT_DELETE_ROLES } from '@/lib/soft-delete';
 import { useTeam } from '@/lib/team';
 import { ServiceReportCard } from '@/components/jobs/ServiceReportCard';
+import { FollowUpActionsCard } from '@/components/jobs/FollowUpActionsCard';
 import { LoadingState } from '@/components/ui/loading-state';
 import type { ServiceReport } from '@/lib/service-report';
 
@@ -63,6 +66,8 @@ export default function JobDetailPage() {
   const t = useTranslations();
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
+  const canDeleteJob = SOFT_DELETE_ROLES.has(user?.profile?.role ?? '');
   const id = params?.id as string;
   const [job, setJob] = useState<JobDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -203,6 +208,7 @@ export default function JobDetailPage() {
             </p>
           </div>
         </div>
+        {canDeleteJob ? (
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="destructive" size="sm">
@@ -225,29 +231,51 @@ export default function JobDetailPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        ) : null}
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
 
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('jobDetails')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {job.property?.address && (
-            <p><span className="text-muted-foreground">{t('address')}:</span> {job.property.address}</p>
-          )}
-          {job.property?.customer_phone && (
-            <p><span className="text-muted-foreground">{t('customerPhone')}:</span> {job.property.customer_phone}</p>
-          )}
-          <p><span className="text-muted-foreground">{t('status')}:</span> {t(`status_${job.status}`)}</p>
-          {job.notes && <p><span className="text-muted-foreground">{t('notes')}:</span> {job.notes}</p>}
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>{t('jobDetails')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {job.property?.address && (
+              <p><span className="text-muted-foreground">{t('address')}:</span> {job.property.address}</p>
+            )}
+            {job.property?.customer_phone && (
+              <p><span className="text-muted-foreground">{t('customerPhone')}:</span> {job.property.customer_phone}</p>
+            )}
+            <p><span className="text-muted-foreground">{t('status')}:</span> {t(`status_${job.status}`)}</p>
+            {job.notes && <p><span className="text-muted-foreground">{t('notes')}:</span> {job.notes}</p>}
+          </CardContent>
+        </Card>
 
-      <ServiceReportCard report={job.service_report ?? null} />
+        <ServiceReportCard report={job.service_report ?? null} className="h-full" />
+      </div>
+
+      {(job.service_report?.follow_up_needed ||
+        (job.service_report?.issue_categories?.length ?? 0) > 0 ||
+        job.service_report?.follow_up_status === 'resolved') && (
+        <FollowUpActionsCard
+          jobId={job.id}
+          isResolved={job.service_report?.follow_up_status === 'resolved'}
+          onResolved={() => {
+            setJob((prev) =>
+              prev?.service_report
+                ? {
+                    ...prev,
+                    service_report: { ...prev.service_report, follow_up_status: 'resolved' },
+                  }
+                : prev,
+            );
+          }}
+        />
+      )}
 
       <Card>
         <CardHeader>

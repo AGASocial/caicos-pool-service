@@ -6,6 +6,7 @@ import {
   decodeCursor,
   parsePaginationParams,
 } from '@/lib/pagination';
+import { reportNeedsFollowUp, uniqueJobIdsFromReports } from '@/lib/follow-up-jobs';
 
 /** Local YYYY-MM-DD without UTC drift. */
 function localDateParts(d: Date): string {
@@ -89,7 +90,8 @@ export async function GET(request: NextRequest) {
   if (needsFollowUp) {
     const { data: flaggedReports, error: reportErr } = await client
       .from('cadenza_service_reports')
-      .select('job_id, follow_up_needed, issue_categories')
+      .select('job_id, follow_up_needed, issue_categories, follow_up_status')
+      .eq('follow_up_status', 'open')
       .or('follow_up_needed.eq.true,issue_categories.neq.{}');
 
     if (reportErr) {
@@ -97,17 +99,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: reportErr.message }, { status: 500 });
     }
 
-    const followUpJobIds = [
-      ...new Set(
-        (flaggedReports ?? [])
-          .filter((row) => {
-            const record = row as { follow_up_needed?: boolean; issue_categories?: string[] | null };
-            if (record.follow_up_needed) return true;
-            return Array.isArray(record.issue_categories) && record.issue_categories.length > 0;
-          })
-          .map((row) => String((row as { job_id: string }).job_id)),
-      ),
-    ];
+    const followUpJobIds = uniqueJobIdsFromReports(
+      (flaggedReports ?? []) as Parameters<typeof uniqueJobIdsFromReports>[0],
+    );
 
     if (followUpJobIds.length === 0) {
       return NextResponse.json(buildPaginatedResponse([], limit, jobSortKey));

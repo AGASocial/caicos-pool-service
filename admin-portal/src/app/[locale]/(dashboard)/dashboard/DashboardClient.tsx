@@ -3,10 +3,10 @@
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Briefcase, MapPin, Users, Building2, ChevronRight, Route as RouteIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Briefcase, MapPin, Users, Building2, ChevronRight, Route as RouteIcon, AlertTriangle } from "lucide-react";
 import { Link } from '@/i18n/navigation';
-import { cn } from '@/lib/utils';
-import type { DashboardJob } from '@/lib/server-data';
+import type { DashboardIssueJob, DashboardJob } from '@/lib/server-data';
 
 type DashboardStats = {
   totalJobs: number;
@@ -15,8 +15,7 @@ type DashboardStats = {
   totalProperties: number;
 };
 
-function JobRow({ job, dotClass }: { job: DashboardJob; dotClass: string }) {
-  const t = useTranslations();
+function PendingJobRow({ job }: { job: DashboardJob }) {
   const propertyName = job.property?.customer_name ?? '—';
   const address = job.property?.address;
   const technicianName = job.technician?.full_name;
@@ -29,10 +28,12 @@ function JobRow({ job, dotClass }: { job: DashboardJob; dotClass: string }) {
         <div className="flex-1 min-w-0">
           <div className="font-medium text-foreground truncate">{propertyName}</div>
           <div className="text-sm text-muted-foreground truncate">
+            {job.scheduled_time && <span>{job.scheduled_time.slice(0, 5)}</span>}
+            {job.scheduled_time && (address || technicianName) && <span className="mx-1.5 opacity-60">·</span>}
             {address && <span>{address}</span>}
             {address && technicianName && <span className="mx-1.5 opacity-60">·</span>}
             {technicianName && <span>{technicianName}</span>}
-            {!address && !technicianName && <span className="opacity-60">—</span>}
+            {!job.scheduled_time && !address && !technicianName && <span className="opacity-60">—</span>}
           </div>
         </div>
         {routeName && (
@@ -41,8 +42,58 @@ function JobRow({ job, dotClass }: { job: DashboardJob; dotClass: string }) {
             {routeName}
           </span>
         )}
-        <span aria-hidden className={cn("h-2 w-2 rounded-full shrink-0", dotClass)} />
+        <span aria-hidden className="h-2 w-2 rounded-full shrink-0 bg-warning" />
         <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+      </Link>
+    </li>
+  );
+}
+
+function IssueJobRow({ job }: { job: DashboardIssueJob }) {
+  const t = useTranslations();
+  const propertyName = job.property?.customer_name ?? '—';
+  const address = job.property?.address;
+  const technicianName = job.technician?.full_name;
+  const routeName = job.route?.name;
+
+  return (
+    <li>
+      <Link href={`/jobs/${job.id}`} className="flex items-start gap-3 py-3 px-1 rounded-lg hover:bg-muted/50 transition-colors">
+        <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <div className="font-medium text-foreground truncate">{propertyName}</div>
+          <div className="text-sm text-muted-foreground truncate">
+            {address && <span>{address}</span>}
+            {address && technicianName && <span className="mx-1.5 opacity-60">·</span>}
+            {technicianName && <span>{technicianName}</span>}
+            {!address && !technicianName && (
+              <span>{job.scheduled_date}</span>
+            )}
+          </div>
+          {job.issue_categories.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {job.issue_categories.map((key) => (
+                <Badge
+                  key={key}
+                  variant="outline"
+                  className="border-warning/40 bg-warning/10 text-warning-foreground text-xs"
+                >
+                  {t(`issue_${key}`)}
+                </Badge>
+              ))}
+            </div>
+          )}
+          {job.follow_up_notes && (
+            <p className="text-xs text-muted-foreground line-clamp-2">{job.follow_up_notes}</p>
+          )}
+        </div>
+        {routeName && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-info-soft text-info-soft-foreground px-2.5 py-0.5 text-xs font-medium shrink-0">
+            <RouteIcon className="h-3 w-3" aria-hidden />
+            {routeName}
+          </span>
+        )}
+        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
       </Link>
     </li>
   );
@@ -50,12 +101,12 @@ function JobRow({ job, dotClass }: { job: DashboardJob; dotClass: string }) {
 
 export default function DashboardClient({
   stats,
-  completedJobs,
-  pendingJobs,
+  issueJobs,
+  pendingJobsToday,
 }: {
   stats: DashboardStats;
-  completedJobs: DashboardJob[];
-  pendingJobs: DashboardJob[];
+  issueJobs: DashboardIssueJob[];
+  pendingJobsToday: DashboardJob[];
 }) {
   const t = useTranslations();
 
@@ -95,20 +146,22 @@ export default function DashboardClient({
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
               <CardTitle className="text-xl flex items-center gap-2 text-foreground">
-                <span className="status-dot status-dot--success" aria-hidden />
-                {t('recentCompletedJobs')}
+                <span className="status-dot status-dot--warning" aria-hidden />
+                {t('jobsWithIssues')}
               </CardTitle>
-              <CardDescription>{t('status_completed')}</CardDescription>
+              <CardDescription>{t('jobsWithIssuesDescription')}</CardDescription>
             </div>
-            <Link href="/jobs?status=completed"><Button variant="ghost" size="sm">{t('jobs')}</Button></Link>
+            <Link href="/jobs?needs_follow_up=1">
+              <Button variant="ghost" size="sm">{t('viewAll')}</Button>
+            </Link>
           </CardHeader>
           <CardContent>
-            {completedJobs.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">{t('noCompletedJobs')}</p>
+            {issueJobs.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">{t('noJobsWithIssues')}</p>
             ) : (
               <ul className="divide-y divide-border">
-                {completedJobs.map((job) => (
-                  <JobRow key={job.id} job={job} dotClass="bg-success" />
+                {issueJobs.map((job) => (
+                  <IssueJobRow key={job.id} job={job} />
                 ))}
               </ul>
             )}
@@ -120,19 +173,21 @@ export default function DashboardClient({
             <div>
               <CardTitle className="text-xl flex items-center gap-2 text-foreground">
                 <span className="status-dot status-dot--warning" aria-hidden />
-                {t('recentPendingJobs')}
+                {t('pendingJobsToday')}
               </CardTitle>
-              <CardDescription>{t('status_pending')}</CardDescription>
+              <CardDescription>{t('status_pending')} · {t('today')}</CardDescription>
             </div>
-            <Link href="/jobs?status=pending"><Button variant="ghost" size="sm">{t('jobs')}</Button></Link>
+            <Link href="/jobs?status=pending">
+              <Button variant="ghost" size="sm">{t('viewAll')}</Button>
+            </Link>
           </CardHeader>
           <CardContent>
-            {pendingJobs.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">{t('noPendingJobs')}</p>
+            {pendingJobsToday.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">{t('noPendingJobsToday')}</p>
             ) : (
               <ul className="divide-y divide-border">
-                {pendingJobs.map((job) => (
-                  <JobRow key={job.id} job={job} dotClass="bg-warning" />
+                {pendingJobsToday.map((job) => (
+                  <PendingJobRow key={job.id} job={job} />
                 ))}
               </ul>
             )}

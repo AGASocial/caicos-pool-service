@@ -1,6 +1,9 @@
 import { createRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 import { buildPaginatedResponse } from '@/lib/pagination';
+import { formatLocalYmd } from '@/lib/date-week';
+import { uniqueJobIdsFromReports } from '@/lib/follow-up-jobs';
+import { normalizeIssueCategories } from '@/lib/service-report';
 
 /** Server-side data helpers for RSC pages (US-F-001). */
 
@@ -13,6 +16,11 @@ export type DashboardJob = {
   property: { id: string; customer_name: string; address: string } | null;
   technician: { id: string; full_name: string } | null;
   route: { id: string; name: string } | null;
+};
+
+export type DashboardIssueJob = DashboardJob & {
+  issue_categories: string[];
+  follow_up_notes: string | null;
 };
 
 type Relation<T> = T | T[] | null | undefined;
@@ -50,8 +58,8 @@ export async function fetchDashboardServerData() {
   if (!profile?.company_id) {
     return {
       stats: { totalJobs: 0, totalRoutes: 0, totalTeamMembers: 0, totalProperties: 0 },
-      completedJobs: [],
-      pendingJobs: [],
+      issueJobs: [],
+      pendingJobsToday: [],
     };
   }
 
@@ -68,12 +76,65 @@ export async function fetchDashboardServerData() {
     route:cadenza_routes!route_id(id, name)
   `;
 
-  const [completedRes, pendingRes] = await Promise.all([
-    client.from('cadenza_service_jobs').select(jobSelect).eq('status', 'completed')
-      .order('created_at', { ascending: false }).limit(4),
-    client.from('cadenza_service_jobs').select(jobSelect).eq('status', 'pending')
-      .order('created_at', { ascending: false }).limit(4),
+  const { data: flaggedReports } = await client
+    .from('cadenza_service_reports')
+    .select('job_id, follow_up_needed, issue_categories, follow_up_status, follow_up_notes')
+    .eq('follow_up_status', 'open')
+    .or('follow_up_needed.eq.true,issue_categories.neq.{}');
+
+  const followUpJobIds = uniqueJobIdsFromReports(
+    (flaggedReports ?? []) as Parameters<typeof uniqueJobIdsFromReports>[0],
+  );
+
+  const reportByJobId = new Map(
+    (flaggedReports ?? []).map((row) => {
+      const record = row as {
+        job_id: string;
+        issue_categories?: string[] | null;
+        follow_up_notes?: string | null;
+      };
+      return [String(record.job_id), record];
+    }),
+  );
+
+  let issueJobs: DashboardIssueJob[] = [];
+  const today = formatLocalYmd(new Date());
+
+  const [issueJobsRes, pendingRes] = await Promise.all([
+    followUpJobIds.length > 0
+      ? client
+          .from('cadenza_service_jobs')
+          .select(jobSelect)
+          .in('id', followUpJobIds)
+          .order('scheduled_date', { ascending: false })
+          .order('scheduled_time', { ascending: false, nullsFirst: false })
+          .limit(8)
+      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+    client
+      .from('cadenza_service_jobs')
+      .select(jobSelect)
+      .eq('status', 'pending')
+      .eq('scheduled_date', today)
+      .order('scheduled_time', { ascending: true, nullsFirst: false })
+      .order('route_order', { ascending: true, nullsFirst: true })
+      .limit(8),
   ]);
+
+  if (issueJobsRes.data?.length) {
+    issueJobs = issueJobsRes.data.map((row) => {
+      const job = normalizeDashboardJob(row as Record<string, unknown>);
+      const report = reportByJobId.get(job.id);
+      return {
+        ...job,
+        issue_categories: normalizeIssueCategories(report?.issue_categories),
+        follow_up_notes: report?.follow_up_notes ?? null,
+      };
+    });
+  }
+
+  const pendingJobsToday = (pendingRes.data ?? []).map((row) =>
+    normalizeDashboardJob(row as Record<string, unknown>),
+  );
 
   return {
     stats: {
@@ -82,8 +143,8 @@ export async function fetchDashboardServerData() {
       totalTeamMembers: statsRow?.total_team_members ?? 0,
       totalProperties: statsRow?.total_properties ?? 0,
     },
-    completedJobs: (completedRes.data ?? []).map(normalizeDashboardJob),
-    pendingJobs: (pendingRes.data ?? []).map(normalizeDashboardJob),
+    issueJobs,
+    pendingJobsToday,
   };
 }
 

@@ -26,6 +26,7 @@ export type ServiceReport = {
   notes: string | null;
   follow_up_needed: boolean | null;
   follow_up_notes: string | null;
+  follow_up_status: 'open' | 'resolved' | null;
   other_chemicals: string | null;
   cleaned_filter: boolean | null;
   vacuumed: boolean | null;
@@ -49,6 +50,7 @@ export const REPORT_SELECT = `
   notes,
   follow_up_needed,
   follow_up_notes,
+  follow_up_status,
   other_chemicals,
   cleaned_filter,
   vacuumed,
@@ -73,6 +75,7 @@ export const REPORT_WITH_PHOTOS_SELECT = `
   notes,
   follow_up_needed,
   follow_up_notes,
+  follow_up_status,
   other_chemicals,
   cleaned_filter,
   vacuumed,
@@ -115,6 +118,8 @@ export function mapReportRow(row: Record<string, unknown>): ServiceReport {
     notes: row.notes != null ? String(row.notes) : null,
     follow_up_needed: row.follow_up_needed != null ? Boolean(row.follow_up_needed) : null,
     follow_up_notes: row.follow_up_notes != null ? String(row.follow_up_notes) : null,
+    follow_up_status:
+      row.follow_up_status === 'resolved' ? 'resolved' : row.follow_up_status === 'open' ? 'open' : null,
     other_chemicals: row.other_chemicals != null ? String(row.other_chemicals) : null,
     cleaned_filter: row.cleaned_filter != null ? Boolean(row.cleaned_filter) : null,
     vacuumed: row.vacuumed != null ? Boolean(row.vacuumed) : null,

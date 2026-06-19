@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { softDeleteByIdForUser } from '@/lib/soft-delete';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 
@@ -149,11 +150,26 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { error } = await (supabase as unknown as CadenzaSupabaseClient).from('cadenza_routes').delete().eq('id', id);
+  const client = supabase as unknown as CadenzaSupabaseClient;
+
+  const { error, count, forbidden } = await softDeleteByIdForUser(
+    client,
+    user.id,
+    'cadenza_routes',
+    id
+  );
+
+  if (forbidden) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
   if (error) {
-    console.error('Supabase error deleting route:', error);
+    console.error('Supabase error soft-deleting route:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (count === 0) {
+    return NextResponse.json({ error: 'Route not found' }, { status: 404 });
   }
 
   return NextResponse.json({ ok: true });

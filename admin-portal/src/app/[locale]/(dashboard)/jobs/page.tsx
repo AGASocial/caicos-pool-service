@@ -1,7 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -61,7 +62,9 @@ function jobStatusBadgeClassName(status: string) {
 
 export default function JobsPage() {
   const t = useTranslations();
+  const searchParams = useSearchParams();
   const week = weekBoundsMonday();
+  const followUpFromUrl = searchParams.get('needs_follow_up') === '1';
   const [dateFrom, setDateFrom] = useState(week.to);
   const [dateTo, setDateTo] = useState(week.to);
   const [teamMemberId, setTeamMemberId] = useState('');
@@ -69,8 +72,8 @@ export default function JobsPage() {
   const [jobSourceFilter, setJobSourceFilter] = useState('');
   const [routeFilter, setRouteFilter] = useState('');
   const [dayOfWeekFilter, setDayOfWeekFilter] = useState('');
-  const [needsFollowUpFilter, setNeedsFollowUpFilter] = useState(false);
-  const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
+  const [needsFollowUpFilter, setNeedsFollowUpFilter] = useState(followUpFromUrl);
+  const [moreFiltersOpen, setMoreFiltersOpen] = useState(followUpFromUrl);
   const [appliedFilters, setAppliedFilters] = useState({
     dateFrom: week.to,
     dateTo: week.to,
@@ -79,8 +82,16 @@ export default function JobsPage() {
     jobSourceFilter: '',
     routeFilter: '',
     dayOfWeekFilter: '',
-    needsFollowUpFilter: false,
+    needsFollowUpFilter: followUpFromUrl,
   });
+
+  useEffect(() => {
+    if (followUpFromUrl) {
+      setNeedsFollowUpFilter(true);
+      setMoreFiltersOpen(true);
+      setAppliedFilters((prev) => ({ ...prev, needsFollowUpFilter: true }));
+    }
+  }, [followUpFromUrl]);
 
   const { data: teamMembers = [] } = useTeam();
   const { data: routesResult } = useRoutes();
@@ -88,8 +99,8 @@ export default function JobsPage() {
 
   const jobFilters = useMemo(
     () => ({
-      date_from: appliedFilters.dateFrom,
-      date_to: appliedFilters.dateTo,
+      date_from: appliedFilters.needsFollowUpFilter ? undefined : appliedFilters.dateFrom,
+      date_to: appliedFilters.needsFollowUpFilter ? undefined : appliedFilters.dateTo,
       technician_id: appliedFilters.teamMemberId || undefined,
       status: appliedFilters.statusFilter || undefined,
       job_source:

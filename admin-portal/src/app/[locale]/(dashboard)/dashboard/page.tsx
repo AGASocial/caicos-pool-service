@@ -6,8 +6,8 @@ export default async function DashboardPage() {
   const data = await fetchDashboardServerData();
   const empty = {
     stats: { totalJobs: 0, totalRoutes: 0, totalTeamMembers: 0, totalProperties: 0 },
-    completedJobs: [],
-    pendingJobs: [],
+    issueJobs: [],
+    pendingJobsToday: [],
   };
 
   return <DashboardClient {...(data ?? empty)} />;

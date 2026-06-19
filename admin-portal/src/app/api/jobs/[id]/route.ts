@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { softDeleteByIdForUser } from '@/lib/soft-delete';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 import {
@@ -180,13 +181,19 @@ export async function DELETE(
 
   const client = supabase as unknown as CadenzaSupabaseClient;
 
-  const { error, count } = await client
-    .from('cadenza_service_jobs')
-    .delete({ count: 'exact' })
-    .eq('id', id);
+  const { error, count, forbidden } = await softDeleteByIdForUser(
+    client,
+    user.id,
+    'cadenza_service_jobs',
+    id
+  );
+
+  if (forbidden) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
   if (error) {
-    console.error('Supabase error deleting job:', error);
+    console.error('Supabase error soft-deleting job:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

@@ -81,6 +81,7 @@ CREATE TABLE cadenza_routes (
   technician_id UUID NOT NULL REFERENCES cadenza_profiles(id) ON DELETE CASCADE,
   day_of_week SMALLINT CHECK (day_of_week IS NULL OR (day_of_week >= 0 AND day_of_week <= 6)),
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -107,8 +108,9 @@ CREATE TABLE cadenza_route_stops (
   day_of_week SMALLINT NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
   service_frequency TEXT NOT NULL DEFAULT 'weekly' CHECK (service_frequency IN ('weekly', 'monthly')),
   week_ordinal SMALLINT CHECK (week_ordinal IS NULL OR (week_ordinal >= 1 AND week_ordinal <= 4)),
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT cadenza_route_stops_property_id_unique UNIQUE (property_id),
+  CONSTRAINT cadenza_route_stops_property_id_active_unique UNIQUE (property_id) -- partial: WHERE NOT is_deleted (see migration)
   CONSTRAINT cadenza_route_stops_schedule_chk CHECK (
     (service_frequency = 'weekly' AND week_ordinal IS NULL)
     OR (service_frequency = 'monthly' AND week_ordinal IS NOT NULL)
@@ -124,6 +126,7 @@ CREATE TABLE cadenza_route_stop_schedules (
   week_ordinal SMALLINT CHECK (week_ordinal IS NULL OR (week_ordinal >= 1 AND week_ordinal <= 4)),
   effective_from DATE NOT NULL,
   effective_until DATE NULL,
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT cadenza_route_stop_schedules_schedule_chk CHECK (
@@ -151,13 +154,14 @@ CREATE TABLE cadenza_service_jobs (
   notes TEXT,
   job_source TEXT NOT NULL DEFAULT 'route' CHECK (job_source IN ('route', 'ad_hoc')),
   visit_kind_id UUID REFERENCES cadenza_visit_reasons(id) ON DELETE SET NULL,
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE UNIQUE INDEX cadenza_service_jobs_route_property_date_unique
   ON cadenza_service_jobs (route_id, property_id, scheduled_date)
-  WHERE job_source = 'route' AND route_id IS NOT NULL;
+  WHERE job_source = 'route' AND route_id IS NOT NULL AND NOT is_deleted;
 
 -- Service reports (filled out during/after service)
 CREATE TABLE cadenza_service_reports (
@@ -190,9 +194,40 @@ CREATE TABLE cadenza_service_reports (
   notes TEXT,
   follow_up_needed BOOLEAN DEFAULT FALSE,
   follow_up_notes TEXT,
+  follow_up_status TEXT NOT NULL DEFAULT 'open' CHECK (follow_up_status IN ('open', 'resolved')),
   issue_categories TEXT[] NOT NULL DEFAULT '{}',
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Message templates (email / SMS) with {{merge_tags}}; issue_categories maps one template → many issues
+CREATE TABLE cadenza_message_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES cadenza_companies(id) ON DELETE CASCADE,
+  channel TEXT NOT NULL CHECK (channel IN ('email', 'sms')),
+  locale TEXT NOT NULL DEFAULT 'en' CHECK (locale IN ('en', 'es')),
+  name TEXT NOT NULL,
+  subject TEXT,
+  body TEXT NOT NULL,
+  issue_categories TEXT[] NOT NULL DEFAULT '{}',
+  is_default BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Office follow-up action log (notes, calls, resolution — attributed to admin user)
+CREATE TABLE cadenza_job_follow_up_actions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES cadenza_companies(id) ON DELETE CASCADE,
+  job_id UUID NOT NULL REFERENCES cadenza_service_jobs(id) ON DELETE CASCADE,
+  report_id UUID REFERENCES cadenza_service_reports(id) ON DELETE SET NULL,
+  author_id UUID NOT NULL REFERENCES cadenza_profiles(id) ON DELETE CASCADE,
+  action_type TEXT NOT NULL CHECK (action_type IN ('note', 'email_sent', 'resolved', 'call')),
+  body TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Report photos
@@ -203,6 +238,7 @@ CREATE TABLE cadenza_report_photos (
   storage_path TEXT NOT NULL,
   caption TEXT,
   photo_type TEXT DEFAULT 'general' CHECK (photo_type IN ('before', 'after', 'issue', 'equipment', 'general')),
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -228,6 +264,11 @@ CREATE INDEX idx_cadenza_service_jobs_property ON cadenza_service_jobs(property_
 CREATE INDEX idx_cadenza_service_jobs_job_source ON cadenza_service_jobs(company_id, job_source);
 CREATE INDEX idx_cadenza_service_jobs_visit_kind ON cadenza_service_jobs(visit_kind_id);
 CREATE INDEX idx_cadenza_service_reports_job ON cadenza_service_reports(job_id);
+CREATE INDEX idx_cadenza_job_follow_up_actions_job ON cadenza_job_follow_up_actions(job_id, created_at DESC);
+CREATE INDEX idx_cadenza_job_follow_up_actions_company ON cadenza_job_follow_up_actions(company_id, created_at DESC);
+CREATE INDEX idx_cadenza_message_templates_company_channel ON cadenza_message_templates(company_id, channel);
+CREATE UNIQUE INDEX cadenza_message_templates_one_default_per_channel_locale
+  ON cadenza_message_templates(company_id, channel, locale) WHERE is_default IS TRUE;
 CREATE INDEX idx_cadenza_report_photos_report ON cadenza_report_photos(report_id);
 
 -- ============================================
@@ -293,10 +334,10 @@ CREATE POLICY "Admins can update properties"
   ON cadenza_properties FOR UPDATE
   USING (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin'));
 
--- Routes: company-scoped, admins manage
+-- Routes: company-scoped, admins manage. Soft-deleted rows hidden via RLS (is_deleted).
 CREATE POLICY "Users can view company routes"
   ON cadenza_routes FOR SELECT
-  USING (company_id = get_my_company_id());
+  USING (company_id = get_my_company_id() AND NOT is_deleted);
 
 CREATE POLICY "Admins can manage routes"
   ON cadenza_routes FOR ALL
@@ -354,10 +395,10 @@ CREATE POLICY "Admins can manage visit reasons"
   USING (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin'))
   WITH CHECK (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin'));
 
--- Service jobs: company-scoped, techs see their own
+-- Service jobs: company-scoped, techs see their own. Delete = is_deleted (no hard DELETE).
 CREATE POLICY "Users can view company jobs"
   ON cadenza_service_jobs FOR SELECT
-  USING (company_id = get_my_company_id());
+  USING (company_id = get_my_company_id() AND NOT is_deleted);
 
 CREATE POLICY "Admins can create jobs"
   ON cadenza_service_jobs FOR INSERT
@@ -383,6 +424,49 @@ CREATE POLICY "Techs can create reports"
 CREATE POLICY "Techs can update own reports"
   ON cadenza_service_reports FOR UPDATE
   USING (company_id = get_my_company_id() AND technician_id = auth.uid());
+
+CREATE POLICY "Office can update report follow-up status"
+  ON cadenza_service_reports FOR UPDATE
+  USING (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin', 'operations'))
+  WITH CHECK (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin', 'operations'));
+
+-- Follow-up actions: office staff log notes and resolution
+ALTER TABLE cadenza_job_follow_up_actions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Company users can view follow-up actions"
+  ON cadenza_job_follow_up_actions FOR SELECT
+  USING (company_id = get_my_company_id() AND NOT is_deleted);
+
+CREATE POLICY "Office staff can insert follow-up actions"
+  ON cadenza_job_follow_up_actions FOR INSERT
+  WITH CHECK (
+    company_id = get_my_company_id()
+    AND author_id = auth.uid()
+    AND get_my_role() IN ('owner', 'admin', 'operations')
+  );
+
+CREATE POLICY "Office staff can soft-delete follow-up actions"
+  ON cadenza_job_follow_up_actions FOR UPDATE
+  USING (
+    company_id = get_my_company_id()
+    AND get_my_role() IN ('owner', 'admin', 'operations')
+    AND NOT is_deleted
+  )
+  WITH CHECK (
+    company_id = get_my_company_id()
+    AND get_my_role() IN ('owner', 'admin', 'operations')
+  );
+
+ALTER TABLE cadenza_message_templates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Company users can view message templates"
+  ON cadenza_message_templates FOR SELECT
+  USING (company_id = get_my_company_id());
+
+CREATE POLICY "Office staff can manage message templates"
+  ON cadenza_message_templates FOR ALL
+  USING (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin', 'operations'))
+  WITH CHECK (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin', 'operations'));
 
 -- Report photos: follow report access
 CREATE POLICY "Users can view company photos"

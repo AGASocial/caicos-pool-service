@@ -602,9 +602,13 @@ export default function JobDetailScreen() {
       if (photo.storage_path) {
         await supabase.storage.from('report-photos').remove([photo.storage_path]);
       }
-      const { error } = await supabase.from('cadenza_report_photos').delete().eq('id', photo.id);
+      const { error } = await supabase
+        .from('cadenza_report_photos')
+        .update({ is_deleted: true })
+        .eq('id', photo.id)
+        .eq('is_deleted', false);
       if (error) {
-        Alert.alert('Could not remove photo', error.message ?? 'Delete failed. The photo was removed from the list\u2014you may need to add a policy for deleting report photos.');
+        Alert.alert('Could not remove photo', error.message ?? 'Delete failed. The photo was removed from the list\u2014you may need to add a policy for updating report photos.');
       }
     }
   }
