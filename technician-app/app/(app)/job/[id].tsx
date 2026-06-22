@@ -11,6 +11,7 @@ import { getSignedUrls } from '@/lib/signed-url-cache';
 import { getPhotoOverlayInfo, type PhotoOverlayInfo } from '@/lib/photoOverlay';
 import { PhotoWithOverlay } from '@/components/PhotoWithOverlay';
 import { getUploadBodyFromUri } from '@/lib/uploadPhoto';
+import { invalidateJobsList } from '@/lib/jobs-list-invalidation';
 import Colors from '@/constants/Colors';
 import {
   CHEMICAL_READINGS,
@@ -725,6 +726,7 @@ export default function JobDetailScreen() {
       if (photoErrors > 0) {
         Alert.alert('Report saved', `${photoErrors} photo(s) could not be uploaded. The report and job are saved.`);
       }
+      invalidateJobsList();
       router.back();
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Failed to save report');
@@ -754,6 +756,7 @@ export default function JobDetailScreen() {
       Alert.alert('Error', error.message ?? 'Failed to update job');
       return;
     }
+    invalidateJobsList();
     router.back();
   }
 

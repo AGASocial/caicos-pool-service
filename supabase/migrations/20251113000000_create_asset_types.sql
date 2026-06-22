@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS public.asset_type_billing_plans (
   created_at timestamp with time zone not null default now(),
   constraint asset_type_billing_plans_pkey primary key (id),
   constraint asset_type_billing_plans_asset_type_id_fkey foreign key (asset_type_id) references asset_types (id) on delete cascade,
-  constraint asset_type_billing_plans_billing_plan_id_fkey foreign key (billing_plan_id) references billing_plans (id) on delete cascade,
+  constraint asset_type_billing_plans_billing_plan_id_fkey foreign key (billing_plan_id) references public.cadenza_billing_plans (id) on delete cascade,
   constraint asset_type_billing_plans_unique unique (asset_type_id, billing_plan_id)
 ) TABLESPACE pg_default;
 

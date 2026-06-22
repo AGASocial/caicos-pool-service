@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { getCachedUserId } from '@/lib/auth-session';
+import { isJobsListInvalidated } from '@/lib/jobs-list-invalidation';
 import type { ServiceJob } from '@/lib/database.types';
 import Colors from '@/constants/Colors';
 
@@ -24,6 +25,7 @@ export default function JobsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const lastFetchedAt = useRef<number>(0);
+  const skipNextFocusRef = useRef(true);
   const router = useRouter();
   const theme = useColorScheme() ?? 'light';
   const c = Colors[theme];
@@ -57,6 +59,22 @@ export default function JobsScreen() {
   useEffect(() => {
     fetchJobs().finally(() => setLoading(false));
   }, [fetchJobs]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (skipNextFocusRef.current) {
+        skipNextFocusRef.current = false;
+        return;
+      }
+      const fetchedAt = lastFetchedAt.current;
+      if (fetchedAt === 0) return;
+      const stale = Date.now() - fetchedAt >= FOCUS_STALE_MS;
+      const invalidated = isJobsListInvalidated(fetchedAt);
+      if (stale || invalidated) {
+        fetchJobs();
+      }
+    }, [fetchJobs])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

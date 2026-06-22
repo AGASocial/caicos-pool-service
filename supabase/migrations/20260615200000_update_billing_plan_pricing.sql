@@ -2,6 +2,9 @@
 -- Pricing model: flat monthly rate (amount_cents on plan row); feature gates in JSONB.
 -- -1 = unlimited
 
+ALTER TABLE public.cadenza_billing_plans
+  ADD COLUMN IF NOT EXISTS active boolean NOT NULL DEFAULT true;
+
 UPDATE public.cadenza_billing_plans
 SET
   amount_cents = 0,

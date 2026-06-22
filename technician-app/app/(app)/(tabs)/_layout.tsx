@@ -4,7 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
-const TAB_BAR_CONTENT_HEIGHT = 52;
+// Icon (22) + label (~14) + spacing — must fit above the home-indicator inset.
+const TAB_BAR_CONTENT_HEIGHT = 60;
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -22,15 +23,18 @@ export default function TabLayout() {
           backgroundColor: colors.card,
           borderTopColor: colors.borderSubtle,
           borderTopWidth: 1,
-          paddingTop: 6,
+          paddingTop: 4,
           paddingBottom: bottomInset,
           height: TAB_BAR_CONTENT_HEIGHT + bottomInset,
+        },
+        tabBarItemStyle: {
+          paddingTop: 2,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '500',
           letterSpacing: 0.3,
-          marginBottom: 2,
+          marginTop: 2,
         },
         headerStyle: {
           backgroundColor: colors.card,
