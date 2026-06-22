@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { getPhotoOverlayInfo, type PhotoOverlayInfo } from '@/lib/photoOverlay';
 import { PhotoWithOverlay } from '@/components/PhotoWithOverlay';
 import { getUploadBodyFromUri } from '@/lib/uploadPhoto';
+import { invalidateJobsList } from '@/lib/jobs-list-invalidation';
 import Colors from '@/constants/Colors';
 
 export default function CantServiceScreen() {
@@ -274,6 +275,7 @@ export default function CantServiceScreen() {
       if (photoErrors > 0) {
         Alert.alert('Job closed', `${photoErrors} photo(s) could not be uploaded. The report was saved.`);
       }
+      invalidateJobsList();
       router.replace('/(app)/(tabs)');
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Failed to close job');

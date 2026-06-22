@@ -2,20 +2,27 @@
 
 Use these agents to structure development work on the Cadenza pool service platform. Each agent has a clear role; invoke the right one by context or by saying who should handle the task.
 
-## Performance plan backlog (active)
+## Work queues
 
-**30 user stories · 113 tasks** in `plan/manifest.json`. Agents execute stories from the plan, not ad-hoc tasks.
+| Queue | Location | Use for |
+|-------|----------|---------|
+| **Day-to-day backlog** | `plan/backlog/` | Bugs, improvements, chores — **start here** |
+| **Performance plan** | `plan/manifest.json` | Phased initiatives (June 2026 review — complete) |
 
 | Agent | Stories | Skill | Brief |
 |-------|---------|-------|-------|
 | **Master Agent** | Orchestrates all | `plan-orchestrator` | `plan/agents/master.md` |
-| **NextJS Developer** | US-F-*, US-B-*, US-D-* | `nextjs-performance`, `database-migrations`, `supabase-server-client` | `plan/agents/nextjs-developer.md` |
-| **React Native Developer** | US-M-* | `mobile-performance` | `plan/agents/react-native-developer.md` |
+| **NextJS Developer** | US-F-*, US-B-*, US-D-* + `backlog/admin`, `backlog/backend`, `backlog/database` | `nextjs-performance`, `database-migrations`, `supabase-server-client` | `plan/agents/nextjs-developer.md` |
+| **React Native Developer** | US-M-* + `backlog/mobile` | `mobile-performance` | `plan/agents/react-native-developer.md` |
 | **QA Specialist** | Validates all; owns US-B-016 | `performance-qa` | `plan/agents/qa-specialist.md` |
 
-**Start autonomous execution:** *"Execute the plan backlog"* or *"You have open card — work plan/manifest.json"*
+**Capture bugs:** paste into `plan/backlog/inbox.md`, then *"Triage plan/backlog/inbox.md"*
 
-Skills live in `.cursor/skills/`. Rules in `.cursor/rules/`. See `plan/README.md`.
+**Work backlog:** *"Work the next open item from plan/backlog/INDEX.md"*
+
+**Performance plan:** *"Execute the plan backlog"* or *"You have open card — work plan/manifest.json"*
+
+Skills live in `.cursor/skills/`. Rules in `.cursor/rules/`. See `plan/README.md` and `plan/backlog/README.md`.
 
 ## Agent overview
 

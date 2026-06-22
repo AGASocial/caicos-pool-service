@@ -1,39 +1,67 @@
 ---
-description: Execute Cadenza performance plan backlog autonomously from plan/manifest.json. Use when user says execute plan, work backlog, or run plan agents.
+description: Execute Cadenza backlog work from plan/backlog/ or performance plan from plan/manifest.json. Use when user says work backlog, triage inbox, execute plan, or run plan agents.
 globs: plan/**/*
 alwaysApply: false
 ---
 
-# Plan backlog development
+# Plan & backlog development
 
-When the user asks to **execute the plan**, **work the backlog**, or **run plan agents**, orchestrate from `plan/manifest.json`.
+## Which queue?
 
-## Bootstrap
+| User intent | Source |
+|-------------|--------|
+| Bugs, improvements, chores, "triage inbox" | `plan/backlog/` — see `plan/backlog/README.md` |
+| Phased performance initiatives | `plan/manifest.json` — see `plan-orchestrator` skill |
+
+Default to **`plan/backlog/INDEX.md`** unless the user explicitly references `manifest.json` or US-* story IDs.
+
+---
+
+## Day-to-day backlog (`plan/backlog/`)
+
+### Triage inbox
+
+When user pastes bugs or says **triage inbox**:
+
+1. Read `plan/backlog/inbox.md`
+2. For each item: create `plan/backlog/{domain}/YYYY-MM-DD-{type}-{slug}.md` from `TEMPLATE.md`
+3. Add rows to `plan/backlog/INDEX.md` (priority, agent, status `PENDING`)
+4. Clear triaged lines from inbox; note them under **Triaged** section
+
+### Work backlog
+
+1. Read `plan/backlog/INDEX.md` — pick highest priority `PENDING` (Critical > High > Medium > Low)
+2. Open the linked dated file; set first task to `IN-PROGRESS`
+3. **Specialist** — implement; mark tasks `DONE`
+4. **QA** — validate; report PASS/FAIL
+5. **Close** — update file + INDEX; remove from open section when all tasks DONE
+
+### Agent assignment
+
+| Folder | Agent |
+|--------|-------|
+| `backlog/admin/` | NextJS Developer |
+| `backlog/backend/` | NextJS Developer |
+| `backlog/database/` | NextJS Developer + QA |
+| `backlog/mobile/` | React Native Developer |
+
+---
+
+## Performance plan (`plan/manifest.json`)
+
+When the user asks to **execute the plan** or references US-* stories:
 
 1. Load `.cursor/skills/plan-orchestrator/SKILL.md`
 2. Read `plan/manifest.json` and `plan/README.md`
 3. Pick next eligible story (phase → priority → dependsOn)
 
-## Per-story loop
+### Per-story loop
 
 1. **Master** — assign story to agent from manifest; set `IN-PROGRESS`
 2. **Specialist** — load agent skill; implement child tasks; mark tasks `DONE`
 3. **QA** — load `performance-qa` skill; validate; report PASS/FAIL
 4. **Close** — on PASS, set story `DONE` in manifest + USER-STORIES.md
 
-## Agent skills map
+Do not ask permission between items unless blocked.
 
-| Agent | Skill(s) | Stories |
-|-------|----------|---------|
-| NextJS Developer | nextjs-performance, database-migrations | US-F-*, US-B-*, US-D-* |
-| React Native Developer | mobile-performance | US-M-* |
-| QA Specialist | performance-qa | All validation; owns US-B-016 |
-
-## Continue until
-
-- All stories DONE, or blocked, or user stops
-- Report progress every story: "Done [N]/30, next [US-*]"
-
-Do not ask permission between stories unless blocked.
-
-Reference: `plan/agents/master.md`, `AGENTS.md`.
+Reference: `plan/agents/master.md`, `plan/backlog/README.md`, `AGENTS.md`.

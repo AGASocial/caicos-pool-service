@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,9 @@ import {
   RefreshControl,
   useColorScheme,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { isJobsListInvalidated } from '@/lib/jobs-list-invalidation';
 import type { ServiceJob } from '@/lib/database.types';
 import Colors from '@/constants/Colors';
 
@@ -42,6 +43,7 @@ type JobWithProperty = ServiceJob & {
 };
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const FOCUS_STALE_MS = 60_000;
 
 export default function CalendarScreen() {
   const theme = useColorScheme() ?? 'light';
@@ -55,6 +57,8 @@ export default function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   const [jobsByDate, setJobsByDate] = useState<Record<string, JobWithProperty[]>>({});
   const [refreshing, setRefreshing] = useState(false);
+  const lastFetchedAt = useRef<number>(0);
+  const skipNextFocusRef = useRef(true);
 
   const weekDates = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -80,11 +84,28 @@ export default function CalendarScreen() {
       map[d].push(job);
     }
     setJobsByDate(map);
+    lastFetchedAt.current = Date.now();
   }, [weekDates]);
 
   useEffect(() => {
     fetchWeek();
   }, [fetchWeek]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (skipNextFocusRef.current) {
+        skipNextFocusRef.current = false;
+        return;
+      }
+      const fetchedAt = lastFetchedAt.current;
+      if (fetchedAt === 0) return;
+      const stale = Date.now() - fetchedAt >= FOCUS_STALE_MS;
+      const invalidated = isJobsListInvalidated(fetchedAt);
+      if (stale || invalidated) {
+        fetchWeek();
+      }
+    }, [fetchWeek])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
