@@ -14,6 +14,7 @@ import {
   authenticateWithBiometrics,
   getBiometricCapability,
 } from '@/lib/biometric-auth';
+import { useI18n } from '@/lib/i18n';
 import Colors from '@/constants/Colors';
 
 type Props = {
@@ -27,13 +28,16 @@ export function BiometricLockOverlay({ visible, onUnlock }: Props) {
   const [label, setLabel] = useState('Face ID');
   const theme = useColorScheme() ?? 'light';
   const c = Colors[theme];
+  const { t } = useI18n();
 
   const attemptUnlock = useCallback(
     async (biometricLabel: string) => {
       setUnlocking(true);
       setError(null);
 
-      const success = await authenticateWithBiometrics(`Unlock Cadenza with ${biometricLabel}`);
+      const success = await authenticateWithBiometrics(
+        t('biometricLock.unlockPrompt', { label: biometricLabel })
+      );
       setUnlocking(false);
 
       if (success) {
@@ -41,9 +45,9 @@ export function BiometricLockOverlay({ visible, onUnlock }: Props) {
         return;
       }
 
-      setError(`${biometricLabel} verification was cancelled.`);
+      setError(t('biometricLock.verificationCancelled', { label: biometricLabel }));
     },
-    [onUnlock]
+    [onUnlock, t]
   );
 
   useEffect(() => {
@@ -111,7 +115,7 @@ export function BiometricLockOverlay({ visible, onUnlock }: Props) {
       <View style={styles.content}>
         <Image source={require('@/assets/images/icon.png')} style={styles.logo} />
         <Text style={styles.title}>Cadenza</Text>
-        <Text style={styles.subtitle}>App locked. Use {label} to continue.</Text>
+        <Text style={styles.subtitle}>{t('biometricLock.subtitle', { label })}</Text>
 
         <Pressable
           style={[styles.button, unlocking && styles.buttonDisabled]}
@@ -121,7 +125,7 @@ export function BiometricLockOverlay({ visible, onUnlock }: Props) {
           {unlocking ? (
             <ActivityIndicator color="#1a1407" size="small" />
           ) : (
-            <Text style={styles.buttonText}>Unlock with {label}</Text>
+            <Text style={styles.buttonText}>{t('biometricLock.unlockWith', { label })}</Text>
           )}
         </Pressable>
 

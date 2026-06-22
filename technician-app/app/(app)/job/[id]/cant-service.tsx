@@ -11,11 +11,13 @@ import {
   DEFAULT_CANT_SERVICE_REASONS,
   type CantServiceReason,
 } from '@/lib/cantServiceReasons';
+import { useI18n } from '@/lib/i18n';
 import Colors from '@/constants/Colors';
 
 export default function CantServiceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t, cantServiceReasonLabel } = useI18n();
   const [comment, setComment] = useState('');
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
   const [reasonCatalog, setReasonCatalog] = useState<CantServiceReason[]>(DEFAULT_CANT_SERVICE_REASONS);
@@ -235,7 +237,7 @@ export default function CantServiceScreen() {
   async function addPhotoFromCamera() {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Camera permission is required to take photos.');
+      Alert.alert(t('jobDetail.permissionNeeded'), t('jobDetail.cameraPermission'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ quality: 0.4, allowsEditing: false });
@@ -251,7 +253,7 @@ export default function CantServiceScreen() {
   async function addPhotoFromGallery() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Gallery permission is required to select photos.');
+      Alert.alert(t('jobDetail.permissionNeeded'), t('jobDetail.galleryPermission'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -272,8 +274,8 @@ export default function CantServiceScreen() {
     if (!id) return;
     if (selectedReasons.length === 0 && !comment.trim()) {
       Alert.alert(
-        'Razón requerida',
-        'Selecciona al menos una razón o escribe un comentario antes de cerrar el trabajo.'
+        t('cantService.reasonRequired'),
+        t('cantService.reasonRequiredMessage')
       );
       return;
     }
@@ -287,7 +289,7 @@ export default function CantServiceScreen() {
         jobData = data as typeof job;
       }
       if (!jobData) {
-        Alert.alert('Error', 'Job not found.');
+        Alert.alert(t('common.error'), t('cantService.jobNotFound'));
         return;
       }
 
@@ -300,14 +302,14 @@ export default function CantServiceScreen() {
       };
       const { data: reportRow, error: reportErr } = await supabase.from('cadenza_service_reports').insert(report).select('id').single();
       if (reportErr) {
-        Alert.alert('Error', reportErr.message ?? 'Failed to save report');
+        Alert.alert(t('common.error'), reportErr.message ?? t('cantService.failedSaveReport'));
         return;
       }
       const reportId = reportRow.id;
 
       const { error: updateJobErr } = await supabase.from('cadenza_service_jobs').update({ status: 'skipped' }).eq('id', id);
       if (updateJobErr) {
-        Alert.alert('Error', updateJobErr.message ?? 'Failed to update job status');
+        Alert.alert(t('common.error'), updateJobErr.message ?? t('cantService.failedUpdateJobStatus'));
         return;
       }
 
@@ -334,12 +336,15 @@ export default function CantServiceScreen() {
       }
 
       if (photoErrors > 0) {
-        Alert.alert('Job closed', `${photoErrors} photo(s) could not be uploaded. The report was saved.`);
+        Alert.alert(
+          t('cantService.jobClosed'),
+          t('cantService.photosUploadFailed', { count: photoErrors })
+        );
       }
       invalidateJobsList();
       router.replace('/(app)/(tabs)');
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to close job');
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('cantService.failedCloseJob'));
     } finally {
       setLoading(false);
     }
@@ -348,10 +353,8 @@ export default function CantServiceScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Can't Service This Job</Text>
-        <Text style={styles.subtitle}>
-          Selecciona una o más razones, agrega un comentario opcional y cierra el trabajo. El estado quedará como "skipped".
-        </Text>
+        <Text style={styles.title}>{t('cantService.title')}</Text>
+        <Text style={styles.subtitle}>{t('cantService.subtitle')}</Text>
       </View>
 
       <View style={styles.content}>
@@ -360,30 +363,31 @@ export default function CantServiceScreen() {
             <View style={styles.sectionIconAmber}>
               <Text style={styles.sectionIconAmberText}>!</Text>
             </View>
-            <Text style={styles.sectionTitle}>Reason</Text>
+            <Text style={styles.sectionTitle}>{t('cantService.reason')}</Text>
           </View>
           <View style={styles.sectionBody}>
-            <Text style={styles.label}>Razones</Text>
+            <Text style={styles.label}>{t('cantService.reasons')}</Text>
             <View style={styles.chipRow}>
               {reasonCatalog.map(({ slug, label }) => {
                 const selected = selectedReasons.includes(slug);
+                const displayLabel = cantServiceReasonLabel(slug, label);
                 return (
                   <Pressable
                     key={slug}
                     style={[styles.chip, selected && styles.chipSelected]}
                     onPress={() => toggleReason(slug)}
                   >
-                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{displayLabel}</Text>
                   </Pressable>
                 );
               })}
             </View>
-            <Text style={[styles.label, { marginTop: 8 }]}>Comentario (opcional)</Text>
+            <Text style={[styles.label, { marginTop: 8 }]}>{t('cantService.commentOptional')}</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={comment}
               onChangeText={setComment}
-              placeholder="Detalles adicionales..."
+              placeholder={t('cantService.commentPlaceholder')}
               placeholderTextColor={c.placeholder}
               multiline
             />
@@ -395,15 +399,15 @@ export default function CantServiceScreen() {
             <View style={styles.sectionIconPurple}>
               <Text style={styles.sectionIconPurpleText}>P</Text>
             </View>
-            <Text style={styles.sectionTitle}>Photos</Text>
+            <Text style={styles.sectionTitle}>{t('cantService.photos')}</Text>
           </View>
           <View style={styles.sectionBody}>
             <View style={styles.photoRow}>
               <Pressable style={styles.photoButton} onPress={addPhotoFromCamera}>
-                <Text style={styles.photoButtonText}>Camera</Text>
+                <Text style={styles.photoButtonText}>{t('cantService.camera')}</Text>
               </Pressable>
               <Pressable style={styles.photoButton} onPress={addPhotoFromGallery}>
-                <Text style={styles.photoButtonText}>Gallery</Text>
+                <Text style={styles.photoButtonText}>{t('cantService.gallery')}</Text>
               </Pressable>
             </View>
             {pendingOverlay != null && (
@@ -439,10 +443,12 @@ export default function CantServiceScreen() {
 
         <View style={styles.actions}>
           <Pressable style={styles.closeButton} onPress={handleCloseJob} disabled={loading}>
-            <Text style={styles.closeButtonText}>{loading ? 'Closing...' : 'CLOSE JOB (MARK AS SKIPPED)'}</Text>
+            <Text style={styles.closeButtonText}>
+              {loading ? t('cantService.closing') : t('cantService.closeJob')}
+            </Text>
           </Pressable>
           <Pressable style={styles.cancelButton} onPress={() => router.back()}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
           </Pressable>
         </View>
       </View>

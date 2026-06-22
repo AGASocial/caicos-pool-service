@@ -25,6 +25,8 @@ import {
   signInWithBiometrics,
 } from '@/lib/biometric-auth';
 import { LegalFooter } from '@/components/LegalFooter';
+import { LanguageSelector } from '@/components/LanguageSelector';
+import { useI18n } from '@/lib/i18n';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -37,6 +39,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const theme = useColorScheme() ?? 'light';
   const c = Colors[theme];
+  const { t } = useI18n();
 
   const loadBiometricState = useCallback(async () => {
     const [{ available, label }, enabled, hasCredentials, storedEmail] = await Promise.all([
@@ -67,17 +70,17 @@ export default function LoginScreen() {
 
     await new Promise<void>((resolve) => {
       Alert.alert(
-        `Enable ${label}?`,
-        `Use ${label} to sign in faster and lock the app when you switch away.`,
+        t('auth.enableBiometricTitle', { label }),
+        t('auth.enableBiometricMessage', { label }),
         [
-          { text: 'Not now', style: 'cancel', onPress: () => resolve() },
+          { text: t('auth.notNow'), style: 'cancel', onPress: () => resolve() },
           {
-            text: 'Enable',
+            text: t('auth.enable'),
             onPress: () => {
               void (async () => {
                 const result = await enableBiometricLogin();
                 if (!result.ok) {
-                  Alert.alert('Could not enable', result.error);
+                  Alert.alert(t('auth.couldNotEnable'), result.error);
                 } else {
                   await loadBiometricState();
                 }
@@ -206,6 +209,16 @@ export default function LoginScreen() {
         footerText: { fontSize: 14, color: c.muted, textAlign: 'center' },
         footerLink: { fontWeight: '700', color: c.link },
         forgotLink: { fontSize: 13, color: c.link, fontWeight: '600' },
+        languageBlock: { marginTop: 20, width: '100%', maxWidth: 280 },
+        languageLabel: {
+          fontSize: 12,
+          fontWeight: '600',
+          color: 'rgba(243, 238, 228, 0.72)',
+          textTransform: 'uppercase',
+          letterSpacing: 0.6,
+          marginBottom: 8,
+          textAlign: 'center',
+        },
       }),
     [c]
   );
@@ -229,11 +242,15 @@ export default function LoginScreen() {
           />
           <Text style={styles.brandName}>Cadenza</Text>
           <View style={styles.brassRule} />
-          <Text style={styles.subtitle}>Technician Portal</Text>
+          <Text style={styles.subtitle}>{t('auth.portalSubtitle')}</Text>
+          <View style={styles.languageBlock}>
+            <Text style={styles.languageLabel}>{t('auth.language')}</Text>
+            <LanguageSelector variant="auth" />
+          </View>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.welcomeText}>Welcome Back, Technician</Text>
+          <Text style={styles.welcomeText}>{t('auth.welcomeBack')}</Text>
 
           <View style={styles.form}>
             {showBiometricSignIn && (
@@ -245,13 +262,15 @@ export default function LoginScreen() {
                 {biometricLoading ? (
                   <ActivityIndicator color={c.tint} size="small" />
                 ) : (
-                  <Text style={styles.biometricButtonText}>Sign in with {biometricLabel}</Text>
+                  <Text style={styles.biometricButtonText}>
+                    {t('auth.signInWithBiometric', { label: biometricLabel })}
+                  </Text>
                 )}
               </Pressable>
             )}
 
             <View style={styles.fieldWrapper}>
-              <Text style={styles.fieldLabel}>Email Address</Text>
+              <Text style={styles.fieldLabel}>{t('auth.emailAddress')}</Text>
               <TextInput
                 style={styles.input}
                 placeholder="technician@cadenzaops.com"
@@ -266,16 +285,16 @@ export default function LoginScreen() {
 
             <View style={styles.fieldWrapper}>
               <View style={styles.fieldLabelRow}>
-                <Text style={[styles.fieldLabel, styles.fieldLabelInline]}>Password</Text>
+                <Text style={[styles.fieldLabel, styles.fieldLabelInline]}>{t('auth.password')}</Text>
                 <Link href="/(auth)/forgot-password" asChild>
                   <Pressable hitSlop={8}>
-                    <Text style={styles.forgotLink}>Forgot password?</Text>
+                    <Text style={styles.forgotLink}>{t('auth.forgotPassword')}</Text>
                   </Pressable>
                 </Link>
               </View>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your password"
+                placeholder={t('auth.enterPassword')}
                 placeholderTextColor={c.placeholder}
                 value={password}
                 onChangeText={setPassword}
@@ -294,16 +313,14 @@ export default function LoginScreen() {
               {loading ? (
                 <ActivityIndicator color="#1a1407" size="small" />
               ) : (
-                <Text style={styles.buttonText}>SIGN IN</Text>
+                <Text style={styles.buttonText}>{t('auth.signIn')}</Text>
               )}
             </Pressable>
           </View>
 
           <View style={styles.divider} />
 
-          <Text style={styles.footerText}>
-            New technician? Ask your administrator for an invite link.
-          </Text>
+          <Text style={styles.footerText}>{t('auth.newTechnicianHint')}</Text>
         </View>
 
         <LegalFooter compact />

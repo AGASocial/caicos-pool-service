@@ -12,6 +12,7 @@ import { getPhotoOverlayInfo, type PhotoOverlayInfo } from '@/lib/photoOverlay';
 import { PhotoWithOverlay } from '@/components/PhotoWithOverlay';
 import { getUploadBodyFromUri } from '@/lib/uploadPhoto';
 import { invalidateJobsList } from '@/lib/jobs-list-invalidation';
+import { useI18n } from '@/lib/i18n';
 import Colors from '@/constants/Colors';
 import {
   CHEMICAL_READINGS,
@@ -47,6 +48,7 @@ export default function JobDetailScreen() {
   const navigation = useNavigation();
   const theme = useColorScheme() ?? 'light';
   const themeColors = Colors[theme];
+  const { t } = useI18n();
   const [job, setJob] = useState<{
     id: string;
     status: string;
@@ -526,7 +528,7 @@ export default function JobDetailScreen() {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted' || cancelled) {
           if (!cancelled) {
-            setLocationError('Location permission denied');
+            setLocationError('locationDenied');
             setLocationChecking(false);
           }
           return;
@@ -538,7 +540,7 @@ export default function JobDetailScreen() {
         const meters = haversineMeters(loc.coords.latitude, loc.coords.longitude, lat, lng);
         setDistanceMeters(meters);
       } catch (e) {
-        if (!cancelled) setLocationError('Location unavailable');
+        if (!cancelled) setLocationError('locationUnavailable');
       } finally {
         if (!cancelled) setLocationChecking(false);
       }
@@ -554,7 +556,7 @@ export default function JobDetailScreen() {
       .update({ status: 'in_progress' })
       .eq('id', id);
     if (error) {
-      Alert.alert('Could not start job', error.message ?? 'You may not be assigned to this job.');
+      Alert.alert(t('jobDetail.couldNotStart'), error.message ?? t('jobDetail.notAssigned'));
       return;
     }
     setStarted(true);
@@ -563,7 +565,7 @@ export default function JobDetailScreen() {
   async function takePhoto() {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Camera permission is required to take photos.');
+      Alert.alert(t('jobDetail.permissionNeeded'), t('jobDetail.cameraPermission'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -582,7 +584,7 @@ export default function JobDetailScreen() {
   async function pickFromGallery() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Gallery permission is required to select photos.');
+      Alert.alert(t('jobDetail.permissionNeeded'), t('jobDetail.galleryPermission'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -609,26 +611,25 @@ export default function JobDetailScreen() {
         .eq('id', photo.id)
         .eq('is_deleted', false);
       if (error) {
-        Alert.alert('Could not remove photo', error.message ?? 'Delete failed. The photo was removed from the list\u2014you may need to add a policy for updating report photos.');
+        Alert.alert(
+          t('jobDetail.couldNotRemovePhoto'),
+          error.message ?? t('jobDetail.deletePhotoFailed')
+        );
       }
     }
   }
 
   function confirmRemovePhoto(index: number) {
-    Alert.alert(
-      'Delete photo?',
-      'Remove this photo from the report?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => removePhoto(index) },
-      ]
-    );
+    Alert.alert(t('jobDetail.deletePhotoTitle'), t('jobDetail.deletePhotoMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => removePhoto(index) },
+    ]);
   }
 
   async function handleComplete() {
     if (!id || !job) return;
     if (photos.length === 0) {
-      Alert.alert('Photo required', 'Add at least one photo before completing this visit.');
+      Alert.alert(t('jobDetail.photoRequired'), t('jobDetail.photoRequiredMessage'));
       return;
     }
     const userId = getCachedUserId();
@@ -671,7 +672,7 @@ export default function JobDetailScreen() {
           .update(reportPayload)
           .eq('id', existingReportId);
         if (updateErr) {
-          Alert.alert('Error', updateErr.message ?? 'Failed to update report');
+          Alert.alert(t('common.error'), updateErr.message ?? t('jobDetail.failedUpdateReport'));
           return;
         }
         reportId = existingReportId;
@@ -682,7 +683,7 @@ export default function JobDetailScreen() {
           .select('id')
           .single();
         if (reportErr) {
-          Alert.alert('Error', reportErr.message ?? 'Failed to save report');
+          Alert.alert(t('common.error'), reportErr.message ?? t('jobDetail.failedSaveReport'));
           return;
         }
         reportId = reportRow.id;
@@ -690,7 +691,7 @@ export default function JobDetailScreen() {
 
       const { error: updateJobErr } = await supabase.from('cadenza_service_jobs').update({ status: 'completed' }).eq('id', id);
       if (updateJobErr) {
-        Alert.alert('Error', updateJobErr.message ?? 'Failed to update job status');
+        Alert.alert(t('common.error'), updateJobErr.message ?? t('jobDetail.failedUpdateJobStatus'));
         return;
       }
 
@@ -724,12 +725,15 @@ export default function JobDetailScreen() {
       }
 
       if (photoErrors > 0) {
-        Alert.alert('Report saved', `${photoErrors} photo(s) could not be uploaded. The report and job are saved.`);
+        Alert.alert(
+          t('jobDetail.reportSaved'),
+          t('jobDetail.photosUploadFailed', { count: photoErrors })
+        );
       }
       invalidateJobsList();
       router.back();
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to save report');
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('jobDetail.failedSaveReport'));
     } finally {
       setSaving(false);
     }
@@ -753,7 +757,7 @@ export default function JobDetailScreen() {
     if (!id) return;
     const { error } = await supabase.from('cadenza_service_jobs').update({ status: 'pending' }).eq('id', id);
     if (error) {
-      Alert.alert('Error', error.message ?? 'Failed to update job');
+      Alert.alert(t('common.error'), error.message ?? t('jobDetail.failedUpdateJob'));
       return;
     }
     invalidateJobsList();
@@ -763,12 +767,33 @@ export default function JobDetailScreen() {
   if (!jobLoaded || !job) {
     return (
       <View style={styles.center}>
-        <Text style={{ color: themeColors.text }}>Loading job...</Text>
+        <Text style={{ color: themeColors.text }}>{t('common.loadingJob')}</Text>
       </View>
     );
   }
 
   const prop = Array.isArray(job.cadenza_properties) ? job.cadenza_properties[0] : job.cadenza_properties;
+
+  const distanceWarningText =
+    distanceMeters != null && distanceMeters > 500
+      ? (() => {
+          const ft = distanceMeters * 3.28084;
+          const distance =
+            ft >= 5280
+              ? `${(ft / 5280).toFixed(1)} ${t('jobDetail.distanceMiles')}`
+              : `${Math.round(ft)} ${t('jobDetail.distanceFeet')}`;
+          return t('jobDetail.tooFarAway', { distance });
+        })()
+      : null;
+
+  const locationErrorText = locationError
+    ? t('jobDetail.distanceCheckSkipped', {
+        error:
+          locationError === 'locationDenied'
+            ? t('jobDetail.locationDenied')
+            : t('jobDetail.locationUnavailable'),
+      })
+    : null;
 
   return (
     <ScrollView style={styles.container}>
@@ -779,14 +804,14 @@ export default function JobDetailScreen() {
             <Text style={styles.title}>{prop?.customer_name ?? '\u2014'}</Text>
             {prop?.gate_code && (
               <View style={styles.gateRow}>
-                <Text style={styles.address}>Gate:</Text>
+                <Text style={styles.address}>{t('jobDetail.gate')}</Text>
                 <Text style={styles.gateCode}>{prop.gate_code}</Text>
               </View>
             )}
             <Text style={styles.address}>{prop?.address ?? ''}</Text>
-            <Text style={styles.status}>Status: {job.status}</Text>
+            <Text style={styles.status}>{t('jobDetail.status', { status: job.status })}</Text>
             <View style={styles.directionsBtn}>
-              <Text style={styles.directionsBtnText}>DIRECTIONS</Text>
+              <Text style={styles.directionsBtnText}>{t('jobDetail.directions')}</Text>
             </View>
           </View>
         </View>
@@ -795,13 +820,13 @@ export default function JobDetailScreen() {
           <Pressable style={styles.menuBackdrop} onPress={closeJobMenu}>
             <Pressable style={styles.menuCard} onPress={() => {}}>
               <Pressable style={styles.menuOption} onPress={handleCantServiceFromMenu}>
-                <Text style={styles.menuOptionText}>Can't service</Text>
+                <Text style={styles.menuOptionText}>{t('jobDetail.cantService')}</Text>
               </Pressable>
               <Pressable style={styles.menuOption} onPress={handlePutOnHold}>
-                <Text style={styles.menuOptionText}>Put visit on hold</Text>
+                <Text style={styles.menuOptionText}>{t('jobDetail.putOnHold')}</Text>
               </Pressable>
               <Pressable style={styles.menuOption} onPress={closeJobMenu}>
-                <Text style={[styles.menuOptionText, styles.menuOptionCancel]}>Cancel</Text>
+                <Text style={[styles.menuOptionText, styles.menuOptionCancel]}>{t('common.cancel')}</Text>
               </Pressable>
             </Pressable>
           </Pressable>
@@ -811,34 +836,29 @@ export default function JobDetailScreen() {
           <>
             {locationChecking && (
               <View style={styles.locationWarning}>
-                <Text style={styles.locationWarningText}>Checking your location...</Text>
+                <Text style={styles.locationWarningText}>{t('jobDetail.checkingLocation')}</Text>
               </View>
             )}
-            {distanceMeters != null && distanceMeters > 500 && (
+            {distanceWarningText != null && (
               <View style={styles.locationWarning}>
-                <Text style={styles.locationWarningText}>
-                  You're about {(() => {
-                    const ft = distanceMeters * 3.28084;
-                    return ft >= 5280 ? `${(ft / 5280).toFixed(1)} miles` : `${Math.round(ft)} ft`;
-                  })()} from this address. Make sure you're at the right location before starting.
-                </Text>
+                <Text style={styles.locationWarningText}>{distanceWarningText}</Text>
               </View>
             )}
-            {locationError && (
+            {locationErrorText != null && (
               <View style={styles.locationWarning}>
-                <Text style={styles.locationWarningText}>{locationError}. Distance check skipped.</Text>
+                <Text style={styles.locationWarningText}>{locationErrorText}</Text>
               </View>
             )}
             <Pressable style={styles.startButton} onPress={handleStart}>
-              <Text style={styles.startButtonText}>START SERVICE</Text>
+              <Text style={styles.startButtonText}>{t('jobDetail.startService')}</Text>
             </Pressable>
             <Pressable style={styles.cantServiceButton} onPress={() => id && router.push(`/(app)/job/${id}/cant-service`)}>
-              <Text style={styles.cantServiceButtonText}>Can't service</Text>
+              <Text style={styles.cantServiceButtonText}>{t('jobDetail.cantService')}</Text>
             </Pressable>
           </>
         ) : !reportLoaded ? (
           <View style={styles.center}>
-            <Text style={{ color: themeColors.text }}>Loading report...</Text>
+            <Text style={{ color: themeColors.text }}>{t('common.loadingReport')}</Text>
           </View>
         ) : (
           <>
@@ -849,16 +869,16 @@ export default function JobDetailScreen() {
                   <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconPurpleBg }]}>
                     <Text style={[styles.sectionIconText, { color: themeColors.sectionIconPurpleText }]}>P</Text>
                   </View>
-                  <Text style={styles.sectionTitle}>Photos</Text>
+                  <Text style={styles.sectionTitle}>{t('jobDetail.photos')}</Text>
                 </View>
               </View>
-              <Text style={styles.photoHint}>Add as many photos as you need — pool, filter, equipment, etc.</Text>
+              <Text style={styles.photoHint}>{t('jobDetail.photoHint')}</Text>
               <View style={styles.photoActions}>
                 <Pressable style={styles.photoButton} onPress={takePhoto}>
-                  <Text style={styles.photoButtonText}>Take Photo</Text>
+                  <Text style={styles.photoButtonText}>{t('jobDetail.takePhoto')}</Text>
                 </Pressable>
                 <Pressable style={styles.photoButton} onPress={pickFromGallery}>
-                  <Text style={styles.photoButtonText}>From Gallery</Text>
+                  <Text style={styles.photoButtonText}>{t('jobDetail.fromGallery')}</Text>
                 </Pressable>
               </View>
               {pendingOverlay != null && (
@@ -919,20 +939,20 @@ export default function JobDetailScreen() {
                   <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconAmberBg }]}>
                     <Text style={[styles.sectionIconText, { color: themeColors.sectionIconAmberText }]}>!</Text>
                   </View>
-                  <Text style={styles.sectionTitle}>Issue Found</Text>
+                  <Text style={styles.sectionTitle}>{t('jobDetail.issueFound')}</Text>
                 </View>
               </View>
-              <Text style={styles.sectionHint}>Tap all that apply. Leave empty if no issues.</Text>
+              <Text style={styles.sectionHint}>{t('jobDetail.issueHint')}</Text>
               <View style={styles.chipRow}>
                 <Pressable
                   style={[styles.chip, issueCategories.length === 0 && styles.chipSelected]}
                   onPress={() => setIssueCategories([])}
                 >
                   <Text style={[styles.chipText, issueCategories.length === 0 && styles.chipTextSelected]}>
-                    No issues
+                    {t('jobDetail.noIssues')}
                   </Text>
                 </Pressable>
-                {ISSUE_CATEGORY_OPTIONS.map(({ key, label }) => {
+                {ISSUE_CATEGORY_OPTIONS.map(({ key }) => {
                   const selected = issueCategories.includes(key);
                   return (
                     <Pressable
@@ -945,7 +965,9 @@ export default function JobDetailScreen() {
                         if (!selected) setFollowUp(true);
                       }}
                     >
-                      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+                      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                        {t(`visit.issueCategories.${key}`)}
+                      </Text>
                     </Pressable>
                   );
                 })}
@@ -959,13 +981,13 @@ export default function JobDetailScreen() {
                   <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconGreenBg }]}>
                     <Text style={[styles.sectionIconText, { color: themeColors.sectionIconGreenText }]}>+</Text>
                   </View>
-                  <Text style={styles.sectionTitle}>Visit Extras</Text>
+                  <Text style={styles.sectionTitle}>{t('jobDetail.visitExtras')}</Text>
                 </View>
               </View>
-              <Text style={styles.sectionHint}>Optional. Standard skim/vacuum is assumed unless noted.</Text>
-              {VISIT_EXTRAS.map(({ key, label, promptsFollowUp }, idx) => (
+              <Text style={styles.sectionHint}>{t('jobDetail.visitExtrasHint')}</Text>
+              {VISIT_EXTRAS.map(({ key, promptsFollowUp }, idx) => (
                 <View key={key} style={[styles.taskRow, idx === VISIT_EXTRAS.length - 1 && !extras.salt_chemicals && styles.taskRowLast]}>
-                  <Text style={styles.taskLabel}>{label}</Text>
+                  <Text style={styles.taskLabel}>{t(`visit.extras.${key}`)}</Text>
                   <Switch
                     value={extras[key] ?? false}
                     onValueChange={(v) => {
@@ -981,7 +1003,7 @@ export default function JobDetailScreen() {
                   style={styles.chemicalNoteInput}
                   value={otherChemicals}
                   onChangeText={setOtherChemicals}
-                  placeholder="e.g. 1 bag salt, pastillero, shock..."
+                  placeholder={t('jobDetail.saltChemicalsPlaceholder')}
                   placeholderTextColor={themeColors.placeholder}
                 />
               )}
@@ -993,7 +1015,7 @@ export default function JobDetailScreen() {
                 style={styles.notesInput}
                 value={notes}
                 onChangeText={setNotes}
-                placeholder="Notes for the office (water level, circulation, client request)..."
+                placeholder={t('jobDetail.officeNotesPlaceholder')}
                 placeholderTextColor={themeColors.placeholder}
                 multiline
               />
@@ -1006,7 +1028,7 @@ export default function JobDetailScreen() {
                   <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconAmberBg }]}>
                     <Text style={[styles.sectionIconText, { color: themeColors.sectionIconAmberText }]}>E</Text>
                   </View>
-                  <Text style={styles.sectionTitle}>Equipment Status</Text>
+                  <Text style={styles.sectionTitle}>{t('jobDetail.equipmentStatus')}</Text>
                 </View>
                 <Ionicons
                   name={equipExpanded ? 'chevron-up' : 'chevron-down'}
@@ -1016,9 +1038,9 @@ export default function JobDetailScreen() {
               </Pressable>
               {equipExpanded && (
                 <View style={styles.equipmentBody}>
-                  {EQUIPMENT.map(({ key, label }) => (
+                  {EQUIPMENT.map(({ key }) => (
                     <View key={key} style={styles.equipmentRow}>
-                      <Text style={styles.taskLabel}>{label}</Text>
+                      <Text style={styles.taskLabel}>{t(`visit.equipment.${key}`)}</Text>
                       <Switch
                         value={equipment[key] ?? true}
                         onValueChange={(v) => setEquipment((e) => ({ ...e, [key]: v }))}
@@ -1037,7 +1059,7 @@ export default function JobDetailScreen() {
                   <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconBlueBg }]}>
                     <Text style={[styles.sectionIconText, { color: themeColors.sectionIconBlueText }]}>S</Text>
                   </View>
-                  <Text style={styles.sectionTitle}>Chemical Readings</Text>
+                  <Text style={styles.sectionTitle}>{t('jobDetail.chemicalReadings')}</Text>
                 </View>
                 <Ionicons
                   name={chemExpanded ? 'chevron-up' : 'chevron-down'}
@@ -1047,9 +1069,9 @@ export default function JobDetailScreen() {
               </Pressable>
               {chemExpanded && (
                 <View style={styles.chemGrid}>
-                  {CHEMICAL_READINGS.map(({ key, label }, idx) => (
+                  {CHEMICAL_READINGS.map(({ key }, idx) => (
                     <View key={key} style={idx >= CHEMICAL_READINGS.length - 1 ? styles.chemFieldFull : styles.chemField}>
-                      <Text style={styles.chemLabel}>{label}</Text>
+                      <Text style={styles.chemLabel}>{t(`visit.chemicals.${key}`)}</Text>
                       <TextInput
                         style={styles.chemInput}
                         value={chemicals[key] ?? ''}
@@ -1066,7 +1088,7 @@ export default function JobDetailScreen() {
 
             {/* Follow-up */}
             <View style={styles.followUpRow}>
-              <Text style={styles.taskLabel}>Follow-up needed?</Text>
+              <Text style={styles.taskLabel}>{t('jobDetail.followUpNeeded')}</Text>
               <Switch
                 value={followUp || issueCategories.length > 0 || Boolean(extras.low_water)}
                 onValueChange={setFollowUp}
@@ -1078,14 +1100,16 @@ export default function JobDetailScreen() {
                 style={styles.followUpInput}
                 value={followUpNotes}
                 onChangeText={setFollowUpNotes}
-                placeholder="What should the office do next?"
+                placeholder={t('jobDetail.followUpPlaceholder')}
                 placeholderTextColor={themeColors.placeholder}
                 multiline
               />
             )}
 
             <Pressable style={styles.completeButton} onPress={handleComplete} disabled={saving}>
-              <Text style={styles.completeButtonText}>{saving ? 'Saving...' : 'Complete & Save Report'}</Text>
+              <Text style={styles.completeButtonText}>
+                {saving ? t('common.saving') : t('jobDetail.completeSave')}
+              </Text>
             </Pressable>
           </>
         )}

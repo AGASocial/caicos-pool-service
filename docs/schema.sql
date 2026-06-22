@@ -31,7 +31,7 @@ CREATE TABLE cadenza_profiles (
   role TEXT NOT NULL DEFAULT 'technician' CHECK (role IN ('owner', 'admin', 'technician')),
   full_name TEXT NOT NULL,
   phone TEXT,
-  avatar_url TEXT,
+  avatar_url TEXT, -- assets bucket path e.g. {user_id}/avatar.jpg, or external OAuth URL
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

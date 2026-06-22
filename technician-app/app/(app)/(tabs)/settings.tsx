@@ -1,39 +1,51 @@
-import { useEffect, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, ScrollView, useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState, useMemo } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useAppColors } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { disableBiometricLogin } from '@/lib/biometric-auth';
-import Colors from '@/constants/Colors';
 import { LegalFooter } from '@/components/LegalFooter';
+import { ProfileAvatar } from '@/components/ProfileAvatar';
+import { getLocaleDisplayName } from '@/components/LanguageSelector';
+import { useI18n } from '@/lib/i18n';
 
 export default function SettingsScreen() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const router = useRouter();
-  const theme = useColorScheme() ?? 'light';
-  const c = Colors[theme];
+  const { colors: c } = useAppColors();
+  const { t, locale } = useI18n();
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setEmail(user.email ?? '');
-        supabase.from('cadenza_profiles').select('full_name').eq('id', user.id).single().then(({ data }) => {
-          setFullName((data?.full_name as string) ?? '');
-        });
-      }
+  const loadProfile = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       setLoading(false);
-    });
+      return;
+    }
+    setEmail(user.email ?? '');
+    setUserId(user.id);
+    const { data } = await supabase
+      .from('cadenza_profiles')
+      .select('full_name, avatar_url')
+      .eq('id', user.id)
+      .single();
+    setFullName((data?.full_name as string) ?? '');
+    setAvatarUrl((data?.avatar_url as string | null) ?? null);
+    setLoading(false);
   }, []);
 
-  async function handleSave() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    setSaving(true);
-    await supabase.from('cadenza_profiles').update({ full_name: fullName }).eq('id', user.id);
-    setSaving(false);
-  }
+  useEffect(() => {
+    void loadProfile();
+  }, [loadProfile]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadProfile();
+    }, [loadProfile])
+  );
 
   async function handleSignOut() {
     await disableBiometricLogin();
@@ -54,47 +66,8 @@ export default function SettingsScreen() {
         avatarOuter: {
           position: 'relative',
           marginBottom: 16,
-        },
-        avatar: {
-          width: 128,
-          height: 128,
-          borderRadius: 64,
-          borderWidth: 4,
-          borderColor: c.card,
-          backgroundColor: c.progressBarBg,
-          justifyContent: 'center',
           alignItems: 'center',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
         },
-        avatarInitials: {
-          fontSize: 40,
-          fontWeight: '700',
-          color: c.muted,
-          letterSpacing: -0.8,
-        },
-        editAvatarBtn: {
-          position: 'absolute',
-          bottom: 0,
-          right: 0,
-          width: 36,
-          height: 36,
-          borderRadius: 18,
-          backgroundColor: c.tint,
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderWidth: 2,
-          borderColor: c.card,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.15,
-          shadowRadius: 3,
-          elevation: 2,
-        },
-        editAvatarIcon: { color: '#fff', fontSize: 16, fontWeight: '600' },
         name: {
           fontSize: 24,
           fontWeight: '700',
@@ -136,34 +109,6 @@ export default function SettingsScreen() {
           shadowRadius: 3,
           elevation: 1,
         },
-        sectionHeader: {
-          paddingHorizontal: 20,
-          paddingVertical: 16,
-          borderBottomWidth: 1,
-          borderBottomColor: c.borderSubtle,
-        },
-        sectionTitle: {
-          fontSize: 16,
-          fontWeight: '700',
-          color: c.text,
-        },
-        sectionBody: {
-          padding: 20,
-          gap: 20,
-        },
-        fieldGroup: { gap: 6 },
-        label: { fontSize: 14, fontWeight: '500', color: c.muted },
-        input: {
-          borderWidth: 1,
-          borderColor: c.border,
-          borderRadius: 8,
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          backgroundColor: c.inputBgAlt,
-          color: c.text,
-          fontSize: 16,
-        },
-        inputDisabled: { backgroundColor: c.inputBgDisabled, color: c.mutedSecondary },
         menuItem: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -174,7 +119,7 @@ export default function SettingsScreen() {
           borderBottomColor: c.borderSubtle,
         },
         menuItemLast: { borderBottomWidth: 0 },
-        menuItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+        menuItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
         menuIcon: {
           width: 32,
           height: 32,
@@ -185,20 +130,10 @@ export default function SettingsScreen() {
         },
         menuIconText: { fontSize: 16, color: c.tint },
         menuLabel: { fontSize: 16, fontWeight: '500', color: c.text },
+        menuValue: { fontSize: 14, fontWeight: '500', color: c.muted, flexShrink: 1 },
         menuChevron: { fontSize: 20, color: c.mutedSecondary },
+        menuRight: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1, maxWidth: '45%' },
         actions: { gap: 12, marginTop: 8 },
-        saveBtn: {
-          backgroundColor: c.buttonPrimary,
-          borderRadius: 12,
-          paddingVertical: 14,
-          alignItems: 'center',
-          shadowColor: c.buttonPrimaryShadow,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 1,
-          shadowRadius: 12,
-          elevation: 4,
-        },
-        saveBtnText: { color: c.buttonPrimaryText, fontWeight: '600', fontSize: 16 },
         logoutBtn: {
           borderRadius: 12,
           paddingVertical: 14,
@@ -219,100 +154,97 @@ export default function SettingsScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <Text style={{ color: c.text }}>Loading...</Text>
+        <Text style={{ color: c.text }}>{t('common.loading')}</Text>
       </View>
     );
   }
 
-  const initials =
-    fullName
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
-      .join('') || 'T';
+  const profileSummary = fullName.trim() || t('common.technician');
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.profileHeader}>
         <View style={styles.avatarOuter}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarInitials}>{initials}</Text>
-          </View>
-          <View style={styles.editAvatarBtn}>
-            <Text style={styles.editAvatarIcon}>E</Text>
-          </View>
+          {userId ? (
+            <ProfileAvatar
+              userId={userId}
+              fullName={fullName}
+              avatarUrl={avatarUrl}
+              size={128}
+            />
+          ) : null}
         </View>
-        <Text style={styles.name}>{fullName || 'Technician'}</Text>
-        <Text style={styles.emailText}>{email || 'Signed in'}</Text>
+        <Text style={styles.name}>{fullName || t('common.technician')}</Text>
+        <Text style={styles.emailText}>{email || t('common.signedIn')}</Text>
         <View style={styles.roleRow}>
-          <Text style={styles.emailText}>Technician</Text>
+          <Text style={styles.emailText}>{t('common.technician')}</Text>
           <View style={styles.roleDot} />
           <View style={styles.roleChip}>
-            <Text style={styles.roleChipText}>Active</Text>
+            <Text style={styles.roleChipText}>{t('common.active')}</Text>
           </View>
         </View>
       </View>
 
       <View style={styles.content}>
         <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Personal Information</Text>
-          </View>
-          <View style={styles.sectionBody}>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Full Name</Text>
-              <TextInput
-                style={styles.input}
-                placeholderTextColor={c.placeholder}
-                value={fullName}
-                onChangeText={setFullName}
-              />
-            </View>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={[styles.input, styles.inputDisabled]}
-                placeholderTextColor={c.placeholder}
-                value={email}
-                editable={false}
-              />
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.sectionCard}>
-          <Pressable style={styles.menuItem} onPress={() => router.push('/(app)/notifications')}>
+          <Pressable style={styles.menuItem} onPress={() => router.push('/(app)/personal-information')}>
             <View style={styles.menuItemLeft}>
               <View style={styles.menuIcon}>
-                <Text style={styles.menuIconText}>N</Text>
+                <Text style={styles.menuIconText}>P</Text>
               </View>
-              <Text style={styles.menuLabel}>Notifications</Text>
+              <Text style={styles.menuLabel}>{t('settings.personalInformation')}</Text>
             </View>
-            <Text style={styles.menuChevron}>{'>'}</Text>
+            <View style={styles.menuRight}>
+              <Text style={styles.menuValue} numberOfLines={1}>
+                {profileSummary}
+              </Text>
+              <Text style={styles.menuChevron}>{'>'}</Text>
+            </View>
           </Pressable>
-          <Pressable style={[styles.menuItem, styles.menuItemLast]} onPress={() => router.push('/(app)/password-security')}>
+          <Pressable
+            style={styles.menuItem}
+            onPress={() => router.push('/(app)/password-security')}
+          >
             <View style={styles.menuItemLeft}>
               <View style={styles.menuIcon}>
                 <Text style={styles.menuIconText}>S</Text>
               </View>
-              <Text style={styles.menuLabel}>Password & Security</Text>
+              <Text style={styles.menuLabel}>{t('settings.passwordSecurity')}</Text>
             </View>
             <Text style={styles.menuChevron}>{'>'}</Text>
           </Pressable>
+          <Pressable style={styles.menuItem} onPress={() => router.push('/(app)/language')}>
+            <View style={styles.menuItemLeft}>
+              <View style={styles.menuIcon}>
+                <Text style={styles.menuIconText}>L</Text>
+              </View>
+              <Text style={styles.menuLabel}>{t('settings.language')}</Text>
+            </View>
+            <View style={styles.menuRight}>
+              <Text style={styles.menuValue}>{getLocaleDisplayName(locale)}</Text>
+              <Text style={styles.menuChevron}>{'>'}</Text>
+            </View>
+          </Pressable>
+          <Pressable style={[styles.menuItem, styles.menuItemLast]} onPress={() => router.push('/(app)/notifications')}>
+            <View style={styles.menuItemLeft}>
+              <View style={styles.menuIcon}>
+                <Text style={styles.menuIconText}>N</Text>
+              </View>
+              <Text style={styles.menuLabel}>{t('settings.notifications')}</Text>
+            </View>
+            <Text style={styles.menuChevron}>{'>'}</Text>
+          </Pressable>
+          
         </View>
 
         <View style={styles.actions}>
-          <Pressable style={styles.saveBtn} onPress={handleSave} disabled={saving}>
-            <Text style={styles.saveBtnText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
-          </Pressable>
           <Pressable style={styles.logoutBtn} onPress={handleSignOut}>
-            <Text style={styles.logoutBtnText}>Logout</Text>
+            <Text style={styles.logoutBtnText}>{t('settings.logout')}</Text>
           </Pressable>
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Cadenza Technician App{'\n'}Version 1.0.0</Text>
+          <Text style={styles.footerText}>{t('common.appVersion')}</Text>
           <LegalFooter compact />
         </View>
       </View>

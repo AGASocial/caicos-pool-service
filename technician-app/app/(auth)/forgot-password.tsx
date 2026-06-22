@@ -18,6 +18,7 @@ import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
 import Colors from '@/constants/Colors';
 import { LegalFooter } from '@/components/LegalFooter';
+import { useI18n } from '@/lib/i18n';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
@@ -25,11 +26,12 @@ export default function ForgotPasswordScreen() {
   const [sent, setSent] = useState(false);
   const theme = useColorScheme() ?? 'light';
   const c = Colors[theme];
+  const { t } = useI18n();
 
   async function handleReset() {
     const trimmed = email.trim();
     if (!trimmed) {
-      Alert.alert('Email required', 'Enter the email address for your account.');
+      Alert.alert(t('auth.emailRequired'), t('auth.enterAccountEmail'));
       return;
     }
 
@@ -39,7 +41,7 @@ export default function ForgotPasswordScreen() {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Could not send reset email', error.message);
+      Alert.alert(t('auth.couldNotSendReset'), error.message);
       return;
     }
 
@@ -123,23 +125,18 @@ export default function ForgotPasswordScreen() {
           <Image source={require('@/assets/images/icon.png')} style={styles.logo} />
           <Text style={styles.brandName}>Cadenza</Text>
           <View style={styles.brassRule} />
-          <Text style={styles.headerSubtitle}>Reset Password</Text>
+          <Text style={styles.headerSubtitle}>{t('auth.resetPassword')}</Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.title}>Forgot your password?</Text>
-          <Text style={styles.subtitle}>
-            Enter your account email and we&apos;ll send a link to reset your password.
-          </Text>
+          <Text style={styles.title}>{t('auth.forgotTitle')}</Text>
+          <Text style={styles.subtitle}>{t('auth.forgotSubtitle')}</Text>
 
           {sent ? (
-            <Text style={styles.success}>
-              If an account exists for {email.trim()}, you will receive a reset link shortly. Check your inbox and spam
-              folder.
-            </Text>
+            <Text style={styles.success}>{t('auth.forgotSuccess', { email: email.trim() })}</Text>
           ) : (
             <>
-              <Text style={styles.fieldLabel}>Email Address</Text>
+              <Text style={styles.fieldLabel}>{t('auth.emailAddress')}</Text>
               <TextInput
                 style={styles.input}
                 placeholder="technician@cadenzaops.com"
@@ -158,7 +155,7 @@ export default function ForgotPasswordScreen() {
                 {loading ? (
                   <ActivityIndicator color="#1a1407" size="small" />
                 ) : (
-                  <Text style={styles.buttonText}>SEND RESET LINK</Text>
+                  <Text style={styles.buttonText}>{t('auth.sendResetLink')}</Text>
                 )}
               </Pressable>
             </>
@@ -166,9 +163,7 @@ export default function ForgotPasswordScreen() {
 
           <Link href="/(auth)/login" asChild>
             <Pressable>
-              <Text style={styles.backLink}>
-                Back to <Text style={styles.backLinkBold}>Sign in</Text>
-              </Text>
+              <Text style={styles.backLink}>{t('auth.backToSignInLink')}</Text>
             </Pressable>
           </Link>
         </View>
