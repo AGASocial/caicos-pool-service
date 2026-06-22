@@ -24,6 +24,7 @@ export type CadenzaSupabaseClient = SupabaseClient<{
       cadenza_job_generation_runs: TableShape;
       cadenza_invite_codes: TableShape;
       cadenza_visit_reasons: TableShape;
+      cadenza_cant_service_reasons: TableShape;
     };
   };
 }>;

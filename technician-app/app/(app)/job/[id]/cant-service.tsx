@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Image, Alert, useColorScheme } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -7,12 +7,18 @@ import { getPhotoOverlayInfo, type PhotoOverlayInfo } from '@/lib/photoOverlay';
 import { PhotoWithOverlay } from '@/components/PhotoWithOverlay';
 import { getUploadBodyFromUri } from '@/lib/uploadPhoto';
 import { invalidateJobsList } from '@/lib/jobs-list-invalidation';
+import {
+  DEFAULT_CANT_SERVICE_REASONS,
+  type CantServiceReason,
+} from '@/lib/cantServiceReasons';
 import Colors from '@/constants/Colors';
 
 export default function CantServiceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [comment, setComment] = useState('');
+  const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
+  const [reasonCatalog, setReasonCatalog] = useState<CantServiceReason[]>(DEFAULT_CANT_SERVICE_REASONS);
   const [photos, setPhotos] = useState<{ uri: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [job, setJob] = useState<{ company_id: string; property_id: string; scheduled_date?: string } | null>(null);
@@ -32,8 +38,36 @@ export default function CantServiceScreen() {
       .select('company_id, property_id, scheduled_date')
       .eq('id', id)
       .single()
-      .then(({ data }) => setJob(data as { company_id: string; property_id: string; scheduled_date?: string } | null));
+      .then(async ({ data }) => {
+        const jobRow = data as { company_id: string; property_id: string; scheduled_date?: string } | null;
+        setJob(jobRow);
+        if (!jobRow?.company_id) return;
+        const { data: reasons } = await supabase
+          .from('cadenza_cant_service_reasons')
+          .select('slug, label, sort_order')
+          .eq('company_id', jobRow.company_id)
+          .eq('is_active', true)
+          .order('sort_order', { ascending: true });
+        if (reasons && reasons.length > 0) {
+          const parsed = reasons
+            .filter((r): r is { slug: string; label: string; sort_order: number } =>
+              typeof r.slug === 'string' && typeof r.label === 'string'
+            )
+            .map((r) => ({
+              slug: r.slug,
+              label: r.label,
+              sort_order: r.sort_order ?? 0,
+            }));
+          if (parsed.length > 0) setReasonCatalog(parsed);
+        }
+      });
   }, [id]);
+
+  const toggleReason = useCallback((slug: string) => {
+    setSelectedReasons((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
+    );
+  }, []);
 
   const styles = useMemo(
     () =>
@@ -121,6 +155,25 @@ export default function CantServiceScreen() {
           fontSize: 16,
         },
         textArea: { minHeight: 100, textAlignVertical: 'top' },
+        chipRow: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 8,
+        },
+        chip: {
+          paddingHorizontal: 14,
+          paddingVertical: 10,
+          borderRadius: 999,
+          borderWidth: 1,
+          borderColor: c.border,
+          backgroundColor: c.chipBgAlt,
+        },
+        chipSelected: {
+          backgroundColor: c.chipBg,
+          borderColor: c.tint,
+        },
+        chipText: { fontSize: 14, fontWeight: '600', color: c.chipText },
+        chipTextSelected: { color: c.text },
         photoRow: { flexDirection: 'row', gap: 12 },
         photoButton: {
           flex: 1,
@@ -217,6 +270,13 @@ export default function CantServiceScreen() {
 
   async function handleCloseJob() {
     if (!id) return;
+    if (selectedReasons.length === 0 && !comment.trim()) {
+      Alert.alert(
+        'Razón requerida',
+        'Selecciona al menos una razón o escribe un comentario antes de cerrar el trabajo.'
+      );
+      return;
+    }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     setLoading(true);
@@ -235,7 +295,8 @@ export default function CantServiceScreen() {
         job_id: id,
         company_id: jobData.company_id,
         technician_id: user.id,
-        notes: comment.trim() || 'Unable to service — no comment provided.',
+        cant_service_reasons: selectedReasons,
+        notes: comment.trim() || null,
       };
       const { data: reportRow, error: reportErr } = await supabase.from('cadenza_service_reports').insert(report).select('id').single();
       if (reportErr) {
@@ -289,7 +350,7 @@ export default function CantServiceScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Can't Service This Job</Text>
         <Text style={styles.subtitle}>
-          Add a photo and/or comment explaining why, then close the job. The status will be set to "skipped".
+          Selecciona una o más razones, agrega un comentario opcional y cierra el trabajo. El estado quedará como "skipped".
         </Text>
       </View>
 
@@ -302,12 +363,27 @@ export default function CantServiceScreen() {
             <Text style={styles.sectionTitle}>Reason</Text>
           </View>
           <View style={styles.sectionBody}>
-            <Text style={styles.label}>Comment (optional)</Text>
+            <Text style={styles.label}>Razones</Text>
+            <View style={styles.chipRow}>
+              {reasonCatalog.map(({ slug, label }) => {
+                const selected = selectedReasons.includes(slug);
+                return (
+                  <Pressable
+                    key={slug}
+                    style={[styles.chip, selected && styles.chipSelected]}
+                    onPress={() => toggleReason(slug)}
+                  >
+                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={[styles.label, { marginTop: 8 }]}>Comentario (opcional)</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={comment}
               onChangeText={setComment}
-              placeholder="e.g. Gate locked, dog in yard, customer not home..."
+              placeholder="Detalles adicionales..."
               placeholderTextColor={c.placeholder}
               multiline
             />

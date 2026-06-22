@@ -98,6 +98,18 @@ CREATE TABLE cadenza_visit_reasons (
   CONSTRAINT cadenza_visit_reasons_company_slug_unique UNIQUE (company_id, slug)
 );
 
+-- Can't-service reasons (technician skip visit). Seeded per company.
+CREATE TABLE cadenza_cant_service_reasons (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES cadenza_companies(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL,
+  label TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT cadenza_cant_service_reasons_company_slug_unique UNIQUE (company_id, slug)
+);
+
 -- Route stops: property on route + pattern (weekday, weekly vs monthly nth weekday). stop_order is display-only (not unique).
 -- day_of_week: 0=Sunday .. 6=Saturday (JavaScript Date.getDay).
 CREATE TABLE cadenza_route_stops (
@@ -196,6 +208,7 @@ CREATE TABLE cadenza_service_reports (
   follow_up_notes TEXT,
   follow_up_status TEXT NOT NULL DEFAULT 'open' CHECK (follow_up_status IN ('open', 'resolved')),
   issue_categories TEXT[] NOT NULL DEFAULT '{}',
+  cant_service_reasons TEXT[] NOT NULL DEFAULT '{}',
   is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -256,6 +269,7 @@ CREATE INDEX idx_cadenza_route_stops_route ON cadenza_route_stops(route_id);
 CREATE INDEX idx_cadenza_route_stop_schedules_stop ON cadenza_route_stop_schedules(route_stop_id);
 CREATE INDEX idx_cadenza_route_stop_schedules_from ON cadenza_route_stop_schedules(route_stop_id, effective_from);
 CREATE INDEX idx_cadenza_visit_reasons_company ON cadenza_visit_reasons(company_id);
+CREATE INDEX idx_cadenza_cant_service_reasons_company ON cadenza_cant_service_reasons(company_id);
 CREATE INDEX idx_cadenza_service_jobs_company ON cadenza_service_jobs(company_id);
 CREATE INDEX idx_cadenza_service_jobs_route ON cadenza_service_jobs(route_id);
 CREATE INDEX idx_cadenza_service_jobs_date ON cadenza_service_jobs(scheduled_date);
@@ -283,6 +297,7 @@ ALTER TABLE cadenza_routes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cadenza_route_stops ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cadenza_route_stop_schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cadenza_visit_reasons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cadenza_cant_service_reasons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cadenza_service_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cadenza_service_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cadenza_report_photos ENABLE ROW LEVEL SECURITY;
