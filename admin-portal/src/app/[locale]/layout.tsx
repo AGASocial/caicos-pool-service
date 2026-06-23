@@ -27,10 +27,6 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Cadenza - Pool Service Management Platform",
   description: "Manage your pool service business with Cadenza",
-  icons: {
-    icon: "/brand-assets/cadenza-app-icon-clean.png",
-    apple: "/brand-assets/cadenza-app-icon-clean.png",
-  },
 };
 
 export default async function RootLayout({
