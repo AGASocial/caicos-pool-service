@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,10 @@ export default function NewRoutePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { data: teamMembers = [] } = useTeam();
+  const technicians = useMemo(
+    () => teamMembers.filter((member) => member.role === 'technician'),
+    [teamMembers],
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,7 +84,7 @@ export default function NewRoutePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="technician_id">{t('teamMember')}</Label>
+              <Label htmlFor="technician_id">{t('technician')}</Label>
               <select
                 id="technician_id"
                 value={teamMemberId}
@@ -89,7 +93,7 @@ export default function NewRoutePage() {
                 required
               >
                 <option value="">—</option>
-                {teamMembers.map((member) => (
+                {technicians.map((member) => (
                   <option key={member.id} value={member.id}>
                     {member.full_name}
                   </option>
