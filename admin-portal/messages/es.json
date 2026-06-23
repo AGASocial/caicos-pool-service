@@ -120,6 +120,8 @@
   "inviteCodeDescription": "Crea un enlace o código de invitación para un nuevo miembro del equipo.",
   "inviteLink": "Enlace de invitación",
   "inviteTeamMember": "Invitar miembro del equipo",
+  "pendingInvitations": "Invitaciones pendientes",
+  "pendingInvitationsDescription": "Enlaces de invitación sin usar que puedes copiar y compartir de nuevo.",
   "invoice": "Factura",
   "invoiceAmount": "Monto",
   "invoiceDate": "Fecha de Factura",

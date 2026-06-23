@@ -120,6 +120,8 @@
   "inviteCodeDescription": "Create an invite link or code for a new team member.",
   "inviteLink": "Invite link",
   "inviteTeamMember": "Invite team member",
+  "pendingInvitations": "Pending invitations",
+  "pendingInvitationsDescription": "Unused invite links you can copy and share again.",
   "invoice": "Invoice",
   "invoiceAmount": "Amount",
   "invoiceDate": "Invoice Date",

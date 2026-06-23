@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,12 +16,14 @@ import {
   useFreePlan,
   computeInviteMaxTechnicians,
 } from '@/lib/billing-queries';
+import { queryKeys } from '@/lib/query-keys';
 
 type CreatedInvite = { code: string; role: string; expires_at: string };
 type InviteRole = 'technician' | 'admin' | 'operations';
 
 export default function InviteTeamMemberPage() {
   const t = useTranslations();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { data: teamMembers = [] } = useTeam();
   const isOwner = user?.profile?.role === 'owner';
@@ -66,6 +69,7 @@ export default function InviteTeamMemberPage() {
         return;
       }
       setCreated(data);
+      queryClient.invalidateQueries({ queryKey: queryKeys.inviteCodes.all });
       setLoading(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to create');

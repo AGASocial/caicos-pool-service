@@ -1,12 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
-import { UserPlus, Users } from 'lucide-react';
+import { UserPlus, Users, Copy, Check, Link2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useTeam, useSetTeamMemberActive, type TeamMember } from '@/lib/team';
+import { usePendingInvites, buildInviteRegisterUrl, type InviteCode } from '@/lib/invite-codes';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -43,11 +45,72 @@ function groupByRole(teamMembers: TeamMember[]): Record<RoleKey, TeamMember[]> {
   return groups;
 }
 
+function PendingInvitationsCard({ invites }: { invites: InviteCode[] }) {
+  const t = useTranslations();
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  function copyInviteLink(code: string) {
+    navigator.clipboard.writeText(buildInviteRegisterUrl(code)).then(() => {
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(null), 2000);
+    });
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('pendingInvitations')}</CardTitle>
+        <CardDescription>{t('pendingInvitationsDescription')}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ul className="divide-y divide-border">
+          {invites.map((invite) => {
+            const roleKey = normalizeRole(invite.role);
+            const isCopied = copiedCode === invite.code;
+            return (
+              <li
+                key={invite.code}
+                className="flex items-center gap-3 py-3 px-3 -mx-3 transition-colors hover:bg-muted/60"
+              >
+                <Link2 className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <span className="font-medium">{t(ROLE_TRANSLATION_KEYS[roleKey])}</span>
+                  <span className="text-amber-700 dark:text-amber-500 text-sm ml-2">
+                    ({t('pending')})
+                  </span>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {t('expiresAt')}: {new Date(invite.expires_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => copyInviteLink(invite.code)}
+                >
+                  {isCopied ? (
+                    <Check className="h-4 w-4 mr-1.5" />
+                  ) : (
+                    <Copy className="h-4 w-4 mr-1.5" />
+                  )}
+                  {t('copyCode')}
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function TeamPage() {
   const t = useTranslations();
   const { user } = useAuth();
   const isAdmin = user?.profile?.role === 'admin' || user?.profile?.role === 'owner';
   const { data: teamMembers = [], isLoading: loading, error: queryError } = useTeam();
+  const { data: pendingInvites = [] } = usePendingInvites();
   const setActive = useSetTeamMemberActive();
   const error = queryError ? (queryError as Error).message : null;
   const byRole = groupByRole(teamMembers);
@@ -80,7 +143,10 @@ export default function TeamPage() {
 
       {loading && <LoadingState size="sm" padded={false} className="py-8" />}
       {error && <p className="text-sm text-destructive">{error}</p>}
-      {!loading && !error && teamMembers.length === 0 && (
+      {!loading && !error && pendingInvites.length > 0 && (
+        <PendingInvitationsCard invites={pendingInvites} />
+      )}
+      {!loading && !error && teamMembers.length === 0 && pendingInvites.length === 0 && (
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">{t('noTeamYet')}</p>

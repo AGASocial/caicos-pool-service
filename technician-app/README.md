@@ -33,7 +33,7 @@ eas secret:list   # verify
 
 6. **App Store Connect metadata** — prepare before submit:
    - Privacy policy URL: `https://cadenzaops.com/privacy.html`
-   - Support URL / email: `support@cadenzaops.com`
+   - Support URL / email: `info@cadenzaops.com`
    - Screenshots (6.7" iPhone required; iPad if supporting tablets)
    - Demo account credentials for App Review (technician with assigned jobs)
 

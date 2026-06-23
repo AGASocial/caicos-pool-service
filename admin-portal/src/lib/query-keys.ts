@@ -7,6 +7,9 @@ export const queryKeys = {
   team: {
     all: ['team'] as const,
   },
+  inviteCodes: {
+    all: ['invite-codes'] as const,
+  },
   jobs: {
     all: ['jobs'] as const,
     list: (filters: Record<string, string | undefined>) => ['jobs', 'list', filters] as const,
