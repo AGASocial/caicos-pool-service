@@ -4,6 +4,13 @@ import PropertiesClient from './PropertiesClient';
 /** RSC properties list — initial data from server (US-F-001). */
 export default async function PropertiesPage() {
   const result = await fetchPropertiesServerPage();
+  if (result && 'noAssignedRoute' in result && result.noAssignedRoute) {
+    return <PropertiesClient properties={[]} noAssignedRoute />;
+  }
   const properties = result?.data ?? [];
-  return <PropertiesClient properties={properties as Parameters<typeof PropertiesClient>[0]['properties']} />;
+  return (
+    <PropertiesClient
+      properties={properties as Parameters<typeof PropertiesClient>[0]['properties']}
+    />
+  );
 }

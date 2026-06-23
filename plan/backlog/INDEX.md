@@ -1,12 +1,13 @@
 # Backlog Index
 
-Last updated: 2026-06-21
+Last updated: 2026-06-23
 
 ## Open items
 
 | ID | Title | Type | Priority | Agent | File | Status |
 |----|-------|------|----------|-------|------|--------|
 | ADM-2026-06-18-010 | Filter-day flag on scheduled jobs | imp | Low | NextJS Developer | [admin/2026-06-18-technician-visit-admin-sync.md](admin/2026-06-18-technician-visit-admin-sync.md) | PENDING |
+| ADM-IMP-2026-06-23-001 | Database-backed entitlements | imp | Medium | NextJS Developer | [admin/2026-06-23-imp-db-backed-entitlements.md](admin/2026-06-23-imp-db-backed-entitlements.md) | PENDING |
 
 ## Recently closed
 

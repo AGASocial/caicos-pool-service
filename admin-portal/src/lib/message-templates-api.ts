@@ -4,11 +4,7 @@ import { ISSUE_CATEGORY_KEYS } from '@/lib/service-report';
 import type { MessageChannel, TemplateLocale } from '@/lib/message-templates';
 import { resolveTemplateLocale } from '@/lib/message-templates';
 
-const OFFICE_ROLES = new Set(['owner', 'admin', 'operations']);
-
-export function isOfficeRole(role: string | undefined | null): boolean {
-  return OFFICE_ROLES.has(role ?? '');
-}
+export { isOfficeRole } from '@/lib/entitlements';
 
 export function parseIssueCategories(raw: unknown): IssueCategoryKey[] | null {
   if (!Array.isArray(raw)) return null;

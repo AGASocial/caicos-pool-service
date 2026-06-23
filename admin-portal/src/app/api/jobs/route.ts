@@ -7,6 +7,7 @@ import {
   parsePaginationParams,
 } from '@/lib/pagination';
 import { reportNeedsFollowUp, uniqueJobIdsFromReports } from '@/lib/follow-up-jobs';
+import { resolveTechnicianScope, technicianJobsOrFilter } from '@/lib/technician-scope';
 
 /** Local YYYY-MM-DD without UTC drift. */
 function localDateParts(d: Date): string {
@@ -87,6 +88,24 @@ export async function GET(request: NextRequest) {
   const client = supabase as unknown as CadenzaSupabaseClient;
   const useDetailFields = fieldsParam === 'detail';
 
+  const { data: profile } = await client
+    .from('cadenza_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const technicianScope = profile
+    ? await resolveTechnicianScope(client, user.id, profile.role as string)
+    : null;
+
+  if (technicianScope && !technicianScope.hasAssignedRoutes) {
+    return NextResponse.json(buildPaginatedResponse([], limit, jobSortKey));
+  }
+
+  const technicianFilter = technicianScope
+    ? technicianJobsOrFilter(user.id, technicianScope.routeIds)
+    : null;
+
   if (needsFollowUp) {
     const { data: flaggedReports, error: reportErr } = await client
       .from('cadenza_service_reports')
@@ -123,6 +142,7 @@ export async function GET(request: NextRequest) {
     if (status) query = query.eq('status', status);
     if (jobSource === 'route' || jobSource === 'ad_hoc') query = query.eq('job_source', jobSource);
     if (routeId) query = query.eq('route_id', routeId);
+    if (technicianFilter) query = query.or(technicianFilter);
 
     if (dayOfWeekParam !== null && dayOfWeekParam !== '') {
       const dow = Number(dayOfWeekParam);
@@ -171,6 +191,7 @@ export async function GET(request: NextRequest) {
   if (status) query = query.eq('status', status);
   if (jobSource === 'route' || jobSource === 'ad_hoc') query = query.eq('job_source', jobSource);
   if (routeId) query = query.eq('route_id', routeId);
+  if (technicianFilter) query = query.or(technicianFilter);
 
   if (dayOfWeekParam !== null && dayOfWeekParam !== '') {
     const dow = Number(dayOfWeekParam);

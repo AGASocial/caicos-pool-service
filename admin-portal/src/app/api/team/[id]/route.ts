@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
+import { entitlementError, hasEntitlement } from '@/lib/entitlements';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -46,6 +47,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: 'Your profile could not be loaded.' }, { status: 403 });
   }
 
+  const callerRole = callerProfile.role as string | undefined;
+
   // Target must be in same company
   const { data: targetProfile, error: targetError } = await client
     .from('cadenza_profiles')
@@ -61,12 +64,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: 'You can only update team members in your company.' }, { status: 403 });
   }
 
-  // Only admin or owner can change another user's is_active (users can update their own via profile)
   const isSelf = targetId === user.id;
-  const role = (callerProfile.role as string)?.toLowerCase();
-  const canUpdateOthers = role === 'admin' || role === 'owner';
-  if (!isSelf && !canUpdateOthers) {
-    return NextResponse.json({ error: 'Only admins can activate or deactivate other team members.' }, { status: 403 });
+  if (!isSelf && !hasEntitlement(callerRole, 'team', 'edit')) {
+    return NextResponse.json(entitlementError('team', 'edit'), { status: 403 });
   }
 
   const { error: updateError } = await (supabaseAdmin as unknown as CadenzaSupabaseClient)

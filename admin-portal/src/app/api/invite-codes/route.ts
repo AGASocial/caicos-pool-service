@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 import { getBillingService } from '@/lib/billing/server';
+import { entitlementError, hasEntitlement } from '@/lib/entitlements';
 
 const DEFAULT_EXPIRES_DAYS = 7;
 const CODE_LENGTH = 12;
@@ -25,7 +26,18 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+  const client = supabase as unknown as CadenzaSupabaseClient;
+  const { data: profile } = await client
+    .from('cadenza_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!hasEntitlement(profile?.role as string | undefined, 'team', 'view')) {
+    return NextResponse.json(entitlementError('team', 'view'), { status: 403 });
+  }
+
+  const { data, error } = await client
     .from('cadenza_invite_codes')
     .select('code, role, expires_at, used_at, created_at')
     .order('created_at', { ascending: false });
@@ -59,6 +71,10 @@ export async function POST(request: NextRequest) {
       { error: 'User profile or company not found.' },
       { status: 403 }
     );
+  }
+
+  if (!hasEntitlement(profile.role as string | undefined, 'team', 'create')) {
+    return NextResponse.json(entitlementError('team', 'create'), { status: 403 });
   }
 
   try {

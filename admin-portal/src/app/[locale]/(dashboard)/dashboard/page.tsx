@@ -8,6 +8,8 @@ export default async function DashboardPage() {
     stats: { totalJobs: 0, totalRoutes: 0, totalTeamMembers: 0, totalProperties: 0 },
     issueJobs: [],
     pendingJobsToday: [],
+    isTechnicianView: false,
+    noAssignedRoute: false,
   };
 
   return <DashboardClient {...(data ?? empty)} />;

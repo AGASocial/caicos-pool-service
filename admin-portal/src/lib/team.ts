@@ -27,11 +27,12 @@ async function fetchTeam(): Promise<TeamMember[]> {
  * Cached list of team members for the current user's company.
  * Uses React Query so multiple components share the same request/cache.
  */
-export function useTeam() {
+export function useTeam(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.team.all,
     queryFn: fetchTeam,
     staleTime: 2 * 60 * 1000,
+    enabled: options?.enabled ?? true,
   });
 }
 

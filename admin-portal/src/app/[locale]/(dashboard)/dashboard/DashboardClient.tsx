@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Briefcase, MapPin, Users, Building2, ChevronRight, Route as RouteIcon, AlertTriangle } from "lucide-react";
 import { Link } from '@/i18n/navigation';
 import type { DashboardIssueJob, DashboardJob } from '@/lib/server-data';
+import { NoAssignedRoute } from '@/components/NoAssignedRoute';
 
 type DashboardStats = {
   totalJobs: number;
@@ -103,12 +104,37 @@ export default function DashboardClient({
   stats,
   issueJobs,
   pendingJobsToday,
+  isTechnicianView = false,
+  noAssignedRoute = false,
 }: {
   stats: DashboardStats;
   issueJobs: DashboardIssueJob[];
   pendingJobsToday: DashboardJob[];
+  isTechnicianView?: boolean;
+  noAssignedRoute?: boolean;
 }) {
   const t = useTranslations();
+
+  const statCards = [
+    { label: t('jobs'), icon: Briefcase, value: stats.totalJobs, sub: t('totalJobsLabel'), chip: 'icon-bg-primary' },
+    { label: t('routes'), icon: MapPin, value: stats.totalRoutes, sub: t('totalRoutesLabel'), chip: 'icon-bg-success' },
+    ...(isTechnicianView
+      ? []
+      : [{ label: t('team'), icon: Users, value: stats.totalTeamMembers, sub: t('totalTeamMembersLabel'), chip: 'icon-bg-accent' }]),
+    { label: t('properties'), icon: Building2, value: stats.totalProperties, sub: t('totalPropertiesLabel'), chip: 'icon-bg-info' },
+  ];
+
+  if (noAssignedRoute) {
+    return (
+      <div className="flex-1 space-y-8 p-4 sm:p-8 pt-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('dashboard')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('dashboardOverview')}</p>
+        </div>
+        <NoAssignedRoute />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 space-y-8 p-4 sm:p-8 pt-6">
@@ -120,12 +146,7 @@ export default function DashboardClient({
       </div>
 
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: t('jobs'), icon: Briefcase, value: stats.totalJobs, sub: t('totalJobsLabel'), chip: 'icon-bg-primary' },
-          { label: t('routes'), icon: MapPin, value: stats.totalRoutes, sub: t('totalRoutesLabel'), chip: 'icon-bg-success' },
-          { label: t('team'), icon: Users, value: stats.totalTeamMembers, sub: t('totalTeamMembersLabel'), chip: 'icon-bg-accent' },
-          { label: t('properties'), icon: Building2, value: stats.totalProperties, sub: t('totalPropertiesLabel'), chip: 'icon-bg-info' },
-        ].map((item, i) => (
+        {statCards.map((item, i) => (
           <Card key={item.label} className={`hover-lift animate-fade-in-up delay-${(i + 1) * 100}`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-foreground">{item.label}</CardTitle>

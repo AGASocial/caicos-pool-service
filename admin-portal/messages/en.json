@@ -170,6 +170,8 @@
   "noPhotosAvailable": "No photos available for this job yet.",
   "noPropertiesMatchSearch": "No properties match your search.",
   "noPropertiesYet": "No properties yet. Add a property to get started.",
+  "noAssignedRouteTitle": "No route assigned",
+  "noAssignedRouteDescription": "You are not assigned to a service route yet. Contact your company admin to get set up.",
   "noRoutesYet": "No routes yet. Create a route and add houses to get started.",
   "noStopsYet": "No stops yet. Add properties to define the route order.",
   "noTeamYet": "No team members yet. Invite technicians to get started.",

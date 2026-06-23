@@ -6,6 +6,7 @@ import {
   decodeCursor,
   parsePaginationParams,
 } from '@/lib/pagination';
+import { resolveTechnicianScope } from '@/lib/technician-scope';
 
 const PROPERTY_BASE_FIELDS =
   'id, customer_name, customer_email, customer_phone, address, city, state, zip, gate_code, pool_type, pool_surface, notes, is_active, created_at';
@@ -59,17 +60,39 @@ export async function GET(request: NextRequest) {
     searchParams.get('unassigned') === '1' || searchParams.get('unassigned') === 'true';
   const { limit, cursor } = parsePaginationParams(searchParams);
 
+  const client = supabase as unknown as CadenzaSupabaseClient;
+  const { data: profile } = await client
+    .from('cadenza_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const technicianScope = profile
+    ? await resolveTechnicianScope(client, user.id, profile.role as string)
+    : null;
+
+  if (technicianScope && !technicianScope.hasAssignedRoutes) {
+    return NextResponse.json(buildPaginatedResponse([], limit, propertySortKey));
+  }
+
   const select = includeRoute
     ? `${PROPERTY_BASE_FIELDS}, stops:cadenza_route_stops!left(route_id, cadenza_routes(id, name))`
     : unassignedOnly
       ? `${PROPERTY_BASE_FIELDS}, stops:cadenza_route_stops!left(id)`
       : PROPERTY_BASE_FIELDS;
 
-  let query = (supabase as unknown as CadenzaSupabaseClient)
+  let query = client
     .from('cadenza_properties')
     .select(select)
     .order('customer_name', { ascending: true })
     .order('id', { ascending: true });
+
+  if (technicianScope) {
+    if (technicianScope.propertyIds.length === 0) {
+      return NextResponse.json(buildPaginatedResponse([], limit, propertySortKey));
+    }
+    query = query.in('id', technicianScope.propertyIds);
+  }
 
   if (activeOnly) {
     query = query.eq('is_active', true);
