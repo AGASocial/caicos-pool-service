@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,15 @@ import {
   ScrollView,
   Pressable,
   RefreshControl,
-  useColorScheme,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useAppColors } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
+import { isJobsListInvalidated } from '@/lib/jobs-list-invalidation';
 import type { ServiceJob } from '@/lib/database.types';
-import Colors from '@/constants/Colors';
+import { useI18n } from '@/lib/i18n';
+import { JobCardFooter } from '@/components/JobCardFooter';
+import { isJobClosedForDay, isJobOpen } from '@/lib/jobStatusDisplay';
 
 function getLocalDateString(d: Date): string {
   const y = d.getFullYear();
@@ -41,12 +44,13 @@ type JobWithProperty = ServiceJob & {
   cadenza_properties?: { customer_name: string; address: string } | null;
 };
 
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+const FOCUS_STALE_MS = 60_000;
 
 export default function CalendarScreen() {
-  const theme = useColorScheme() ?? 'light';
-  const c = Colors[theme];
+  const { colors: c } = useAppColors();
   const router = useRouter();
+  const { t, formatDate, dayLabels } = useI18n();
 
   const today = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => getLocalDateString(today), [today]);
@@ -55,6 +59,8 @@ export default function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   const [jobsByDate, setJobsByDate] = useState<Record<string, JobWithProperty[]>>({});
   const [refreshing, setRefreshing] = useState(false);
+  const lastFetchedAt = useRef<number>(0);
+  const skipNextFocusRef = useRef(true);
 
   const weekDates = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -80,11 +86,28 @@ export default function CalendarScreen() {
       map[d].push(job);
     }
     setJobsByDate(map);
+    lastFetchedAt.current = Date.now();
   }, [weekDates]);
 
   useEffect(() => {
     fetchWeek();
   }, [fetchWeek]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (skipNextFocusRef.current) {
+        skipNextFocusRef.current = false;
+        return;
+      }
+      const fetchedAt = lastFetchedAt.current;
+      if (fetchedAt === 0) return;
+      const stale = Date.now() - fetchedAt >= FOCUS_STALE_MS;
+      const invalidated = isJobsListInvalidated(fetchedAt);
+      if (stale || invalidated) {
+        fetchWeek();
+      }
+    }, [fetchWeek])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -102,7 +125,7 @@ export default function CalendarScreen() {
 
   const selectedJobs = jobsByDate[selectedDate] ?? [];
 
-  const monthLabel = weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const monthLabel = formatDate(weekDates[0], { month: 'long', year: 'numeric' });
 
   const styles = useMemo(
     () =>
@@ -204,24 +227,6 @@ export default function CalendarScreen() {
           borderTopWidth: 1,
           borderTopColor: c.divider,
         },
-        statusBadge: {
-          paddingHorizontal: 10,
-          paddingVertical: 4,
-          borderRadius: 8,
-          backgroundColor: c.chipBg,
-        },
-        statusBadgeText: { fontSize: 12, fontWeight: '600', color: c.tint },
-        startBtn: {
-          flex: 1,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: 36,
-          borderRadius: 10,
-          borderWidth: 1,
-          borderColor: c.tint,
-        },
-        startBtnText: { fontSize: 14, fontWeight: '600', color: c.tint },
       }),
     [c]
   );
@@ -246,8 +251,8 @@ export default function CalendarScreen() {
           const isSelected = ds === selectedDate;
           const isToday = ds === todayStr;
           const dayJobs = jobsByDate[ds] ?? [];
-          const completedCount = dayJobs.filter((j) => j.status === 'completed').length;
-          const pendingCount = dayJobs.length - completedCount;
+          const openCount = dayJobs.filter((j) => isJobOpen(j.status)).length;
+          const closedCount = dayJobs.filter((j) => isJobClosedForDay(j.status)).length;
 
           return (
             <Pressable
@@ -256,16 +261,16 @@ export default function CalendarScreen() {
               onPress={() => setSelectedDate(ds)}
             >
               <Text style={[styles.dayLabel, isSelected && styles.dayLabelSelected]}>
-                {DAY_LABELS[i]}
+                {dayLabels[i]}
               </Text>
               <Text style={[styles.dayNum, isSelected && styles.dayNumSelected]}>
                 {d.getDate()}
               </Text>
               <View style={styles.dotRow}>
-                {Array.from({ length: Math.min(pendingCount, 3) }).map((_, k) => (
+                {Array.from({ length: Math.min(openCount, 3) }).map((_, k) => (
                   <View key={`p${k}`} style={[styles.dot, isSelected && styles.dotSelected]} />
                 ))}
-                {Array.from({ length: Math.min(completedCount, 3) }).map((_, k) => (
+                {Array.from({ length: Math.min(closedCount, 3) }).map((_, k) => (
                   <View key={`c${k}`} style={[styles.dot, !isSelected && styles.dotCompleted, isSelected && styles.dotSelected]} />
                 ))}
               </View>
@@ -281,7 +286,7 @@ export default function CalendarScreen() {
       >
         <View style={styles.dayHeader}>
           <Text style={styles.dayHeaderText}>
-            {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
+            {formatDate(selectedDate, {
               weekday: 'long',
               month: 'short',
               day: 'numeric',
@@ -295,13 +300,12 @@ export default function CalendarScreen() {
         </View>
 
         {selectedJobs.length === 0 ? (
-          <Text style={styles.empty}>No jobs scheduled</Text>
+          <Text style={styles.empty}>{t('jobs.noJobsScheduled')}</Text>
         ) : (
           selectedJobs.map((item) => {
             const prop = Array.isArray(item.cadenza_properties)
               ? item.cadenza_properties[0]
               : item.cadenza_properties;
-            const isCompleted = item.status === 'completed';
             return (
               <Pressable
                 key={item.id}
@@ -314,15 +318,7 @@ export default function CalendarScreen() {
                     <Text style={styles.cardAddress}>{prop?.address ?? ''}</Text>
                   </View>
                   <View style={styles.cardFooter}>
-                    {isCompleted ? (
-                      <View style={styles.statusBadge}>
-                        <Text style={styles.statusBadgeText}>Completed</Text>
-                      </View>
-                    ) : (
-                      <View style={styles.startBtn}>
-                        <Text style={styles.startBtnText}>Start Service</Text>
-                      </View>
-                    )}
+                    <JobCardFooter status={item.status} />
                   </View>
                 </View>
               </Pressable>

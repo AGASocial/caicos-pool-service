@@ -3,11 +3,15 @@ import { AppState, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
 import { BiometricLockOverlay } from '@/components/BiometricLockOverlay';
+import { useAppColors } from '@/lib/theme';
 import { isBiometricLoginEnabled } from '@/lib/biometric-auth';
+import { useI18n } from '@/lib/i18n';
 import { supabase } from '@/lib/supabase';
 
 export default function AppLayout() {
   const router = useRouter();
+  const { t } = useI18n();
+  const { colors } = useAppColors();
   const [isLocked, setIsLocked] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const appState = useRef(AppState.currentState);
@@ -61,11 +65,17 @@ export default function AppLayout() {
           const isJobRoute = route.name?.startsWith('job') ?? false;
           return {
             headerShown: isJobRoute,
-            headerBackTitle: 'Back',
+            headerBackTitle: t('common.back'),
+            headerStyle: { backgroundColor: colors.headerBg },
+            headerBackground: () => <View style={{ flex: 1, backgroundColor: colors.headerBg }} />,
+            headerTintColor: colors.text,
+            headerTitleStyle: { color: colors.text, fontWeight: '600' },
+            headerShadowVisible: false,
+            contentStyle: { backgroundColor: colors.background },
             ...(isJobRoute && route.name === 'job/[id]/cant-service'
-              ? { title: "Can't service" }
+              ? { title: t('nav.cantService') }
               : isJobRoute
-                ? { title: 'Job' }
+                ? { title: t('nav.job') }
                 : {}),
           };
         }}
@@ -73,12 +83,36 @@ export default function AppLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="job/[id]" />
         <Stack.Screen
+          name="personal-information"
+          options={{
+            headerShown: true,
+            title: t('settings.personalInformation'),
+            headerBackTitle: t('nav.settings'),
+          }}
+        />
+        <Stack.Screen
+          name="language"
+          options={{
+            headerShown: true,
+            title: t('settings.language'),
+            headerBackTitle: t('nav.settings'),
+          }}
+        />
+        <Stack.Screen
           name="notifications"
-          options={{ headerShown: true, title: 'Notifications', headerBackTitle: 'Settings' }}
+          options={{
+            headerShown: true,
+            title: t('nav.notifications'),
+            headerBackTitle: t('nav.settings'),
+          }}
         />
         <Stack.Screen
           name="password-security"
-          options={{ headerShown: true, title: 'Password & Security', headerBackTitle: 'Settings' }}
+          options={{
+            headerShown: true,
+            title: t('nav.passwordSecurity'),
+            headerBackTitle: t('nav.settings'),
+          }}
         />
       </Stack>
 

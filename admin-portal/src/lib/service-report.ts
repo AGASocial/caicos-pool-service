@@ -23,6 +23,7 @@ export type ServiceReport = {
   id: string;
   created_at: string;
   issue_categories: string[] | null;
+  cant_service_reasons: string[] | null;
   notes: string | null;
   follow_up_needed: boolean | null;
   follow_up_notes: string | null;
@@ -47,6 +48,7 @@ export const REPORT_SELECT = `
   id,
   created_at,
   issue_categories,
+  cant_service_reasons,
   notes,
   follow_up_needed,
   follow_up_notes,
@@ -72,6 +74,7 @@ export const REPORT_WITH_PHOTOS_SELECT = `
   id,
   created_at,
   issue_categories,
+  cant_service_reasons,
   notes,
   follow_up_needed,
   follow_up_notes,
@@ -115,6 +118,7 @@ export function mapReportRow(row: Record<string, unknown>): ServiceReport {
     id: String(row.id),
     created_at: String(row.created_at),
     issue_categories: normalizeIssueCategories(row.issue_categories),
+    cant_service_reasons: normalizeCantServiceReasons(row.cant_service_reasons),
     notes: row.notes != null ? String(row.notes) : null,
     follow_up_needed: row.follow_up_needed != null ? Boolean(row.follow_up_needed) : null,
     follow_up_notes: row.follow_up_notes != null ? String(row.follow_up_notes) : null,
@@ -175,6 +179,15 @@ export function normalizeIssueCategories(raw: unknown): IssueCategoryKey[] {
   return raw.filter((k): k is IssueCategoryKey =>
     typeof k === 'string' && ISSUE_CATEGORY_KEYS.includes(k as IssueCategoryKey),
   );
+}
+
+export function normalizeCantServiceReasons(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((k): k is string => typeof k === 'string' && k.length > 0);
+}
+
+export function hasCantServiceReasons(report: ServiceReport): boolean {
+  return (report.cant_service_reasons?.length ?? 0) > 0;
 }
 
 export function hasVisitExtras(report: ServiceReport): boolean {

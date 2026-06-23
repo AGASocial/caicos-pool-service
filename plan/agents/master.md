@@ -34,6 +34,22 @@ Delegates to NextJS Developer, React Native Developer, or QA Specialist.
 
 ## Invoke
 
+**Day-to-day backlog** (`plan/backlog/INDEX.md`):
+
+```
+You are the Master Agent. What's next in plan/backlog/INDEX.md?
+```
+
+```
+Triage the items in plan/backlog/inbox.md
+```
+
+```
+Work the next open item from plan/backlog/INDEX.md
+```
+
+**Performance plan** (`plan/manifest.json`):
+
 ```
 You are the Master Agent. Read plan/manifest.json and assign the next eligible story.
 ```

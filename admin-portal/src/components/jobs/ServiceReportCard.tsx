@@ -11,6 +11,7 @@ import {
   hasChemicalReadings,
   hasEquipmentFlags,
   hasVisitExtras,
+  hasCantServiceReasons,
   normalizeIssueCategories,
 } from '@/lib/service-report';
 import { cn } from '@/lib/utils';
@@ -58,6 +59,7 @@ export function ServiceReportCard({ report, className }: Props) {
   }
 
   const issues = normalizeIssueCategories(report.issue_categories);
+  const cantServiceReasons = report.cant_service_reasons ?? [];
   const showDetails = hasChemicalReadings(report) || hasEquipmentFlags(report);
 
   return (
@@ -66,6 +68,21 @@ export function ServiceReportCard({ report, className }: Props) {
         <CardTitle>{t('serviceReport')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {hasCantServiceReasons(report) && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t('cantServiceReasons')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {cantServiceReasons.map((key) => (
+                <Badge key={key} variant="outline" className="border-destructive/40 bg-destructive/10">
+                  {t(`cant_service_${key}` as 'cant_service_gate_locked')}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t('issuesFound')}

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, useColorScheme } from 'react-native'
 import * as WebBrowser from 'expo-web-browser';
 import Colors from '@/constants/Colors';
 import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL } from '@/constants/Legal';
+import { useI18n } from '@/lib/i18n';
 
 type Props = {
   compact?: boolean;
@@ -11,6 +12,7 @@ type Props = {
 export function LegalFooter({ compact = false }: Props) {
   const theme = useColorScheme() ?? 'light';
   const c = Colors[theme];
+  const { t } = useI18n();
 
   const styles = useMemo(
     () =>
@@ -36,11 +38,11 @@ export function LegalFooter({ compact = false }: Props) {
     <View style={styles.container}>
       <View style={styles.row}>
         <Pressable onPress={() => openUrl(PRIVACY_POLICY_URL)} hitSlop={8}>
-          <Text style={styles.link}>Privacy Policy</Text>
+          <Text style={styles.link}>{t('common.privacyPolicy')}</Text>
         </Pressable>
         <Text style={styles.dot}>·</Text>
         <Pressable onPress={() => openUrl(TERMS_OF_SERVICE_URL)} hitSlop={8}>
-          <Text style={styles.link}>Terms of Service</Text>
+          <Text style={styles.link}>{t('common.termsOfService')}</Text>
         </Pressable>
       </View>
       {!compact && (

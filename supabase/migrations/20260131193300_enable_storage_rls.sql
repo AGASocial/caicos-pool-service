@@ -1,7 +1,15 @@
--- Enable RLS for storage.objects if not already enabled
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- Legacy Caicos assets bucket policies. storage.objects is owned by Supabase;
+-- RLS is already enabled on hosted projects. Skip steps that require table ownership.
 
--- Create policy to allow users to upload files to their own folder
+DO $$
+BEGIN
+  ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'storage.objects RLS already managed by Supabase; skipping ALTER';
+END $$;
+
+DROP POLICY IF EXISTS "Users can upload their own files" ON storage.objects;
 CREATE POLICY "Users can upload their own files"
 ON storage.objects FOR INSERT
 TO authenticated
@@ -10,7 +18,7 @@ WITH CHECK (
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- Create policy to allow users to view their own files
+DROP POLICY IF EXISTS "Users can view their own files" ON storage.objects;
 CREATE POLICY "Users can view their own files"
 ON storage.objects FOR SELECT
 TO authenticated
@@ -19,7 +27,7 @@ USING (
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- Create policy to allow users to update their own files
+DROP POLICY IF EXISTS "Users can update their own files" ON storage.objects;
 CREATE POLICY "Users can update their own files"
 ON storage.objects FOR UPDATE
 TO authenticated
@@ -28,7 +36,7 @@ USING (
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- Create policy to allow users to delete their own files
+DROP POLICY IF EXISTS "Users can delete their own files" ON storage.objects;
 CREATE POLICY "Users can delete their own files"
 ON storage.objects FOR DELETE
 TO authenticated

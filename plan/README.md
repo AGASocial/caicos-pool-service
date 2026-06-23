@@ -1,21 +1,34 @@
-# Cadenza Performance & Scalability Plan
+# Cadenza Plan & Backlog
 
-Backlog derived from the [Performance & Scalability Review](../docs/) (June 2026). User stories are grouped by domain and intended for tech refinement before assignment to development agents.
+Two systems for development work:
+
+| System | Location | Use for |
+|--------|----------|---------|
+| **Performance plan** | `manifest.json` + domain `USER-STORIES.md` | Phased initiatives with dependencies (June 2026 review) |
+| **Day-to-day backlog** | `backlog/` | Bugs, improvements, chores, feature follow-ups |
+
+See **`backlog/README.md`** for capture → triage → work workflow. Paste raw items in **`backlog/inbox.md`**.
 
 ## Folder structure
 
 ```
 plan/
 ├── README.md                 ← You are here
-├── manifest.json             ← Machine-readable index (status, tasks, agents)
+├── manifest.json             ← Performance plan index (status, tasks, agents)
+├── backlog/                  ← Bugs, improvements, chores (see backlog/README.md)
+│   ├── INDEX.md              ← Open items at a glance
+│   ├── inbox.md              ← Quick capture
+│   ├── TEMPLATE.md
+│   ├── admin/
+│   ├── mobile/
+│   ├── backend/
+│   └── database/
 ├── agents/                   ← Per-agent queues and invoke prompts
 │   ├── master.md
 │   ├── nextjs-developer.md
 │   ├── react-native-developer.md
 │   └── qa-specialist.md
 ├── frontend/USER-STORIES.md
-├── admin/                    ← Admin follow-ups outside performance backlog
-│   └── 2026-06-18-technician-visit-admin-sync.md
 ├── backend/USER-STORIES.md
 ├── mobile/USER-STORIES.md
 └── database/USER-STORIES.md
@@ -40,6 +53,14 @@ You are the NextJS Developer. Implement US-D-003 from plan/manifest.json.
 
 ```
 Execute the plan backlog autonomously.
+```
+
+```
+Work the next open item from plan/backlog/INDEX.md
+```
+
+```
+Triage the items in plan/backlog/inbox.md
 ```
 
 ```

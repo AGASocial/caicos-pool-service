@@ -19,6 +19,7 @@ import {
   getBiometricCapability,
   isBiometricLoginEnabled,
 } from '@/lib/biometric-auth';
+import { useI18n } from '@/lib/i18n';
 
 export default function PasswordSecurityScreen() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -33,6 +34,7 @@ export default function PasswordSecurityScreen() {
   const [biometricUpdating, setBiometricUpdating] = useState(false);
   const theme = useColorScheme() ?? 'light';
   const c = Colors[theme];
+  const { t } = useI18n();
 
   const loadBiometricSettings = useCallback(async () => {
     const [{ available, label }, enabled] = await Promise.all([
@@ -58,7 +60,7 @@ export default function PasswordSecurityScreen() {
       setBiometricUpdating(false);
 
       if (!result.ok) {
-        Alert.alert('Could not enable', result.error);
+        Alert.alert(t('auth.couldNotEnable'), result.error);
         return;
       }
 
@@ -76,15 +78,15 @@ export default function PasswordSecurityScreen() {
     setSuccess(false);
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setError('All fields are required.');
+      setError(t('passwordSecurity.allFieldsRequired'));
       return;
     }
     if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters.');
+      setError(t('passwordSecurity.passwordMinLength'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match.');
+      setError(t('passwordSecurity.passwordsDoNotMatch'));
       return;
     }
 
@@ -92,7 +94,7 @@ export default function PasswordSecurityScreen() {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user?.email) {
-      setError('Unable to verify current session.');
+      setError(t('passwordSecurity.sessionVerifyFailed'));
       setSaving(false);
       return;
     }
@@ -103,7 +105,7 @@ export default function PasswordSecurityScreen() {
     });
 
     if (signInErr) {
-      setError('Current password is incorrect.');
+      setError(t('passwordSecurity.currentPasswordIncorrect'));
       setSaving(false);
       return;
     }
@@ -234,14 +236,12 @@ export default function PasswordSecurityScreen() {
         {biometricAvailable && (
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Biometric Sign-In</Text>
+              <Text style={styles.sectionTitle}>{t('passwordSecurity.biometricSignIn')}</Text>
             </View>
             <View style={styles.toggleRow}>
               <View style={styles.toggleText}>
                 <Text style={styles.infoLabel}>{biometricLabel}</Text>
-                <Text style={styles.infoDesc}>
-                  Sign in faster and lock the app when you switch away from Cadenza.
-                </Text>
+                <Text style={styles.infoDesc}>{t('passwordSecurity.biometricDesc')}</Text>
               </View>
               <Switch
                 value={biometricEnabled}
@@ -256,7 +256,7 @@ export default function PasswordSecurityScreen() {
 
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Change Password</Text>
+            <Text style={styles.sectionTitle}>{t('passwordSecurity.changePassword')}</Text>
           </View>
           <View style={styles.sectionBody}>
             {error && (
@@ -267,16 +267,16 @@ export default function PasswordSecurityScreen() {
             {success && (
               <View style={styles.success}>
                 <Text style={styles.successText}>
-                  Password updated successfully. Re-enable {biometricLabel} if you want biometric sign-in again.
+                  {t('passwordSecurity.passwordUpdated', { label: biometricLabel })}
                 </Text>
               </View>
             )}
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Current Password</Text>
+              <Text style={styles.label}>{t('passwordSecurity.currentPassword')}</Text>
               <TextInput
                 style={styles.input}
                 placeholderTextColor={c.placeholder}
-                placeholder="Enter current password"
+                placeholder={t('passwordSecurity.enterCurrentPassword')}
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
                 secureTextEntry
@@ -285,25 +285,25 @@ export default function PasswordSecurityScreen() {
               />
             </View>
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>New Password</Text>
+              <Text style={styles.label}>{t('passwordSecurity.newPassword')}</Text>
               <TextInput
                 style={styles.input}
                 placeholderTextColor={c.placeholder}
-                placeholder="At least 8 characters"
+                placeholder={t('passwordSecurity.atLeast8Chars')}
                 value={newPassword}
                 onChangeText={setNewPassword}
                 secureTextEntry
                 autoCapitalize="none"
                 editable={!saving}
               />
-              <Text style={styles.hint}>Minimum 8 characters</Text>
+              <Text style={styles.hint}>{t('passwordSecurity.min8Chars')}</Text>
             </View>
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Confirm New Password</Text>
+              <Text style={styles.label}>{t('passwordSecurity.confirmNewPassword')}</Text>
               <TextInput
                 style={styles.input}
                 placeholderTextColor={c.placeholder}
-                placeholder="Re-enter new password"
+                placeholder={t('passwordSecurity.reEnterNewPassword')}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
@@ -320,7 +320,9 @@ export default function PasswordSecurityScreen() {
           disabled={saving}
         >
           {saving && <ActivityIndicator color={c.buttonPrimaryText} size="small" />}
-          <Text style={styles.saveBtnText}>{saving ? 'Updating...' : 'Update Password'}</Text>
+          <Text style={styles.saveBtnText}>
+            {saving ? t('common.updating') : t('passwordSecurity.updatePassword')}
+          </Text>
         </Pressable>
 
         <View style={styles.sectionCard}>
@@ -329,10 +331,8 @@ export default function PasswordSecurityScreen() {
               <Text style={styles.infoIconText}>🔒</Text>
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Two-Factor Authentication</Text>
-              <Text style={styles.infoDesc}>
-                Managed through your account email. Contact your administrator to enable.
-              </Text>
+              <Text style={styles.infoLabel}>{t('passwordSecurity.twoFactor')}</Text>
+              <Text style={styles.infoDesc}>{t('passwordSecurity.twoFactorDesc')}</Text>
             </View>
           </View>
           <View style={[styles.infoRow, styles.infoRowLast]}>
@@ -340,10 +340,8 @@ export default function PasswordSecurityScreen() {
               <Text style={styles.infoIconText}>✓</Text>
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Secure Session</Text>
-              <Text style={styles.infoDesc}>
-                Your session is encrypted and secured with Supabase Auth.
-              </Text>
+              <Text style={styles.infoLabel}>{t('passwordSecurity.secureSession')}</Text>
+              <Text style={styles.infoDesc}>{t('passwordSecurity.secureSessionDesc')}</Text>
             </View>
           </View>
         </View>

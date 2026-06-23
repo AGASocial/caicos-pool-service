@@ -1,3 +1,11 @@
+-- Legacy Caicos digital_assets stub (not used by Cadenza app; required for FK below).
+CREATE TABLE IF NOT EXISTS public.digital_assets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    files JSONB NOT NULL DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Create asset_attachments table
 CREATE TABLE IF NOT EXISTS public.asset_attachments (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

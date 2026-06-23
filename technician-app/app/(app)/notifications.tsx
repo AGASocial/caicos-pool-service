@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Switch, useColorScheme, Alert } from 'react-native';
 import { supabase } from '@/lib/supabase';
+import { useI18n } from '@/lib/i18n';
 import Colors from '@/constants/Colors';
 
 type Prefs = {
@@ -9,39 +10,6 @@ type Prefs = {
   schedule_changed: boolean;
   follow_up_due: boolean;
 };
-
-const NOTIFICATION_GROUPS = [
-  {
-    title: 'Jobs',
-    items: [
-      {
-        key: 'job_assigned' as const,
-        label: 'New job assigned',
-        description: 'When a new job is added to your route',
-      },
-      {
-        key: 'job_reminder' as const,
-        label: 'Job reminder',
-        description: '30 minutes before a scheduled job',
-      },
-      {
-        key: 'schedule_changed' as const,
-        label: 'Schedule changes',
-        description: 'When a job is rescheduled or cancelled',
-      },
-    ],
-  },
-  {
-    title: 'Follow-ups',
-    items: [
-      {
-        key: 'follow_up_due' as const,
-        label: 'Follow-up due',
-        description: 'When a follow-up you filed is coming up',
-      },
-    ],
-  },
-];
 
 const DEFAULTS: Prefs = {
   job_assigned: true,
@@ -53,9 +21,46 @@ const DEFAULTS: Prefs = {
 export default function NotificationsScreen() {
   const theme = useColorScheme() ?? 'light';
   const c = Colors[theme];
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [prefs, setPrefs] = useState<Prefs>(DEFAULTS);
   const userIdRef = useRef<string | null>(null);
+
+  const notificationGroups = useMemo(
+    () => [
+      {
+        title: t('notifications.jobs'),
+        items: [
+          {
+            key: 'job_assigned' as const,
+            label: t('notifications.newJobAssigned'),
+            description: t('notifications.newJobAssignedDesc'),
+          },
+          {
+            key: 'job_reminder' as const,
+            label: t('notifications.jobReminder'),
+            description: t('notifications.jobReminderDesc'),
+          },
+          {
+            key: 'schedule_changed' as const,
+            label: t('notifications.scheduleChanged'),
+            description: t('notifications.scheduleChangedDesc'),
+          },
+        ],
+      },
+      {
+        title: t('notifications.followUps'),
+        items: [
+          {
+            key: 'follow_up_due' as const,
+            label: t('notifications.followUpDue'),
+            description: t('notifications.followUpDueDesc'),
+          },
+        ],
+      },
+    ],
+    [t]
+  );
 
   useEffect(() => {
     (async () => {
@@ -86,8 +91,8 @@ export default function NotificationsScreen() {
       .update({ notification_prefs: next })
       .eq('id', userIdRef.current);
     if (error) {
-      setPrefs(prefs); // revert on failure
-      Alert.alert('Error', error.message ?? 'Failed to save');
+      setPrefs(prefs);
+      Alert.alert(t('common.error'), error.message ?? t('notifications.saveFailed'));
     }
   }
 
@@ -131,19 +136,6 @@ export default function NotificationsScreen() {
         rowText: { flex: 1, gap: 2 },
         rowLabel: { fontSize: 16, fontWeight: '500', color: c.text },
         rowDescription: { fontSize: 13, color: c.muted },
-        saveBtn: {
-          backgroundColor: c.buttonPrimary,
-          borderRadius: 12,
-          paddingVertical: 14,
-          alignItems: 'center',
-          marginTop: 8,
-          shadowColor: c.buttonPrimaryShadow,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 1,
-          shadowRadius: 12,
-          elevation: 4,
-        },
-        saveBtnText: { color: c.buttonPrimaryText, fontWeight: '600', fontSize: 16 },
       }),
     [c]
   );
@@ -151,7 +143,7 @@ export default function NotificationsScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: c.background }}>
-        <Text style={{ color: c.muted }}>Loading...</Text>
+        <Text style={{ color: c.muted }}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -159,7 +151,7 @@ export default function NotificationsScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
-        {NOTIFICATION_GROUPS.map((group) => (
+        {notificationGroups.map((group) => (
           <View key={group.title}>
             <Text style={styles.sectionLabel}>{group.title}</Text>
             <View style={styles.card}>
@@ -182,7 +174,6 @@ export default function NotificationsScreen() {
             </View>
           </View>
         ))}
-
       </View>
     </ScrollView>
   );

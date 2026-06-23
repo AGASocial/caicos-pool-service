@@ -1,10 +1,13 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { getCachedUserId } from '@/lib/auth-session';
+import { isJobsListInvalidated } from '@/lib/jobs-list-invalidation';
 import type { ServiceJob } from '@/lib/database.types';
-import Colors from '@/constants/Colors';
+import { useI18n } from '@/lib/i18n';
+import { JobCardFooter } from '@/components/JobCardFooter';
+import { useAppColors } from '@/lib/theme';
 
 /** Today in local time as YYYY-MM-DD (avoids UTC date being wrong in Americas etc.) */
 function getLocalDateString(d: Date): string {
@@ -24,9 +27,10 @@ export default function JobsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const lastFetchedAt = useRef<number>(0);
+  const skipNextFocusRef = useRef(true);
   const router = useRouter();
-  const theme = useColorScheme() ?? 'light';
-  const c = Colors[theme];
+  const { colors: c } = useAppColors();
+  const { t, formatDate } = useI18n();
 
   const today = getLocalDateString(new Date());
 
@@ -57,6 +61,22 @@ export default function JobsScreen() {
   useEffect(() => {
     fetchJobs().finally(() => setLoading(false));
   }, [fetchJobs]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (skipNextFocusRef.current) {
+        skipNextFocusRef.current = false;
+        return;
+      }
+      const fetchedAt = lastFetchedAt.current;
+      if (fetchedAt === 0) return;
+      const stale = Date.now() - fetchedAt >= FOCUS_STALE_MS;
+      const invalidated = isJobsListInvalidated(fetchedAt);
+      if (stale || invalidated) {
+        fetchJobs();
+      }
+    }, [fetchJobs])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -226,12 +246,12 @@ export default function JobsScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <Text style={{ color: c.text }}>Loading jobs...</Text>
+        <Text style={{ color: c.text }}>{t('common.loadingJobs')}</Text>
       </View>
     );
   }
 
-  const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  const dateLabel = formatDate(new Date(), { weekday: 'long', month: 'short', day: 'numeric' });
 
   return (
     <FlatList
@@ -249,15 +269,17 @@ export default function JobsScreen() {
               </View>
               <View>
                 <Text style={styles.date}>{dateLabel}</Text>
-                <Text style={styles.headerSub}>Today's schedule</Text>
+                <Text style={styles.headerSub}>{t('jobs.todaysSchedule')}</Text>
               </View>
             </View>
           </View>
           <View style={styles.progressCard}>
             <View style={styles.progressTop}>
               <View>
-                <Text style={styles.progressTitle}>Daily Progress</Text>
-                <Text style={styles.progressSub}>{completed} of {jobs.length} jobs completed</Text>
+                <Text style={styles.progressTitle}>{t('jobs.dailyProgress')}</Text>
+                <Text style={styles.progressSub}>
+                  {t('jobs.jobsCompleted', { completed, total: jobs.length })}
+                </Text>
               </View>
               <View style={styles.progressCircle}>
                 <Text style={styles.progressCircleText}>{progressPct}%</Text>
@@ -268,19 +290,19 @@ export default function JobsScreen() {
             </View>
           </View>
           <View style={styles.listHeader}>
-            <Text style={styles.listHeaderTitle}>Upcoming Jobs</Text>
+            <Text style={styles.listHeaderTitle}>{t('jobs.upcomingJobs')}</Text>
             <View style={styles.countBadge}>
               <Text style={styles.countBadgeText}>{jobs.length}</Text>
             </View>
           </View>
         </>
       }
-      ListEmptyComponent={<Text style={styles.empty}>No jobs today. Enjoy your day off!</Text>}
+      ListEmptyComponent={<Text style={styles.empty}>{t('jobs.noJobsToday')}</Text>}
       ListFooterComponent={
         overdueJobs.length > 0 ? (
           <View style={styles.overdueSection}>
             <View style={styles.overdueHeader}>
-              <Text style={styles.overdueHeaderTitle}>Pending from Past</Text>
+              <Text style={styles.overdueHeaderTitle}>{t('jobs.pendingFromPast')}</Text>
               <View style={styles.overdueCountBadge}>
                 <Text style={styles.overdueCountBadgeText}>{overdueJobs.length}</Text>
               </View>
@@ -288,7 +310,7 @@ export default function JobsScreen() {
             {overdueJobs.map((item) => {
               const prop = Array.isArray(item.cadenza_properties) ? item.cadenza_properties[0] : item.cadenza_properties;
               const overdueDateLabel = item.scheduled_date
-                ? new Date(item.scheduled_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                ? formatDate(item.scheduled_date, { weekday: 'short', month: 'short', day: 'numeric' })
                 : '';
               return (
                 <Pressable key={item.id} style={styles.overdueCard} onPress={() => router.push(`/(app)/job/${item.id}`)}>
@@ -305,9 +327,7 @@ export default function JobsScreen() {
                       </View>
                     </View>
                     <View style={styles.cardFooter}>
-                      <View style={styles.startServiceBtn}>
-                        <Text style={styles.startServiceText}>Start Service</Text>
-                      </View>
+                      <JobCardFooter status={item.status} />
                     </View>
                   </View>
                 </Pressable>
@@ -318,7 +338,6 @@ export default function JobsScreen() {
       }
       renderItem={({ item }) => {
         const prop = Array.isArray(item.cadenza_properties) ? item.cadenza_properties[0] : item.cadenza_properties;
-        const isCompleted = item.status === 'completed';
         return (
           <Pressable style={styles.card} onPress={() => router.push(`/(app)/job/${item.id}`)}>
             <View style={styles.cardBody}>
@@ -329,15 +348,7 @@ export default function JobsScreen() {
                 </View>
               </View>
               <View style={styles.cardFooter}>
-                {!isCompleted ? (
-                  <View style={styles.startServiceBtn}>
-                    <Text style={styles.startServiceText}>Start Service</Text>
-                  </View>
-                ) : (
-                  <View style={styles.statusBadge}>
-                    <Text style={styles.statusBadgeText}>Completed</Text>
-                  </View>
-                )}
+                <JobCardFooter status={item.status} />
               </View>
             </View>
           </Pressable>

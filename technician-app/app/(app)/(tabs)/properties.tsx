@@ -1,14 +1,15 @@
 import { useEffect, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput } from 'react-native';
+import { useAppColors } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import type { Property } from '@/lib/database.types';
-import Colors from '@/constants/Colors';
+import { useI18n } from '@/lib/i18n';
 
 export default function PropertiesScreen() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
-  const theme = useColorScheme() ?? 'light';
-  const c = Colors[theme];
+  const { colors: c } = useAppColors();
+  const { t } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
@@ -182,7 +183,7 @@ export default function PropertiesScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <Text style={{ color: c.text }}>Loading properties...</Text>
+        <Text style={{ color: c.text }}>{t('common.loadingProperties')}</Text>
       </View>
     );
   }
@@ -217,10 +218,12 @@ export default function PropertiesScreen() {
                 </View>
               </View>
             </View> */}
-            <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Properties ({properties.length})</Text>
+            <Text style={[styles.sectionTitle, { marginTop: 16 }]}>
+              {t('properties.title', { count: properties.length })}
+            </Text>
           </>
         }
-        ListEmptyComponent={<Text style={styles.empty}>No properties</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>{t('properties.noProperties')}</Text>}
         renderItem={({ item }) => {
           const poolType = item.pool_type ?? 'Pool';
           return (
@@ -232,7 +235,7 @@ export default function PropertiesScreen() {
                     <View style={styles.cardTitleRow}>
                       <Text style={styles.cardTitle} numberOfLines={1}>{item.customer_name}</Text>
                       <View style={styles.typeBadge}>
-                        <Text style={styles.typeBadgeText}>Residential</Text>
+                        <Text style={styles.typeBadgeText}>{t('properties.residential')}</Text>
                       </View>
                     </View>
                     <Text style={styles.cardAddress} numberOfLines={1}>{item.address}</Text>
