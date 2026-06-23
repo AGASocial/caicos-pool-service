@@ -18,7 +18,7 @@ export default function RegisterPage() {
         <div className="mx-auto m-4 flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           {/* Mobile: Card with backdrop blur for better readability */}
           <div className="lg:bg-transparent bg-card/85 backdrop-blur-md rounded-xl lg:rounded-none p-6 sm:p-8 lg:p-0 shadow-xl lg:shadow-none border border-border lg:border-0">
-            <AuthForm type="register" />
+            <AuthForm type="register" inviteCode={inviteCode} />
           </div>
         </div>
       </div>
