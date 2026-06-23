@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-fetch";
 import { queryKeys } from "@/lib/query-keys";
+import type { TechnicianScope } from "@/lib/technician-scope";
 
 export interface AuthUser {
   id: string;
@@ -18,6 +19,7 @@ export interface AuthUser {
     full_name: string;
     is_active: boolean;
   } | null;
+  technicianScope?: TechnicianScope | null;
 }
 
 interface SessionResponse {

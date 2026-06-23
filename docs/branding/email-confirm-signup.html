@@ -1,0 +1,145 @@
+<!--
+  Cadenza — Supabase "Confirm signup" email template
+  Paste into: Supabase Dashboard → Authentication → Email Templates → Confirm signup
+
+  Variables: {{ .ConfirmationURL }}, {{ .Email }}, {{ .SiteURL }}
+  Brand: docs/branding/BRAND-IDENTITY.md + landing-page tokens (linen, ink, brass, teal CTA)
+-->
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <title>Confirm your Cadenza account</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+  <style>
+    @media only screen and (max-width: 620px) {
+      .email-container { width: 100% !important; }
+      .content-pad { padding-left: 24px !important; padding-right: 24px !important; }
+      .cta-btn { display: block !important; width: 100% !important; box-sizing: border-box !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#FAF7F2;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+  <!-- Preheader (hidden preview text) -->
+  <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
+  Confirm your email to finish setting up your Cadenza account.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+  </div>
+
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#FAF7F2;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+
+        <table role="presentation" class="email-container" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="padding:0 0 20px 0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#0F172A;border-radius:12px 12px 0 0;">
+                <tr>
+                  <td align="center" style="padding:28px 32px 0 32px;">
+                    <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:500;letter-spacing:0.3px;line-height:1;color:#FAF7F2;">
+                      Cadenza
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding:10px 32px 0 32px;">
+                    <p style="margin:0;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#C7A85F;">
+                      Service Management, Synchronized
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:20px 32px 0 32px;">
+                    <table role="presentation" width="48" cellspacing="0" cellpadding="0" border="0" align="center">
+                      <tr>
+                        <td style="height:2px;background-color:#C7A85F;font-size:0;line-height:0;">&nbsp;</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="height:24px;font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body card -->
+          <tr>
+            <td style="background-color:#FFFFFF;border-radius:0 0 12px 12px;box-shadow:0 4px 6px rgba(15,23,42,0.06);">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td class="content-pad" style="padding:36px 40px 8px 40px;">
+                    <h1 style="margin:0 0 16px 0;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:24px;font-weight:600;line-height:1.3;color:#0F172A;">
+                      Confirm your email address
+                    </h1>
+                    <p style="margin:0 0 16px 0;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:16px;font-weight:400;line-height:1.6;color:#475569;">
+                      You&rsquo;re one step away from your Cadenza account. Confirm <strong style="color:#0F172A;font-weight:600;">{{ .Email }}</strong> to finish signing up and start coordinating your team.
+                    </p>
+                    <p style="margin:0 0 28px 0;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:16px;font-weight:400;line-height:1.6;color:#475569;">
+                      This link expires soon for your security. If you didn&rsquo;t create an account, you can safely ignore this email.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- CTA -->
+                <tr>
+                  <td class="content-pad" align="center" style="padding:0 40px 32px 40px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td align="center" style="border-radius:10px;background-color:#0891B2;">
+                          <a href="{{ .ConfirmationURL }}" class="cta-btn" style="display:inline-block;padding:14px 28px;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;text-decoration:none;color:#FFFFFF;line-height:1.2;">
+                            Confirm email address &rarr;
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Fallback link -->
+                <tr>
+                  <td class="content-pad" style="padding:0 40px 32px 40px;border-top:1px solid #F1F5F9;">
+                    <p style="margin:24px 0 8px 0;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:13px;font-weight:500;line-height:1.5;color:#475569;">
+                      Button not working? Copy and paste this link into your browser:
+                    </p>
+                    <p style="margin:0;font-family:'JetBrains Mono','Courier New',monospace;font-size:12px;font-weight:400;line-height:1.6;word-break:break-all;">
+                      <a href="{{ .ConfirmationURL }}" style="color:#0891B2;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding:28px 16px 8px 16px;">
+              <p style="margin:0 0 8px 0;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:13px;font-weight:400;line-height:1.5;color:#94A3B8;">
+                Questions? Contact us at
+                <a href="mailto:info@cadenzaops.com" style="color:#0891B2;text-decoration:underline;">info@cadenzaops.com</a>
+              </p>
+              <p style="margin:0;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:12px;font-weight:400;line-height:1.5;color:#94A3B8;">
+                &copy; Cadenza &middot; <a href="https://cadenzaops.com" style="color:#94A3B8;text-decoration:underline;">cadenzaops.com</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

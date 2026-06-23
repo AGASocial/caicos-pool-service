@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoadingState } from '@/components/ui/loading-state';
+import { EntitlementGate } from '@/components/EntitlementGate';
 
 type ByStatus = {
   pending: number;
@@ -82,6 +83,7 @@ export default function ReportsPage() {
   const completionRatePct = stats ? Math.round(stats.completionRate * 100) : 0;
 
   return (
+    <EntitlementGate resource="report" action="view">
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
@@ -225,5 +227,6 @@ export default function ReportsPage() {
         </>
       ) : null}
     </div>
+    </EntitlementGate>
   );
 }

@@ -12,6 +12,8 @@ import { usePendingInvites, buildInviteRegisterUrl, type InviteCode } from '@/li
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { LoadingState } from '@/components/ui/loading-state';
+import { EntitlementGate } from '@/components/EntitlementGate';
+import { hasEntitlement } from '@/lib/entitlements';
 
 /** Roles that can appear as team cards. Matches invite/API roles. */
 type RoleKey = 'technician' | 'admin' | 'operations';
@@ -109,6 +111,7 @@ export default function TeamPage() {
   const t = useTranslations();
   const { user } = useAuth();
   const isAdmin = user?.profile?.role === 'admin' || user?.profile?.role === 'owner';
+  const canInvite = hasEntitlement(user?.profile?.role, 'team', 'create');
   const { data: teamMembers = [], isLoading: loading, error: queryError } = useTeam();
   const { data: pendingInvites = [] } = usePendingInvites();
   const setActive = useSetTeamMemberActive();
@@ -127,18 +130,21 @@ export default function TeamPage() {
   };
 
   return (
+    <EntitlementGate resource="team" action="view">
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('team')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('teamDescription')}</p>
         </div>
-        <Button asChild className="w-fit shrink-0">
-          <Link href="/team/invite">
-            <UserPlus className="mr-2 h-4 w-4" />
-            {t('inviteTeamMember')}
-          </Link>
-        </Button>
+        {canInvite && (
+          <Button asChild className="w-fit shrink-0">
+            <Link href="/team/invite">
+              <UserPlus className="mr-2 h-4 w-4" />
+              {t('inviteTeamMember')}
+            </Link>
+          </Button>
+        )}
       </div>
 
       {loading && <LoadingState size="sm" padded={false} className="py-8" />}
@@ -228,5 +234,6 @@ export default function TeamPage() {
         </div>
       )}
     </div>
+    </EntitlementGate>
   );
 }

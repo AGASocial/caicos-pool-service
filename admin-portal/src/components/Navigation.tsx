@@ -3,27 +3,33 @@
 import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
-import { LayoutDashboard, Briefcase, Building2, Route, Users, FileText, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Building2, Route, Users, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/auth';
+import { hasEntitlement, type Resource } from '@/lib/entitlements';
 
 export default function Navigation({ closeSidebar, collapsed }: { closeSidebar?: () => void; collapsed?: boolean }) {
   const t = useTranslations();
   const pathname = usePathname();
+  const { user } = useAuth();
 
-  const navItems = [
-    { href: '/dashboard', label: t('dashboard'), icon: LayoutDashboard },
-    { href: '/reports', label: t('reports'), icon: FileText },
-    { href: '/jobs', label: t('jobs'), icon: Briefcase },
-    { href: '/routes', label: t('routes'), icon: Route },
-    { href: '/team', label: t('team'), icon: Users },
-    { href: '/properties', label: t('properties'), icon: Building2 },
-    // { href: '/billing', label: t('billing'), icon: CreditCard },
+  const navItems: Array<{ href: string; label: string; icon: typeof LayoutDashboard; resource: Resource }> = [
+    { href: '/dashboard', label: t('dashboard'), icon: LayoutDashboard, resource: 'dashboard' },
+    { href: '/reports', label: t('reports'), icon: FileText, resource: 'report' },
+    { href: '/jobs', label: t('jobs'), icon: Briefcase, resource: 'job' },
+    { href: '/routes', label: t('routes'), icon: Route, resource: 'route' },
+    { href: '/team', label: t('team'), icon: Users, resource: 'team' },
+    { href: '/properties', label: t('properties'), icon: Building2, resource: 'property' },
   ];
+
+  const visibleNavItems = navItems.filter((item) =>
+    hasEntitlement(user?.profile?.role, item.resource, 'view'),
+  );
 
   return (
     <nav className="space-y-6">
       <ul className="space-y-1">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = pathname?.includes(item.href);
           return (
             <li key={item.href}>

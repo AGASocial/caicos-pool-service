@@ -17,6 +17,7 @@ import {
   computeInviteMaxTechnicians,
 } from '@/lib/billing-queries';
 import { queryKeys } from '@/lib/query-keys';
+import { EntitlementGate } from '@/components/EntitlementGate';
 
 type CreatedInvite = { code: string; role: string; expires_at: string };
 type InviteRole = 'technician' | 'admin' | 'operations';
@@ -96,6 +97,7 @@ export default function InviteTeamMemberPage() {
   }
 
   return (
+    <EntitlementGate resource="team" action="create">
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
@@ -215,5 +217,6 @@ export default function InviteTeamMemberPage() {
         </Card>
       )}
     </div>
+    </EntitlementGate>
   );
 }

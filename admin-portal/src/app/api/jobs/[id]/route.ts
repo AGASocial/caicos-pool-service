@@ -8,6 +8,7 @@ import {
   extractReportPhotos,
   mapReportRow,
 } from '@/lib/service-report';
+import { jobMatchesTechnicianScope, resolveTechnicianScope } from '@/lib/technician-scope';
 
 export async function GET(
   _request: NextRequest,
@@ -52,6 +53,27 @@ export async function GET(
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
     return NextResponse.json({ error: error?.message || 'Not found' }, { status: 500 });
+  }
+
+  const { data: profile } = await client
+    .from('cadenza_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const technicianScope = profile
+    ? await resolveTechnicianScope(client, user.id, profile.role as string)
+    : null;
+
+  if (
+    technicianScope &&
+    !jobMatchesTechnicianScope(
+      data as { technician_id?: string | null; route_id?: string | null },
+      user.id,
+      technicianScope,
+    )
+  ) {
+    return NextResponse.json({ error: 'Job not found' }, { status: 404 });
   }
 
   const { data: reportRow } = await client

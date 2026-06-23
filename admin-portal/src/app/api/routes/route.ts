@@ -6,6 +6,8 @@ import {
   decodeCursor,
   parsePaginationParams,
 } from '@/lib/pagination';
+import { entitlementError, hasEntitlement } from '@/lib/entitlements';
+import { resolveTechnicianScope } from '@/lib/technician-scope';
 
 type RouteRow = { id: string; name: string; technician_id: string; stops?: unknown[] };
 
@@ -23,7 +25,26 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const { limit, cursor } = parsePaginationParams(searchParams);
 
-  let query = (supabase as unknown as CadenzaSupabaseClient)
+  const client = supabase as unknown as CadenzaSupabaseClient;
+  const { data: profile } = await client
+    .from('cadenza_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!hasEntitlement(profile?.role as string | undefined, 'route', 'view')) {
+    return NextResponse.json(entitlementError('route', 'view'), { status: 403 });
+  }
+
+  const technicianScope = profile
+    ? await resolveTechnicianScope(client, user.id, profile.role as string)
+    : null;
+
+  if (technicianScope && !technicianScope.hasAssignedRoutes) {
+    return NextResponse.json(buildPaginatedResponse([], limit, routeSortKey));
+  }
+
+  let query = client
     .from('cadenza_routes')
     .select(`
       id,
@@ -37,6 +58,10 @@ export async function GET(request: NextRequest) {
     `)
     .order('name', { ascending: true })
     .order('id', { ascending: true });
+
+  if (technicianScope) {
+    query = query.in('id', technicianScope.routeIds);
+  }
 
   if (cursor) {
     const decoded = decodeCursor(cursor);

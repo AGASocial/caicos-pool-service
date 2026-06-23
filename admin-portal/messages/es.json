@@ -170,6 +170,8 @@
   "noPhotosAvailable": "No hay fotos disponibles para este trabajo todavía.",
   "noPropertiesMatchSearch": "Ninguna propiedad coincide con la búsqueda.",
   "noPropertiesYet": "Aún no hay propiedades. Añade una propiedad para comenzar.",
+  "noAssignedRouteTitle": "Sin ruta asignada",
+  "noAssignedRouteDescription": "Aún no tienes una ruta de servicio asignada. Contacta al administrador de tu empresa para configurarte.",
   "noRoutesYet": "Aún no hay rutas. Crea una ruta y añade casas para comenzar.",
   "noStopsYet": "Aún no hay paradas. Añade propiedades para definir el orden.",
   "noTeamYet": "Aún no hay miembros en el equipo. Invita técnicos para comenzar.",

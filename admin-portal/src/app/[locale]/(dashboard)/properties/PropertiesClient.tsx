@@ -5,6 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 import { Plus, Building2, ChevronRight } from 'lucide-react';
+import { NoAssignedRoute } from '@/components/NoAssignedRoute';
+import { hasEntitlement } from '@/lib/entitlements';
+import { useAuth } from '@/lib/auth';
 
 type Property = {
   id: string;
@@ -15,8 +18,28 @@ type Property = {
   created_at?: string;
 };
 
-export default function PropertiesClient({ properties }: { properties: Property[] }) {
+export default function PropertiesClient({
+  properties,
+  noAssignedRoute = false,
+}: {
+  properties: Property[];
+  noAssignedRoute?: boolean;
+}) {
   const t = useTranslations();
+  const { user } = useAuth();
+  const canCreateProperty = hasEntitlement(user?.profile?.role, 'property', 'create');
+
+  if (noAssignedRoute) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('properties')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('propertiesDescription')}</p>
+        </div>
+        <NoAssignedRoute />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -25,12 +48,14 @@ export default function PropertiesClient({ properties }: { properties: Property[
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('properties')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('propertiesDescription')}</p>
         </div>
-        <Button asChild className="w-fit shrink-0">
-          <Link href="/properties/new">
-            <Plus className="mr-2 h-4 w-4" />
-            {t('createProperty')}
-          </Link>
-        </Button>
+        {canCreateProperty && (
+          <Button asChild className="w-fit shrink-0">
+            <Link href="/properties/new">
+              <Plus className="mr-2 h-4 w-4" />
+              {t('createProperty')}
+            </Link>
+          </Button>
+        )}
       </div>
 
       <Card>

@@ -15,6 +15,9 @@ import { useJobs, useRoutes } from '@/lib/data-queries';
 import { monthBoundsCalendar, weekBoundsMonday } from '@/lib/date-week';
 import { cn } from '@/lib/utils';
 import { LoadingState } from '@/components/ui/loading-state';
+import { useAuth } from '@/lib/auth';
+import { hasEntitlement, isOfficeRole } from '@/lib/entitlements';
+import { NoAssignedRoute } from '@/components/NoAssignedRoute';
 
 type PropertyRef = { id: string; customer_name: string; address?: string };
 type TechnicianRef = { id: string; full_name: string };
@@ -63,6 +66,10 @@ function jobStatusBadgeClassName(status: string) {
 export default function JobsPage() {
   const t = useTranslations();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
+  const isOffice = isOfficeRole(user?.profile?.role);
+  const canCreateJob = hasEntitlement(user?.profile?.role, 'job', 'create');
+  const noAssignedRoute = user?.technicianScope?.hasAssignedRoutes === false;
   const week = weekBoundsMonday();
   const followUpFromUrl = searchParams.get('needs_follow_up') === '1';
   const [dateFrom, setDateFrom] = useState(week.to);
@@ -93,8 +100,8 @@ export default function JobsPage() {
     }
   }, [followUpFromUrl]);
 
-  const { data: teamMembers = [] } = useTeam();
-  const { data: routesResult } = useRoutes();
+  const { data: teamMembers = [] } = useTeam({ enabled: isOffice });
+  const { data: routesResult } = useRoutes({ enabled: hasEntitlement(user?.profile?.role, 'route', 'view') });
   const routes = (routesResult?.data ?? []) as { id: string; name: string }[];
 
   const jobFilters = useMemo(
@@ -158,6 +165,18 @@ export default function JobsPage() {
 
   const errorMessage = error instanceof Error ? error.message : null;
 
+  if (noAssignedRoute) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('jobs')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('jobsDescription')}</p>
+        </div>
+        <NoAssignedRoute />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -165,12 +184,14 @@ export default function JobsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('jobs')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('jobsDescription')}</p>
         </div>
-        <Button asChild className="w-fit shrink-0">
-          <Link href="/jobs/new?mode=dispatch">
-            <Radio className="mr-2 h-4 w-4" />
-            {t('adHocDispatch')}
-          </Link>
-        </Button>
+        {canCreateJob && (
+          <Button asChild className="w-fit shrink-0">
+            <Link href="/jobs/new?mode=dispatch">
+              <Radio className="mr-2 h-4 w-4" />
+              {t('adHocDispatch')}
+            </Link>
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -224,7 +245,7 @@ export default function JobsPage() {
             </Button>
           </div>
 
-          {moreFiltersOpen && (
+          {moreFiltersOpen && isOffice && (
             <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
               <div className="space-y-1">
                 <Label className="text-xs">{t('filterByTeamMember')}</Label>

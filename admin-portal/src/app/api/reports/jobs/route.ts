@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiTiming } from '@/lib/api-timing';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
-import { withApiTiming } from '@/lib/api-timing';
+import { entitlementError, hasEntitlement } from '@/lib/entitlements';
 
 type ReportStats = {
   total: number;
@@ -25,12 +26,16 @@ export async function GET(request: NextRequest) {
 
     const { data: profile, error: profileError } = await (supabase as unknown as CadenzaSupabaseClient)
       .from('cadenza_profiles')
-      .select('company_id')
+      .select('company_id, role')
       .eq('id', user.id)
       .single();
 
     if (profileError || !profile?.company_id) {
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    }
+
+    if (!hasEntitlement(profile.role as string, 'report', 'view')) {
+      return NextResponse.json(entitlementError('report', 'view'), { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);

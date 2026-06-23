@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
       full_name: typeof fullName === 'string' ? fullName : '',
     };
 
-    if (inviteCode && typeof inviteCode === 'string' && inviteCode.trim()) {
+    const hasInviteCode = inviteCode && typeof inviteCode === 'string' && inviteCode.trim();
+    if (hasInviteCode) {
       const code = inviteCode.trim();
       const { data: invite, error: inviteError } = await supabaseAdmin
         .from('cadenza_invite_codes')
@@ -66,10 +67,21 @@ export async function POST(request: NextRequest) {
 
       const companyId = invite.company_id != null ? String(invite.company_id) : '';
       const role = (invite.role === 'admin' || invite.role === 'operations') ? invite.role : 'technician';
-      if (companyId && /^[0-9a-f-]{36}$/i.test(companyId)) {
-        userMetadata.company_id = companyId;
-        userMetadata.role = role;
+      if (!companyId || !/^[0-9a-f-]{36}$/i.test(companyId)) {
+        console.error('Invite code has invalid company_id:', invite.company_id);
+        return NextResponse.json(
+          { error: 'Invalid invite configuration. Ask your admin for a new link.' },
+          { status: 400 }
+        );
       }
+
+      userMetadata.company_id = companyId;
+      userMetadata.role = role;
+    } else {
+      return NextResponse.json(
+        { error: 'An invite link is required to create an account. Ask your admin for an invite.' },
+        { status: 400 }
+      );
     }
 
     const supabase = await createRouteClient();

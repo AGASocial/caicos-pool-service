@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
+import { entitlementError, hasEntitlement } from '@/lib/entitlements';
 
 /**
  * List technicians (and admins/owners) for the current user's company.
@@ -14,7 +15,18 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
+  const client = supabase as unknown as CadenzaSupabaseClient;
+  const { data: profile } = await client
+    .from('cadenza_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!hasEntitlement(profile?.role as string | undefined, 'team', 'view')) {
+    return NextResponse.json(entitlementError('team', 'view'), { status: 403 });
+  }
+
+  const { data, error } = await client
     .from('cadenza_profiles')
     .select('id, full_name, role, is_active, email_confirmed_at')
     .order('full_name', { ascending: true });
