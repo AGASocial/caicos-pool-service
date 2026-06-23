@@ -289,5 +289,4 @@ chipText: '#00D9FF'
 4. **Release:**
    - Bump version number
    - Update app store listing with new branding
-   - Update description to mention "by Neuraliti"
 
