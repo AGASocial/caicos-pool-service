@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
 
 function getAppOrigin(request: NextRequest): string {
   const origin = request.headers.get('origin');
@@ -18,16 +19,20 @@ function getAppOrigin(request: NextRequest): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+    const rl = checkRateLimit(`auth:register:${ip}`, RATE_LIMITS.auth.limit, RATE_LIMITS.auth.windowMs);
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfterSec);
+
     let body: Record<string, unknown>;
     try {
       body = await request.json();
     } catch {
       return NextResponse.json(
-        { error: 'Invalid request body. Send JSON with email, password, and optionally fullName, locale, invite.' },
+        { error: 'Invalid request body. Send JSON with email, password, and optionally fullName, locale, invite, companyName.' },
         { status: 400 }
       );
     }
-    const { email, password, fullName, locale, invite: inviteCode } = body;
+    const { email, password, fullName, locale, invite: inviteCode, companyName } = body;
 
     if (!email || !password) {
       return NextResponse.json(
@@ -77,9 +82,11 @@ export async function POST(request: NextRequest) {
 
       userMetadata.company_id = companyId;
       userMetadata.role = role;
+    } else if (typeof companyName === 'string' && companyName.trim()) {
+      userMetadata.company_name = companyName.trim();
     } else {
       return NextResponse.json(
-        { error: 'An invite link is required to create an account. Ask your admin for an invite.' },
+        { error: 'Provide a company name to create a new company, or an invite code to join an existing one.' },
         { status: 400 }
       );
     }
