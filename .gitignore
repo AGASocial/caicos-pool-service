@@ -13,7 +13,7 @@
 /docs/whatsapp
 .worktrees/
 ui-ux-pro-max
-
+graphify-out
 # testing
 /coverage
 *.lcov
