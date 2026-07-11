@@ -12,7 +12,6 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(sips -g pixelWidth -g pixelHeight /Users/gabrielvega/Projects/agasocial/cadenza/technician-app/assets/images/icon.png)",
-      "Bash(sips -z 1024 1024 /Users/gabrielvega/Projects/agasocial/cadenza/docs/logo-neura-pool.png --out /Users/gabrielvega/Projects/agasocial/cadenza/technician-app/assets/images/icon.png)",
       "Bash(sips -s format png -s formatOptions best /Users/gabrielvega/Projects/agasocial/cadenza/technician-app/assets/images/icon.png --out /Users/gabrielvega/Projects/agasocial/cadenza/technician-app/assets/images/icon.png)",
       "Bash(sips -g pixelWidth -g pixelHeight -g hasAlpha /Users/gabrielvega/Projects/agasocial/cadenza/technician-app/assets/images/icon.png)",
       "Bash(convert /Users/gabrielvega/Projects/agasocial/cadenza/technician-app/assets/images/icon.png -background white -flatten -resize 1024x1024 /Users/gabrielvega/Projects/agasocial/cadenza/technician-app/assets/images/icon.png)",
