@@ -28,6 +28,8 @@ const formSchema = z.object({
     .min(8, "Password must be at least 8 characters")
     .max(100, "Password must be less than 100 characters"),
   fullName: z.string().optional(),
+  companyName: z.string().optional(),
+  code: z.string().optional(),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -41,6 +43,7 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = React.useState(false)
   const [formError, setFormError] = React.useState<string | null>(null)
+  const [mode, setMode] = React.useState<"create" | "join">(inviteCode ? "join" : "create")
   const t = useTranslations()
   const locale = useLocale()
   const form = useForm<FormData>({
@@ -49,6 +52,8 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
       email: "",
       password: "",
       fullName: "",
+      companyName: "",
+      code: "",
     },
   })
 
@@ -58,6 +63,17 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
 
     try {
       if (type === "register") {
+        if (mode === "create" && !data.companyName?.trim()) {
+          form.setError("companyName", { message: "Company name is required" })
+          setIsLoading(false)
+          return
+        }
+        if (mode === "join" && !inviteCode && !data.code?.trim()) {
+          form.setError("code", { message: "Invite code is required" })
+          setIsLoading(false)
+          return
+        }
+
         const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -66,7 +82,9 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
             password: data.password,
             fullName: data.fullName,
             locale,
-            ...(inviteCode ? { invite: inviteCode } : {}),
+            ...(mode === "join"
+              ? { invite: inviteCode ?? data.code }
+              : { companyName: data.companyName }),
           }),
         })
         const result = await response.json()
@@ -170,6 +188,15 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
             ? t("enterYourCredentialsToSignInToYourAccount")
             : t("enterYourDetailsToCreateYourAccount")}
         </p>
+        {type === "register" && !inviteCode && (
+          <button
+            type="button"
+            onClick={() => setMode(mode === "create" ? "join" : "create")}
+            className="text-sm text-muted-foreground underline underline-offset-4 hover:text-primary mx-auto"
+          >
+            {mode === "create" ? t("haveAnInviteCode") : t("createACompanyInstead")}
+          </button>
+        )}
       </div>
 
       <Button
@@ -230,6 +257,36 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
                   <FormLabel>{t("fullName")}</FormLabel>
                   <FormControl>
                     <Input placeholder="John Doe" autoComplete="name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+          {type === "register" && mode === "create" && (
+            <FormField
+              control={form.control}
+              name="companyName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("companyName")}</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Acme Pool Services" autoComplete="organization" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+          {type === "register" && mode === "join" && !inviteCode && (
+            <FormField
+              control={form.control}
+              name="code"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("inviteCode")}</FormLabel>
+                  <FormControl>
+                    <Input placeholder="ABC123" autoComplete="off" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
