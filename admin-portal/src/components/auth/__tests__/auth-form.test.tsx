@@ -137,6 +137,7 @@ describe('AuthForm', () => {
       render(<AuthForm type="register" />);
 
       await user.type(screen.getByLabelText(/fullName/i), 'John Doe');
+      await user.type(screen.getByLabelText(/companyName/i), 'Acme Pool Services');
       await user.type(screen.getByLabelText(/email/i), 'test@example.com');
       await user.type(screen.getByLabelText(/password/i), 'password123');
       await user.click(screen.getByRole('button', { name: /createAccount/i }));
@@ -144,8 +145,109 @@ describe('AuthForm', () => {
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith('/api/auth/register', expect.objectContaining({
           method: 'POST',
+          body: JSON.stringify({
+            email: 'test@example.com',
+            password: 'password123',
+            fullName: 'John Doe',
+            locale: 'en',
+            companyName: 'Acme Pool Services',
+          }),
         }));
         expect(toast.success).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Company signup toggle', () => {
+    it('defaults to create mode with a company name field and no invite code field', () => {
+      render(<AuthForm type="register" />);
+
+      expect(screen.getByLabelText(/companyName/i)).toBeInTheDocument();
+      expect(screen.queryByLabelText(/inviteCode/i)).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /haveAnInviteCode/i })).toBeInTheDocument();
+    });
+
+    it('toggles to join mode and shows an invite code field instead', async () => {
+      const user = userEvent.setup();
+      render(<AuthForm type="register" />);
+
+      await user.click(screen.getByRole('button', { name: /haveAnInviteCode/i }));
+
+      expect(screen.getByLabelText(/inviteCode/i)).toBeInTheDocument();
+      expect(screen.queryByLabelText(/companyName/i)).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /createACompanyInstead/i })).toBeInTheDocument();
+    });
+
+    it('toggles back to create mode', async () => {
+      const user = userEvent.setup();
+      render(<AuthForm type="register" />);
+
+      await user.click(screen.getByRole('button', { name: /haveAnInviteCode/i }));
+      await user.click(screen.getByRole('button', { name: /createACompanyInstead/i }));
+
+      expect(screen.getByLabelText(/companyName/i)).toBeInTheDocument();
+    });
+
+    it('blocks submission in create mode without a company name', async () => {
+      const user = userEvent.setup();
+      render(<AuthForm type="register" />);
+
+      await user.type(screen.getByLabelText(/fullName/i), 'John Doe');
+      await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+      await user.type(screen.getByLabelText(/password/i), 'password123');
+      await user.click(screen.getByRole('button', { name: /createAccount/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/company name is required/i)).toBeInTheDocument();
+      });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('blocks submission in manual join mode without an invite code', async () => {
+      const user = userEvent.setup();
+      render(<AuthForm type="register" />);
+
+      await user.click(screen.getByRole('button', { name: /haveAnInviteCode/i }));
+      await user.type(screen.getByLabelText(/fullName/i), 'John Doe');
+      await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+      await user.type(screen.getByLabelText(/password/i), 'password123');
+      await user.click(screen.getByRole('button', { name: /createAccount/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/invite code is required/i)).toBeInTheDocument();
+      });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('sends the invite code from the URL and hides the toggle when inviteCode prop is set', async () => {
+      const user = userEvent.setup();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true }),
+      });
+
+      render(<AuthForm type="register" inviteCode="URLCODE123" />);
+
+      expect(screen.queryByRole('button', { name: /haveAnInviteCode/i })).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/companyName/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/inviteCode/i)).not.toBeInTheDocument();
+
+      await user.type(screen.getByLabelText(/fullName/i), 'Jane Tech');
+      await user.type(screen.getByLabelText(/email/i), 'tech@example.com');
+      await user.type(screen.getByLabelText(/password/i), 'password123');
+      await user.click(screen.getByRole('button', { name: /createAccount/i }));
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith('/api/auth/register', expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            email: 'tech@example.com',
+            password: 'password123',
+            fullName: 'Jane Tech',
+            locale: 'en',
+            invite: 'URLCODE123',
+          }),
+        }));
       });
     });
   });
