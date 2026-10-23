@@ -75,6 +75,7 @@ export default function BillingPage() {
   const [freePlanOverride, setFreePlanOverride] = useState<Subscription['plan'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [canceling, setCanceling] = useState(false);
+  const [openingPortal, setOpeningPortal] = useState(false);
   const [provider, setProvider] = useState<string | null>(null);
   const { data: teamMembers = [] } = useTeam();
   const userCount = teamMembers.filter(member => member.role === 'technician').length;
@@ -177,6 +178,35 @@ export default function BillingPage() {
     } catch (error) {
       console.error('Error resuming subscription:', error);
       toast.error(t('billingError'));
+    }
+  };
+
+  const handleOpenCustomerPortal = async () => {
+    if (provider !== 'stripe') {
+      toast.error(t('customerPortalNotAvailable'));
+      return;
+    }
+
+    setOpeningPortal(true);
+    try {
+      const response = await fetch('/api/billing/portal', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'x-locale': t('locale') || 'en',
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to create portal session');
+
+      const result = await response.json();
+      if (result.url) {
+        window.location.href = result.url;
+      }
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      toast.error(t('billingError'));
+      setOpeningPortal(false);
     }
   };
 
@@ -335,6 +365,15 @@ export default function BillingPage() {
               </Button>
             ) : !subscription?.cancelAtPeriodEnd ? (
               <>
+                {provider === 'stripe' && (
+                  <Button
+                    variant="default"
+                    onClick={handleOpenCustomerPortal}
+                    disabled={openingPortal}
+                  >
+                    {openingPortal ? t('loading') : t('managePaymentMethods')}
+                  </Button>
+                )}
                 {provider !== 'payu' && (
                   <Button
                     variant="outline"

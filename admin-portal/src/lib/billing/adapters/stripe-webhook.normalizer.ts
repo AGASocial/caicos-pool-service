@@ -92,6 +92,7 @@ export class StripeWebhookNormalizer implements WebhookNormalizer {
 
   shouldProcess(eventType: string): boolean {
     const supportedEvents = [
+      'checkout.session.completed',
       'customer.subscription.created',
       'customer.subscription.updated',
       'customer.subscription.deleted',
@@ -118,6 +119,7 @@ export class StripeWebhookNormalizer implements WebhookNormalizer {
    */
   private mapEventType(stripeEventType: string): NormalizedEvent['type'] {
     const typeMap: Record<string, NormalizedEvent['type']> = {
+      'checkout.session.completed': 'subscription.created',
       'customer.subscription.created': 'subscription.created',
       'customer.subscription.updated': 'subscription.updated',
       'customer.subscription.deleted': 'subscription.canceled',
@@ -137,6 +139,9 @@ export class StripeWebhookNormalizer implements WebhookNormalizer {
    */
   private extractEventData(event: Stripe.Event): unknown {
     switch (event.type) {
+      case 'checkout.session.completed':
+        return this.extractCheckoutData(event.data.object as Stripe.Checkout.Session);
+
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
@@ -157,6 +162,32 @@ export class StripeWebhookNormalizer implements WebhookNormalizer {
       default:
         return event.data.object;
     }
+  }
+
+  /**
+   * Extract checkout session data
+   */
+  private extractCheckoutData(session: Stripe.Checkout.Session): SubscriptionEventData | null {
+    if (session.mode !== 'subscription' || !session.subscription) {
+      return null;
+    }
+
+    const subscriptionId = typeof session.subscription === 'string'
+      ? session.subscription
+      : session.subscription.id;
+
+    const customerId = typeof session.customer === 'string'
+      ? session.customer
+      : session.customer?.id || '';
+
+    return {
+      userId: session.metadata?.user_id,
+      subscriptionId,
+      customerId,
+      planId: session.metadata?.plan_id,
+      quantity: session.metadata?.quantity ? parseInt(session.metadata.quantity, 10) : 1,
+      status: 'active',
+    };
   }
 
   /**
