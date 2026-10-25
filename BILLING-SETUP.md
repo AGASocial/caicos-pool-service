@@ -6,10 +6,13 @@ This guide documents the complete billing and subscription flow implementation f
 
 ## Pricing Model
 
-- **Free Plan**: $0/month, limited features (5 photos/service, 5,000 properties, 365-day retention)
-- **Standard Plan**: $14.99 per technician per month (10 photos/service, unlimited properties, 1,825-day retention)
+- **Free Plan**: $0/month, limited features (2 photos/service, 300 properties max, 30-day retention, 3 technicians max)
+- **Standard Plan (plan_necessary_month)**: $14.99 per technician per month (10 photos/service, unlimited properties, 1,825-day retention)
+- **Pro Plan (plan_pro_month)**: $24.99 per technician per month (20 photos/service, unlimited properties, 2,555-day retention, video support, data export)
 
 Formula: `monthly_charge = plan.amount_cents × subscription.quantity`
+
+Where `subscription.quantity` = number of technician seats purchased.
 
 ## Architecture
 
@@ -87,9 +90,13 @@ node scripts/setup-stripe-products.js
 
 This creates:
 - Free Plan (Product + Price at $0)
-- Standard Plan (Product + Price at $14.99)
+- Standard Plan (Product + Price at $14.99 per unit/month)
+- Pro Plan (Product + Price at $24.99 per unit/month)
 
 The script automatically updates `cadenza_billing_plans.provider_price_map` in the database.
+
+**Important**: These are **per-unit prices**. Stripe quantity = number of technician seats.
+For example, 5 technicians on Standard = $14.99 × 5 = $74.95/month.
 
 ### 2. Configure Webhooks
 
@@ -168,10 +175,10 @@ When Stripe sends webhooks:
 
 ## Seat Management
 
-The system enforces seat limits:
+The system enforces seat limits based on `subscription.quantity`:
 
-- **Free Plan**: No enforcement (unlimited technicians)
-- **Standard Plan**: Active technicians must not exceed `quantity`
+- **Free Plan**: No per-seat pricing; limit is plan.features.max_technicians (3)
+- **Standard/Pro Plans**: Active technicians must not exceed `subscription.quantity`
 
 Checked when:
 - Creating invite codes for technicians
@@ -184,12 +191,14 @@ Query seat status:
 GET /api/billing/seats
 Response:
 {
-  "subscribed": 5,
-  "active": 3,
-  "available": 2,
-  "isOverLimit": false
+  "subscribed": 5,       // Number of paid seats (subscription.quantity)
+  "active": 3,          // Number of active technicians
+  "available": 2,       // Remaining seats (subscribed - active)
+  "isOverLimit": false  // True if active > subscribed
 }
 ```
+
+When a user upgrades or increases quantity, Stripe prorates the charge automatically.
 
 ## Plan Limits Enforcement
 

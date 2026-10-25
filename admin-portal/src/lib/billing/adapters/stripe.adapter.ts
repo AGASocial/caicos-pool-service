@@ -352,6 +352,7 @@ export class StripeAdapter implements PaymentGateway {
     plan: { providerPriceMap?: Partial<Record<PaymentProvider, string>> };
     successUrl: string;
     cancelUrl: string;
+    quantity?: number;
     metadata?: Record<string, string>;
     customerData?: {
       email?: string;
@@ -360,7 +361,7 @@ export class StripeAdapter implements PaymentGateway {
     };
   }): Promise<{ sessionId: string; url: string; formFields?: Record<string, string> }> {
     try {
-      const { customer, plan, successUrl, cancelUrl, metadata } = params;
+      const { customer, plan, successUrl, cancelUrl, quantity = 1, metadata } = params;
 
       const priceId = plan.providerPriceMap?.stripe;
       if (!priceId) {
@@ -369,10 +370,13 @@ export class StripeAdapter implements PaymentGateway {
 
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
         mode: 'subscription',
-        line_items: [{ price: priceId, quantity: 1 }],
+        line_items: [{ price: priceId, quantity }],
         success_url: successUrl,
         cancel_url: cancelUrl,
         metadata: metadata || {},
+        subscription_data: {
+          metadata: metadata || {},
+        },
       };
 
       if (customer) {

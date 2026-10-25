@@ -180,13 +180,18 @@ export class StripeWebhookNormalizer implements WebhookNormalizer {
       ? session.customer
       : session.customer?.id || '';
 
+    // Don't set status to active immediately - check payment_status
+    // The subscription.created/updated event will set the actual status
+    const status = session.payment_status === 'paid' ? 'active' : 'incomplete';
+
     return {
       userId: session.metadata?.user_id,
       subscriptionId,
       customerId,
       planId: session.metadata?.plan_id,
+      // Get quantity from metadata as fallback - subscription.updated will have the real value
       quantity: session.metadata?.quantity ? parseInt(session.metadata.quantity, 10) : 1,
-      status: 'active',
+      status,
     };
   }
 

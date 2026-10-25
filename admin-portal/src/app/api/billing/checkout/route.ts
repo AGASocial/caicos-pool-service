@@ -25,6 +25,12 @@ export async function POST(request: NextRequest) {
       return errorResponse('Plan ID is required', 400);
     }
 
+    // Validate quantity server-side
+    const parsedQuantity = parseInt(String(quantity), 10);
+    if (isNaN(parsedQuantity) || parsedQuantity < 1 || parsedQuantity > 1000) {
+      return errorResponse('Quantity must be between 1 and 1000', 400);
+    }
+
     const billingService = await getBillingService();
     const provider = billingService.getProviderName();
 
@@ -40,10 +46,15 @@ export async function POST(request: NextRequest) {
       return errorResponse('Free plan does not require checkout', 400);
     }
 
-    // Get or create Stripe customer
+    // Prevent duplicate paid subscriptions
     const { supabase, user } = await (await import('@/lib/supabase-server')).createAuthenticatedRouteClient();
     if (!user?.email) {
       return errorResponse('Unable to identify user', 401);
+    }
+
+    const existingSub = await billingService.getUserSubscription(userId);
+    if (existingSub && existingSub.planId !== 'plan_free') {
+      return errorResponse('Active paid subscription already exists. Please manage your subscription from the billing page.', 400);
     }
 
     const customer = await billingService.getOrCreateCustomer(
@@ -56,28 +67,36 @@ export async function POST(request: NextRequest) {
     const { StripeAdapter } = await import('@/lib/billing/adapters');
     const stripeAdapter = new StripeAdapter(process.env.STRIPE_SECRET_KEY!);
 
-    // Build success/cancel URLs based on mode
-    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || '';
-    const locale = request.headers.get('x-locale') || 'en';
+    // Build success/cancel URLs from NEXT_PUBLIC_APP_URL with allowlisted locale
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) {
+      return errorResponse('Application URL not configured', 500);
+    }
+    
+    // Allowlist locales to prevent open redirects
+    const allowedLocales = ['en', 'es'];
+    const requestedLocale = request.headers.get('x-locale') || 'en';
+    const locale = allowedLocales.includes(requestedLocale) ? requestedLocale : 'en';
 
     const successUrl =
       mode === 'onboarding'
-        ? `${origin}/${locale}/onboarding/success?session_id={CHECKOUT_SESSION_ID}`
-        : `${origin}/${locale}/billing?session_id={CHECKOUT_SESSION_ID}`;
+        ? `${appUrl}/${locale}/onboarding/success?session_id={CHECKOUT_SESSION_ID}`
+        : `${appUrl}/${locale}/billing?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl =
       mode === 'onboarding'
-        ? `${origin}/${locale}/onboarding`
-        : `${origin}/${locale}/billing/plans`;
+        ? `${appUrl}/${locale}/onboarding`
+        : `${appUrl}/${locale}/billing/plans`;
 
     const checkoutSession = await stripeAdapter.createCheckoutSession({
       customer,
       plan,
+      quantity: parsedQuantity,
       successUrl,
       cancelUrl,
       metadata: {
         user_id: userId,
         plan_id: planId,
-        quantity: String(quantity),
+        quantity: String(parsedQuantity),
         mode,
       },
     });
@@ -88,9 +107,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error creating checkout session:', error);
-    return errorResponse(
-      error instanceof Error ? error.message : 'Failed to create checkout session',
-      500
-    );
+    // Don't leak raw Stripe errors to clients
+    const message = error instanceof Error && !error.message.includes('Stripe')
+      ? error.message
+      : 'Failed to create checkout session. Please try again.';
+    return errorResponse(message, 500);
   }
 }
