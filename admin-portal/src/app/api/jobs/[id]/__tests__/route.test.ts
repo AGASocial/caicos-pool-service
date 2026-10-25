@@ -94,15 +94,28 @@ describe('GET /api/jobs/[id]', () => {
       eq: jest.fn().mockReturnThis(),
       maybeSingle: jest.fn().mockResolvedValue({ data: { role: 'admin' }, error: null }),
     };
+    
+    const mockReportsQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      then: (resolve: (v: unknown) => void) =>
+        Promise.resolve({ data: [], error: null }).then(resolve),
+    };
+
     const mockQuery = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       single: jest.fn().mockResolvedValue({ data: mockJob, error: null }),
     };
+    
     const mockSupabase = {
       from: jest.fn((table: string) => {
         if (table === 'cadenza_profiles') {
           return mockProfileQuery;
+        }
+        if (table === 'cadenza_service_reports') {
+          return mockReportsQuery;
         }
         return mockQuery;
       }),
