@@ -97,8 +97,10 @@ export default function NewJobPage() {
     return properties.filter((p) => p.route?.id === routeFilter);
   }, [dispatchMode, properties, routeFilter]);
 
+  // Auto-clear property if it was deleted/filtered out
   useEffect(() => {
     if (!dispatchMode) return;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     setForm((prev) => {
       if (!prev.property_id) return prev;
       if (!filteredProperties.some((p) => p.id === prev.property_id)) {
