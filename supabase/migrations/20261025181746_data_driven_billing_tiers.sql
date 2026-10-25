@@ -127,12 +127,14 @@ VALUES (
     'sso_saml', false,
     'dedicated_account_manager', false
   ),
-  jsonb_build_object(
-    'stripe', 'price_pro_monthly',
-    'paypal', 'PLAN-PRO-MONTHLY',
-    'wompi', 'pro_monthly',
-    'payu', 'PRO-MONTHLY'
-  )
+  -- NOTE: Provider price mapping is intentionally NULL for per-technician plans.
+  -- Stripe prices are resolved dynamically by lookup key at checkout time:
+  --   - cadenza_standard_monthly for plan_necessary_month
+  --   - cadenza_pro_monthly for plan_pro_month
+  -- See admin-portal/src/app/api/billing/checkout/route.ts and
+  -- admin-portal/src/lib/billing/adapters/stripe.adapter.ts (resolvePriceByLookupKey).
+  -- This eliminates the need to hardcode Stripe price IDs in migrations.
+  NULL
 )
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,

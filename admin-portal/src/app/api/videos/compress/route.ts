@@ -7,13 +7,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
-import ffmpeg from 'fluent-ffmpeg';
-import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import { writeFile, unlink, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
-
-ffmpeg.setFfmpegPath(ffmpegPath.path);
 
 const TMP_DIR = '/tmp/cadenza-videos';
 
@@ -80,6 +76,11 @@ export async function POST(request: NextRequest) {
       // Write to temp file
       const buffer = Buffer.from(await rawVideo.arrayBuffer());
       await writeFile(inputPath, buffer);
+
+      // Dynamic import of FFmpeg to avoid bundling issues
+      const ffmpeg = (await import('fluent-ffmpeg')).default;
+      const ffmpegPath = (await import('@ffmpeg-installer/ffmpeg')).path;
+      ffmpeg.setFfmpegPath(ffmpegPath);
 
       // Compress with FFmpeg (visually lossless quality)
       await new Promise<void>((resolve, reject) => {

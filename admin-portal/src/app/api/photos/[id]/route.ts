@@ -10,15 +10,14 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: photoId } = await params;
     const { supabase, user } = await createAuthenticatedRouteClient();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const photoId = params.id;
 
     // Get photo record
     const client = supabase as unknown as CadenzaSupabaseClient;

@@ -347,6 +347,27 @@ export class StripeAdapter implements PaymentGateway {
     }
   }
 
+  /**
+   * Resolve Stripe price ID by lookup key
+   * This allows dynamic price resolution without hardcoding price IDs
+   */
+  async resolvePriceByLookupKey(lookupKey: string): Promise<string> {
+    try {
+      const prices = await this.stripe.prices.list({
+        lookup_keys: [lookupKey],
+        limit: 1,
+      });
+
+      if (prices.data.length === 0) {
+        throw new Error(`No Stripe price found with lookup key: ${lookupKey}`);
+      }
+
+      return prices.data[0].id;
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to resolve price by lookup key');
+    }
+  }
+
   async createCheckoutSession(params: {
     customer?: CustomerRef;
     plan: { providerPriceMap?: Partial<Record<PaymentProvider, string>> };
@@ -354,6 +375,7 @@ export class StripeAdapter implements PaymentGateway {
     cancelUrl: string;
     quantity?: number;
     metadata?: Record<string, string>;
+    lookupKey?: string;
     customerData?: {
       email?: string;
       name?: string;
@@ -361,11 +383,17 @@ export class StripeAdapter implements PaymentGateway {
     };
   }): Promise<{ sessionId: string; url: string; formFields?: Record<string, string> }> {
     try {
-      const { customer, plan, successUrl, cancelUrl, quantity = 1, metadata } = params;
+      const { customer, plan, successUrl, cancelUrl, quantity = 1, metadata, lookupKey } = params;
 
-      const priceId = plan.providerPriceMap?.stripe;
-      if (!priceId) {
-        throw new Error('Stripe price ID not configured for this plan');
+      // Resolve price ID: use lookup key if provided, otherwise fall back to plan's provider price map
+      let priceId: string;
+      if (lookupKey) {
+        priceId = await this.resolvePriceByLookupKey(lookupKey);
+      } else {
+        priceId = plan.providerPriceMap?.stripe || '';
+        if (!priceId) {
+          throw new Error('Stripe price ID not configured for this plan and no lookup key provided');
+        }
       }
 
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
