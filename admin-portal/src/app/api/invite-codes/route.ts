@@ -94,25 +94,46 @@ export async function POST(request: NextRequest) {
     if (role === 'technician') {
       const billingService = await getBillingService();
       const subscription = await billingService.getUserSubscription(user.id);
-      const isExpired = subscription?.currentPeriodEnd && subscription.currentPeriodEnd < new Date();
-      const plan = subscription && !isExpired
-        ? await billingService.getPlan(subscription.planId)
-        : await billingService.getPlan('plan_free');
-      const maxTechnicians = (plan.features as { max_technicians?: number; max_users?: number })?.max_technicians
-        ?? (plan.features as { max_technicians?: number; max_users?: number })?.max_users
-        ?? 0;
-      if (maxTechnicians !== -1) {
-        const { count, error: countError } = await (supabase as unknown as CadenzaSupabaseClient)
-          .from('cadenza_profiles')
-          .select('id', { count: 'exact', head: true })
-          .eq('company_id', profile.company_id)
-          .eq('role', 'technician');
-        if (!countError && (count ?? 0) >= maxTechnicians) {
-          return NextResponse.json(
-            { error: 'Technician limit reached.', code: 'TECHNICIAN_LIMIT_REACHED', max: maxTechnicians },
-            { status: 403 }
-          );
+      
+      // For free plan, check max_technicians feature limit
+      // For paid plans (per_technician pricing), check subscription.quantity
+      let maxTechnicians = 3; // Free plan default
+      let isPerSeatPlan = false;
+      
+      if (subscription) {
+        const plan = await billingService.getPlan(subscription.planId);
+        const pricingModel = (plan as unknown as { pricing_model?: string }).pricing_model;
+        
+        if (pricingModel === 'per_technician') {
+          // Per-seat plan: limit is subscription.quantity
+          maxTechnicians = subscription.quantity || 1;
+          isPerSeatPlan = true;
+        } else {
+          // Flat plan: limit is from plan features
+          maxTechnicians = (plan.features as { max_technicians?: number })?.max_technicians ?? 3;
         }
+      }
+
+      // Count active technicians in company
+      const { count, error: countError } = await (supabase as unknown as CadenzaSupabaseClient)
+        .from('cadenza_profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', profile.company_id)
+        .eq('role', 'technician')
+        .eq('is_active', true);
+
+      if (!countError && maxTechnicians !== -1 && (count ?? 0) >= maxTechnicians) {
+        return NextResponse.json(
+          {
+            error: isPerSeatPlan
+              ? `Technician seat limit reached. You have ${maxTechnicians} seat(s). Please upgrade to add more technicians.`
+              : `Technician limit reached for your plan (${maxTechnicians} max).`,
+            code: 'TECHNICIAN_LIMIT_REACHED',
+            max: maxTechnicians,
+            isPerSeat: isPerSeatPlan,
+          },
+          { status: 403 }
+        );
       }
     }
 
