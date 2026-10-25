@@ -4,9 +4,10 @@
  * Nightly job that moves photos older than photo_hot_storage_days from
  * Supabase Storage to Cloudflare R2 for cost-effective long-term storage.
  * 
- * Invoked by pg_cron or scheduled Edge Function trigger.
+ * **OPTIONAL FEATURE**: If R2 environment variables are not configured,
+ * this function will no-op gracefully and photos will remain in Supabase Storage.
  * 
- * Environment variables required:
+ * Environment variables required (all must be present to enable archiving):
  * - R2_ENDPOINT: R2 endpoint URL (e.g., https://<account-id>.r2.cloudflarestorage.com)
  * - R2_ACCESS_KEY_ID: R2 access key
  * - R2_SECRET_ACCESS_KEY: R2 secret key
@@ -51,20 +52,39 @@ serve(async (req) => {
       });
     }
 
+    // Check if R2 is configured - if not, return success with archiving disabled message
+    const r2Endpoint = Deno.env.get('R2_ENDPOINT');
+    const r2AccessKey = Deno.env.get('R2_ACCESS_KEY_ID');
+    const r2SecretKey = Deno.env.get('R2_SECRET_ACCESS_KEY');
+    const r2Bucket = Deno.env.get('R2_BUCKET_NAME');
+
+    if (!r2Endpoint || !r2AccessKey || !r2SecretKey || !r2Bucket) {
+      console.log('R2 archiving disabled: environment variables not configured');
+      return new Response(
+        JSON.stringify({
+          success: true,
+          archiving_enabled: false,
+          message: 'R2 archiving is not configured. Photos remain in Supabase Storage.',
+          total_archived: 0,
+          companies_processed: 0,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Initialize R2 client (S3-compatible)
     const r2Client = new S3Client({
-      endpoint: Deno.env.get('R2_ENDPOINT'),
+      endpoint: r2Endpoint,
       region: 'auto',
       credentials: {
-        accessKeyId: Deno.env.get('R2_ACCESS_KEY_ID')!,
-        secretAccessKey: Deno.env.get('R2_SECRET_ACCESS_KEY')!,
+        accessKeyId: r2AccessKey,
+        secretAccessKey: r2SecretKey,
       },
     });
-    const r2Bucket = Deno.env.get('R2_BUCKET_NAME')!;
 
     // Get all active companies with their plans
     const { data: companies, error: companiesError } = await supabase
@@ -210,6 +230,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
+        archiving_enabled: true,
         total_archived: totalArchived,
         companies_processed: results.length,
         results,

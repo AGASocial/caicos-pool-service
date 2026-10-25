@@ -1,11 +1,16 @@
 /**
- * Cleanup Archived Photos Beyond Retention
+ * Cleanup Photos Beyond Retention
  * 
- * Deletes photos from R2 that exceed the plan's photo_retention_days limit.
- * Invoked by pg_cron or scheduled Edge Function trigger.
+ * Deletes photos that exceed the plan's photo_retention_days limit.
+ * 
+ * **SAFETY**: Only deletes photos that have been successfully archived to R2
+ * (storage_tier = 'archive' AND archive_key IS NOT NULL) OR photos that are
+ * beyond retention in hot storage AND R2 archiving is not configured.
+ * 
+ * This prevents accidental data loss if archiving fails or is disabled.
  * 
  * Environment variables required:
- * - R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME
+ * - R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME (optional)
  * - SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  */
 
@@ -40,15 +45,24 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const r2Client = new S3Client({
-      endpoint: Deno.env.get('R2_ENDPOINT'),
-      region: 'auto',
-      credentials: {
-        accessKeyId: Deno.env.get('R2_ACCESS_KEY_ID')!,
-        secretAccessKey: Deno.env.get('R2_SECRET_ACCESS_KEY')!,
-      },
-    });
-    const r2Bucket = Deno.env.get('R2_BUCKET_NAME')!;
+    // Check if R2 is configured
+    const r2Endpoint = Deno.env.get('R2_ENDPOINT');
+    const r2AccessKey = Deno.env.get('R2_ACCESS_KEY_ID');
+    const r2SecretKey = Deno.env.get('R2_SECRET_ACCESS_KEY');
+    const r2Bucket = Deno.env.get('R2_BUCKET_NAME');
+    const r2Configured = !!(r2Endpoint && r2AccessKey && r2SecretKey && r2Bucket);
+
+    let r2Client: S3Client | null = null;
+    if (r2Configured) {
+      r2Client = new S3Client({
+        endpoint: r2Endpoint,
+        region: 'auto',
+        credentials: {
+          accessKeyId: r2AccessKey!,
+          secretAccessKey: r2SecretKey!,
+        },
+      });
+    }
 
     // Get all companies with their plans
     const { data: companies } = await supabase
@@ -58,7 +72,7 @@ serve(async (req) => {
       .eq('is_active', true);
 
     let totalDeleted = 0;
-    const results: { company_id: string; deleted: number; errors: number }[] = [];
+    const results: { company_id: string; deleted: number; errors: number; skipped?: number }[] = [];
 
     for (const company of companies || []) {
       try {
@@ -90,12 +104,22 @@ serve(async (req) => {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
-        const { data: photosToDelete } = await supabase
+        // SAFETY: Only select photos that are either:
+        // 1. Successfully archived (storage_tier = 'archive' AND archive_key IS NOT NULL)
+        // 2. In hot storage AND beyond retention (only if R2 is not configured)
+        let query = supabase
           .from('cadenza_report_photos')
-          .select('id, archive_key')
+          .select('id, archive_key, storage_tier, file_path')
           .eq('company_id', company.company_id)
-          .lt('created_at', cutoffDate.toISOString())
-          .limit(100);
+          .lt('created_at', cutoffDate.toISOString());
+
+        if (r2Configured) {
+          // If R2 is configured, only delete archived photos
+          query = query.eq('storage_tier', 'archive').not('archive_key', 'is', null);
+        }
+        // If R2 is not configured, delete all photos beyond retention (hot or archive)
+
+        const { data: photosToDelete } = await query.limit(100);
 
         if (!photosToDelete?.length) {
           continue;
@@ -103,26 +127,36 @@ serve(async (req) => {
 
         let companyDeleted = 0;
         let companyErrors = 0;
+        let companySkipped = 0;
 
         for (const photo of photosToDelete) {
           try {
-            // Delete from R2 if archived
-            if (photo.archive_key) {
-              const deleteCommand = new DeleteObjectCommand({
-                Bucket: r2Bucket,
-                Key: photo.archive_key,
-              });
-              await r2Client.send(deleteCommand);
-            } else {
-              // Delete from Supabase Storage if still hot
-              const { data: record } = await supabase
-                .from('cadenza_report_photos')
-                .select('file_path')
-                .eq('id', photo.id)
-                .single();
+            // Safety check: skip if in hot storage and R2 is configured but photo wasn't archived
+            if (r2Configured && photo.storage_tier === 'hot') {
+              console.warn(`Skipping hot photo ${photo.id} - should have been archived but wasn't`);
+              companySkipped++;
+              continue;
+            }
 
-              if (record?.file_path) {
-                await supabase.storage.from('report-photos').remove([record.file_path]);
+            // Delete from R2 if archived
+            if (photo.archive_key && r2Client && r2Bucket) {
+              try {
+                const deleteCommand = new DeleteObjectCommand({
+                  Bucket: r2Bucket,
+                  Key: photo.archive_key,
+                });
+                await r2Client.send(deleteCommand);
+              } catch (r2Error) {
+                console.error(`Failed to delete from R2: ${photo.archive_key}`, r2Error);
+                // Continue with DB deletion even if R2 deletion fails
+              }
+            } else if (photo.storage_tier === 'hot') {
+              // Delete from Supabase Storage if still hot
+              try {
+                await supabase.storage.from('report-photos').remove([photo.file_path]);
+              } catch (storageError) {
+                console.error(`Failed to delete from Supabase: ${photo.file_path}`, storageError);
+                // Continue with DB deletion even if storage deletion fails
               }
             }
 
@@ -148,6 +182,7 @@ serve(async (req) => {
           company_id: company.company_id,
           deleted: companyDeleted,
           errors: companyErrors,
+          ...(companySkipped > 0 && { skipped: companySkipped }),
         });
       } catch (companyError) {
         console.error(`Error processing company ${company.company_id}:`, companyError);
@@ -162,9 +197,13 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
+        r2_configured: r2Configured,
         total_deleted: totalDeleted,
         companies_processed: results.length,
         results,
+        safety_note: r2Configured 
+          ? 'Only archived photos were deleted'
+          : 'R2 not configured - deleted all photos beyond retention from Supabase Storage',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

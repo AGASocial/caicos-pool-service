@@ -29,7 +29,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 
 # App Configuration
-NEXT_PUBLIC_APP_URL=https://app.cadenza.com
+NEXT_PUBLIC_APP_URL=https://app.cadenzaops.com
 CRON_SECRET=your-secure-random-string
 
 # Cloudflare R2 (Photo Archival)
@@ -47,7 +47,7 @@ PAYU_ACCOUNT_ID=xxx
 PAYU_API_KEY=xxx
 PAYU_API_LOGIN=xxx
 PAYU_TEST=false
-PAYU_RESPONSE_URL=https://app.cadenza.com/payments/payu/return
+PAYU_RESPONSE_URL=https://app.cadenzaops.com/payments/payu/return
 ```
 
 ### Technician App (EAS Build)
@@ -124,7 +124,7 @@ Replace `price_xxx` with actual Stripe Price IDs.
 ### 3. Configure Webhook
 
 1. Go to Stripe Dashboard → Developers → Webhooks
-2. Add endpoint: `https://app.cadenza.com/api/webhooks/stripe`
+2. Add endpoint: `https://app.cadenzaops.com/api/webhooks/stripe`
 3. Select events:
    - `checkout.session.completed`
    - `customer.subscription.created`

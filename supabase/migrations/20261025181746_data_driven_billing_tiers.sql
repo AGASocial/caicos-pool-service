@@ -17,7 +17,7 @@ SET
   features = jsonb_build_object(
     'admin_users', 1,
     'max_technicians', 3,
-    'max_photos_per_service', 2,
+    'max_photos_per_service', 4,
     'photo_retention_days', 30,
     'photo_hot_storage_days', 30,
     'photo_archive_provider', null,
@@ -53,7 +53,7 @@ SET
     'admin_users', -1,
     'max_technicians', -1,
     'max_photos_per_service', 10,
-    'photo_retention_days', 1825,
+    'photo_retention_days', 365,
     'photo_hot_storage_days', 30,
     'photo_archive_provider', 'r2',
     'report_history_days', -1,

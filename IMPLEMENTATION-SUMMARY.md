@@ -279,7 +279,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 
 # App Configuration
-NEXT_PUBLIC_APP_URL=https://app.cadenza.com
+NEXT_PUBLIC_APP_URL=https://app.cadenzaops.com
 CRON_SECRET=your-secure-random-string
 STORAGE_MASTER_KEY=your-64-char-hex-key
 
@@ -325,7 +325,7 @@ supabase secrets set \
    Save the three Stripe Price IDs.
 
 3. **Configure Stripe Webhook**:
-   - URL: `https://app.cadenza.com/api/webhooks/stripe`
+   - URL: `https://app.cadenzaops.com/api/webhooks/stripe`
    - Events: checkout, subscription, invoice, payment_method, customer
    - Copy signing secret to `STRIPE_WEBHOOK_SECRET`
 
