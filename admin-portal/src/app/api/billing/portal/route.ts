@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user details
-    const { supabase, user } = await (await import('@/lib/supabase-server')).createAuthenticatedRouteClient();
+    const { user } = await (await import('@/lib/supabase-server')).createAuthenticatedRouteClient();
     if (!user?.email) {
       return errorResponse('Unable to identify user', 401);
     }

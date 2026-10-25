@@ -3,7 +3,7 @@
  * POST /api/billing/checkout - Create Stripe Checkout session
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import {
   getBillingService,
   getAuthenticatedUserId,
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prevent duplicate paid subscriptions
-    const { supabase, user } = await (await import('@/lib/supabase-server')).createAuthenticatedRouteClient();
+    const { user } = await (await import('@/lib/supabase-server')).createAuthenticatedRouteClient();
     if (!user?.email) {
       return errorResponse('Unable to identify user', 401);
     }

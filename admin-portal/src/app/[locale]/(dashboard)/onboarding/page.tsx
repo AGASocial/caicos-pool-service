@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2 } from 'lucide-react';
@@ -37,11 +37,7 @@ export default function OnboardingPage() {
   const [quantity, setQuantity] = useState(1);
   const [subscribing, setSubscribing] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchPlans();
-  }, []);
-
-  const fetchPlans = async () => {
+  const fetchPlans = useCallback(async () => {
     try {
       const response = await fetch('/api/billing/plans', {
         credentials: 'include'
@@ -56,7 +52,11 @@ export default function OnboardingPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    fetchPlans();
+  }, [fetchPlans]);
 
   const handleSelectPlan = async (planId: string) => {
     setSubscribing(planId);

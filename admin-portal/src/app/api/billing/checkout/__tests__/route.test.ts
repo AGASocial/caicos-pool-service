@@ -3,15 +3,8 @@
  */
 
 import { POST } from '../route';
-
-// Mock Next.js Request - must be done before other imports
-global.Request = class Request {
-  constructor(public url: string, public init?: any) {}
-  headers = {
-    get: jest.fn(),
-  };
-  json = jest.fn();
-} as any;
+import { NextRequest } from 'next/server';
+import { getAuthenticatedUserId } from '@/lib/billing/server';
 
 // Mock dependencies
 jest.mock('@/lib/supabase-server', () => ({
@@ -21,13 +14,15 @@ jest.mock('@/lib/supabase-server', () => ({
 jest.mock('@/lib/billing/server', () => ({
   getAuthenticatedUserId: jest.fn(),
   getBillingService: jest.fn(),
-  errorResponse: jest.fn((message, status) => 
+  errorResponse: jest.fn((message: string, status: number) => 
     new Response(JSON.stringify({ error: message }), { status })
   ),
-  successResponse: jest.fn((data) => 
+  successResponse: jest.fn((data: unknown) => 
     new Response(JSON.stringify(data), { status: 200 })
   ),
 }));
+
+const mockGetAuthenticatedUserId = getAuthenticatedUserId as jest.MockedFunction<typeof getAuthenticatedUserId>;
 
 describe('/api/billing/checkout', () => {
   beforeEach(() => {
@@ -36,17 +31,16 @@ describe('/api/billing/checkout', () => {
 
   describe('quantity validation', () => {
     it('should validate quantity is present and numeric', async () => {
-      const { getAuthenticatedUserId } = require('@/lib/billing/server');
-      getAuthenticatedUserId.mockResolvedValue('user-123');
+      mockGetAuthenticatedUserId.mockResolvedValue('user-123');
 
       const mockRequest = {
         json: jest.fn().mockResolvedValue({ planId: 'plan_pro_month', quantity: 'invalid' }),
         headers: {
           get: jest.fn(() => 'en'),
         },
-      };
+      } as unknown as NextRequest;
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest);
       const data = await response.json();
 
       expect(response.status).toBe(400);

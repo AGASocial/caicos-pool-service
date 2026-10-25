@@ -7,14 +7,18 @@ import {
   canUploadVideo,
   isFreePlanExpired,
 } from '../plan-limits';
+import { getBillingService } from '../billing/server';
+import type { CadenzaSupabaseClient } from '../supabase-cadenza';
 
 // Mock dependencies
 jest.mock('../billing/server', () => ({
   getBillingService: jest.fn(),
 }));
 
+const mockGetBillingService = getBillingService as jest.MockedFunction<typeof getBillingService>;
+
 describe('Plan Limits', () => {
-  let mockSupabase: any;
+  let mockSupabase: Pick<CadenzaSupabaseClient, 'from' | 'select' | 'eq' | 'single'>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -23,13 +27,11 @@ describe('Plan Limits', () => {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       single: jest.fn(),
-      maybeSingle: jest.fn(),
-    };
+    } as unknown as typeof mockSupabase;
   });
 
   describe('canUploadPhotos', () => {
     it('should allow photo upload when under limit', async () => {
-      const { getBillingService } = require('../billing/server');
 
       const mockBillingService = {
         getUserSubscription: jest.fn().mockResolvedValue({
@@ -42,21 +44,19 @@ describe('Plan Limits', () => {
         }),
       };
 
-      getBillingService.mockResolvedValue(mockBillingService);
+      mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
       mockSupabase.select.mockReturnThis();
       mockSupabase.eq.mockReturnThis();
-      mockSupabase.maybeSingle.mockResolvedValue({ data: { count: 2 } });
+      (mockSupabase as { maybeSingle: jest.Mock }).maybeSingle = jest.fn().mockResolvedValue({ data: { count: 2 } });
 
-      const result = await canUploadPhotos(mockSupabase, 'user-123', 'job-123');
+      const result = await canUploadPhotos(mockSupabase as CadenzaSupabaseClient, 'user-123', 'job-123');
 
       expect(result.allowed).toBe(true);
       expect(result.limit).toBe(4);
     });
 
     it('should block photo upload when at limit', async () => {
-      const { getBillingService } = require('../billing/server');
-
       const mockBillingService = {
         getUserSubscription: jest.fn().mockResolvedValue({
           planId: 'plan_free',
@@ -68,7 +68,7 @@ describe('Plan Limits', () => {
         }),
       };
 
-      getBillingService.mockResolvedValue(mockBillingService);
+      mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
       mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
@@ -77,7 +77,7 @@ describe('Plan Limits', () => {
             head: true,
           }),
         }),
-      });
+      } as never);
 
       // Mock count query
       const countResult = { count: 4, error: null };
@@ -85,9 +85,9 @@ describe('Plan Limits', () => {
         select: jest.fn(() => ({
           eq: jest.fn(() => Promise.resolve(countResult)),
         })),
-      }));
+      })) as never;
 
-      const result = await canUploadPhotos(mockSupabase, 'user-123', 'job-123');
+      const result = await canUploadPhotos(mockSupabase as CadenzaSupabaseClient, 'user-123', 'job-123');
 
       expect(result.allowed).toBe(false);
       expect(result.reason).toContain('Photo limit reached');
@@ -95,8 +95,6 @@ describe('Plan Limits', () => {
     });
 
     it('should allow unlimited photos when limit is -1', async () => {
-      const { getBillingService } = require('../billing/server');
-
       const mockBillingService = {
         getUserSubscription: jest.fn().mockResolvedValue({
           planId: 'plan_pro_month',
@@ -108,9 +106,9 @@ describe('Plan Limits', () => {
         }),
       };
 
-      getBillingService.mockResolvedValue(mockBillingService);
+      mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
-      const result = await canUploadPhotos(mockSupabase, 'user-123', 'job-123');
+      const result = await canUploadPhotos(mockSupabase as CadenzaSupabaseClient, 'user-123', 'job-123');
 
       expect(result.allowed).toBe(true);
     });
@@ -118,8 +116,6 @@ describe('Plan Limits', () => {
 
   describe('canUploadVideo', () => {
     it('should block video upload for non-Pro plans', async () => {
-      const { getBillingService } = require('../billing/server');
-
       const mockBillingService = {
         getUserSubscription: jest.fn().mockResolvedValue({
           planId: 'plan_free',
@@ -132,17 +128,15 @@ describe('Plan Limits', () => {
         }),
       };
 
-      getBillingService.mockResolvedValue(mockBillingService);
+      mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
-      const result = await canUploadVideo(mockSupabase, 'user-123', 30);
+      const result = await canUploadVideo(mockSupabase as CadenzaSupabaseClient, 'user-123', 30);
 
       expect(result.allowed).toBe(false);
       expect(result.reason).toContain('not available on your plan');
     });
 
     it('should allow video upload for Pro plan within duration limit', async () => {
-      const { getBillingService } = require('../billing/server');
-
       const mockBillingService = {
         getUserSubscription: jest.fn().mockResolvedValue({
           planId: 'plan_pro_month',
@@ -155,17 +149,15 @@ describe('Plan Limits', () => {
         }),
       };
 
-      getBillingService.mockResolvedValue(mockBillingService);
+      mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
-      const result = await canUploadVideo(mockSupabase, 'user-123', 45);
+      const result = await canUploadVideo(mockSupabase as CadenzaSupabaseClient, 'user-123', 45);
 
       expect(result.allowed).toBe(true);
       expect(result.maxSeconds).toBe(60);
     });
 
     it('should block video upload exceeding duration limit', async () => {
-      const { getBillingService } = require('../billing/server');
-
       const mockBillingService = {
         getUserSubscription: jest.fn().mockResolvedValue({
           planId: 'plan_pro_month',
@@ -178,9 +170,9 @@ describe('Plan Limits', () => {
         }),
       };
 
-      getBillingService.mockResolvedValue(mockBillingService);
+      mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
-      const result = await canUploadVideo(mockSupabase, 'user-123', 90);
+      const result = await canUploadVideo(mockSupabase as CadenzaSupabaseClient, 'user-123', 90);
 
       expect(result.allowed).toBe(false);
       expect(result.reason).toContain('duration exceeds limit');
@@ -190,8 +182,6 @@ describe('Plan Limits', () => {
 
   describe('isFreePlanExpired', () => {
     it('should detect expired free plan after 90 days', async () => {
-      const { getBillingService } = require('../billing/server');
-
       const mockBillingService = {
         getUserSubscription: jest.fn().mockResolvedValue({
           id: 'sub-123',
@@ -204,7 +194,7 @@ describe('Plan Limits', () => {
         }),
       };
 
-      getBillingService.mockResolvedValue(mockBillingService);
+      mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
       // Mock created 100 days ago
       const createdAt = new Date();
@@ -218,17 +208,15 @@ describe('Plan Limits', () => {
             }),
           }),
         }),
-      });
+      } as never);
 
-      const result = await isFreePlanExpired(mockSupabase, 'user-123');
+      const result = await isFreePlanExpired(mockSupabase as CadenzaSupabaseClient, 'user-123');
 
       expect(result.expired).toBe(true);
       expect(result.daysRemaining).toBe(0);
     });
 
     it('should not expire non-free plans', async () => {
-      const { getBillingService } = require('../billing/server');
-
       const mockBillingService = {
         getUserSubscription: jest.fn().mockResolvedValue({
           id: 'sub-123',
@@ -236,9 +224,9 @@ describe('Plan Limits', () => {
         }),
       };
 
-      getBillingService.mockResolvedValue(mockBillingService);
+      mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
-      const result = await isFreePlanExpired(mockSupabase, 'user-123');
+      const result = await isFreePlanExpired(mockSupabase as CadenzaSupabaseClient, 'user-123');
 
       expect(result.expired).toBe(false);
     });
