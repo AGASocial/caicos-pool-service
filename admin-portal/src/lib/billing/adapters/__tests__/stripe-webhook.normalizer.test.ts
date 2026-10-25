@@ -116,6 +116,7 @@ describe('StripeWebhookNormalizer', () => {
             } as Stripe.SubscriptionItem,
           ],
         } as Stripe.ApiList<Stripe.SubscriptionItem>,
+        // @ts-expect-error - Stripe SDK type doesn't include current_period_start but it exists at runtime
         current_period_start: Date.now() / 1000,
         current_period_end: Date.now() / 1000 + 2592000,
         metadata: {

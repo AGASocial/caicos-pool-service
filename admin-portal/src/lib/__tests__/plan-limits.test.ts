@@ -75,7 +75,7 @@ describe('Plan Limits', () => {
 
       mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
-      // @ts-expect-error - Mock for test
+      // @ts-expect-error - Mock method doesn't exist on actual type but is needed for test
       mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
@@ -87,7 +87,6 @@ describe('Plan Limits', () => {
 
       // Mock count query
       const countResult = { count: 4, error: null };
-      // @ts-expect-error - Mock for test
       mockSupabase.from = jest.fn(() => ({
         select: jest.fn(() => ({
           eq: jest.fn(() => Promise.resolve(countResult)),
