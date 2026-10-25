@@ -99,8 +99,8 @@ describe('GET /api/jobs/[id]', () => {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       order: jest.fn().mockReturnThis(),
-      then: (resolve: (v: unknown) => void) =>
-        Promise.resolve({ data: [], error: null }).then(resolve),
+      limit: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
     };
 
     const mockQuery = {

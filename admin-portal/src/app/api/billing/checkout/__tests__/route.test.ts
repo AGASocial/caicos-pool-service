@@ -14,14 +14,14 @@ jest.mock('@/lib/supabase-server', () => ({
 jest.mock('@/lib/billing/server', () => ({
   getAuthenticatedUserId: jest.fn(),
   getBillingService: jest.fn(),
-  errorResponse: jest.fn((message: string, status: number) => {
-    const NextResponse = jest.requireActual('next/server').NextResponse;
-    return NextResponse.json({ error: message }, { status });
-  }),
-  successResponse: jest.fn((data: unknown) => {
-    const NextResponse = jest.requireActual('next/server').NextResponse;
-    return NextResponse.json(data, { status: 200 });
-  }),
+  errorResponse: jest.fn((message: string, status: number) => ({
+    json: jest.fn().mockResolvedValue({ error: message }),
+    status,
+  })),
+  successResponse: jest.fn((data: unknown) => ({
+    json: jest.fn().mockResolvedValue(data),
+    status: 200,
+  })),
 }));
 
 const mockGetAuthenticatedUserId = getAuthenticatedUserId as jest.MockedFunction<typeof getAuthenticatedUserId>;
