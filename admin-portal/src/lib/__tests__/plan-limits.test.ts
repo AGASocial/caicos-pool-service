@@ -18,6 +18,7 @@ jest.mock('../billing/server', () => ({
 const mockGetBillingService = getBillingService as jest.MockedFunction<typeof getBillingService>;
 
 describe('Plan Limits', () => {
+  // @ts-expect-error - Mock type doesn't fully match CadenzaSupabaseClient
   let mockSupabase: Pick<CadenzaSupabaseClient, 'from' | 'select' | 'eq' | 'single'>;
 
   beforeEach(() => {
@@ -46,10 +47,14 @@ describe('Plan Limits', () => {
 
       mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
+      // @ts-expect-error - Mock chaining for test
       mockSupabase.select.mockReturnThis();
+      // @ts-expect-error - Mock chaining for test
       mockSupabase.eq.mockReturnThis();
+      // @ts-expect-error - Mock with maybeSingle
       (mockSupabase as { maybeSingle: jest.Mock }).maybeSingle = jest.fn().mockResolvedValue({ data: { count: 2 } });
 
+      // @ts-expect-error - Partial mock is sufficient for test
       const result = await canUploadPhotos(mockSupabase as CadenzaSupabaseClient, 'user-123', 'job-123');
 
       expect(result.allowed).toBe(true);
@@ -70,6 +75,7 @@ describe('Plan Limits', () => {
 
       mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
+      // @ts-expect-error - Mock for test
       mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
@@ -81,12 +87,14 @@ describe('Plan Limits', () => {
 
       // Mock count query
       const countResult = { count: 4, error: null };
+      // @ts-expect-error - Mock for test
       mockSupabase.from = jest.fn(() => ({
         select: jest.fn(() => ({
           eq: jest.fn(() => Promise.resolve(countResult)),
         })),
       })) as never;
 
+      // @ts-expect-error - Partial mock is sufficient for test
       const result = await canUploadPhotos(mockSupabase as CadenzaSupabaseClient, 'user-123', 'job-123');
 
       expect(result.allowed).toBe(false);
@@ -108,6 +116,7 @@ describe('Plan Limits', () => {
 
       mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
+      // @ts-expect-error - Partial mock is sufficient for test
       const result = await canUploadPhotos(mockSupabase as CadenzaSupabaseClient, 'user-123', 'job-123');
 
       expect(result.allowed).toBe(true);
@@ -130,6 +139,7 @@ describe('Plan Limits', () => {
 
       mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
+      // @ts-expect-error - Partial mock is sufficient for test
       const result = await canUploadVideo(mockSupabase as CadenzaSupabaseClient, 'user-123', 30);
 
       expect(result.allowed).toBe(false);
@@ -151,6 +161,7 @@ describe('Plan Limits', () => {
 
       mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
+      // @ts-expect-error - Partial mock is sufficient for test
       const result = await canUploadVideo(mockSupabase as CadenzaSupabaseClient, 'user-123', 45);
 
       expect(result.allowed).toBe(true);
@@ -172,6 +183,7 @@ describe('Plan Limits', () => {
 
       mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
+      // @ts-expect-error - Partial mock is sufficient for test
       const result = await canUploadVideo(mockSupabase as CadenzaSupabaseClient, 'user-123', 90);
 
       expect(result.allowed).toBe(false);
@@ -200,6 +212,7 @@ describe('Plan Limits', () => {
       const createdAt = new Date();
       createdAt.setDate(createdAt.getDate() - 100);
 
+      // @ts-expect-error - Mock for test
       mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
@@ -210,6 +223,7 @@ describe('Plan Limits', () => {
         }),
       } as never);
 
+      // @ts-expect-error - Partial mock is sufficient for test
       const result = await isFreePlanExpired(mockSupabase as CadenzaSupabaseClient, 'user-123');
 
       expect(result.expired).toBe(true);
@@ -226,6 +240,7 @@ describe('Plan Limits', () => {
 
       mockGetBillingService.mockResolvedValue(mockBillingService as never);
 
+      // @ts-expect-error - Partial mock is sufficient for test
       const result = await isFreePlanExpired(mockSupabase as CadenzaSupabaseClient, 'user-123');
 
       expect(result.expired).toBe(false);
