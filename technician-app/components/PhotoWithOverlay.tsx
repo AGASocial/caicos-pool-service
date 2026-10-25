@@ -36,7 +36,7 @@ export function PhotoWithOverlay({ uri, width, height, overlay, onCaptured, onEr
     const capH = Math.round(height * scale);
     captureRef(viewRef, {
       format: 'jpg',
-      quality: 0.9,
+      quality: 0.6,
       width: capW,
       height: capH,
       result: 'tmpfile',

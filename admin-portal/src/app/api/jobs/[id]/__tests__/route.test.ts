@@ -49,6 +49,11 @@ describe('GET /api/jobs/[id]', () => {
   });
 
   it('returns 404 when not found (error code PGRST116)', async () => {
+    const mockProfileQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: { role: 'admin' }, error: null }),
+    };
     const mockQuery = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
@@ -57,7 +62,14 @@ describe('GET /api/jobs/[id]', () => {
         error: { code: 'PGRST116', message: 'Row not found' },
       }),
     };
-    const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
+    const mockSupabase = {
+      from: jest.fn((table: string) => {
+        if (table === 'cadenza_profiles') {
+          return mockProfileQuery;
+        }
+        return mockQuery;
+      }),
+    };
     mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
 
     const req = makeRequest(`http://localhost/api/jobs/${TEST_ID}`);
@@ -77,12 +89,37 @@ describe('GET /api/jobs/[id]', () => {
       status: 'pending',
     };
 
+    const mockProfileQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: { role: 'admin' }, error: null }),
+    };
+    
+    const mockReportsQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+    };
+
     const mockQuery = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       single: jest.fn().mockResolvedValue({ data: mockJob, error: null }),
     };
-    const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
+    
+    const mockSupabase = {
+      from: jest.fn((table: string) => {
+        if (table === 'cadenza_profiles') {
+          return mockProfileQuery;
+        }
+        if (table === 'cadenza_service_reports') {
+          return mockReportsQuery;
+        }
+        return mockQuery;
+      }),
+    };
     mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
 
     const req = makeRequest(`http://localhost/api/jobs/${TEST_ID}`);

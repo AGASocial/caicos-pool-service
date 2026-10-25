@@ -253,27 +253,18 @@ describe('AuthForm', () => {
   });
 
   describe('OAuth Buttons', () => {
-    it('should call backend oauth start when Google button is clicked', async () => {
-      const user = userEvent.setup();
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ url: 'https://oauth.example.com/start' }),
-      });
-
+    it('should render Google button with Coming Soon text', () => {
       render(<AuthForm type="login" />);
-
-      await user.click(screen.getByRole('button', { name: /signInWithGoogle/i }));
-
-      await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/auth/oauth/start', expect.objectContaining({
-          method: 'POST',
-        }));
-      });
+      const googleButton = screen.getByRole('button', { name: /Coming Soon/i });
+      expect(googleButton).toBeInTheDocument();
+      expect(googleButton).toBeDisabled();
     });
 
-    it('should render Apple sign in button', () => {
+    it('should render Apple sign in button (hidden)', () => {
       render(<AuthForm type="login" />);
-      expect(screen.getByAltText(/signInWithApple/i)).toBeInTheDocument();
+      // Button is hidden but image should be in document
+      const appleImage = screen.getByAltText(/signInWithApple/i);
+      expect(appleImage).toBeInTheDocument();
     });
   });
 });

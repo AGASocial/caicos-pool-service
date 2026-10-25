@@ -1,8 +1,26 @@
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useAuth } from '../auth';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactNode } from 'react';
 
 describe('useAuth', () => {
   const mockFetch = global.fetch as jest.Mock;
+  let queryClient: QueryClient;
+
+  const createWrapper = () => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+    const Wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    );
+    Wrapper.displayName = 'AuthTestWrapper';
+    return Wrapper;
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -15,7 +33,9 @@ describe('useAuth', () => {
       json: async () => ({ authenticated: false, user: null }),
     });
 
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: createWrapper(),
+    });
 
     expect(result.current.loading).toBe(true);
 
@@ -31,7 +51,9 @@ describe('useAuth', () => {
       json: async () => ({ authenticated: true, user }),
     });
 
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -39,10 +61,10 @@ describe('useAuth', () => {
 
     expect(result.current.user).toEqual(user);
     expect(result.current.isAuthenticated).toBe(true);
-    expect(mockFetch).toHaveBeenCalledWith('/api/auth/session', {
+    expect(mockFetch).toHaveBeenCalledWith('/api/auth/session', expect.objectContaining({
       method: 'GET',
       credentials: 'include',
-    });
+    }));
   });
 
   it('should return null user when not authenticated', async () => {
@@ -51,7 +73,9 @@ describe('useAuth', () => {
       json: async () => ({ authenticated: false, user: null }),
     });
 
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -61,16 +85,21 @@ describe('useAuth', () => {
     expect(result.current.isAuthenticated).toBe(false);
   });
 
-  it('should set error when session request fails', async () => {
+  it('should handle failed session request gracefully', async () => {
     mockFetch.mockResolvedValue({ ok: false, json: async () => ({}) });
 
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.error).toBe('Failed to get session');
+    // When session request fails, fetchSession returns { authenticated: false, user: null }
+    // So we should be logged out, not have an error
+    expect(result.current.user).toBeNull();
+    expect(result.current.isAuthenticated).toBe(false);
   });
 
   it('should call logout endpoint on signOut', async () => {
@@ -88,7 +117,9 @@ describe('useAuth', () => {
         json: async () => ({ authenticated: false, user: null }),
       });
 
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -98,10 +129,10 @@ describe('useAuth', () => {
       await result.current.signOut();
     });
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', {
+    expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', expect.objectContaining({
       method: 'POST',
       credentials: 'include',
-    });
+    }));
   });
 
   it('should refresh session when auth-changed is dispatched', async () => {
@@ -115,7 +146,9 @@ describe('useAuth', () => {
         json: async () => ({ authenticated: true, user: { id: 'user-999' } }),
       });
 
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);

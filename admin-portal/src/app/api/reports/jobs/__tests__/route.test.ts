@@ -54,7 +54,10 @@ describe('GET /api/reports/jobs', () => {
     const mockProfileQuery = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: { company_id: 'company-1' }, error: null }),
+      single: jest.fn().mockResolvedValue({ 
+        data: { company_id: 'company-1', role: 'admin' }, 
+        error: null 
+      }),
     };
     const mockSupabase = {
       from: jest.fn().mockReturnValue(mockProfileQuery),
@@ -79,7 +82,10 @@ describe('GET /api/reports/jobs', () => {
     const mockProfileQuery = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: { company_id: 'company-1' }, error: null }),
+      single: jest.fn().mockResolvedValue({ 
+        data: { company_id: 'company-1', role: 'admin' }, 
+        error: null 
+      }),
     };
     const emptyStats = { ...mockStats, total: 0, completionRate: 0, byTechnician: [] };
     const mockSupabase = {
