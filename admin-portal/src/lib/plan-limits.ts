@@ -56,7 +56,8 @@ export async function getUserPlanLimits(
       if (subRecord?.created_at) {
         const createdAt = new Date(subRecord.created_at as string);
         const plan = await billingService.getPlan('plan_free');
-        const durationDays = (plan.features as { plan_duration_days?: number | null })?.plan_duration_days;
+        const features = plan.features as Record<string, unknown>;
+        const durationDays = features.plan_duration_days as number | null;
         
         if (durationDays && durationDays > 0) {
           const expiryDate = new Date(createdAt);
@@ -74,7 +75,26 @@ export async function getUserPlanLimits(
   }
 
   const plan = await billingService.getPlan(planId);
-  return plan.features as PlanLimits;
+  const features = plan.features as Record<string, unknown>;
+  
+  return {
+    admin_users: (features.admin_users as number) ?? 1,
+    max_technicians: (features.max_technicians as number) ?? 3,
+    max_photos_per_service: (features.max_photos_per_service as number) ?? 5,
+    photo_retention_days: (features.photo_retention_days as number) ?? 30,
+    photo_hot_storage_days: (features.photo_hot_storage_days as number) ?? 30,
+    photo_archive_provider: (features.photo_archive_provider as string | null) ?? null,
+    report_history_days: (features.report_history_days as number) ?? 90,
+    plan_duration_days: (features.plan_duration_days as number | null) ?? null,
+    video_per_service: (features.video_per_service as boolean) ?? false,
+    max_video_seconds: (features.max_video_seconds as number) ?? 0,
+    data_export: (features.data_export as boolean) ?? false,
+    advanced_analytics: (features.advanced_analytics as boolean) ?? false,
+    storage_gb: (features.storage_gb as number) ?? 5,
+    max_properties: (features.max_properties as number) ?? 300,
+    max_routes: (features.max_routes as number) ?? 10,
+    max_service_jobs: (features.max_service_jobs as number) ?? -1,
+  } as PlanLimits;
 }
 
 /**
@@ -206,7 +226,8 @@ export async function isFreePlanExpired(
   }
 
   const plan = await billingService.getPlan('plan_free');
-  const durationDays = (plan.features as { plan_duration_days?: number | null })?.plan_duration_days;
+  const features = plan.features as Record<string, unknown>;
+  const durationDays = features.plan_duration_days as number | null;
 
   if (!durationDays || durationDays <= 0) {
     return { expired: false }; // No expiry
