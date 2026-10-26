@@ -51,11 +51,15 @@ export interface SubscriptionResult {
  */
 export interface InvoiceData {
   id: string;
+  number?: string; // Invoice number (e.g. "INV-1234")
   amountCents: number;
+  amountDue?: number; // Amount still due (for open invoices)
   currency: Currency;
   status: InvoiceStatus;
   createdAt: string;
   paidAt?: string;
+  hostedInvoiceUrl?: string; // URL to hosted invoice page
+  invoicePdf?: string; // URL to PDF version
 }
 
 /**

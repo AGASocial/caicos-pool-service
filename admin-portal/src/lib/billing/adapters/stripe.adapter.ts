@@ -291,13 +291,17 @@ export class StripeAdapter implements PaymentGateway {
         const statusTrans = (invData.status_transitions || invData.statusTransitions) as Record<string, unknown> | undefined;
         return {
           id: invoice.id,
+          number: invoice.number || undefined,
           amountCents: (invData.amount_paid as number) || 0,
+          amountDue: invoice.amount_due || 0,
           currency: invoice.currency.toUpperCase() as InvoiceData['currency'],
           status: this.mapInvoiceStatus(invoice.status),
           createdAt: new Date(invoice.created * 1000).toISOString(),
           paidAt: statusTrans?.paid_at
             ? new Date((statusTrans.paid_at as number) * 1000).toISOString()
             : undefined,
+          hostedInvoiceUrl: invoice.hosted_invoice_url || undefined,
+          invoicePdf: invoice.invoice_pdf || undefined,
         };
       });
     } catch (error) {
@@ -313,13 +317,17 @@ export class StripeAdapter implements PaymentGateway {
       const statusTrans = (invData.status_transitions || invData.statusTransitions) as Record<string, unknown> | undefined;
       return {
         id: invoice.id,
+        number: invoice.number || undefined,
         amountCents: (invData.amount_paid as number) || 0,
+        amountDue: invoice.amount_due || 0,
         currency: invoice.currency.toUpperCase() as InvoiceData['currency'],
         status: this.mapInvoiceStatus(invoice.status),
         createdAt: new Date(invoice.created * 1000).toISOString(),
         paidAt: statusTrans?.paid_at
           ? new Date((statusTrans.paid_at as number) * 1000).toISOString()
           : undefined,
+        hostedInvoiceUrl: invoice.hosted_invoice_url || undefined,
+        invoicePdf: invoice.invoice_pdf || undefined,
       };
     } catch (error) {
       throw this.handleStripeError(error, 'Failed to fetch invoice');
@@ -334,16 +342,41 @@ export class StripeAdapter implements PaymentGateway {
 
       return {
         id: invoice.id,
+        number: invoice.number || undefined,
         amountCents: (invData.amount_paid as number) || 0,
+        amountDue: invoice.amount_due || 0,
         currency: invoice.currency.toUpperCase() as InvoiceData['currency'],
         status: this.mapInvoiceStatus(invoice.status),
         createdAt: new Date(invoice.created * 1000).toISOString(),
         paidAt: statusTrans?.paid_at
           ? new Date((statusTrans.paid_at as number) * 1000).toISOString()
           : undefined,
+        hostedInvoiceUrl: invoice.hosted_invoice_url || undefined,
+        invoicePdf: invoice.invoice_pdf || undefined,
       };
     } catch (error) {
       throw this.handleStripeError(error, 'Failed to retry invoice payment');
+    }
+  }
+
+  /**
+   * Resolve Stripe price ID by lookup key
+   * This allows dynamic price resolution without hardcoding price IDs
+   */
+  async resolvePriceByLookupKey(lookupKey: string): Promise<string> {
+    try {
+      const prices = await this.stripe.prices.list({
+        lookup_keys: [lookupKey],
+        limit: 1,
+      });
+
+      if (prices.data.length === 0) {
+        throw new Error(`No Stripe price found with lookup key: ${lookupKey}`);
+      }
+
+      return prices.data[0].id;
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to resolve price by lookup key');
     }
   }
 
@@ -352,7 +385,9 @@ export class StripeAdapter implements PaymentGateway {
     plan: { providerPriceMap?: Partial<Record<PaymentProvider, string>> };
     successUrl: string;
     cancelUrl: string;
+    quantity?: number;
     metadata?: Record<string, string>;
+    lookupKey?: string;
     customerData?: {
       email?: string;
       name?: string;
@@ -360,19 +395,28 @@ export class StripeAdapter implements PaymentGateway {
     };
   }): Promise<{ sessionId: string; url: string; formFields?: Record<string, string> }> {
     try {
-      const { customer, plan, successUrl, cancelUrl, metadata } = params;
+      const { customer, plan, successUrl, cancelUrl, quantity = 1, metadata, lookupKey } = params;
 
-      const priceId = plan.providerPriceMap?.stripe;
-      if (!priceId) {
-        throw new Error('Stripe price ID not configured for this plan');
+      // Resolve price ID: use lookup key if provided, otherwise fall back to plan's provider price map
+      let priceId: string;
+      if (lookupKey) {
+        priceId = await this.resolvePriceByLookupKey(lookupKey);
+      } else {
+        priceId = plan.providerPriceMap?.stripe || '';
+        if (!priceId) {
+          throw new Error('Stripe price ID not configured for this plan and no lookup key provided');
+        }
       }
 
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
         mode: 'subscription',
-        line_items: [{ price: priceId, quantity: 1 }],
+        line_items: [{ price: priceId, quantity }],
         success_url: successUrl,
         cancel_url: cancelUrl,
         metadata: metadata || {},
+        subscription_data: {
+          metadata: metadata || {},
+        },
       };
 
       if (customer) {

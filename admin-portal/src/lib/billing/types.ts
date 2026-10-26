@@ -100,6 +100,11 @@ export interface Invoice {
   paidAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  // Stripe-specific fields (optional, only present when provider is Stripe)
+  number?: string;
+  amountDue?: number;
+  hostedInvoiceUrl?: string;
+  invoicePdf?: string;
 }
 
 /**

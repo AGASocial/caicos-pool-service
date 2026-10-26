@@ -44,6 +44,12 @@ const nextConfig: NextConfig = {
       '@/*': ['./src/*'],
     },
   },
+  // Exclude FFmpeg from bundling (native binaries)
+  serverExternalPackages: ['@ffmpeg-installer/ffmpeg', 'fluent-ffmpeg'],
+  // Ensure FFmpeg binary is included in function bundle
+  outputFileTracingIncludes: {
+    '/api/videos/compress': ['./node_modules/@ffmpeg-installer/**/*'],
+  },
 };
 
 export default withNextIntl(nextConfig);

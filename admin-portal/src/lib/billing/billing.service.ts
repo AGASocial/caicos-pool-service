@@ -152,6 +152,70 @@ export class BillingService {
    * Get user's invoices
    */
   async getInvoices(userId: string, limit = 10): Promise<Invoice[]> {
+    const providerName = this.gateway.getName();
+
+    // For Stripe, fetch directly from Stripe API
+    if (providerName === 'stripe') {
+      // Get customer ID from payment methods or subscriptions
+      const { data: paymentMethod } = await this.supabase
+        .from('cadenza_billing_payment_methods')
+        .select('provider_customer_id')
+        .eq('user_id', userId)
+        .eq('provider', 'stripe')
+        .limit(1)
+        .maybeSingle();
+
+      let customerId = paymentMethod?.provider_customer_id;
+
+      if (!customerId) {
+        // Try to get from subscription
+        const { data: subscription } = await this.supabase
+          .from('cadenza_billing_subscriptions')
+          .select('provider_customer_id')
+          .eq('user_id', userId)
+          .eq('provider', 'stripe')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        customerId = subscription?.provider_customer_id;
+      }
+
+      if (!customerId) {
+        // No customer ID found, return empty array
+        return [];
+      }
+
+      const customer: CustomerRef = {
+        provider: 'stripe',
+        providerCustomerId: customerId,
+      };
+
+      const invoicesData = await this.gateway.getInvoices(customer, limit);
+
+      // Map to domain Invoice type
+      return invoicesData.map((inv) => ({
+        id: inv.id,
+        userId,
+        subscriptionId: undefined,
+        provider: 'stripe' as const,
+        providerInvoiceId: inv.id,
+        amountCents: inv.amountCents,
+        currency: inv.currency,
+        status: inv.status,
+        issuedAt: new Date(inv.createdAt),
+        paidAt: inv.paidAt ? new Date(inv.paidAt) : undefined,
+        createdAt: new Date(inv.createdAt),
+        updatedAt: new Date(inv.createdAt),
+        // Add Stripe-specific fields
+        number: inv.number,
+        amountDue: inv.amountDue,
+        hostedInvoiceUrl: inv.hostedInvoiceUrl,
+        invoicePdf: inv.invoicePdf,
+      } as Invoice & { number?: string; amountDue?: number; hostedInvoiceUrl?: string; invoicePdf?: string }));
+    }
+
+    // For PayU and other providers, fetch from database
     const { data, error } = await this.supabase
       .from('cadenza_billing_invoices')
       .select('*')

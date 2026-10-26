@@ -65,6 +65,11 @@ interface Invoice {
   issuedAt: Date;
   paidAt?: Date;
   providerInvoiceId?: string;
+  // Stripe-specific fields
+  number?: string;
+  amountDue?: number;
+  hostedInvoiceUrl?: string;
+  invoicePdf?: string;
 }
 
 export default function BillingPage() {
@@ -75,6 +80,7 @@ export default function BillingPage() {
   const [freePlanOverride, setFreePlanOverride] = useState<Subscription['plan'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [canceling, setCanceling] = useState(false);
+  const [openingPortal, setOpeningPortal] = useState(false);
   const [provider, setProvider] = useState<string | null>(null);
   const { data: teamMembers = [] } = useTeam();
   const userCount = teamMembers.filter(member => member.role === 'technician').length;
@@ -177,6 +183,35 @@ export default function BillingPage() {
     } catch (error) {
       console.error('Error resuming subscription:', error);
       toast.error(t('billingError'));
+    }
+  };
+
+  const handleOpenCustomerPortal = async () => {
+    if (provider !== 'stripe') {
+      toast.error(t('customerPortalNotAvailable'));
+      return;
+    }
+
+    setOpeningPortal(true);
+    try {
+      const response = await fetch('/api/billing/portal', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'x-locale': t('locale') || 'en',
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to create portal session');
+
+      const result = await response.json();
+      if (result.url) {
+        window.location.href = result.url;
+      }
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      toast.error(t('billingError'));
+      setOpeningPortal(false);
     }
   };
 
@@ -335,6 +370,15 @@ export default function BillingPage() {
               </Button>
             ) : !subscription?.cancelAtPeriodEnd ? (
               <>
+                {provider === 'stripe' && (
+                  <Button
+                    variant="default"
+                    onClick={handleOpenCustomerPortal}
+                    disabled={openingPortal}
+                  >
+                    {openingPortal ? t('loading') : t('managePaymentMethods')}
+                  </Button>
+                )}
                 {provider !== 'payu' && (
                   <Button
                     variant="outline"
@@ -467,24 +511,40 @@ export default function BillingPage() {
                         )}
                       </td>
                       <td className="p-3 font-mono text-muted-foreground">
-                        {invoice.providerInvoiceId
+                        {invoice.number || (invoice.providerInvoiceId
                           ? String(invoice.providerInvoiceId).slice(-12)
-                          : invoice.id.slice(0, 8)}
+                          : invoice.id.slice(0, 8))}
                       </td>
                       <td className="p-3 text-right font-semibold">
                         {formatPrice(invoice.amountCents, invoice.currency)}
                       </td>
                       <td className="p-3">
                         <span
-                          className={`font-semibold ${invoice.status === 'paid' ? 'text-green-600' : invoice.status === 'open' ? 'text-amber-600' : 'text-muted-foreground'}`}
+                          className={`font-semibold ${
+                            invoice.status === 'paid' 
+                              ? 'text-green-600' 
+                              : invoice.status === 'open' 
+                                ? 'text-amber-600' 
+                                : 'text-muted-foreground'
+                          }`}
                         >
                           {t(`invoice${invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}`)}
                         </span>
                       </td>
                       <td className="p-3 text-right">
-                        {invoice.status === 'paid' && (
-                          <Button variant="ghost" size="sm">
-                            {t('downloadInvoice')}
+                        {(invoice.hostedInvoiceUrl || invoice.invoicePdf) && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            asChild
+                          >
+                            <a 
+                              href={invoice.hostedInvoiceUrl || invoice.invoicePdf} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                            >
+                              {t('viewInvoice')}
+                            </a>
                           </Button>
                         )}
                       </td>

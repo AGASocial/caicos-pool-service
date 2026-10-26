@@ -39,6 +39,32 @@ function makeJobsQueryMock(data: unknown[] = []) {
   return mockQuery;
 }
 
+function makeSupabaseMock(jobsData: unknown[] = []) {
+  const profileMock = {
+    select: jest.fn(() => ({
+      eq: jest.fn(() => ({
+        maybeSingle: jest.fn(() =>
+          Promise.resolve({
+            data: { role: 'admin' },
+            error: null,
+          })
+        ),
+      })),
+    })),
+  };
+
+  const jobsQueryMock = makeJobsQueryMock(jobsData);
+
+  return {
+    from: jest.fn((table: string) => {
+      if (table === 'cadenza_profiles') {
+        return profileMock;
+      }
+      return jobsQueryMock;
+    }),
+  };
+}
+
 describe('GET /api/jobs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -61,8 +87,7 @@ describe('GET /api/jobs', () => {
       { id: 'job-2', property_id: 'prop-2', status: 'completed', scheduled_date: '2026-03-11', scheduled_time: null },
     ];
 
-    const mockQuery = makeJobsQueryMock(mockJobs);
-    const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
+    const mockSupabase = makeSupabaseMock(mockJobs);
     mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
 
     const req = makeRequest('http://localhost/api/jobs');
@@ -76,30 +101,31 @@ describe('GET /api/jobs', () => {
   });
 
   it('applies date_from filter when provided', async () => {
-    const mockQuery = makeJobsQueryMock([]);
-    const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
+    const mockSupabase = makeSupabaseMock([]);
     mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
 
     const req = makeRequest('http://localhost/api/jobs?date_from=2026-03-01');
     await GET(req);
 
-    expect(mockQuery.gte).toHaveBeenCalledWith('scheduled_date', '2026-03-01');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const jobsQueryMock = mockSupabase.from('cadenza_service_jobs') as any;
+    expect(jobsQueryMock.gte).toHaveBeenCalledWith('scheduled_date', '2026-03-01');
   });
 
   it('applies status filter when provided', async () => {
-    const mockQuery = makeJobsQueryMock([]);
-    const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
+    const mockSupabase = makeSupabaseMock([]);
     mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
 
     const req = makeRequest('http://localhost/api/jobs?status=completed');
     await GET(req);
 
-    expect(mockQuery.eq).toHaveBeenCalledWith('status', 'completed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const jobsQueryMock = mockSupabase.from('cadenza_service_jobs') as any;
+    expect(jobsQueryMock.eq).toHaveBeenCalledWith('status', 'completed');
   });
 
   it('applies day_of_week filter via SQL IN when date range provided', async () => {
-    const mockQuery = makeJobsQueryMock([]);
-    const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
+    const mockSupabase = makeSupabaseMock([]);
     mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
 
     const req = makeRequest(
@@ -107,21 +133,24 @@ describe('GET /api/jobs', () => {
     );
     await GET(req);
 
-    expect(mockQuery.in).toHaveBeenCalledWith('scheduled_date', expect.any(Array));
-    const dates = mockQuery.in.mock.calls[0][1] as string[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const jobsQueryMock = mockSupabase.from('cadenza_service_jobs') as any;
+    expect(jobsQueryMock.in).toHaveBeenCalledWith('scheduled_date', expect.any(Array));
+    const dates = jobsQueryMock.in.mock.calls[0][1] as string[];
     expect(dates.length).toBeGreaterThan(0);
-    expect(dates.every((d) => typeof d === 'string')).toBe(true);
+    expect(dates.every((d: string) => typeof d === 'string')).toBe(true);
   });
 
   it('respects limit query param', async () => {
-    const mockQuery = makeJobsQueryMock([]);
-    const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
+    const mockSupabase = makeSupabaseMock([]);
     mockCreateClient.mockResolvedValue({ supabase: mockSupabase, user: { id: 'user-1' } });
 
     const req = makeRequest('http://localhost/api/jobs?limit=10');
     await GET(req);
 
-    expect(mockQuery.limit).toHaveBeenCalledWith(11);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const jobsQueryMock = mockSupabase.from('cadenza_service_jobs') as any;
+    expect(jobsQueryMock.limit).toHaveBeenCalledWith(11);
   });
 });
 

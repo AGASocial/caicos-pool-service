@@ -68,37 +68,41 @@ async function main() {
   console.log('🚀 Setting up Stripe products for Cadenza...\n');
 
   try {
-    // Create Necessary Plan
-    console.log('📦 Creating Necessary Plan...');
-    const necessaryProductId = await createStripeProduct(
-      'Necessary Plan',
-      'Essential features for managing your pool service business'
+    // Create Free Plan (optional, for completeness)
+    console.log('📦 Creating Free Plan...');
+    const freeProductId = await createStripeProduct(
+      'Free Plan',
+      'Limited features for small teams'
     );
-    const necessaryMonthlyPriceId = await createStripePrice(necessaryProductId, 999, 'month');
-    const necessaryYearlyPriceId = await createStripePrice(necessaryProductId, 9999, 'year');
-    console.log(`✅ Necessary Monthly: ${necessaryMonthlyPriceId}`);
-    console.log(`✅ Necessary Yearly: ${necessaryYearlyPriceId}\n`);
+    const freePriceId = await createStripePrice(freeProductId, 0, 'month');
+    console.log(`✅ Free: ${freePriceId}\n`);
 
-    // Create Premium Plan
-    console.log('📦 Creating Premium Plan...');
-    const premiumProductId = await createStripeProduct(
-      'Premium Plan',
-      'Unlimited features with priority support'
+    // Create Standard Plan (formerly Necessary) at $14.99 per technician per month
+    console.log('📦 Creating Standard Plan ($14.99/tech/month)...');
+    const standardProductId = await createStripeProduct(
+      'Standard Plan',
+      'Essential features with per-technician pricing'
     );
-    const premiumMonthlyPriceId = await createStripePrice(premiumProductId, 3999, 'month');
-    const premiumYearlyPriceId = await createStripePrice(premiumProductId, 39999, 'year');
-    console.log(`✅ Premium Monthly: ${premiumMonthlyPriceId}`);
-    console.log(`✅ Premium Yearly: ${premiumYearlyPriceId}\n`);
+    const standardMonthlyPriceId = await createStripePrice(standardProductId, 1499, 'month');
+    console.log(`✅ Standard Monthly: ${standardMonthlyPriceId}\n`);
+
+    // Create Pro Plan at $24.99 per technician per month
+    console.log('📦 Creating Pro Plan ($24.99/tech/month)...');
+    const proProductId = await createStripeProduct(
+      'Pro Plan',
+      'Advanced features with video, extended retention, and data export'
+    );
+    const proMonthlyPriceId = await createStripePrice(proProductId, 2499, 'month');
+    console.log(`✅ Pro Monthly: ${proMonthlyPriceId}\n`);
 
     // Update database
     console.log('🔄 Updating database...');
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     const updates = [
-      { id: 'plan_necessary_month', priceId: necessaryMonthlyPriceId },
-      { id: 'plan_necessary_year', priceId: necessaryYearlyPriceId },
-      { id: 'plan_premium_month', priceId: premiumMonthlyPriceId },
-      { id: 'plan_premium_year', priceId: premiumYearlyPriceId },
+      { id: 'plan_free', priceId: freePriceId },
+      { id: 'plan_necessary_month', priceId: standardMonthlyPriceId },
+      { id: 'plan_pro_month', priceId: proMonthlyPriceId },
     ];
 
     for (const { id, priceId } of updates) {
@@ -106,10 +110,15 @@ async function main() {
         .from('cadenza_billing_plans')
         .select('provider_price_map')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (fetchError) {
         console.error(`❌ Error fetching plan ${id}:`, fetchError.message);
+        continue;
+      }
+
+      if (!plan) {
+        console.warn(`⚠️  Plan ${id} not found in database, skipping...`);
         continue;
       }
 
@@ -130,10 +139,10 @@ async function main() {
     console.log('\n🎉 Setup complete! Your Stripe products are ready.');
     console.log('\n📝 Stripe Price IDs:');
     console.log('-----------------------------------');
-    console.log(`Necessary Monthly: ${necessaryMonthlyPriceId}`);
-    console.log(`Necessary Yearly: ${necessaryYearlyPriceId}`);
-    console.log(`Premium Monthly: ${premiumMonthlyPriceId}`);
-    console.log(`Premium Yearly: ${premiumYearlyPriceId}`);
+    console.log(`Free: ${freePriceId}`);
+    console.log(`Standard Monthly ($14.99/tech): ${standardMonthlyPriceId}`);
+    console.log(`Pro Monthly ($24.99/tech): ${proMonthlyPriceId}`);
+    console.log('\n💡 Important: These are per-unit prices for subscription quantities.');
 
   } catch (error) {
     console.error('❌ Setup failed:', error.message);
