@@ -291,13 +291,17 @@ export class StripeAdapter implements PaymentGateway {
         const statusTrans = (invData.status_transitions || invData.statusTransitions) as Record<string, unknown> | undefined;
         return {
           id: invoice.id,
+          number: invoice.number || undefined,
           amountCents: (invData.amount_paid as number) || 0,
+          amountDue: invoice.amount_due || 0,
           currency: invoice.currency.toUpperCase() as InvoiceData['currency'],
           status: this.mapInvoiceStatus(invoice.status),
           createdAt: new Date(invoice.created * 1000).toISOString(),
           paidAt: statusTrans?.paid_at
             ? new Date((statusTrans.paid_at as number) * 1000).toISOString()
             : undefined,
+          hostedInvoiceUrl: invoice.hosted_invoice_url || undefined,
+          invoicePdf: invoice.invoice_pdf || undefined,
         };
       });
     } catch (error) {
@@ -313,13 +317,17 @@ export class StripeAdapter implements PaymentGateway {
       const statusTrans = (invData.status_transitions || invData.statusTransitions) as Record<string, unknown> | undefined;
       return {
         id: invoice.id,
+        number: invoice.number || undefined,
         amountCents: (invData.amount_paid as number) || 0,
+        amountDue: invoice.amount_due || 0,
         currency: invoice.currency.toUpperCase() as InvoiceData['currency'],
         status: this.mapInvoiceStatus(invoice.status),
         createdAt: new Date(invoice.created * 1000).toISOString(),
         paidAt: statusTrans?.paid_at
           ? new Date((statusTrans.paid_at as number) * 1000).toISOString()
           : undefined,
+        hostedInvoiceUrl: invoice.hosted_invoice_url || undefined,
+        invoicePdf: invoice.invoice_pdf || undefined,
       };
     } catch (error) {
       throw this.handleStripeError(error, 'Failed to fetch invoice');
@@ -334,13 +342,17 @@ export class StripeAdapter implements PaymentGateway {
 
       return {
         id: invoice.id,
+        number: invoice.number || undefined,
         amountCents: (invData.amount_paid as number) || 0,
+        amountDue: invoice.amount_due || 0,
         currency: invoice.currency.toUpperCase() as InvoiceData['currency'],
         status: this.mapInvoiceStatus(invoice.status),
         createdAt: new Date(invoice.created * 1000).toISOString(),
         paidAt: statusTrans?.paid_at
           ? new Date((statusTrans.paid_at as number) * 1000).toISOString()
           : undefined,
+        hostedInvoiceUrl: invoice.hosted_invoice_url || undefined,
+        invoicePdf: invoice.invoice_pdf || undefined,
       };
     } catch (error) {
       throw this.handleStripeError(error, 'Failed to retry invoice payment');
