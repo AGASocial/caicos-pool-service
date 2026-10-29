@@ -131,7 +131,7 @@ jobs:
 
       - name: Run E2E tests
         working-directory: ./admin-portal
-        run: npx playwright test ../e2e/full-flow.spec.ts
+        run: npx playwright test e2e/full-flow.spec.ts
         env:
           PLAYWRIGHT_TEST_BASE_URL: ${{ needs.wait-for-vercel.outputs.preview-url }}
           PLAYWRIGHT_TECH_BASE_URL: http://localhost:8081
