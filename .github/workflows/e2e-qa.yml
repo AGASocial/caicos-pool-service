@@ -102,8 +102,11 @@ jobs:
         working-directory: ./admin-portal
         run: npx playwright install --with-deps chromium
 
+      - name: Install root dependencies
+        run: npm install
+
       - name: Run QA seed
-        run: npx tsx scripts/qa-seed-cleanup.ts seed
+        run: npm run qa:seed
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -148,7 +151,7 @@ jobs:
 
       - name: Run QA cleanup
         if: always()
-        run: npx tsx scripts/qa-seed-cleanup.ts cleanup
+        run: npm run qa:cleanup
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

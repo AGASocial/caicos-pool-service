@@ -139,10 +139,10 @@ npx tsx scripts/qa-seed-cleanup.ts cleanup
 
 ```bash
 # Seed only
-npx tsx scripts/qa-seed-cleanup.ts seed
+npm run qa:seed
 
 # Cleanup only
-npx tsx scripts/qa-seed-cleanup.ts cleanup
+npm run qa:cleanup
 
 # Run tests with UI (local debugging)
 cd admin-portal
