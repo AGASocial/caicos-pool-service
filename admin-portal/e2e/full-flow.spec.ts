@@ -12,10 +12,27 @@
 import { test, expect, type Page } from '@playwright/test';
 import path from 'path';
 
+// Validate required environment variables
+function validateTestEnvironment() {
+  const missing: string[] = [];
+  
+  if (!process.env.QA_ADMIN_PASSWORD) missing.push('QA_ADMIN_PASSWORD');
+  if (!process.env.QA_TECH_PASSWORD) missing.push('QA_TECH_PASSWORD');
+  
+  if (missing.length > 0) {
+    const msg = `Missing required environment variables: ${missing.join(', ')}`;
+    console.error(`❌ ${msg}`);
+    throw new Error(msg);
+  }
+}
+
+// Validate on module load
+validateTestEnvironment();
+
 const ADMIN_EMAIL = 'qa-admin@cadenzaops.com';
-const ADMIN_PASSWORD = process.env.QA_ADMIN_PASSWORD || '';
+const ADMIN_PASSWORD = process.env.QA_ADMIN_PASSWORD!;
 const TECH_EMAIL = 'qa-tech@cadenzaops.com';
-const TECH_PASSWORD = process.env.QA_TECH_PASSWORD || '';
+const TECH_PASSWORD = process.env.QA_TECH_PASSWORD!;
 
 const ADMIN_BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
 const TECH_BASE_URL = process.env.PLAYWRIGHT_TECH_BASE_URL || 'http://localhost:8081';

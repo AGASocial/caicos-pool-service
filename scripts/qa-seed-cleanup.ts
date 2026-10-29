@@ -15,6 +15,7 @@
  * Required env vars:
  *   SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
+ *   QA_TECH_PASSWORD (for seed only)
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -39,7 +40,10 @@ function getSupabaseAdmin() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !key) {
-    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+    console.error('❌ Missing required environment variables:');
+    if (!url) console.error('  - SUPABASE_URL');
+    if (!key) console.error('  - SUPABASE_SERVICE_ROLE_KEY');
+    throw new Error('Missing required Supabase credentials. Cannot proceed.');
   }
 
   return createClient(url, key, {
@@ -50,7 +54,24 @@ function getSupabaseAdmin() {
   });
 }
 
+function validateSeedEnvironment() {
+  const missing: string[] = [];
+  
+  if (!process.env.SUPABASE_URL) missing.push('SUPABASE_URL');
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+  if (!process.env.QA_TECH_PASSWORD) missing.push('QA_TECH_PASSWORD');
+  
+  if (missing.length > 0) {
+    console.error('❌ Missing required environment variables for seed:');
+    missing.forEach(v => console.error(`  - ${v}`));
+    throw new Error('Cannot seed without required environment variables.');
+  }
+}
+
 async function seedQAData() {
+  // Validate environment before proceeding
+  validateSeedEnvironment();
+  
   const supabase = getSupabaseAdmin();
   console.log('🌱 Starting QA seed...');
 
@@ -110,7 +131,7 @@ async function seedQAData() {
       console.log(`  Creating ${tech.email}...`);
       const { data: newUser, error: authError } = await supabase.auth.admin.createUser({
         email: tech.email,
-        password: process.env.QA_TECH_PASSWORD || 'QATest123!',
+        password: process.env.QA_TECH_PASSWORD!,
         email_confirm: true,
         user_metadata: {
           company_id: QA_COMPANY_ID,
