@@ -473,5 +473,22 @@
   "subscriptionSuccess": "Subscription Activated!",
   "yourSubscriptionIsActive": "Your subscription is now active. Welcome to Cadenza!",
   "goToDashboard": "Go to Dashboard",
-  "locale": "en"
+  "locale": "en",
+  "liveStatusBoard": "Live Status Board",
+  "liveStatusBoardDescription": "Real-time technician location and job status",
+  "statusOnTheWay": "On the way",
+  "statusOnSite": "On site",
+  "statusDone": "Done",
+  "statusPending": "Pending",
+  "statusSkipped": "Skipped",
+  "filterByRoute": "Filter by route",
+  "filterByTechnician": "Filter by technician",
+  "allRoutes": "All routes",
+  "allTechnicians": "All technicians",
+  "noJobsForToday": "No jobs scheduled for today",
+  "timeNow": "now",
+  "timeMinutesAgo": "{minutes}m ago",
+  "timeHoursAgo": "{hours}h ago",
+  "upgradeForLiveStatus": "Upgrade to Standard or Pro to access the live status board",
+  "upgradeNow": "Upgrade Now"
 }
