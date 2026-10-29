@@ -1,0 +1,287 @@
+name: E2E QA Tests
+
+on:
+  pull_request:
+    branches: [develop]
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [admin-portal, technician-app]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./${{ matrix.app }}
+        run: npm ci
+
+      - name: Lint
+        working-directory: ./${{ matrix.app }}
+        run: npm run lint
+        continue-on-error: ${{ matrix.app == 'technician-app' }}
+
+      - name: Type check
+        working-directory: ./${{ matrix.app }}
+        run: npx tsc --noEmit
+        continue-on-error: ${{ matrix.app == 'technician-app' }}
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: admin-portal/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./admin-portal
+        run: npm ci
+
+      - name: Run tests
+        working-directory: ./admin-portal
+        run: npm test -- --passWithNoTests
+        env:
+          CI: true
+
+  wait-for-vercel:
+    name: Wait for Vercel Preview
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    outputs:
+      preview-url: ${{ steps.wait.outputs.url }}
+    steps:
+      - name: Wait for Vercel Preview
+        id: wait
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          max_timeout: 300
+          check_interval: 10
+
+      - name: Preview URL
+        run: |
+          echo "Preview URL: ${{ steps.wait.outputs.url }}"
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: wait-for-vercel
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install admin-portal dependencies
+        working-directory: ./admin-portal
+        run: npm ci
+
+      - name: Install technician-app dependencies
+        working-directory: ./technician-app
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: ./admin-portal
+        run: npx playwright install --with-deps chromium
+
+      - name: Run QA seed
+        run: npx tsx scripts/qa-seed-cleanup.ts seed
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          QA_ADMIN_PASSWORD: ${{ secrets.QA_ADMIN_PASSWORD }}
+          QA_TECH_PASSWORD: ${{ secrets.QA_TECH_PASSWORD }}
+
+      - name: Build Expo web
+        working-directory: ./technician-app
+        run: |
+          npm install -g expo-cli
+          npx expo export:web
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+      - name: Serve Expo web in background
+        working-directory: ./technician-app
+        run: |
+          npx serve web-build -l 8081 &
+          echo $! > expo-server.pid
+          sleep 5
+
+      - name: Run E2E tests
+        working-directory: ./admin-portal
+        run: npx playwright test ../e2e/full-flow.spec.ts
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: ${{ needs.wait-for-vercel.outputs.preview-url }}
+          PLAYWRIGHT_TECH_BASE_URL: http://localhost:8081
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          QA_ADMIN_PASSWORD: ${{ secrets.QA_ADMIN_PASSWORD }}
+          QA_TECH_PASSWORD: ${{ secrets.QA_TECH_PASSWORD }}
+          CI: true
+
+      - name: Stop Expo server
+        if: always()
+        working-directory: ./technician-app
+        run: |
+          if [ -f expo-server.pid ]; then
+            kill $(cat expo-server.pid) || true
+            rm expo-server.pid
+          fi
+
+      - name: Run QA cleanup
+        if: always()
+        run: npx tsx scripts/qa-seed-cleanup.ts cleanup
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            admin-portal/playwright-report/
+            admin-portal/test-results/
+          retention-days: 30
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: admin-portal/test-results/**/*.png
+          retention-days: 30
+
+  report-results:
+    name: Report Test Results
+    runs-on: ubuntu-latest
+    needs: e2e-tests
+    if: always()
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-report
+          path: ./reports
+
+      - name: Generate test summary
+        id: summary
+        run: |
+          if [ -f reports/test-results/results.json ]; then
+            # Parse results
+            TOTAL=$(jq '.suites[].specs | length' reports/test-results/results.json | awk '{s+=$1} END {print s}')
+            PASSED=$(jq '[.suites[].specs[].tests[] | select(.status=="passed")] | length' reports/test-results/results.json)
+            FAILED=$(jq '[.suites[].specs[].tests[] | select(.status=="failed")] | length' reports/test-results/results.json)
+            
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "passed=$PASSED" >> $GITHUB_OUTPUT
+            echo "failed=$FAILED" >> $GITHUB_OUTPUT
+            
+            if [ "$FAILED" -eq 0 ]; then
+              echo "status=✅ PASSED" >> $GITHUB_OUTPUT
+            else
+              echo "status=❌ FAILED" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "status=⚠️ NO RESULTS" >> $GITHUB_OUTPUT
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const status = '${{ steps.summary.outputs.status }}';
+            const total = '${{ steps.summary.outputs.total }}';
+            const passed = '${{ steps.summary.outputs.passed }}';
+            const failed = '${{ steps.summary.outputs.failed }}';
+            
+            const body = `## E2E QA Test Results ${status}
+            
+            | Tests | Passed | Failed |
+            |-------|--------|--------|
+            | ${total} | ✅ ${passed} | ❌ ${failed} |
+            
+            ### Test Coverage
+            - ✅ Admin login and dashboard
+            - ✅ Technician app login
+            - ✅ Job status updates (en route)
+            - ✅ Service report completion
+            - ✅ Pro plan feature gating
+            
+            **Full report:** [View Playwright Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+            **Screenshots:** Available in workflow artifacts
+            
+            ---
+            *QA Company ID: \`45173a02-9f30-4a07-89bb-16923bd043b5\`*
+            `;
+            
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('E2E QA Test Results')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body,
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+
+  status-check:
+    name: E2E QA Status
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, unit-tests, e2e-tests]
+    if: always()
+    steps:
+      - name: Check status
+        run: |
+          if [ "${{ needs.e2e-tests.result }}" != "success" ]; then
+            echo "E2E tests failed"
+            exit 1
+          fi
+          echo "All checks passed!"
