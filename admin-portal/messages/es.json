@@ -473,5 +473,22 @@
   "subscriptionSuccess": "¡Suscripción Activada!",
   "yourSubscriptionIsActive": "Su suscripción está ahora activa. ¡Bienvenido a Cadenza!",
   "goToDashboard": "Ir al Panel",
-  "locale": "es"
+  "locale": "es",
+  "liveStatusBoard": "Panel de Estado en Vivo",
+  "liveStatusBoardDescription": "Ubicación y estado de trabajos en tiempo real",
+  "statusOnTheWay": "En camino",
+  "statusOnSite": "En sitio",
+  "statusDone": "Completado",
+  "statusPending": "Pendiente",
+  "statusSkipped": "Omitido",
+  "filterByRoute": "Filtrar por ruta",
+  "filterByTechnician": "Filtrar por técnico",
+  "allRoutes": "Todas las rutas",
+  "allTechnicians": "Todos los técnicos",
+  "noJobsForToday": "No hay trabajos programados para hoy",
+  "timeNow": "ahora",
+  "timeMinutesAgo": "hace {minutes}m",
+  "timeHoursAgo": "hace {hours}h",
+  "upgradeForLiveStatus": "Actualiza a Standard o Pro para acceder al panel de estado en vivo",
+  "upgradeNow": "Actualizar Ahora"
 }

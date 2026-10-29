@@ -145,6 +145,7 @@ export const en = {
     currentPasswordIncorrect: 'Current password is incorrect.',
   },
   jobDetail: {
+    onMyWay: 'On My Way',
     distanceMiles: 'miles',
     distanceFeet: 'ft',
     gate: 'Gate:',

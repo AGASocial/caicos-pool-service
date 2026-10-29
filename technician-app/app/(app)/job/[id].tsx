@@ -548,6 +548,22 @@ export default function JobDetailScreen() {
     return () => { cancelled = true; };
   }, [job, started]);
 
+  async function handleOnMyWay() {
+    if (!id) return;
+    if (!getCachedUserId()) return;
+    const { error } = await supabase
+      .from('cadenza_service_jobs')
+      .update({ status: 'en_route', en_route_at: new Date().toISOString() })
+      .eq('id', id);
+    if (error) {
+      Alert.alert(t('jobDetail.couldNotStart'), error.message ?? t('jobDetail.notAssigned'));
+      return;
+    }
+    if (job) {
+      setJob({ ...job, status: 'en_route' });
+    }
+  }
+
   async function handleStart() {
     if (!id) return;
     if (!getCachedUserId()) return;
@@ -848,6 +864,11 @@ export default function JobDetailScreen() {
               <View style={styles.locationWarning}>
                 <Text style={styles.locationWarningText}>{locationErrorText}</Text>
               </View>
+            )}
+            {job.status === 'pending' && (
+              <Pressable style={[styles.startButton, { backgroundColor: themeColors.onMyWayButton ?? themeColors.buttonPrimary }]} onPress={handleOnMyWay}>
+                <Text style={styles.startButtonText}>{t('jobDetail.onMyWay')}</Text>
+              </Pressable>
             )}
             <Pressable style={styles.startButton} onPress={handleStart}>
               <Text style={styles.startButtonText}>{t('jobDetail.startService')}</Text>
