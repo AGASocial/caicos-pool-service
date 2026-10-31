@@ -9,7 +9,9 @@
  * 5. Pro plan features are visible
  */
 
-import { test, expect, type Page, type Browser } from '@playwright/test';
+import { test, expect, type Page, type Browser, type TestInfo } from '@playwright/test';
+import path from 'path';
+import fs from 'fs';
 
 // Validate required environment variables
 function validateTestEnvironment() {
@@ -44,32 +46,85 @@ const vercelBypassHeaders: Record<string, string> | undefined =
       }
     : undefined;
 
-/** Clear password field values so failure snapshots/traces don't retain secrets. */
+const SCREENSHOT_DIR = path.join('test-results', 'screenshots');
+
+function passwordLocators(page: Page) {
+  return page.locator(
+    'input[type="password"], [data-testid="login-password"], input[name="password"], input[autocomplete="current-password"]'
+  );
+}
+
+/**
+ * Clear password through the React-controlled input (fill), then blur.
+ * evaluate()-only clears get overwritten on re-render and still leak into error-context.
+ */
 async function redactPasswordFields(page: Page) {
+  const fields = passwordLocators(page);
+  const count = await fields.count().catch(() => 0);
+  for (let i = 0; i < count; i++) {
+    const field = fields.nth(i);
+    if (await field.isVisible().catch(() => false)) {
+      await field.fill('').catch(() => undefined);
+      await field.blur().catch(() => undefined);
+    }
+  }
+}
+
+function isAuthedAppPath(pathname: string): boolean {
+  const pathNoSlash = pathname.replace(/\/$/, '') || '/';
+  if (pathNoSlash.includes('/auth')) return false;
+  return (
+    pathNoSlash === '/en' ||
+    pathNoSlash === '/es' ||
+    pathNoSlash.startsWith('/en/') ||
+    pathNoSlash.startsWith('/es/')
+  );
+}
+
+async function waitForAdminSession(page: Page) {
+  await page.waitForURL((url) => isAuthedAppPath(url.pathname), { timeout: 20000 });
+  // Prefer an authenticated cookie / storage signal when available
   await page
-    .locator('input[type="password"], [data-testid="login-password"]')
-    .evaluateAll((els) => {
-      for (const el of els) {
-        if (el instanceof HTMLInputElement) {
-          el.value = '';
-          el.setAttribute('value', '');
-          el.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      }
-    })
+    .waitForFunction(() => {
+      const hasCookie = document.cookie.length > 0;
+      const hasStorage =
+        Object.keys(window.localStorage).some((k) => /supabase|auth|sb-/i.test(k)) ||
+        Object.keys(window.sessionStorage).some((k) => /supabase|auth|sb-/i.test(k));
+      return hasCookie || hasStorage;
+    }, { timeout: 10000 })
     .catch(() => undefined);
 }
 
-async function adminLogin(page: Page) {
-  await page.goto(`${ADMIN_BASE_URL}/en/auth/login`);
-  await page.getByLabel(/email/i).fill(ADMIN_EMAIL);
-  await page.getByLabel(/password/i).fill(ADMIN_PASSWORD);
-  await page.getByRole('button', { name: /sign in/i }).click();
-  await redactPasswordFields(page);
-  await page.waitForURL(/.*\/en\/(dashboard)?/, { timeout: 15000 });
+async function captureStep(page: Page, testInfo: TestInfo, name: string) {
+  fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+  const filePath = path.join(SCREENSHOT_DIR, `${name}.png`);
+  await page.screenshot({
+    path: filePath,
+    fullPage: true,
+    mask: [passwordLocators(page)],
+  });
+  await testInfo.attach(name, { path: filePath, contentType: 'image/png' });
 }
 
-async function techLogin(page: Page) {
+async function adminLogin(page: Page, testInfo?: TestInfo) {
+  await page.goto(`${ADMIN_BASE_URL}/en/auth/login`);
+  await page.getByLabel(/email/i).fill(ADMIN_EMAIL);
+  const passwordField = page.getByLabel(/password/i);
+  await passwordField.fill(ADMIN_PASSWORD);
+  await page.getByRole('button', { name: /sign in/i }).click();
+
+  // Scrub before any assertion/wait that can produce error-context snapshots
+  await redactPasswordFields(page);
+
+  await waitForAdminSession(page);
+  await expect(page).not.toHaveURL(/\/auth\//);
+
+  if (testInfo) {
+    await captureStep(page, testInfo, 'admin-after-login');
+  }
+}
+
+async function techLogin(page: Page, testInfo?: TestInfo) {
   await page.goto(`${TECH_BASE_URL}/`);
   await page.waitForLoadState('networkidle');
 
@@ -82,6 +137,10 @@ async function techLogin(page: Page) {
   await loginSubmit.click();
   await redactPasswordFields(page);
   await page.waitForLoadState('networkidle');
+
+  if (testInfo) {
+    await captureStep(page, testInfo, 'tech-after-login');
+  }
   return true;
 }
 
@@ -101,15 +160,18 @@ async function withTechPage(browser: Browser, run: (page: Page) => Promise<void>
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Full E2E Flow', () => {
-  test('Admin: Login and view dashboard', async ({ page }) => {
-    await adminLogin(page);
+  test('Admin: Login and view dashboard', async ({ page }, testInfo) => {
+    await adminLogin(page, testInfo);
     await expect(page.getByText(/dashboard|welcome/i).first()).toBeVisible({ timeout: 10000 });
+    await captureStep(page, testInfo, 'admin-dashboard');
     console.log('✓ Admin logged in');
   });
 
-  test('Admin: View live status board (Pro feature)', async ({ page }) => {
-    await adminLogin(page);
+  test('Admin: View live status board (Pro feature)', async ({ page }, testInfo) => {
+    await adminLogin(page, testInfo);
     await page.goto(`${ADMIN_BASE_URL}/en/dashboard`);
+    await expect(page).not.toHaveURL(/\/auth\//);
+    await captureStep(page, testInfo, 'admin-live-status');
 
     const pageContent = await page.content();
     const hasPro =
@@ -118,44 +180,47 @@ test.describe('Full E2E Flow', () => {
     console.log('✓ Admin can access dashboard', { hasPro });
   });
 
-  test('Tech: Login and view jobs', async ({ browser }) => {
+  test('Tech: Login and view jobs', async ({ browser }, testInfo) => {
     await withTechPage(browser, async (page) => {
-      const hasLoginForm = await techLogin(page);
+      const hasLoginForm = await techLogin(page, testInfo);
       await page.waitForTimeout(2000);
+      await captureStep(page, testInfo, 'tech-jobs');
       const hasJobs = (await page.locator('text=/job|service|visit|trabajo/i').count()) > 0;
       console.log('✓ Tech app loaded', { hasLoginForm, hasJobs });
     });
   });
 
-  test('Tech: Mark job en route', async ({ browser }) => {
+  test('Tech: Mark job en route', async ({ browser }, testInfo) => {
     await withTechPage(browser, async (page) => {
-      await techLogin(page);
+      await techLogin(page, testInfo);
       await page.waitForTimeout(2000);
 
       const enRouteButton = page.getByTestId('job-on-my-way');
       if ((await enRouteButton.count()) > 0) {
         await enRouteButton.click();
         await page.waitForTimeout(1000);
+        await captureStep(page, testInfo, 'tech-en-route');
         console.log('✓ Tech marked job en route');
       } else {
-        // Fallback: start-service CTA may be visible depending on job status
         const startButton = page.getByTestId('job-start-service');
         if ((await startButton.count()) > 0) {
           console.log('⚠ On-my-way not shown; start-service button is present');
         } else {
           console.log('⚠ Could not find en route button (may need job detail navigation)');
         }
+        await captureStep(page, testInfo, 'tech-en-route');
       }
     });
   });
 
-  test('Tech: Complete service with report and photo', async ({ browser }) => {
+  test('Tech: Complete service with report and photo', async ({ browser }, testInfo) => {
     await withTechPage(browser, async (page) => {
-      await techLogin(page);
+      await techLogin(page, testInfo);
       await page.waitForTimeout(2000);
 
       const takePhoto = page.getByTestId('job-take-photo');
       const complete = page.getByTestId('job-complete');
+      await captureStep(page, testInfo, 'tech-complete-ready');
       console.log('✓ Tech app ready for service completion', {
         hasTakePhoto: (await takePhoto.count()) > 0,
         hasComplete: (await complete.count()) > 0,
@@ -163,10 +228,12 @@ test.describe('Full E2E Flow', () => {
     });
   });
 
-  test('Admin: View completed report', async ({ page }) => {
-    await adminLogin(page);
+  test('Admin: View completed report', async ({ page }, testInfo) => {
+    await adminLogin(page, testInfo);
     await page.goto(`${ADMIN_BASE_URL}/en/reports`);
+    await expect(page).not.toHaveURL(/\/auth\//);
     await page.waitForLoadState('networkidle');
+    await captureStep(page, testInfo, 'admin-reports');
 
     const hasReports = (await page.locator('text=/report|service|completed/i').count()) > 0;
     console.log('✓ Admin reports page loaded', { hasReports });
@@ -174,17 +241,24 @@ test.describe('Full E2E Flow', () => {
 });
 
 test.describe('Plan Gating Tests', () => {
-  test('Pro plan: Live status board visible', async ({ page }) => {
-    await adminLogin(page);
+  test('Pro plan: Live status board visible', async ({ page }, testInfo) => {
+    await adminLogin(page, testInfo);
+
+    // Must be past login (session established) before calling authenticated APIs
+    await expect(page).not.toHaveURL(/\/auth\//);
 
     const response = await page.request.get(`${ADMIN_BASE_URL}/api/billing/plan-features`, {
       headers: vercelBypassHeaders,
     });
 
-    expect(response.ok()).toBeTruthy();
-    const data = await response.json();
+    if (!response.ok()) {
+      console.error(`plan-features failed: status=${response.status()} body=${(await response.text()).slice(0, 500)}`);
+    }
+    expect(response.ok(), `plan-features status=${response.status()}`).toBeTruthy();
 
+    const data = await response.json();
     console.log('Plan features:', data);
+    await captureStep(page, testInfo, 'admin-plan-features');
 
     if (data.planId?.includes('pro')) {
       expect(data.features?.live_status_board).toBe(true);

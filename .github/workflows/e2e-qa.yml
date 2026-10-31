@@ -150,6 +150,8 @@ jobs:
           QA_ADMIN_PASSWORD: ${{ secrets.QA_ADMIN_PASSWORD }}
           QA_TECH_PASSWORD: ${{ secrets.QA_TECH_PASSWORD }}
           CI: true
+          # Disables Playwright error-context.md page snapshots that can embed password field text
+          PLAYWRIGHT_NO_COPY_PROMPT: '1'
 
       - name: Stop Expo server
         if: always() && needs.wait-for-vercel.result == 'success'
@@ -167,6 +169,34 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      - name: Verify artifacts do not contain secrets
+        if: always() && needs.wait-for-vercel.result == 'success'
+        env:
+          QA_ADMIN_PASSWORD: ${{ secrets.QA_ADMIN_PASSWORD }}
+          QA_TECH_PASSWORD: ${{ secrets.QA_TECH_PASSWORD }}
+        run: |
+          set +e
+          leaked=0
+          for var in QA_ADMIN_PASSWORD QA_TECH_PASSWORD; do
+            secret="${!var}"
+            if [ -z "$secret" ] || [ "${#secret}" -lt 8 ]; then
+              continue
+            fi
+            # Search without printing the secret; only report which env var leaked
+            if grep -R -F -I -l -- "$secret" \
+              admin-portal/test-results \
+              admin-portal/playwright-report \
+              2>/dev/null | head -1 | grep -q .; then
+              echo "::error::Secret from ${var} found in Playwright artifacts"
+              leaked=1
+            fi
+          done
+          if [ "$leaked" -ne 0 ]; then
+            echo "Artifact secret scan failed"
+            exit 1
+          fi
+          echo "Artifact secret scan passed"
+
       - name: Upload test results
         if: always() && needs.wait-for-vercel.result == 'success'
         uses: actions/upload-artifact@v4
@@ -183,7 +213,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
-          path: admin-portal/test-results/**/*.png
+          path: |
+            admin-portal/test-results/screenshots/
+            admin-portal/test-results/**/*.png
           retention-days: 30
           if-no-files-found: ignore
 
@@ -208,12 +240,18 @@ jobs:
       - name: Generate test summary
         id: summary
         run: |
+          COVERAGE_FILE="$RUNNER_TEMP/e2e-coverage.md"
+          SCREENSHOTS_FILE="$RUNNER_TEMP/e2e-screenshots.md"
+          : > "$COVERAGE_FILE"
+          : > "$SCREENSHOTS_FILE"
+
           if [ "${{ steps.download.outcome }}" != "success" ]; then
             echo "status=❌ FAILED (no report artifact)" >> $GITHUB_OUTPUT
             echo "total=0" >> $GITHUB_OUTPUT
             echo "passed=0" >> $GITHUB_OUTPUT
             echo "failed=0" >> $GITHUB_OUTPUT
             echo "missing_artifact=true" >> $GITHUB_OUTPUT
+            echo "_No results available._" > "$COVERAGE_FILE"
           elif [ -f reports/test-results/results.json ] || [ -f reports/admin-portal/test-results/results.json ]; then
             RESULTS_FILE=reports/test-results/results.json
             if [ ! -f "$RESULTS_FILE" ]; then
@@ -233,6 +271,36 @@ jobs:
             echo "failed=$FAILED" >> $GITHUB_OUTPUT
             echo "missing_artifact=false" >> $GITHUB_OUTPUT
             
+            # Build coverage list from real nested suite results
+            jq -r '
+              def status_icon($ok; $status):
+                if $ok == true then "✅"
+                elif $status == "skipped" then "⏭️"
+                elif $status == "flaky" then "⚠️"
+                else "❌" end;
+              def walk:
+                (.specs[]? |
+                  (.tests[-1].results[-1].status // (if .ok then "passed" else "failed" end)) as $st |
+                  "- \(status_icon(.ok; $st)) \(.title) (\($st))"
+                ),
+                (.suites[]? | walk);
+              [.suites[] | walk] | if length == 0 then ["_No tests found in results.json_"] else . end | .[]
+            ' "$RESULTS_FILE" > "$COVERAGE_FILE"
+
+            # List screenshot files found in the downloaded artifact
+            {
+              echo "Screenshots artifact: [Download screenshots](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)"
+              echo ""
+              found=0
+              while IFS= read -r img; do
+                found=1
+                echo "- \`$(basename "$img")\`"
+              done < <(find reports -type f -name '*.png' 2>/dev/null | sort | head -40)
+              if [ "$found" -eq 0 ]; then
+                echo "_No screenshots found in report artifact._"
+              fi
+            } > "$SCREENSHOTS_FILE"
+            
             if [ "$TOTAL" -eq 0 ]; then
               echo "status=❌ FAILED (0 tests reported)" >> $GITHUB_OUTPUT
             elif [ "$FAILED" -eq 0 ]; then
@@ -246,51 +314,71 @@ jobs:
             echo "passed=0" >> $GITHUB_OUTPUT
             echo "failed=0" >> $GITHUB_OUTPUT
             echo "missing_artifact=true" >> $GITHUB_OUTPUT
+            echo "_No results available._" > "$COVERAGE_FILE"
           fi
+
+          {
+            echo "coverage<<EOF"
+            cat "$COVERAGE_FILE"
+            echo "EOF"
+            echo "screenshots<<EOF"
+            cat "$SCREENSHOTS_FILE"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Comment PR
         uses: actions/github-script@v7
+        env:
+          E2E_STATUS: ${{ steps.summary.outputs.status }}
+          E2E_TOTAL: ${{ steps.summary.outputs.total }}
+          E2E_PASSED: ${{ steps.summary.outputs.passed }}
+          E2E_FAILED: ${{ steps.summary.outputs.failed }}
+          E2E_MISSING_ARTIFACT: ${{ steps.summary.outputs.missing_artifact }}
+          E2E_JOB_RESULT: ${{ needs.e2e-tests.result }}
+          E2E_COVERAGE: ${{ steps.summary.outputs.coverage }}
+          E2E_SCREENSHOTS: ${{ steps.summary.outputs.screenshots }}
+          E2E_RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const status = '${{ steps.summary.outputs.status }}';
-            const total = '${{ steps.summary.outputs.total }}';
-            const passed = '${{ steps.summary.outputs.passed }}';
-            const failed = '${{ steps.summary.outputs.failed }}';
-            const missingArtifact = '${{ steps.summary.outputs.missing_artifact }}' === 'true';
-            const e2eResult = '${{ needs.e2e-tests.result }}';
+            const status = process.env.E2E_STATUS || '';
+            const total = process.env.E2E_TOTAL || '0';
+            const passed = process.env.E2E_PASSED || '0';
+            const failed = process.env.E2E_FAILED || '0';
+            const missingArtifact = process.env.E2E_MISSING_ARTIFACT === 'true';
+            const e2eResult = process.env.E2E_JOB_RESULT || '';
+            const coverage = process.env.E2E_COVERAGE || '_No coverage details_';
+            const screenshots = process.env.E2E_SCREENSHOTS || '_No screenshots_';
+            const runUrl = process.env.E2E_RUN_URL || '';
             
             let body;
             if (missingArtifact) {
               body = `## E2E QA Test Results ${status}
-            
+
             Playwright report artifact was not available (E2E job result: \`${e2eResult}\`).
-            
+
             This usually means upstream checks failed, the E2E job exited before uploading results, or the artifact upload was skipped.
-            
-            **Workflow run:** [View details](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            
+
+            **Workflow run:** [View details](${runUrl})
+
             ---
             *QA Company ID: \`45173a02-9f30-4a07-89bb-16923bd043b5\`*
             `;
             } else {
               body = `## E2E QA Test Results ${status}
-            
+
             | Tests | Passed | Failed |
             |-------|--------|--------|
             | ${total} | ✅ ${passed} | ❌ ${failed} |
-            
+
             ### Test Coverage
-            - ✅ Admin login and dashboard
-            - ✅ Technician app login
-            - ✅ Job status updates (en route)
-            - ✅ Service report completion
-            - ✅ Pro plan feature gating
-            
-            **Full report:** [View Playwright Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            
-            **Screenshots:** Available in workflow artifacts
-            
+            ${coverage}
+
+            ### Screenshots
+            ${screenshots}
+
+            **Full report:** [View Playwright Report](${runUrl})
+
             ---
             *QA Company ID: \`45173a02-9f30-4a07-89bb-16923bd043b5\`*
             `;

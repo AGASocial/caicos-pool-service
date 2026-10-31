@@ -6,10 +6,11 @@ import { defineConfig, devices } from '@playwright/test';
  * In CI: tests run against Vercel preview deployment
  * Locally: tests run against local dev server
  *
- * Secrets: avoid retaining password field values in artifacts.
- * - No video (keystrokes visible)
- * - Trace without DOM snapshots/sources (error-context / snapshot dumps)
- * - Screenshots on failure only; specs also redact password inputs after fill
+ * Secrets:
+ * - PLAYWRIGHT_NO_COPY_PROMPT disables error-context.md page snapshots
+ * - Specs clear+blur password fields via fill('') after submit
+ * - Manual screenshots use mask: [password locators]
+ * - Trace omits DOM snapshots/sources
  */
 export default defineConfig({
   testDir: './e2e',
@@ -27,15 +28,14 @@ export default defineConfig({
     : 'html',
   use: {
     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
-    // Keep action/log traces for debugging, but omit DOM snapshots that can embed secrets
     trace: {
       mode: process.env.CI ? 'retain-on-failure' : 'on-first-retry',
       snapshots: false,
       screenshots: true,
       sources: false,
     },
-    // CI: skip page screenshots — login failures previously leaked passwords via error-context/PNG
-    screenshot: process.env.CI ? 'off' : 'only-on-failure',
+    // Failure screenshots on; key-step shots taken explicitly with password mask in the spec
+    screenshot: 'only-on-failure',
     video: 'off',
     // Vercel Deployment Protection bypass (CI preview URLs)
     extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET

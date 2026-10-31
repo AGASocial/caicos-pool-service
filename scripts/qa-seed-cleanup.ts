@@ -201,18 +201,28 @@ async function seedQAData() {
   for (const prop of properties) {
     const { data: existing } = await supabase
       .from('cadenza_properties')
-      .select('id')
+      .select('id, is_active')
       .eq('company_id', QA_COMPANY_ID)
       .eq('address', prop.address)
-      .single();
+      .maybeSingle();
 
     if (existing) {
-      console.log(`  ✓ Property exists: ${prop.address}`);
+      if (!existing.is_active) {
+        const { error } = await supabase
+          .from('cadenza_properties')
+          .update({ is_active: true, ...prop })
+          .eq('id', existing.id)
+          .eq('company_id', QA_COMPANY_ID);
+        if (error) throw new Error(`Failed to reactivate property: ${error.message}`);
+        console.log(`  ✓ Property reactivated: ${prop.address}`);
+      } else {
+        console.log(`  ✓ Property exists: ${prop.address}`);
+      }
       propertyIds.push(existing.id);
     } else {
       const { data: newProp, error } = await supabase
         .from('cadenza_properties')
-        .insert({ ...prop, company_id: QA_COMPANY_ID })
+        .insert({ ...prop, company_id: QA_COMPANY_ID, is_active: true })
         .select('id')
         .single();
 
@@ -224,20 +234,31 @@ async function seedQAData() {
     }
   }
 
-  // Create route
+  // Create / revive route (soft-delete aware)
   console.log('🚗 Creating route...');
-  const { data: existingRoute } = await supabase
+  const { data: existingRoutes } = await supabase
     .from('cadenza_routes')
-    .select('id')
+    .select('id, is_deleted')
     .eq('company_id', QA_COMPANY_ID)
     .eq('technician_id', QA_TECH_ID)
-    .eq('name', 'QA Test Route')
-    .single();
+    .eq('name', 'QA Test Route');
+
+  const activeRoute = existingRoutes?.find((r) => !r.is_deleted);
+  const softDeletedRoute = existingRoutes?.find((r) => r.is_deleted);
 
   let routeId: string;
-  if (existingRoute) {
-    routeId = existingRoute.id;
+  if (activeRoute) {
+    routeId = activeRoute.id;
     console.log('  ✓ Route exists');
+  } else if (softDeletedRoute) {
+    const { error } = await supabase
+      .from('cadenza_routes')
+      .update({ is_deleted: false, is_active: true, day_of_week: new Date().getDay() })
+      .eq('id', softDeletedRoute.id)
+      .eq('company_id', QA_COMPANY_ID);
+    if (error) throw new Error(`Failed to revive route: ${error.message}`);
+    routeId = softDeletedRoute.id;
+    console.log('  ✓ Route revived');
   } else {
     const { data: newRoute, error } = await supabase
       .from('cadenza_routes')
@@ -258,21 +279,40 @@ async function seedQAData() {
     console.log('  ✓ Route created');
   }
 
-  // Create route stops
+  // Create / revive route stops (soft-delete aware)
   console.log('📍 Creating route stops...');
   const today = new Date();
   const todayDayOfWeek = today.getDay();
 
   for (let i = 0; i < propertyIds.length; i++) {
     const propertyId = propertyIds[i];
-    const { data: existingStop } = await supabase
+    const { data: existingStops } = await supabase
       .from('cadenza_route_stops')
-      .select('id')
+      .select('id, is_deleted')
       .eq('route_id', routeId)
-      .eq('property_id', propertyId)
-      .single();
+      .eq('property_id', propertyId);
 
-    if (!existingStop) {
+    const activeStop = existingStops?.find((s) => !s.is_deleted);
+    const softDeletedStop = existingStops?.find((s) => s.is_deleted);
+
+    if (activeStop) {
+      console.log(`  ✓ Stop ${i + 1} exists`);
+    } else if (softDeletedStop) {
+      const { error } = await supabase
+        .from('cadenza_route_stops')
+        .update({
+          is_deleted: false,
+          stop_order: i + 1,
+          day_of_week: todayDayOfWeek,
+          service_frequency: 'weekly',
+        })
+        .eq('id', softDeletedStop.id);
+      if (error) {
+        console.warn(`  Warning: Could not revive stop for property ${i + 1}:`, error.message);
+      } else {
+        console.log(`  ✓ Stop ${i + 1} revived`);
+      }
+    } else {
       const { error } = await supabase.from('cadenza_route_stops').insert({
         route_id: routeId,
         property_id: propertyId,
@@ -286,8 +326,6 @@ async function seedQAData() {
       } else {
         console.log(`  ✓ Stop ${i + 1} created`);
       }
-    } else {
-      console.log(`  ✓ Stop ${i + 1} exists`);
     }
   }
 
@@ -404,7 +442,7 @@ async function cleanupQAData() {
   const routeIds = (routes ?? []).map((r: { id: string }) => r.id);
 
   if (routeIds.length > 0) {
-    console.log('  Deleting route stop schedules...');
+    console.log('  Soft-deleting route stop schedules...');
     const { data: stops } = await supabase
       .from('cadenza_route_stops')
       .select('id')
@@ -414,33 +452,40 @@ async function cleanupQAData() {
     if (stopIds.length > 0) {
       const { error: schedErr } = await supabase
         .from('cadenza_route_stop_schedules')
-        .delete()
-        .in('route_stop_id', stopIds);
+        .update({ is_deleted: true })
+        .in('route_stop_id', stopIds)
+        .eq('is_deleted', false);
       if (schedErr) console.warn('    Warning:', schedErr.message);
     }
 
-    console.log('  Deleting route stops...');
+    // Hard DELETE is not allowed on cadenza_route_stops — soft-delete only
+    console.log('  Soft-deleting route stops...');
     const { error: stopsErr } = await supabase
       .from('cadenza_route_stops')
-      .delete()
-      .in('route_id', routeIds);
+      .update({ is_deleted: true })
+      .in('route_id', routeIds)
+      .eq('is_deleted', false);
     if (stopsErr) console.warn('    Warning:', stopsErr.message);
   } else {
     console.log('  No QA routes found — skipping stop/schedule cleanup');
   }
 
-  console.log('  Deleting routes...');
+  // Hard DELETE is not allowed on cadenza_routes — soft-delete only
+  console.log('  Soft-deleting routes...');
   const { error: routesErr } = await supabase
     .from('cadenza_routes')
-    .delete()
-    .eq('company_id', QA_COMPANY_ID);
+    .update({ is_deleted: true, is_active: false })
+    .eq('company_id', QA_COMPANY_ID)
+    .eq('is_deleted', false);
   if (routesErr) console.warn('    Warning:', routesErr.message);
 
-  console.log('  Deleting properties...');
+  // Properties have no is_deleted column — seed reuses them by address; deactivate for cleanup
+  console.log('  Deactivating properties (no soft-delete column; seed reuses by address)...');
   const { error: propsErr } = await supabase
     .from('cadenza_properties')
-    .delete()
-    .eq('company_id', QA_COMPANY_ID);
+    .update({ is_active: false })
+    .eq('company_id', QA_COMPANY_ID)
+    .eq('is_active', true);
   if (propsErr) console.warn('    Warning:', propsErr.message);
 
   console.log('  Deleting subscriptions...');
