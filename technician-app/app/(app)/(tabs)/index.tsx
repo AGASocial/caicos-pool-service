@@ -245,7 +245,7 @@ export default function JobsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={styles.center} testID="tech-jobs-screen">
         <Text style={{ color: c.text }}>{t('common.loadingJobs')}</Text>
       </View>
     );
@@ -255,6 +255,7 @@ export default function JobsScreen() {
 
   return (
     <FlatList
+      testID="tech-jobs-screen"
       style={styles.container}
       data={jobs}
       keyExtractor={(item) => item.id}

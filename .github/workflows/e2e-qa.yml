@@ -176,21 +176,38 @@ jobs:
           QA_TECH_PASSWORD: ${{ secrets.QA_TECH_PASSWORD }}
         run: |
           set +e
+          SCAN_ROOT="$RUNNER_TEMP/artifact-secret-scan"
+          rm -rf "$SCAN_ROOT"
+          mkdir -p "$SCAN_ROOT"
+
+          # Copy text artifacts and explode any .zip (trace.zip etc.) so binary
+          # archives are not skipped by grep -I.
+          for dir in admin-portal/test-results admin-portal/playwright-report; do
+            if [ -d "$dir" ]; then
+              cp -a "$dir" "$SCAN_ROOT/$(basename "$dir")"
+            fi
+          done
+          while IFS= read -r zip; do
+            dest="$SCAN_ROOT/unzipped/$(basename "$zip" .zip)-$(echo "$zip" | sha256sum | cut -c1-8)"
+            mkdir -p "$dest"
+            unzip -qq -o "$zip" -d "$dest" 2>/dev/null || true
+          done < <(find "$SCAN_ROOT" -type f -name '*.zip' 2>/dev/null)
+
           leaked=0
           for var in QA_ADMIN_PASSWORD QA_TECH_PASSWORD; do
             secret="${!var}"
             if [ -z "$secret" ] || [ "${#secret}" -lt 8 ]; then
               continue
             fi
-            # Search without printing the secret; only report which env var leaked
-            if grep -R -F -I -l -- "$secret" \
-              admin-portal/test-results \
-              admin-portal/playwright-report \
+            # Search without printing the secret; only report which env var leaked.
+            # No -I: scan binary/extracted contents after unzip.
+            if grep -R -F -a -l -- "$secret" "$SCAN_ROOT" \
               2>/dev/null | head -1 | grep -q .; then
               echo "::error::Secret from ${var} found in Playwright artifacts"
               leaked=1
             fi
           done
+          rm -rf "$SCAN_ROOT"
           if [ "$leaked" -ne 0 ]; then
             echo "Artifact secret scan failed"
             exit 1
@@ -250,6 +267,7 @@ jobs:
             echo "total=0" >> $GITHUB_OUTPUT
             echo "passed=0" >> $GITHUB_OUTPUT
             echo "failed=0" >> $GITHUB_OUTPUT
+            echo "skipped=0" >> $GITHUB_OUTPUT
             echo "missing_artifact=true" >> $GITHUB_OUTPUT
             echo "_No results available._" > "$COVERAGE_FILE"
           elif [ -f reports/test-results/results.json ] || [ -f reports/admin-portal/test-results/results.json ]; then
@@ -269,35 +287,51 @@ jobs:
             echo "total=$TOTAL" >> $GITHUB_OUTPUT
             echo "passed=$PASSED" >> $GITHUB_OUTPUT
             echo "failed=$FAILED" >> $GITHUB_OUTPUT
+            echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
             echo "missing_artifact=false" >> $GITHUB_OUTPUT
             
-            # Build coverage list from real nested suite results
+            # Build coverage list from real nested suite results.
+            # Check skipped/status before .ok — Playwright marks skipped specs ok=true.
             jq -r '
               def status_icon($ok; $status):
-                if $ok == true then "✅"
-                elif $status == "skipped" then "⏭️"
-                elif $status == "flaky" then "⚠️"
+                if $status == "skipped" then "⏭️"
+                elif $status == "flaky" or $status == "interrupted" then "⚠️"
+                elif $ok == true or $status == "passed" or $status == "expected" then "✅"
                 else "❌" end;
               def walk:
                 (.specs[]? |
-                  (.tests[-1].results[-1].status // (if .ok then "passed" else "failed" end)) as $st |
+                  (
+                    (.tests[-1].status // empty) as $ts |
+                    (.tests[-1].results[-1].status // empty) as $rs |
+                    (if $ts == "skipped" or $rs == "skipped" then "skipped"
+                     elif $rs != "" then $rs
+                     elif .ok then "passed"
+                     else "failed" end)
+                  ) as $st |
                   "- \(status_icon(.ok; $st)) \(.title) (\($st))"
                 ),
                 (.suites[]? | walk);
               [.suites[] | walk] | if length == 0 then ["_No tests found in results.json_"] else . end | .[]
             ' "$RESULTS_FILE" > "$COVERAGE_FILE"
 
-            # List screenshot files found in the downloaded artifact
+            # Key-step screenshots only (captureStep writes test-results/screenshots/<name>.png).
+            # Dedupe by basename; skip hashed report thumbs and retry duplicates.
             {
               echo "Screenshots artifact: [Download screenshots](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)"
               echo ""
               found=0
-              while IFS= read -r img; do
+              while IFS= read -r name; do
                 found=1
-                echo "- \`$(basename "$img")\`"
-              done < <(find reports -type f -name '*.png' 2>/dev/null | sort | head -40)
+                echo "- \`$name\`"
+              done < <(
+                find reports -type f -path '*/screenshots/*.png' 2>/dev/null \
+                  | sed 's|.*/||' \
+                  | grep -E '^(admin|tech)-[a-z0-9-]+\.png$' \
+                  | grep -Ev '-[a-f0-9]{16,}\.png$' \
+                  | sort -u
+              )
               if [ "$found" -eq 0 ]; then
-                echo "_No screenshots found in report artifact._"
+                echo "_No key-step screenshots found._"
               fi
             } > "$SCREENSHOTS_FILE"
             
@@ -313,6 +347,7 @@ jobs:
             echo "total=0" >> $GITHUB_OUTPUT
             echo "passed=0" >> $GITHUB_OUTPUT
             echo "failed=0" >> $GITHUB_OUTPUT
+            echo "skipped=0" >> $GITHUB_OUTPUT
             echo "missing_artifact=true" >> $GITHUB_OUTPUT
             echo "_No results available._" > "$COVERAGE_FILE"
           fi
@@ -333,6 +368,7 @@ jobs:
           E2E_TOTAL: ${{ steps.summary.outputs.total }}
           E2E_PASSED: ${{ steps.summary.outputs.passed }}
           E2E_FAILED: ${{ steps.summary.outputs.failed }}
+          E2E_SKIPPED: ${{ steps.summary.outputs.skipped }}
           E2E_MISSING_ARTIFACT: ${{ steps.summary.outputs.missing_artifact }}
           E2E_JOB_RESULT: ${{ needs.e2e-tests.result }}
           E2E_COVERAGE: ${{ steps.summary.outputs.coverage }}
@@ -345,6 +381,7 @@ jobs:
             const total = process.env.E2E_TOTAL || '0';
             const passed = process.env.E2E_PASSED || '0';
             const failed = process.env.E2E_FAILED || '0';
+            const skipped = process.env.E2E_SKIPPED || '0';
             const missingArtifact = process.env.E2E_MISSING_ARTIFACT === 'true';
             const e2eResult = process.env.E2E_JOB_RESULT || '';
             const coverage = process.env.E2E_COVERAGE || '_No coverage details_';
@@ -367,9 +404,9 @@ jobs:
             } else {
               body = `## E2E QA Test Results ${status}
 
-            | Tests | Passed | Failed |
-            |-------|--------|--------|
-            | ${total} | ✅ ${passed} | ❌ ${failed} |
+            | Tests | Passed | Failed | Skipped |
+            |-------|--------|--------|---------|
+            | ${total} | ✅ ${passed} | ❌ ${failed} | ⏭️ ${skipped} |
 
             ### Test Coverage
             ${coverage}

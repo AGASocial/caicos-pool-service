@@ -10,7 +10,8 @@ import { defineConfig, devices } from '@playwright/test';
  * - PLAYWRIGHT_NO_COPY_PROMPT disables error-context.md page snapshots
  * - Specs clear+blur password fields via fill('') after submit
  * - Manual screenshots use mask: [password locators]
- * - Trace omits DOM snapshots/sources
+ * - Trace is off in CI (typed passwords can land in trace.zip action logs)
+ * - Locally: on-first-retry with no DOM snapshots/sources
  */
 export default defineConfig({
   testDir: './e2e',
@@ -28,12 +29,15 @@ export default defineConfig({
     : 'html',
   use: {
     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
-    trace: {
-      mode: process.env.CI ? 'retain-on-failure' : 'on-first-retry',
-      snapshots: false,
-      screenshots: true,
-      sources: false,
-    },
+    // CI: off — fill() values are recorded in trace.zip and bypass text-only secret scans
+    trace: process.env.CI
+      ? 'off'
+      : {
+          mode: 'on-first-retry',
+          snapshots: false,
+          screenshots: true,
+          sources: false,
+        },
     // Failure screenshots on; key-step shots taken explicitly with password mask in the spec
     screenshot: 'only-on-failure',
     video: 'off',

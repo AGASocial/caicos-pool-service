@@ -95,12 +95,40 @@ async function waitForAdminSession(page: Page) {
     .catch(() => undefined);
 }
 
+function isTechLoginPath(pathname: string): boolean {
+  // Expo may show login at `/`; only treat explicit login/auth segments as login routes.
+  return /(?:^|\/)(login|auth)(?:\/|$)/i.test(pathname);
+}
+
+async function waitForTechSession(page: Page) {
+  // Expo web never reaches networkidle (persistent websocket). Mirror
+  // waitForAdminSession: wait for a logged-in-only element, with URL fallback
+  // when the app uses an explicit /login route.
+  const jobsScreen = page.getByTestId('tech-jobs-screen');
+  try {
+    await jobsScreen.waitFor({ state: 'visible', timeout: 20000 });
+  } catch {
+    if (isTechLoginPath(new URL(page.url()).pathname)) {
+      await page.waitForURL((url) => !isTechLoginPath(url.pathname), { timeout: 20000 });
+    }
+    await jobsScreen.waitFor({ state: 'visible', timeout: 15000 });
+  }
+  await page
+    .waitForFunction(() => {
+      const hasStorage =
+        Object.keys(window.localStorage).some((k) => /supabase|auth|sb-/i.test(k)) ||
+        Object.keys(window.sessionStorage).some((k) => /supabase|auth|sb-/i.test(k));
+      return hasStorage || document.cookie.length > 0;
+    }, { timeout: 10000 })
+    .catch(() => undefined);
+}
+
 async function captureStep(page: Page, testInfo: TestInfo, name: string) {
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
   const filePath = path.join(SCREENSHOT_DIR, `${name}.png`);
   await page.screenshot({
     path: filePath,
-    fullPage: true,
+    fullPage: false,
     mask: [passwordLocators(page)],
   });
   await testInfo.attach(name, { path: filePath, contentType: 'image/png' });
@@ -126,17 +154,29 @@ async function adminLogin(page: Page, testInfo?: TestInfo) {
 
 async function techLogin(page: Page, testInfo?: TestInfo) {
   await page.goto(`${TECH_BASE_URL}/`);
-  await page.waitForLoadState('networkidle');
-
+  // Wait for either the login form or an already-authenticated jobs screen.
+  // Do not use networkidle — Expo web never settles.
   const loginSubmit = page.getByTestId('login-submit');
-  const hasLoginForm = (await loginSubmit.count()) > 0;
-  if (!hasLoginForm) return false;
+  const jobsScreen = page.getByTestId('tech-jobs-screen');
+  await Promise.race([
+    loginSubmit.waitFor({ state: 'visible', timeout: 20000 }),
+    jobsScreen.waitFor({ state: 'visible', timeout: 20000 }),
+  ]);
+
+  const hasLoginForm = (await loginSubmit.count()) > 0 && (await loginSubmit.isVisible());
+  if (!hasLoginForm) {
+    await waitForTechSession(page);
+    if (testInfo) {
+      await captureStep(page, testInfo, 'tech-after-login');
+    }
+    return false;
+  }
 
   await page.getByTestId('login-email').fill(TECH_EMAIL);
   await page.getByTestId('login-password').fill(TECH_PASSWORD);
   await loginSubmit.click();
   await redactPasswordFields(page);
-  await page.waitForLoadState('networkidle');
+  await waitForTechSession(page);
 
   if (testInfo) {
     await captureStep(page, testInfo, 'tech-after-login');
@@ -183,7 +223,7 @@ test.describe('Full E2E Flow', () => {
   test('Tech: Login and view jobs', async ({ browser }, testInfo) => {
     await withTechPage(browser, async (page) => {
       const hasLoginForm = await techLogin(page, testInfo);
-      await page.waitForTimeout(2000);
+      await expect(page.getByTestId('tech-jobs-screen')).toBeVisible({ timeout: 15000 });
       await captureStep(page, testInfo, 'tech-jobs');
       const hasJobs = (await page.locator('text=/job|service|visit|trabajo/i').count()) > 0;
       console.log('✓ Tech app loaded', { hasLoginForm, hasJobs });
@@ -193,12 +233,12 @@ test.describe('Full E2E Flow', () => {
   test('Tech: Mark job en route', async ({ browser }, testInfo) => {
     await withTechPage(browser, async (page) => {
       await techLogin(page, testInfo);
-      await page.waitForTimeout(2000);
+      await expect(page.getByTestId('tech-jobs-screen')).toBeVisible({ timeout: 15000 });
 
       const enRouteButton = page.getByTestId('job-on-my-way');
       if ((await enRouteButton.count()) > 0) {
         await enRouteButton.click();
-        await page.waitForTimeout(1000);
+        await page.getByTestId('job-start-service').waitFor({ state: 'visible', timeout: 5000 }).catch(() => undefined);
         await captureStep(page, testInfo, 'tech-en-route');
         console.log('✓ Tech marked job en route');
       } else {
@@ -216,7 +256,7 @@ test.describe('Full E2E Flow', () => {
   test('Tech: Complete service with report and photo', async ({ browser }, testInfo) => {
     await withTechPage(browser, async (page) => {
       await techLogin(page, testInfo);
-      await page.waitForTimeout(2000);
+      await expect(page.getByTestId('tech-jobs-screen')).toBeVisible({ timeout: 15000 });
 
       const takePhoto = page.getByTestId('job-take-photo');
       const complete = page.getByTestId('job-complete');
@@ -232,7 +272,6 @@ test.describe('Full E2E Flow', () => {
     await adminLogin(page, testInfo);
     await page.goto(`${ADMIN_BASE_URL}/en/reports`);
     await expect(page).not.toHaveURL(/\/auth\//);
-    await page.waitForLoadState('networkidle');
     await captureStep(page, testInfo, 'admin-reports');
 
     const hasReports = (await page.locator('text=/report|service|completed/i').count()) > 0;
