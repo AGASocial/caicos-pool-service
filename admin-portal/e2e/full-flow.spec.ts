@@ -40,6 +40,9 @@ const TECH_BASE_URL = process.env.PLAYWRIGHT_TECH_BASE_URL || 'http://localhost:
 
 const PHOTO_FIXTURE = path.join(__dirname, 'fixtures', 'pool-photo.png');
 
+/** QA property 1 (123 Test St, Austin) — near enough for distance check. */
+const QA_GEOLOCATION = { latitude: 30.2672, longitude: -97.7431, accuracy: 10 };
+
 const vercelBypassHeaders: Record<string, string> | undefined =
   process.env.VERCEL_AUTOMATION_BYPASS_SECRET
     ? {
@@ -237,16 +240,81 @@ async function openFirstTechJob(page: Page) {
 async function withTechPage(browser: Browser, run: (page: Page) => Promise<void>) {
   const context = await browser.newContext({
     extraHTTPHeaders: vercelBypassHeaders,
-    // Allow file chooser / gallery on Expo web
-    permissions: [],
+    // Grant geolocation so Expo Location.requestForegroundPermissionsAsync succeeds
+    // and distance check runs against the QA property coords.
+    permissions: ['geolocation'],
+    geolocation: QA_GEOLOCATION,
   });
   const page = await context.newPage();
+  // Expo web uses window.alert — accept so tests don't hang; message is logged.
+  page.on('dialog', async (dialog) => {
+    console.log(`Tech web dialog (${dialog.type()}): ${dialog.message().slice(0, 200)}`);
+    await dialog.accept();
+  });
   try {
     await run(page);
   } finally {
     await redactPasswordFields(page);
     await context.close();
   }
+}
+
+/**
+ * Ensure the job is in_progress (service form visible). Waits for Start Service —
+ * never use isVisible() alone (no auto-wait).
+ */
+async function ensureJobStarted(page: Page) {
+  const startButton = page.getByTestId('job-start-service');
+  const enRoute = page.getByTestId('job-on-my-way');
+  const complete = page.getByTestId('job-complete');
+
+  // Already on the service form (prior test left job in_progress).
+  if (await complete.isVisible().catch(() => false)) {
+    return;
+  }
+
+  await expect(startButton).toBeVisible({ timeout: 15000 });
+
+  if (await enRoute.isVisible().catch(() => false)) {
+    await enRoute.click();
+    await expect(enRoute).toBeHidden({ timeout: 10000 });
+    await expect(startButton).toBeVisible({ timeout: 10000 });
+  }
+
+  await expect(startButton).toBeVisible({ timeout: 10000 });
+  await startButton.click();
+
+  await expect(page.getByTestId('job-status')).toContainText(/in_progress/i, {
+    timeout: 15000,
+  });
+  await expect(complete).toBeVisible({ timeout: 20000 });
+}
+
+/** Attach a photo via gallery → file input setInputFiles (Expo web). */
+async function attachJobPhoto(page: Page) {
+  const fromGallery = page.getByTestId('job-from-gallery');
+  await expect(fromGallery).toBeVisible({ timeout: 10000 });
+
+  // Kick off ImagePicker so a file input / chooser appears, then set files.
+  const chooserPromise = page.waitForEvent('filechooser', { timeout: 8000 }).catch(() => null);
+  await fromGallery.click();
+
+  const fileInput = page.locator('input[type="file"]').first();
+  const inputAppeared = await fileInput
+    .waitFor({ state: 'attached', timeout: 8000 })
+    .then(() => true)
+    .catch(() => false);
+
+  if (inputAppeared) {
+    await fileInput.setInputFiles(PHOTO_FIXTURE);
+  } else {
+    const chooser = await chooserPromise;
+    expect(chooser, 'Expected filechooser or input[type=file] after From Gallery').toBeTruthy();
+    await chooser!.setFiles(PHOTO_FIXTURE);
+  }
+
+  // Give ImagePicker a beat to commit the asset into React state
+  await page.waitForTimeout(1000);
 }
 
 test.describe.configure({ mode: 'serial' });
@@ -331,54 +399,44 @@ test.describe('Full E2E Flow', () => {
   });
 
   test('Tech: Complete service with report and photo', async ({ browser }, testInfo) => {
-    test.setTimeout(120_000);
+    test.setTimeout(180_000);
     await withTechPage(browser, async (page) => {
       await techLogin(page, testInfo);
       await expect(page.getByTestId('tech-jobs-screen')).toBeVisible({ timeout: 15000 });
       await openFirstTechJob(page);
 
-      const startButton = page.getByTestId('job-start-service');
       const takePhoto = page.getByTestId('job-take-photo');
       const fromGallery = page.getByTestId('job-from-gallery');
       const complete = page.getByTestId('job-complete');
 
-      // Pre-start: both on-my-way and start-service can be visible — click explicitly.
-      if (await startButton.isVisible().catch(() => false)) {
-        const enRoute = page.getByTestId('job-on-my-way');
-        if (await enRoute.isVisible().catch(() => false)) {
-          await enRoute.click();
-          await expect(enRoute).toBeHidden({ timeout: 8000 });
-          await expect(startButton).toBeVisible({ timeout: 8000 });
-        }
-        await startButton.click();
-      }
+      await ensureJobStarted(page);
 
       // After start, gallery + take-photo + complete are all on screen — assert each, never .or().
       await expect(complete).toBeVisible({ timeout: 20000 });
-      await expect(fromGallery).toBeVisible({ timeout: 5000 });
-      await expect(takePhoto).toBeVisible({ timeout: 5000 });
+      await expect(fromGallery).toBeVisible({ timeout: 10000 });
+      await expect(takePhoto).toBeVisible({ timeout: 10000 });
 
-      // Prefer gallery + file chooser on Expo web (camera permissions are awkward in CI)
-      const chooserPromise = page.waitForEvent('filechooser', { timeout: 10000 }).catch(() => null);
-      await fromGallery.click();
-      const chooser = await chooserPromise;
-      if (chooser) {
-        await chooser.setFiles(PHOTO_FIXTURE);
-      } else {
-        const fileInput = page.locator('input[type="file"]').first();
-        if ((await fileInput.count()) > 0) {
-          await fileInput.setInputFiles(PHOTO_FIXTURE);
-        } else {
-          console.log('⚠ No filechooser/input for gallery — photo step may be incomplete');
-        }
-      }
+      // Report fields (notes always visible; expand chemicals for a reading)
+      const notes = page.getByTestId('job-notes');
+      await expect(notes).toBeVisible({ timeout: 10000 });
+      await notes.fill('E2E QA visit — chemicals and photo attached');
 
+      const chemToggle = page.getByTestId('job-chem-toggle');
+      await expect(chemToggle).toBeVisible({ timeout: 5000 });
+      await chemToggle.click();
+      const phInput = page.getByTestId('job-chem-ph_level');
+      await expect(phInput).toBeVisible({ timeout: 5000 });
+      await phInput.fill('7.4');
+
+      // Prefer file input setInputFiles on Expo web (camera permissions are awkward in CI)
+      await attachJobPhoto(page);
+
+      await expect(complete).toBeEnabled({ timeout: 5000 });
       await complete.click();
-      await page
-        .getByTestId('tech-jobs-screen')
-        .waitFor({ state: 'visible', timeout: 20000 })
-        .catch(() => undefined);
-      console.log('✓ Tech completed service (or attempted complete)');
+
+      // Success: back to jobs list (or at least leave the complete button)
+      await expect(page.getByTestId('tech-jobs-screen')).toBeVisible({ timeout: 30000 });
+      console.log('✓ Tech completed service with report and photo');
       await captureStep(page, testInfo, 'tech-complete');
     });
   });
@@ -388,10 +446,12 @@ test.describe('Full E2E Flow', () => {
     await adminLogin(page, testInfo);
     await page.goto(`${ADMIN_BASE_URL}/en/reports`);
     await expect(page).not.toHaveURL(/\/auth\//);
-    await expect(page.getByTestId('admin-reports')).toBeVisible({ timeout: 15000 });
-    // Stats load async after mount
+    await expect(page.getByTestId('admin-reports')).toBeVisible({ timeout: 20000 });
+    // Stats load async after mount — wait for completed card + numeric count
     await expect(page.getByTestId('reports-completed')).toBeVisible({ timeout: 20000 });
-    await expect(page.getByTestId('reports-completed-count')).toBeVisible();
+    const countEl = page.getByTestId('reports-completed-count');
+    await expect(countEl).toBeVisible({ timeout: 10000 });
+    await expect(countEl).toHaveText(/\d+/, { timeout: 10000 });
     await captureStep(page, testInfo, 'admin-report');
     console.log('✓ Admin reports page loaded with completed stats');
   });
@@ -407,7 +467,15 @@ test.describe('Plan Gating Tests', () => {
     // Board on dashboard (Pro)
     await page.goto(`${ADMIN_BASE_URL}/en/dashboard`);
     await expect(page).not.toHaveURL(/\/auth\//);
-    await expect(page.getByTestId('live-status-board')).toBeVisible({ timeout: 20000 });
+    const board = page.getByTestId('live-status-board');
+    await expect(board).toBeVisible({ timeout: 20000 });
+    // Prefer a status badge once data loads; empty board is still a valid Pro feature render
+    const badge = page.locator('[data-testid^="live-status-badge-"]').first();
+    const emptyBoard = board.getByText(/no jobs/i);
+    await Promise.race([
+      badge.waitFor({ state: 'visible', timeout: 20000 }),
+      emptyBoard.waitFor({ state: 'visible', timeout: 20000 }),
+    ]).catch(() => undefined);
     await captureStep(page, testInfo, 'admin-pro-live-status');
 
     const response = await page.request.get(`${ADMIN_BASE_URL}/api/billing/plan-features`, {

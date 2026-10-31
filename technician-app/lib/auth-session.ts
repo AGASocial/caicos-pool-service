@@ -8,6 +8,18 @@ export function getCachedUserId(): string | null {
   return cachedUserId;
 }
 
+/**
+ * Resolve the current user id from the in-memory cache, falling back to the
+ * Supabase session when the cache has not hydrated yet (common on Expo web).
+ */
+export async function resolveUserId(): Promise<string | null> {
+  if (cachedUserId) return cachedUserId;
+  const { data } = await supabase.auth.getSession();
+  const id = data.session?.user?.id ?? null;
+  if (id) cachedUserId = id;
+  return id;
+}
+
 /** Subscribe once to auth state; call from root layout. */
 export function initAuthSessionCache(): void {
   if (initialized) return;
