@@ -300,7 +300,7 @@ export function LiveStatusBoard() {
   }
 
   return (
-      <Card>
+      <Card data-testid="live-status-board">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -363,6 +363,7 @@ export function LiveStatusBoard() {
                       return (
                         <div
                           key={job.id}
+                          data-testid={`live-status-job-${job.status}`}
                           className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex-1 min-w-0">
@@ -383,7 +384,13 @@ export function LiveStatusBoard() {
                                 {time}
                               </div>
                             )}
-                            <Badge variant={variant} className={className}>{label}</Badge>
+                            <Badge
+                              variant={variant}
+                              className={className}
+                              data-testid={`live-status-badge-${job.status}`}
+                            >
+                              {label}
+                            </Badge>
                           </div>
                         </div>
                       );

@@ -263,13 +263,9 @@ test.describe('Full E2E Flow', () => {
     await adminLogin(page, testInfo);
     await page.goto(`${ADMIN_BASE_URL}/en/dashboard`);
     await expect(page).not.toHaveURL(/\/auth\//);
+    await expect(page.getByTestId('live-status-board')).toBeVisible({ timeout: 20000 });
     await captureStep(page, testInfo, 'admin-live-status');
-
-    const pageContent = await page.content();
-    const hasPro =
-      pageContent.includes('Pro') || pageContent.includes('live') || pageContent.includes('status');
-
-    console.log('✓ Admin can access dashboard', { hasPro });
+    console.log('✓ Admin can access live status board');
   });
 
   test('Tech: Login and view jobs', async ({ browser }, testInfo) => {
@@ -285,6 +281,8 @@ test.describe('Full E2E Flow', () => {
 
   test('Tech: Mark job en route', async ({ browser }, testInfo) => {
     test.setTimeout(120_000);
+    let markedEnRoute = false;
+
     await withTechPage(browser, async (page) => {
       await techLogin(page, testInfo);
       await expect(page.getByTestId('tech-jobs-screen')).toBeVisible({ timeout: 15000 });
@@ -292,18 +290,44 @@ test.describe('Full E2E Flow', () => {
 
       const enRouteButton = page.getByTestId('job-on-my-way');
       const startButton = page.getByTestId('job-start-service');
-      await expect(startButton.or(enRouteButton)).toBeVisible({ timeout: 15000 });
 
-      if ((await enRouteButton.count()) > 0 && (await enRouteButton.isVisible())) {
+      // Pending jobs show BOTH buttons at once — never assert .or() (strict mode).
+      await expect(startButton).toBeVisible({ timeout: 15000 });
+
+      if (await enRouteButton.isVisible().catch(() => false)) {
         await enRouteButton.click();
-        // After en route, on-my-way hides; start-service remains
+        // Status → en_route: On My Way unmounts; Start Service stays.
+        await expect(enRouteButton).toBeHidden({ timeout: 10000 });
         await expect(startButton).toBeVisible({ timeout: 10000 });
+        markedEnRoute = true;
         console.log('✓ Tech marked job en route');
       } else {
         console.log('⚠ On-my-way not shown (job may already be en_route/in_progress)');
       }
       await captureStep(page, testInfo, 'tech-en-route');
     });
+
+    // Confirm admin live status board reflects en_route when we just flipped it.
+    if (markedEnRoute) {
+      const adminContext = await browser.newContext({
+        extraHTTPHeaders: vercelBypassHeaders,
+      });
+      const adminPage = await adminContext.newPage();
+      try {
+        await adminLogin(adminPage);
+        await adminPage.goto(`${ADMIN_BASE_URL}/en/dashboard`);
+        await expect(adminPage).not.toHaveURL(/\/auth\//);
+        await expect(adminPage.getByTestId('live-status-board')).toBeVisible({ timeout: 15000 });
+        await expect(adminPage.getByTestId('live-status-badge-en_route').first()).toBeVisible({
+          timeout: 20000,
+        });
+        await captureStep(adminPage, testInfo, 'admin-en-route-status');
+        console.log('✓ Admin live status board shows en_route');
+      } finally {
+        await redactPasswordFields(adminPage);
+        await adminContext.close();
+      }
+    }
   });
 
   test('Tech: Complete service with report and photo', async ({ browser }, testInfo) => {
@@ -318,71 +342,73 @@ test.describe('Full E2E Flow', () => {
       const fromGallery = page.getByTestId('job-from-gallery');
       const complete = page.getByTestId('job-complete');
 
-      // Start service if still on pre-start actions
-      if ((await startButton.count()) > 0 && (await startButton.isVisible().catch(() => false))) {
+      // Pre-start: both on-my-way and start-service can be visible — click explicitly.
+      if (await startButton.isVisible().catch(() => false)) {
         const enRoute = page.getByTestId('job-on-my-way');
-        if ((await enRoute.count()) > 0 && (await enRoute.isVisible().catch(() => false))) {
+        if (await enRoute.isVisible().catch(() => false)) {
           await enRoute.click();
+          await expect(enRoute).toBeHidden({ timeout: 8000 });
           await expect(startButton).toBeVisible({ timeout: 8000 });
         }
         await startButton.click();
       }
 
-      await expect(fromGallery.or(takePhoto).or(complete)).toBeVisible({ timeout: 20000 });
-      await captureStep(page, testInfo, 'tech-complete-ready');
+      // After start, gallery + take-photo + complete are all on screen — assert each, never .or().
+      await expect(complete).toBeVisible({ timeout: 20000 });
+      await expect(fromGallery).toBeVisible({ timeout: 5000 });
+      await expect(takePhoto).toBeVisible({ timeout: 5000 });
 
       // Prefer gallery + file chooser on Expo web (camera permissions are awkward in CI)
-      if ((await fromGallery.count()) > 0 && (await fromGallery.isVisible())) {
-        const chooserPromise = page.waitForEvent('filechooser', { timeout: 10000 }).catch(() => null);
-        await fromGallery.click();
-        const chooser = await chooserPromise;
-        if (chooser) {
-          await chooser.setFiles(PHOTO_FIXTURE);
+      const chooserPromise = page.waitForEvent('filechooser', { timeout: 10000 }).catch(() => null);
+      await fromGallery.click();
+      const chooser = await chooserPromise;
+      if (chooser) {
+        await chooser.setFiles(PHOTO_FIXTURE);
+      } else {
+        const fileInput = page.locator('input[type="file"]').first();
+        if ((await fileInput.count()) > 0) {
+          await fileInput.setInputFiles(PHOTO_FIXTURE);
         } else {
-          // Some Expo web builds use a hidden <input type="file">
-          const fileInput = page.locator('input[type="file"]').first();
-          if ((await fileInput.count()) > 0) {
-            await fileInput.setInputFiles(PHOTO_FIXTURE);
-          } else {
-            console.log('⚠ No filechooser/input for gallery — photo step may be incomplete');
-          }
+          console.log('⚠ No filechooser/input for gallery — photo step may be incomplete');
         }
       }
 
-      if ((await complete.count()) > 0 && (await complete.isVisible())) {
-        await complete.click();
-        // After save, typically returns to jobs list
-        await page
-          .getByTestId('tech-jobs-screen')
-          .waitFor({ state: 'visible', timeout: 20000 })
-          .catch(() => undefined);
-        console.log('✓ Tech completed service (or attempted complete)');
-      } else {
-        console.log('⚠ Complete button not visible yet', {
-          hasTakePhoto: (await takePhoto.count()) > 0,
-          hasGallery: (await fromGallery.count()) > 0,
-        });
-      }
-      await captureStep(page, testInfo, 'tech-complete-done');
+      await complete.click();
+      await page
+        .getByTestId('tech-jobs-screen')
+        .waitFor({ state: 'visible', timeout: 20000 })
+        .catch(() => undefined);
+      console.log('✓ Tech completed service (or attempted complete)');
+      await captureStep(page, testInfo, 'tech-complete');
     });
   });
 
   test('Admin: View completed report', async ({ page }, testInfo) => {
+    test.setTimeout(90_000);
     await adminLogin(page, testInfo);
     await page.goto(`${ADMIN_BASE_URL}/en/reports`);
     await expect(page).not.toHaveURL(/\/auth\//);
-    await captureStep(page, testInfo, 'admin-reports');
-
-    const hasReports = (await page.locator('text=/report|service|completed|informe/i').count()) > 0;
-    console.log('✓ Admin reports page loaded', { hasReports });
+    await expect(page.getByTestId('admin-reports')).toBeVisible({ timeout: 15000 });
+    // Stats load async after mount
+    await expect(page.getByTestId('reports-completed')).toBeVisible({ timeout: 20000 });
+    await expect(page.getByTestId('reports-completed-count')).toBeVisible();
+    await captureStep(page, testInfo, 'admin-report');
+    console.log('✓ Admin reports page loaded with completed stats');
   });
 });
 
 test.describe('Plan Gating Tests', () => {
   test('Pro plan: Live status board visible', async ({ page }, testInfo) => {
+    test.setTimeout(90_000);
     await adminLogin(page, testInfo);
 
     await expect(page).not.toHaveURL(/\/auth\//);
+
+    // Board on dashboard (Pro)
+    await page.goto(`${ADMIN_BASE_URL}/en/dashboard`);
+    await expect(page).not.toHaveURL(/\/auth\//);
+    await expect(page.getByTestId('live-status-board')).toBeVisible({ timeout: 20000 });
+    await captureStep(page, testInfo, 'admin-pro-live-status');
 
     const response = await page.request.get(`${ADMIN_BASE_URL}/api/billing/plan-features`, {
       headers: vercelBypassHeaders,
