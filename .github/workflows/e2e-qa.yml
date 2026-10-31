@@ -219,17 +219,23 @@ jobs:
             if [ ! -f "$RESULTS_FILE" ]; then
               RESULTS_FILE=reports/admin-portal/test-results/results.json
             fi
-            # Parse results
-            TOTAL=$(jq '.suites[].specs | length' "$RESULTS_FILE" | awk '{s+=$1} END {print s}')
-            PASSED=$(jq '[.suites[].specs[].tests[] | select(.status=="passed")] | length' "$RESULTS_FILE")
-            FAILED=$(jq '[.suites[].specs[].tests[] | select(.status=="failed")] | length' "$RESULTS_FILE")
+            # Use Playwright top-level stats (nested describe suites break .suites[].specs[])
+            EXPECTED=$(jq '.stats.expected // 0' "$RESULTS_FILE")
+            UNEXPECTED=$(jq '.stats.unexpected // 0' "$RESULTS_FILE")
+            FLAKY=$(jq '.stats.flaky // 0' "$RESULTS_FILE")
+            SKIPPED=$(jq '.stats.skipped // 0' "$RESULTS_FILE")
+            TOTAL=$((EXPECTED + UNEXPECTED + FLAKY + SKIPPED))
+            PASSED=$EXPECTED
+            FAILED=$UNEXPECTED
             
             echo "total=$TOTAL" >> $GITHUB_OUTPUT
             echo "passed=$PASSED" >> $GITHUB_OUTPUT
             echo "failed=$FAILED" >> $GITHUB_OUTPUT
             echo "missing_artifact=false" >> $GITHUB_OUTPUT
             
-            if [ "$FAILED" -eq 0 ]; then
+            if [ "$TOTAL" -eq 0 ]; then
+              echo "status=❌ FAILED (0 tests reported)" >> $GITHUB_OUTPUT
+            elif [ "$FAILED" -eq 0 ]; then
               echo "status=✅ PASSED" >> $GITHUB_OUTPUT
             else
               echo "status=❌ FAILED" >> $GITHUB_OUTPUT

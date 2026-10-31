@@ -297,16 +297,53 @@ async function seedQAData() {
 
   for (let i = 0; i < propertyIds.length; i++) {
     const propertyId = propertyIds[i];
-    const { data: existingJob } = await supabase
+    const { data: existingJobs } = await supabase
       .from('cadenza_service_jobs')
-      .select('id')
+      .select('id, is_deleted, status')
       .eq('company_id', QA_COMPANY_ID)
       .eq('property_id', propertyId)
       .eq('scheduled_date', chicagoDate)
-      .eq('job_source', 'route')
-      .single();
+      .eq('job_source', 'route');
 
-    if (!existingJob) {
+    const activeJob = existingJobs?.find((j) => !j.is_deleted);
+    const softDeletedJob = existingJobs?.find((j) => j.is_deleted);
+
+    if (activeJob) {
+      // Reset to a known pending state for idempotent E2E runs
+      const { error } = await supabase
+        .from('cadenza_service_jobs')
+        .update({
+          status: 'pending',
+          technician_id: QA_TECH_ID,
+          route_id: routeId,
+          route_order: i + 1,
+          is_deleted: false,
+        })
+        .eq('id', activeJob.id)
+        .eq('company_id', QA_COMPANY_ID);
+      if (error) {
+        console.warn(`  Warning: Could not reset job ${i + 1}:`, error.message);
+      } else {
+        console.log(`  ✓ Job ${i + 1} reset for ${chicagoDate}`);
+      }
+    } else if (softDeletedJob) {
+      const { error } = await supabase
+        .from('cadenza_service_jobs')
+        .update({
+          status: 'pending',
+          technician_id: QA_TECH_ID,
+          route_id: routeId,
+          route_order: i + 1,
+          is_deleted: false,
+        })
+        .eq('id', softDeletedJob.id)
+        .eq('company_id', QA_COMPANY_ID);
+      if (error) {
+        console.warn(`  Warning: Could not revive job ${i + 1}:`, error.message);
+      } else {
+        console.log(`  ✓ Job ${i + 1} revived for ${chicagoDate}`);
+      }
+    } else {
       const { error } = await supabase.from('cadenza_service_jobs').insert({
         company_id: QA_COMPANY_ID,
         property_id: propertyId,
@@ -323,8 +360,6 @@ async function seedQAData() {
       } else {
         console.log(`  ✓ Job ${i + 1} created for ${chicagoDate}`);
       }
-    } else {
-      console.log(`  ✓ Job ${i + 1} exists for ${chicagoDate}`);
     }
   }
 
@@ -335,7 +370,7 @@ async function cleanupQAData() {
   const supabase = getSupabaseAdmin();
   console.log('🧹 Starting QA cleanup...');
 
-  // Delete in reverse dependency order
+  // Delete in reverse dependency order — every query scoped to QA company
   console.log('  Deleting report photos...');
   const { error: photosErr } = await supabase
     .from('cadenza_report_photos')
@@ -350,40 +385,49 @@ async function cleanupQAData() {
     .eq('company_id', QA_COMPANY_ID);
   if (reportsErr) console.warn('    Warning:', reportsErr.message);
 
-  console.log('  Deleting service jobs...');
+  // Hard DELETE is not allowed on cadenza_service_jobs — soft-delete only
+  console.log('  Soft-deleting service jobs...');
   const { error: jobsErr } = await supabase
     .from('cadenza_service_jobs')
-    .delete()
-    .eq('company_id', QA_COMPANY_ID);
+    .update({ is_deleted: true })
+    .eq('company_id', QA_COMPANY_ID)
+    .eq('is_deleted', false);
   if (jobsErr) console.warn('    Warning:', jobsErr.message);
 
-  console.log('  Deleting route stop schedules...');
-  const { data: stops } = await supabase
-    .from('cadenza_route_stops')
+  console.log('  Fetching QA route IDs...');
+  const { data: routes, error: routesFetchErr } = await supabase
+    .from('cadenza_routes')
     .select('id')
-    .in(
-      'route_id',
-      supabase.from('cadenza_routes').select('id').eq('company_id', QA_COMPANY_ID)
-    );
+    .eq('company_id', QA_COMPANY_ID);
+  if (routesFetchErr) console.warn('    Warning:', routesFetchErr.message);
 
-  if (stops && stops.length > 0) {
-    const stopIds = stops.map((s: any) => s.id);
-    const { error: schedErr } = await supabase
-      .from('cadenza_route_stop_schedules')
+  const routeIds = (routes ?? []).map((r: { id: string }) => r.id);
+
+  if (routeIds.length > 0) {
+    console.log('  Deleting route stop schedules...');
+    const { data: stops } = await supabase
+      .from('cadenza_route_stops')
+      .select('id')
+      .in('route_id', routeIds);
+
+    const stopIds = (stops ?? []).map((s: { id: string }) => s.id);
+    if (stopIds.length > 0) {
+      const { error: schedErr } = await supabase
+        .from('cadenza_route_stop_schedules')
+        .delete()
+        .in('route_stop_id', stopIds);
+      if (schedErr) console.warn('    Warning:', schedErr.message);
+    }
+
+    console.log('  Deleting route stops...');
+    const { error: stopsErr } = await supabase
+      .from('cadenza_route_stops')
       .delete()
-      .in('route_stop_id', stopIds);
-    if (schedErr) console.warn('    Warning:', schedErr.message);
+      .in('route_id', routeIds);
+    if (stopsErr) console.warn('    Warning:', stopsErr.message);
+  } else {
+    console.log('  No QA routes found — skipping stop/schedule cleanup');
   }
-
-  console.log('  Deleting route stops...');
-  const { error: stopsErr } = await supabase
-    .from('cadenza_route_stops')
-    .delete()
-    .in(
-      'route_id',
-      supabase.from('cadenza_routes').select('id').eq('company_id', QA_COMPANY_ID)
-    );
-  if (stopsErr) console.warn('    Warning:', stopsErr.message);
 
   console.log('  Deleting routes...');
   const { error: routesErr } = await supabase

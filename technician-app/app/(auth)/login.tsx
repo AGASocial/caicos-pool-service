@@ -280,6 +280,8 @@ export default function LoginScreen() {
                 autoCapitalize="none"
                 keyboardType="email-address"
                 editable={!loading && !biometricLoading}
+                testID="login-email"
+                accessibilityLabel={t('auth.emailAddress')}
               />
             </View>
 
@@ -300,6 +302,8 @@ export default function LoginScreen() {
                 onChangeText={setPassword}
                 secureTextEntry
                 editable={!loading && !biometricLoading}
+                testID="login-password"
+                accessibilityLabel={t('auth.password')}
               />
             </View>
 
@@ -309,6 +313,9 @@ export default function LoginScreen() {
               style={[styles.button, (loading || biometricLoading) && styles.buttonDisabled]}
               onPress={() => void handleSignIn()}
               disabled={loading || biometricLoading}
+              accessibilityRole="button"
+              accessibilityLabel={t('auth.signIn')}
+              testID="login-submit"
             >
               {loading ? (
                 <ActivityIndicator color="#1a1407" size="small" />
