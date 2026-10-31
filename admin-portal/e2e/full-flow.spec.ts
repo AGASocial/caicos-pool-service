@@ -76,7 +76,7 @@ test.describe('Full E2E Flow', () => {
       extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET
         ? {
             'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '',
-            'x-vercel-set-bypass-cookie': 'samesitenone',
+            'x-vercel-set-bypass-cookie': 'true',
           }
         : {},
     });
@@ -115,7 +115,7 @@ test.describe('Full E2E Flow', () => {
       extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET
         ? {
             'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '',
-            'x-vercel-set-bypass-cookie': 'samesitenone',
+            'x-vercel-set-bypass-cookie': 'true',
           }
         : {},
     });
@@ -155,7 +155,7 @@ test.describe('Full E2E Flow', () => {
       extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET
         ? {
             'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '',
-            'x-vercel-set-bypass-cookie': 'samesitenone',
+            'x-vercel-set-bypass-cookie': 'true',
           }
         : {},
     });
@@ -212,7 +212,7 @@ test.describe('Plan Gating Tests', () => {
       headers: process.env.VERCEL_AUTOMATION_BYPASS_SECRET
         ? {
             'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
-            'x-vercel-set-bypass-cookie': 'samesitenone',
+            'x-vercel-set-bypass-cookie': 'true',
           }
         : {},
     });

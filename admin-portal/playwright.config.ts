@@ -25,11 +25,11 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    // Vercel preview bypass headers (CI only)
+    // Vercel Deployment Protection bypass (CI preview URLs)
     extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET
       ? {
           'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
-          'x-vercel-set-bypass-cookie': 'samesitenone',
+          'x-vercel-set-bypass-cookie': 'true',
         }
       : {},
   },

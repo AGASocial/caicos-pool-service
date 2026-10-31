@@ -68,11 +68,13 @@ jobs:
     steps:
       - name: Wait for Vercel Preview
         id: wait
-        uses: patrickedqvist/wait-for-vercel-preview@v1.3.1
+        # v1.3.3 adds vercel_protection_bypass_header (not present in v1.3.1)
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           max_timeout: 300
           check_interval: 10
+          vercel_protection_bypass_header: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - name: Preview URL
         run: |
