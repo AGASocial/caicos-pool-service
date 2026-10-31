@@ -790,7 +790,7 @@ export default function JobDetailScreen() {
 
   if (!jobLoaded || !job) {
     return (
-      <View style={styles.center}>
+      <View style={styles.center} testID="tech-job-detail">
         <Text style={{ color: themeColors.text }}>{t('common.loadingJob')}</Text>
       </View>
     );
@@ -820,7 +820,8 @@ export default function JobDetailScreen() {
     : null;
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container} testID="tech-job-detail">
+    <ScrollView style={{ flex: 1 }}>
       <View style={styles.content}>
         {/* Customer Info Card */}
         <View style={styles.customerCard}>
@@ -1181,5 +1182,6 @@ export default function JobDetailScreen() {
         )}
       </View>
     </ScrollView>
+    </View>
   );
 }

@@ -253,17 +253,19 @@ export default function JobsScreen() {
 
   const dateLabel = formatDate(new Date(), { weekday: 'long', month: 'short', day: 'numeric' });
 
+  // Put testID on a plain View — FlatList testIDs are often not visible as
+  // data-testid on Expo web (VirtualizedList), which breaks Playwright waits.
   return (
+    <View style={styles.container} testID="tech-jobs-screen">
     <FlatList
-      testID="tech-jobs-screen"
-      style={styles.container}
+      style={{ flex: 1 }}
       data={jobs}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContent}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.tint} />}
       ListHeaderComponent={
         <>
-          <View style={styles.headerSection}>
+          <View style={styles.headerSection} testID="tech-jobs-header">
             <View style={styles.headerRow}>
               <View style={styles.headerIcon}>
                 <Text style={styles.headerIconText}>{'Cal'[0]}</Text>
@@ -314,7 +316,12 @@ export default function JobsScreen() {
                 ? formatDate(item.scheduled_date, { weekday: 'short', month: 'short', day: 'numeric' })
                 : '';
               return (
-                <Pressable key={item.id} style={styles.overdueCard} onPress={() => router.push(`/(app)/job/${item.id}`)}>
+                <Pressable
+                  key={item.id}
+                  style={styles.overdueCard}
+                  testID="tech-job-card"
+                  onPress={() => router.push(`/(app)/job/${item.id}`)}
+                >
                   <View style={styles.cardBody}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <View style={{ flex: 1, marginRight: 8 }}>
@@ -340,7 +347,11 @@ export default function JobsScreen() {
       renderItem={({ item }) => {
         const prop = Array.isArray(item.cadenza_properties) ? item.cadenza_properties[0] : item.cadenza_properties;
         return (
-          <Pressable style={styles.card} onPress={() => router.push(`/(app)/job/${item.id}`)}>
+          <Pressable
+            style={styles.card}
+            testID="tech-job-card"
+            onPress={() => router.push(`/(app)/job/${item.id}`)}
+          >
             <View style={styles.cardBody}>
               <View>
                 <Text style={styles.cardTitle}>{prop?.customer_name ?? '\u2014'}</Text>
@@ -356,5 +367,6 @@ export default function JobsScreen() {
         );
       }}
     />
+    </View>
   );
 }

@@ -8,10 +8,13 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * Secrets:
  * - PLAYWRIGHT_NO_COPY_PROMPT disables error-context.md page snapshots
- * - Specs clear+blur password fields via fill('') after submit
+ * - Specs enter passwords via evaluate (never locator.fill(secret) — that
+ *   records Fill "<secret>" in HTML report step titles)
+ * - Specs clear+blur password fields after submit without fill(secret)
  * - Manual screenshots use mask: [password locators]
  * - Trace is off in CI (typed passwords can land in trace.zip action logs)
  * - Locally: on-first-retry with no DOM snapshots/sources
+ * - Tech Expo-web flows set test.setTimeout(120_000) in the spec
  */
 export default defineConfig({
   testDir: './e2e',
@@ -19,7 +22,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : 1, // Sequential for data consistency
-  timeout: 60 * 1000, // 60s per test
+  timeout: 60 * 1000, // 60s default; tech tests raise to 120s in-spec
   reporter: process.env.CI
     ? [
         ['html', { outputFolder: 'playwright-report', open: 'never' }],

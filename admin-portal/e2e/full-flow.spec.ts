@@ -9,7 +9,7 @@
  * 5. Pro plan features are visible
  */
 
-import { test, expect, type Page, type Browser, type TestInfo } from '@playwright/test';
+import { test, expect, type Page, type Locator, type Browser, type TestInfo } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 
@@ -38,6 +38,8 @@ const TECH_PASSWORD = process.env.QA_TECH_PASSWORD!;
 const ADMIN_BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
 const TECH_BASE_URL = process.env.PLAYWRIGHT_TECH_BASE_URL || 'http://localhost:8081';
 
+const PHOTO_FIXTURE = path.join(__dirname, 'fixtures', 'pool-photo.png');
+
 const vercelBypassHeaders: Record<string, string> | undefined =
   process.env.VERCEL_AUTOMATION_BYPASS_SECRET
     ? {
@@ -55,8 +57,34 @@ function passwordLocators(page: Page) {
 }
 
 /**
- * Clear password through the React-controlled input (fill), then blur.
- * evaluate()-only clears get overwritten on re-render and still leak into error-context.
+ * Set a password without Playwright recording the value in step titles
+ * (locator.fill(secret) becomes Fill "<secret>" in the HTML report).
+ */
+async function fillPassword(locator: Locator, password: string) {
+  await test.step('Enter password', async () => {
+    await locator.waitFor({ state: 'visible', timeout: 15000 });
+    await locator.evaluate((el, value) => {
+      const input = el as HTMLInputElement;
+      const proto = Object.getPrototypeOf(input) as HTMLInputElement;
+      const protoDesc = Object.getOwnPropertyDescriptor(proto, 'value');
+      const ownDesc = Object.getOwnPropertyDescriptor(input, 'value');
+      if (protoDesc?.set && ownDesc?.set && protoDesc.set !== ownDesc.set) {
+        protoDesc.set.call(input, value);
+      } else if (protoDesc?.set) {
+        protoDesc.set.call(input, value);
+      } else if (ownDesc?.set) {
+        ownDesc.set.call(input, value);
+      } else {
+        input.value = value;
+      }
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }, password);
+  });
+}
+
+/**
+ * Clear password through React-controlled input without logging secrets.
  */
 async function redactPasswordFields(page: Page) {
   const fields = passwordLocators(page);
@@ -64,7 +92,17 @@ async function redactPasswordFields(page: Page) {
   for (let i = 0; i < count; i++) {
     const field = fields.nth(i);
     if (await field.isVisible().catch(() => false)) {
-      await field.fill('').catch(() => undefined);
+      await field
+        .evaluate((el) => {
+          const input = el as HTMLInputElement;
+          const proto = Object.getPrototypeOf(input) as HTMLInputElement;
+          const protoDesc = Object.getOwnPropertyDescriptor(proto, 'value');
+          protoDesc?.set?.call(input, '');
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        })
+        .catch(() => undefined);
       await field.blur().catch(() => undefined);
     }
   }
@@ -83,7 +121,6 @@ function isAuthedAppPath(pathname: string): boolean {
 
 async function waitForAdminSession(page: Page) {
   await page.waitForURL((url) => isAuthedAppPath(url.pathname), { timeout: 20000 });
-  // Prefer an authenticated cookie / storage signal when available
   await page
     .waitForFunction(() => {
       const hasCookie = document.cookie.length > 0;
@@ -96,22 +133,30 @@ async function waitForAdminSession(page: Page) {
 }
 
 function isTechLoginPath(pathname: string): boolean {
-  // Expo may show login at `/`; only treat explicit login/auth segments as login routes.
   return /(?:^|\/)(login|auth)(?:\/|$)/i.test(pathname);
 }
 
+/**
+ * Jobs list marker: wrapping View with data-testid="tech-jobs-screen"
+ * (FlatList testIDs are not reliably visible on Expo web).
+ * Fallback: schedule header text (en/es).
+ */
 async function waitForTechSession(page: Page) {
-  // Expo web never reaches networkidle (persistent websocket). Mirror
-  // waitForAdminSession: wait for a logged-in-only element, with URL fallback
-  // when the app uses an explicit /login route.
   const jobsScreen = page.getByTestId('tech-jobs-screen');
+  const scheduleText = page.getByText(/today'?s schedule|agenda de hoy|upcoming jobs|pr[oó]ximos trabajos/i).first();
   try {
-    await jobsScreen.waitFor({ state: 'visible', timeout: 20000 });
+    await Promise.race([
+      jobsScreen.waitFor({ state: 'visible', timeout: 25000 }),
+      scheduleText.waitFor({ state: 'visible', timeout: 25000 }),
+    ]);
   } catch {
     if (isTechLoginPath(new URL(page.url()).pathname)) {
-      await page.waitForURL((url) => !isTechLoginPath(url.pathname), { timeout: 20000 });
+      await page.waitForURL((url) => !isTechLoginPath(url.pathname), { timeout: 15000 });
     }
-    await jobsScreen.waitFor({ state: 'visible', timeout: 15000 });
+    await Promise.race([
+      jobsScreen.waitFor({ state: 'visible', timeout: 15000 }),
+      scheduleText.waitFor({ state: 'visible', timeout: 15000 }),
+    ]);
   }
   await page
     .waitForFunction(() => {
@@ -119,7 +164,7 @@ async function waitForTechSession(page: Page) {
         Object.keys(window.localStorage).some((k) => /supabase|auth|sb-/i.test(k)) ||
         Object.keys(window.sessionStorage).some((k) => /supabase|auth|sb-/i.test(k));
       return hasStorage || document.cookie.length > 0;
-    }, { timeout: 10000 })
+    }, { timeout: 8000 })
     .catch(() => undefined);
 }
 
@@ -137,11 +182,9 @@ async function captureStep(page: Page, testInfo: TestInfo, name: string) {
 async function adminLogin(page: Page, testInfo?: TestInfo) {
   await page.goto(`${ADMIN_BASE_URL}/en/auth/login`);
   await page.getByLabel(/email/i).fill(ADMIN_EMAIL);
-  const passwordField = page.getByLabel(/password/i);
-  await passwordField.fill(ADMIN_PASSWORD);
+  await fillPassword(page.getByLabel(/password/i), ADMIN_PASSWORD);
   await page.getByRole('button', { name: /sign in/i }).click();
 
-  // Scrub before any assertion/wait that can produce error-context snapshots
   await redactPasswordFields(page);
 
   await waitForAdminSession(page);
@@ -154,13 +197,13 @@ async function adminLogin(page: Page, testInfo?: TestInfo) {
 
 async function techLogin(page: Page, testInfo?: TestInfo) {
   await page.goto(`${TECH_BASE_URL}/`);
-  // Wait for either the login form or an already-authenticated jobs screen.
-  // Do not use networkidle — Expo web never settles.
   const loginSubmit = page.getByTestId('login-submit');
   const jobsScreen = page.getByTestId('tech-jobs-screen');
+  const scheduleText = page.getByText(/today'?s schedule|agenda de hoy/i).first();
   await Promise.race([
     loginSubmit.waitFor({ state: 'visible', timeout: 20000 }),
     jobsScreen.waitFor({ state: 'visible', timeout: 20000 }),
+    scheduleText.waitFor({ state: 'visible', timeout: 20000 }),
   ]);
 
   const hasLoginForm = (await loginSubmit.count()) > 0 && (await loginSubmit.isVisible());
@@ -173,7 +216,7 @@ async function techLogin(page: Page, testInfo?: TestInfo) {
   }
 
   await page.getByTestId('login-email').fill(TECH_EMAIL);
-  await page.getByTestId('login-password').fill(TECH_PASSWORD);
+  await fillPassword(page.getByTestId('login-password'), TECH_PASSWORD);
   await loginSubmit.click();
   await redactPasswordFields(page);
   await waitForTechSession(page);
@@ -184,9 +227,18 @@ async function techLogin(page: Page, testInfo?: TestInfo) {
   return true;
 }
 
+async function openFirstTechJob(page: Page) {
+  const card = page.getByTestId('tech-job-card').first();
+  await expect(card).toBeVisible({ timeout: 15000 });
+  await card.click();
+  await expect(page.getByTestId('tech-job-detail')).toBeVisible({ timeout: 15000 });
+}
+
 async function withTechPage(browser: Browser, run: (page: Page) => Promise<void>) {
   const context = await browser.newContext({
     extraHTTPHeaders: vercelBypassHeaders,
+    // Allow file chooser / gallery on Expo web
+    permissions: [],
   });
   const page = await context.newPage();
   try {
@@ -221,50 +273,97 @@ test.describe('Full E2E Flow', () => {
   });
 
   test('Tech: Login and view jobs', async ({ browser }, testInfo) => {
+    test.setTimeout(120_000);
     await withTechPage(browser, async (page) => {
       const hasLoginForm = await techLogin(page, testInfo);
       await expect(page.getByTestId('tech-jobs-screen')).toBeVisible({ timeout: 15000 });
       await captureStep(page, testInfo, 'tech-jobs');
-      const hasJobs = (await page.locator('text=/job|service|visit|trabajo/i').count()) > 0;
+      const hasJobs = (await page.getByTestId('tech-job-card').count()) > 0;
       console.log('✓ Tech app loaded', { hasLoginForm, hasJobs });
     });
   });
 
   test('Tech: Mark job en route', async ({ browser }, testInfo) => {
+    test.setTimeout(120_000);
     await withTechPage(browser, async (page) => {
       await techLogin(page, testInfo);
       await expect(page.getByTestId('tech-jobs-screen')).toBeVisible({ timeout: 15000 });
+      await openFirstTechJob(page);
 
       const enRouteButton = page.getByTestId('job-on-my-way');
-      if ((await enRouteButton.count()) > 0) {
+      const startButton = page.getByTestId('job-start-service');
+      await expect(startButton.or(enRouteButton)).toBeVisible({ timeout: 15000 });
+
+      if ((await enRouteButton.count()) > 0 && (await enRouteButton.isVisible())) {
         await enRouteButton.click();
-        await page.getByTestId('job-start-service').waitFor({ state: 'visible', timeout: 5000 }).catch(() => undefined);
-        await captureStep(page, testInfo, 'tech-en-route');
+        // After en route, on-my-way hides; start-service remains
+        await expect(startButton).toBeVisible({ timeout: 10000 });
         console.log('✓ Tech marked job en route');
       } else {
-        const startButton = page.getByTestId('job-start-service');
-        if ((await startButton.count()) > 0) {
-          console.log('⚠ On-my-way not shown; start-service button is present');
-        } else {
-          console.log('⚠ Could not find en route button (may need job detail navigation)');
-        }
-        await captureStep(page, testInfo, 'tech-en-route');
+        console.log('⚠ On-my-way not shown (job may already be en_route/in_progress)');
       }
+      await captureStep(page, testInfo, 'tech-en-route');
     });
   });
 
   test('Tech: Complete service with report and photo', async ({ browser }, testInfo) => {
+    test.setTimeout(120_000);
     await withTechPage(browser, async (page) => {
       await techLogin(page, testInfo);
       await expect(page.getByTestId('tech-jobs-screen')).toBeVisible({ timeout: 15000 });
+      await openFirstTechJob(page);
 
+      const startButton = page.getByTestId('job-start-service');
       const takePhoto = page.getByTestId('job-take-photo');
+      const fromGallery = page.getByTestId('job-from-gallery');
       const complete = page.getByTestId('job-complete');
+
+      // Start service if still on pre-start actions
+      if ((await startButton.count()) > 0 && (await startButton.isVisible().catch(() => false))) {
+        const enRoute = page.getByTestId('job-on-my-way');
+        if ((await enRoute.count()) > 0 && (await enRoute.isVisible().catch(() => false))) {
+          await enRoute.click();
+          await expect(startButton).toBeVisible({ timeout: 8000 });
+        }
+        await startButton.click();
+      }
+
+      await expect(fromGallery.or(takePhoto).or(complete)).toBeVisible({ timeout: 20000 });
       await captureStep(page, testInfo, 'tech-complete-ready');
-      console.log('✓ Tech app ready for service completion', {
-        hasTakePhoto: (await takePhoto.count()) > 0,
-        hasComplete: (await complete.count()) > 0,
-      });
+
+      // Prefer gallery + file chooser on Expo web (camera permissions are awkward in CI)
+      if ((await fromGallery.count()) > 0 && (await fromGallery.isVisible())) {
+        const chooserPromise = page.waitForEvent('filechooser', { timeout: 10000 }).catch(() => null);
+        await fromGallery.click();
+        const chooser = await chooserPromise;
+        if (chooser) {
+          await chooser.setFiles(PHOTO_FIXTURE);
+        } else {
+          // Some Expo web builds use a hidden <input type="file">
+          const fileInput = page.locator('input[type="file"]').first();
+          if ((await fileInput.count()) > 0) {
+            await fileInput.setInputFiles(PHOTO_FIXTURE);
+          } else {
+            console.log('⚠ No filechooser/input for gallery — photo step may be incomplete');
+          }
+        }
+      }
+
+      if ((await complete.count()) > 0 && (await complete.isVisible())) {
+        await complete.click();
+        // After save, typically returns to jobs list
+        await page
+          .getByTestId('tech-jobs-screen')
+          .waitFor({ state: 'visible', timeout: 20000 })
+          .catch(() => undefined);
+        console.log('✓ Tech completed service (or attempted complete)');
+      } else {
+        console.log('⚠ Complete button not visible yet', {
+          hasTakePhoto: (await takePhoto.count()) > 0,
+          hasGallery: (await fromGallery.count()) > 0,
+        });
+      }
+      await captureStep(page, testInfo, 'tech-complete-done');
     });
   });
 
@@ -274,7 +373,7 @@ test.describe('Full E2E Flow', () => {
     await expect(page).not.toHaveURL(/\/auth\//);
     await captureStep(page, testInfo, 'admin-reports');
 
-    const hasReports = (await page.locator('text=/report|service|completed/i').count()) > 0;
+    const hasReports = (await page.locator('text=/report|service|completed|informe/i').count()) > 0;
     console.log('✓ Admin reports page loaded', { hasReports });
   });
 });
@@ -283,7 +382,6 @@ test.describe('Plan Gating Tests', () => {
   test('Pro plan: Live status board visible', async ({ page }, testInfo) => {
     await adminLogin(page, testInfo);
 
-    // Must be past login (session established) before calling authenticated APIs
     await expect(page).not.toHaveURL(/\/auth\//);
 
     const response = await page.request.get(`${ADMIN_BASE_URL}/api/billing/plan-features`, {
