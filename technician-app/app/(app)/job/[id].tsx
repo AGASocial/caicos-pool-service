@@ -49,6 +49,13 @@ export default function JobDetailScreen() {
   const theme = useColorScheme() ?? 'light';
   const themeColors = Colors[theme];
   const { t } = useI18n();
+  type JobProperty = {
+    customer_name: string;
+    address: string;
+    gate_code: string | null;
+    lat: number | null;
+    lng: number | null;
+  };
   const [job, setJob] = useState<{
     id: string;
     status: string;
@@ -56,7 +63,8 @@ export default function JobDetailScreen() {
     company_id: string;
     technician_id: string | null;
     scheduled_date?: string;
-    cadenza_properties?: { customer_name: string; address: string; gate_code: string | null; lat: number | null; lng: number | null } | null;
+    // Supabase nested select may return object or single-element array
+    cadenza_properties?: JobProperty | JobProperty[] | null;
   } | null>(null);
   const [started, setStarted] = useState(false);
   const [jobLoaded, setJobLoaded] = useState(false);

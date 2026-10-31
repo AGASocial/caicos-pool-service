@@ -119,61 +119,62 @@ export default function TabLayout() {
         textColor={colors.text}
         borderColor={colors.border}
       />
-      <Tabs
-        style={styles.tabs}
-        screenOptions={
-          {
-            headerShown: false,
-            sceneStyle: { backgroundColor: colors.background },
-            tabBarActiveTintColor: colors.tabIconSelected,
-            tabBarInactiveTintColor: colors.tabIconDefault,
-            tabBar: (props: BottomTabBarProps) => <CadenzaTabBar {...props} />,
-            tabBarStyle: {
-              backgroundColor: chromeBg,
-              borderTopWidth: 0,
-              elevation: 0,
-              shadowOpacity: 0,
-            },
-          } satisfies BottomTabNavigationOptions
-        }
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: t('tabs.jobs'),
-            headerShown: false,
-            tabBarLabel: t('tabs.jobs'),
-            tabBarIcon: ({ color }) => <FontAwesome name="list" size={22} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="calendar"
-          options={{
-            title: t('tabs.calendar'),
-            headerShown: false,
-            tabBarLabel: t('tabs.calendar'),
-            tabBarIcon: ({ color }) => <FontAwesome name="calendar" size={22} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="properties"
-          options={{
-            title: t('tabs.properties'),
-            headerShown: false,
-            tabBarLabel: t('tabs.properties'),
-            tabBarIcon: ({ color }) => <FontAwesome name="home" size={22} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="settings"
-          options={{
-            title: t('tabs.me'),
-            headerShown: false,
-            tabBarLabel: t('tabs.me'),
-            tabBarIcon: ({ color }) => <FontAwesome name="user" size={22} color={color} />,
-          }}
-        />
-      </Tabs>
+      <View style={styles.tabs}>
+        <Tabs
+          tabBar={(props: BottomTabBarProps) => <CadenzaTabBar {...props} />}
+          screenOptions={
+            {
+              headerShown: false,
+              sceneStyle: { backgroundColor: colors.background },
+              tabBarActiveTintColor: colors.tabIconSelected,
+              tabBarInactiveTintColor: colors.tabIconDefault,
+              tabBarStyle: {
+                backgroundColor: chromeBg,
+                borderTopWidth: 0,
+                elevation: 0,
+                shadowOpacity: 0,
+              },
+            } satisfies BottomTabNavigationOptions
+          }
+        >
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: t('tabs.jobs'),
+              headerShown: false,
+              tabBarLabel: t('tabs.jobs'),
+              tabBarIcon: ({ color }) => <FontAwesome name="list" size={22} color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="calendar"
+            options={{
+              title: t('tabs.calendar'),
+              headerShown: false,
+              tabBarLabel: t('tabs.calendar'),
+              tabBarIcon: ({ color }) => <FontAwesome name="calendar" size={22} color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="properties"
+            options={{
+              title: t('tabs.properties'),
+              headerShown: false,
+              tabBarLabel: t('tabs.properties'),
+              tabBarIcon: ({ color }) => <FontAwesome name="home" size={22} color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="settings"
+            options={{
+              title: t('tabs.me'),
+              headerShown: false,
+              tabBarLabel: t('tabs.me'),
+              tabBarIcon: ({ color }) => <FontAwesome name="user" size={22} color={color} />,
+            }}
+          />
+        </Tabs>
+      </View>
     </View>
   );
 }

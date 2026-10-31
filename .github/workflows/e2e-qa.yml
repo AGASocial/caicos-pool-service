@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: ${{ matrix.app }}/package-lock.json
 
@@ -45,7 +45,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: admin-portal/package-lock.json
 
@@ -100,7 +100,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install admin-portal dependencies
         working-directory: ./admin-portal
@@ -125,11 +125,10 @@ jobs:
           QA_ADMIN_PASSWORD: ${{ secrets.QA_ADMIN_PASSWORD }}
           QA_TECH_PASSWORD: ${{ secrets.QA_TECH_PASSWORD }}
 
+      # Metro bundler export — does not run tsc; type errors won't fail this step
       - name: Build Expo web
         working-directory: ./technician-app
-        run: |
-          npm install -g expo-cli
-          npx expo export:web
+        run: npx expo export --platform web --output-dir web-build
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
