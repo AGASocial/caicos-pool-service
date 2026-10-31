@@ -1,0 +1,16 @@
+{
+  "name": "cadenza-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "qa:seed": "NODE_PATH=./node_modules tsx scripts/qa-seed-cleanup.ts seed",
+    "qa:cleanup": "NODE_PATH=./node_modules tsx scripts/qa-seed-cleanup.ts cleanup",
+    "qa:test": "cd admin-portal && npm run test:e2e",
+    "dev:admin": "cd admin-portal && npm run dev",
+    "dev:mobile": "cd technician-app && npm start"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "tsx": "^4.21.0"
+  }
+}

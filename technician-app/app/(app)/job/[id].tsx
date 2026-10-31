@@ -49,6 +49,13 @@ export default function JobDetailScreen() {
   const theme = useColorScheme() ?? 'light';
   const themeColors = Colors[theme];
   const { t } = useI18n();
+  type JobProperty = {
+    customer_name: string;
+    address: string;
+    gate_code: string | null;
+    lat: number | null;
+    lng: number | null;
+  };
   const [job, setJob] = useState<{
     id: string;
     status: string;
@@ -56,7 +63,8 @@ export default function JobDetailScreen() {
     company_id: string;
     technician_id: string | null;
     scheduled_date?: string;
-    cadenza_properties?: { customer_name: string; address: string; gate_code: string | null; lat: number | null; lng: number | null } | null;
+    // Supabase nested select may return object or single-element array
+    cadenza_properties?: JobProperty | JobProperty[] | null;
   } | null>(null);
   const [started, setStarted] = useState(false);
   const [jobLoaded, setJobLoaded] = useState(false);
@@ -866,14 +874,32 @@ export default function JobDetailScreen() {
               </View>
             )}
             {job.status === 'pending' && (
-              <Pressable style={[styles.startButton, { backgroundColor: themeColors.onMyWayButton ?? themeColors.buttonPrimary }]} onPress={handleOnMyWay}>
+              <Pressable
+                style={[styles.startButton, { backgroundColor: themeColors.onMyWayButton ?? themeColors.buttonPrimary }]}
+                onPress={handleOnMyWay}
+                accessibilityRole="button"
+                accessibilityLabel={t('jobDetail.onMyWay')}
+                testID="job-on-my-way"
+              >
                 <Text style={styles.startButtonText}>{t('jobDetail.onMyWay')}</Text>
               </Pressable>
             )}
-            <Pressable style={styles.startButton} onPress={handleStart}>
+            <Pressable
+              style={styles.startButton}
+              onPress={handleStart}
+              accessibilityRole="button"
+              accessibilityLabel={t('jobDetail.startService')}
+              testID="job-start-service"
+            >
               <Text style={styles.startButtonText}>{t('jobDetail.startService')}</Text>
             </Pressable>
-            <Pressable style={styles.cantServiceButton} onPress={() => id && router.push(`/(app)/job/${id}/cant-service`)}>
+            <Pressable
+              style={styles.cantServiceButton}
+              onPress={() => id && router.push(`/(app)/job/${id}/cant-service`)}
+              accessibilityRole="button"
+              accessibilityLabel={t('jobDetail.cantService')}
+              testID="job-cant-service"
+            >
               <Text style={styles.cantServiceButtonText}>{t('jobDetail.cantService')}</Text>
             </Pressable>
           </>
@@ -895,10 +921,22 @@ export default function JobDetailScreen() {
               </View>
               <Text style={styles.photoHint}>{t('jobDetail.photoHint')}</Text>
               <View style={styles.photoActions}>
-                <Pressable style={styles.photoButton} onPress={takePhoto}>
+                <Pressable
+                  style={styles.photoButton}
+                  onPress={takePhoto}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('jobDetail.takePhoto')}
+                  testID="job-take-photo"
+                >
                   <Text style={styles.photoButtonText}>{t('jobDetail.takePhoto')}</Text>
                 </Pressable>
-                <Pressable style={styles.photoButton} onPress={pickFromGallery}>
+                <Pressable
+                  style={styles.photoButton}
+                  onPress={pickFromGallery}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('jobDetail.fromGallery')}
+                  testID="job-from-gallery"
+                >
                   <Text style={styles.photoButtonText}>{t('jobDetail.fromGallery')}</Text>
                 </Pressable>
               </View>
@@ -1127,7 +1165,14 @@ export default function JobDetailScreen() {
               />
             )}
 
-            <Pressable style={styles.completeButton} onPress={handleComplete} disabled={saving}>
+            <Pressable
+              style={styles.completeButton}
+              onPress={handleComplete}
+              disabled={saving}
+              accessibilityRole="button"
+              accessibilityLabel={t('jobDetail.completeSave')}
+              testID="job-complete"
+            >
               <Text style={styles.completeButtonText}>
                 {saving ? t('common.saving') : t('jobDetail.completeSave')}
               </Text>
