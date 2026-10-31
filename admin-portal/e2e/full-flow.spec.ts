@@ -9,8 +9,7 @@
  * 5. Pro plan features are visible
  */
 
-import { test, expect, type Page } from '@playwright/test';
-import path from 'path';
+import { test, expect } from '@playwright/test';
 
 // Validate required environment variables
 function validateTestEnvironment() {
@@ -38,8 +37,6 @@ const ADMIN_BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost
 const TECH_BASE_URL = process.env.PLAYWRIGHT_TECH_BASE_URL || 'http://localhost:8081';
 
 test.describe.configure({ mode: 'serial' });
-
-let sharedJobId: string | null = null;
 
 test.describe('Full E2E Flow', () => {
   test('Admin: Login and view dashboard', async ({ page }) => {

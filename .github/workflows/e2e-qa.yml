@@ -82,7 +82,17 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-latest
     needs: wait-for-vercel
+    # Always run so this required check cannot be silently skipped
+    # (GitHub treats a skipped required job as passing).
+    if: always()
     steps:
+      - name: Fail if prerequisites did not succeed
+        if: needs.wait-for-vercel.result != 'success'
+        run: |
+          echo "E2E Tests cannot run: Wait for Vercel Preview result was '${{ needs.wait-for-vercel.result }}'"
+          echo "This job must fail (not skip) so branch protection cannot treat a skipped E2E check as passing."
+          exit 1
+
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -141,7 +151,7 @@ jobs:
           CI: true
 
       - name: Stop Expo server
-        if: always()
+        if: always() && needs.wait-for-vercel.result == 'success'
         working-directory: ./technician-app
         run: |
           if [ -f expo-server.pid ]; then
@@ -150,14 +160,14 @@ jobs:
           fi
 
       - name: Run QA cleanup
-        if: always()
+        if: always() && needs.wait-for-vercel.result == 'success'
         run: npm run qa:cleanup
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Upload test results
-        if: always()
+        if: always() && needs.wait-for-vercel.result == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
@@ -165,14 +175,16 @@ jobs:
             admin-portal/playwright-report/
             admin-portal/test-results/
           retention-days: 30
+          if-no-files-found: ignore
 
       - name: Upload screenshots
-        if: always()
+        if: always() && needs.wait-for-vercel.result == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
           path: admin-portal/test-results/**/*.png
           retention-days: 30
+          if-no-files-found: ignore
 
   report-results:
     name: Report Test Results
@@ -185,6 +197,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download test results
+        id: download
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: playwright-report
@@ -193,15 +207,26 @@ jobs:
       - name: Generate test summary
         id: summary
         run: |
-          if [ -f reports/test-results/results.json ]; then
+          if [ "${{ steps.download.outcome }}" != "success" ]; then
+            echo "status=❌ FAILED (no report artifact)" >> $GITHUB_OUTPUT
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "missing_artifact=true" >> $GITHUB_OUTPUT
+          elif [ -f reports/test-results/results.json ] || [ -f reports/admin-portal/test-results/results.json ]; then
+            RESULTS_FILE=reports/test-results/results.json
+            if [ ! -f "$RESULTS_FILE" ]; then
+              RESULTS_FILE=reports/admin-portal/test-results/results.json
+            fi
             # Parse results
-            TOTAL=$(jq '.suites[].specs | length' reports/test-results/results.json | awk '{s+=$1} END {print s}')
-            PASSED=$(jq '[.suites[].specs[].tests[] | select(.status=="passed")] | length' reports/test-results/results.json)
-            FAILED=$(jq '[.suites[].specs[].tests[] | select(.status=="failed")] | length' reports/test-results/results.json)
+            TOTAL=$(jq '.suites[].specs | length' "$RESULTS_FILE" | awk '{s+=$1} END {print s}')
+            PASSED=$(jq '[.suites[].specs[].tests[] | select(.status=="passed")] | length' "$RESULTS_FILE")
+            FAILED=$(jq '[.suites[].specs[].tests[] | select(.status=="failed")] | length' "$RESULTS_FILE")
             
             echo "total=$TOTAL" >> $GITHUB_OUTPUT
             echo "passed=$PASSED" >> $GITHUB_OUTPUT
             echo "failed=$FAILED" >> $GITHUB_OUTPUT
+            echo "missing_artifact=false" >> $GITHUB_OUTPUT
             
             if [ "$FAILED" -eq 0 ]; then
               echo "status=✅ PASSED" >> $GITHUB_OUTPUT
@@ -209,10 +234,11 @@ jobs:
               echo "status=❌ FAILED" >> $GITHUB_OUTPUT
             fi
           else
-            echo "status=⚠️ NO RESULTS" >> $GITHUB_OUTPUT
+            echo "status=❌ FAILED (no results file)" >> $GITHUB_OUTPUT
             echo "total=0" >> $GITHUB_OUTPUT
             echo "passed=0" >> $GITHUB_OUTPUT
             echo "failed=0" >> $GITHUB_OUTPUT
+            echo "missing_artifact=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Comment PR
@@ -224,8 +250,24 @@ jobs:
             const total = '${{ steps.summary.outputs.total }}';
             const passed = '${{ steps.summary.outputs.passed }}';
             const failed = '${{ steps.summary.outputs.failed }}';
+            const missingArtifact = '${{ steps.summary.outputs.missing_artifact }}' === 'true';
+            const e2eResult = '${{ needs.e2e-tests.result }}';
             
-            const body = `## E2E QA Test Results ${status}
+            let body;
+            if (missingArtifact) {
+              body = `## E2E QA Test Results ${status}
+            
+            Playwright report artifact was not available (E2E job result: \`${e2eResult}\`).
+            
+            This usually means upstream checks failed, the E2E job exited before uploading results, or the artifact upload was skipped.
+            
+            **Workflow run:** [View details](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+            ---
+            *QA Company ID: \`45173a02-9f30-4a07-89bb-16923bd043b5\`*
+            `;
+            } else {
+              body = `## E2E QA Test Results ${status}
             
             | Tests | Passed | Failed |
             |-------|--------|--------|
@@ -245,6 +287,7 @@ jobs:
             ---
             *QA Company ID: \`45173a02-9f30-4a07-89bb-16923bd043b5\`*
             `;
+            }
             
             // Find existing comment
             const comments = await github.rest.issues.listComments({
