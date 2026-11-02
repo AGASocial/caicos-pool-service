@@ -95,8 +95,20 @@ async function createCheckout(api: APIRequestContext, planId: string, quantity: 
 async function payOnStripeCheckout(page: Page, url: string, card: string) {
   await page.goto(url, { waitUntil: 'domcontentloaded' });
   // Newer Checkout renders payment methods as an accordion
-  const cardAccordion = page.locator('[data-testid="card-accordion-item-button"]');
-  if (await cardAccordion.isVisible({ timeout: 5_000 }).catch(() => false)) await cardAccordion.click();
+  // (isVisible() does not wait, so explicitly wait for the form to render.)
+  const cardNumber = page.locator('input#cardNumber');
+  const cardOption = page
+    .locator('[data-testid="card-accordion-item-button"], input#payment-method-accordion-item-title-card, [data-testid="card-accordion-item"] input[type="radio"]')
+    .or(page.getByRole('radio', { name: /^card$/i }))
+    .first();
+  await expect(cardNumber.or(cardOption).first()).toBeVisible({ timeout: 30_000 });
+  if (!(await cardNumber.isVisible())) {
+    await cardOption.click({ force: true });
+    if (!(await cardNumber.isVisible({ timeout: 3_000 }).catch(() => false))) {
+      await page.getByText(/^Card$/).first().click();
+    }
+  }
+  await expect(cardNumber).toBeVisible({ timeout: 15_000 });
   const email = page.locator('input#email');
   if (await email.isVisible({ timeout: 2_000 }).catch(() => false) && (await email.isEditable())) {
     if (!(await email.inputValue())) await email.fill(OWNER_EMAIL);
