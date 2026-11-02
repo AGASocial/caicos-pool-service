@@ -62,7 +62,7 @@ export function PhotoHistory({ propertyId }: { propertyId: string }) {
                   {v.scheduledDate}
                 </Link>
                 <span className="text-muted-foreground">{v.technicianName ?? '—'}</span>
-                <span className="text-xs uppercase text-muted-foreground">{v.status}</span>
+                <span className="text-xs text-muted-foreground">{t(`status_${v.status}`)}</span>
               </div>
               {v.notes && <p className="mt-1 text-sm text-muted-foreground">{v.notes}</p>}
               {v.photos.length === 0 ? (

@@ -497,5 +497,12 @@
   "photoArchived": "Archived",
   "photoUnavailable": "Photo unavailable",
   "loadMore": "Load more",
-  "visitNoPhotos": "No photos for this visit"
+  "visitNoPhotos": "No photos for this visit",
+  "stops": "stops",
+  "status_en_route": "En route",
+  "noMembersWithRole": "No members with this role yet.",
+  "teamRoleDescription_admin": "Full access to settings, billing and team.",
+  "teamRoleDescription_operations": "Dispatch, routes, jobs and reports.",
+  "teamRoleDescription_technician": "Field technicians who service pools.",
+  "googleSignInComingSoon": "Google sign-in (coming soon)"
 }

@@ -60,7 +60,7 @@ export default function RoutesPage() {
                     <div className="flex-1 min-w-0">
                       <span className="font-medium">{r.name}</span>
                       <p className="text-sm text-muted-foreground">
-                        {r.technician?.full_name ?? '—'} · {r.stop_count} {t('stops', { defaultValue: 'stops' })}
+                        {r.technician?.full_name ?? '—'} · {r.stop_count} {t('stops')}
                       </p>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />

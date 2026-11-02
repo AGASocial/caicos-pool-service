@@ -253,9 +253,9 @@ describe('AuthForm', () => {
   });
 
   describe('OAuth Buttons', () => {
-    it('should render Google button with Coming Soon text', () => {
+    it('should render localized Google coming-soon button', () => {
       render(<AuthForm type="login" />);
-      const googleButton = screen.getByRole('button', { name: /Coming Soon/i });
+      const googleButton = screen.getByRole('button', { name: /googleSignInComingSoon/i });
       expect(googleButton).toBeInTheDocument();
       expect(googleButton).toBeDisabled();
     });

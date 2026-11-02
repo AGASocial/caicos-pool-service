@@ -168,16 +168,12 @@ export default function TeamPage() {
               <Card key={roleKey}>
                 <CardHeader>
                   <CardTitle>{t(titleKey)}</CardTitle>
-                  <CardDescription>
-                    {list.length === 0
-                      ? t('noTeamYet', { defaultValue: 'No members with this role yet.' })
-                      : t('teamCardDescription')}
-                  </CardDescription>
+                  <CardDescription>{t(`teamRoleDescription_${roleKey}`)}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {list.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      {t('noTeamYet', { defaultValue: 'No members with this role yet.' })}
+                      {t('noMembersWithRole')}
                     </p>
                   ) : (
                     <ul className="divide-y divide-border">

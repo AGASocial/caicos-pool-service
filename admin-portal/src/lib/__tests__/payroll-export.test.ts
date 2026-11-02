@@ -1,4 +1,13 @@
-import { buildPayrollCsv, csvEscape, formatCompletedTime, isValidDate, mapPayrollRows, UTF8_BOM } from '../payroll-export';
+import {
+  buildPayrollCsv,
+  csvEscape,
+  formatCompletedTime,
+  isValidDate,
+  mapPayrollRows,
+  payrollLocale,
+  statsCompletedTotal,
+  UTF8_BOM,
+} from '../payroll-export';
 
 describe('payroll-export', () => {
   const jobs = [
@@ -38,13 +47,39 @@ describe('payroll-export', () => {
   });
 
   it('builds BOM CSV with CRLF and summary', () => {
-    const csv = buildPayrollCsv(mapPayrollRows(jobs), [{ technicianId: 't1', fullName: 'Al Smith', completed: 1 }]);
+    const csv = buildPayrollCsv(mapPayrollRows(jobs), [{ technicianId: 't1', fullName: 'Al Smith', completed: 1 }], {
+      includeSummary: true,
+    });
     expect(csv.startsWith(UTF8_BOM)).toBe(true);
     const lines = csv.slice(1).split('\r\n');
     expect(lines[0]).toBe('Technician,Date,Customer,Address,Completed Time');
     expect(lines[2]).toContain('"Pérez, Ana"');
     expect(lines).toContain('Technician,Completed Pools');
     expect(lines).toContain('Al Smith,1');
+  });
+
+  it('data rows equal the stats completed count (no summary block by default)', () => {
+    // Regression: 1,726 completed on screen vs 1,758 CSV lines = header + 1,726 rows + blank + summary header + 30 techs.
+    const summary = [
+      { technicianId: 't1', fullName: 'Al Smith', completed: 1 },
+      { technicianId: 't2', fullName: 'Zoe Ríos', completed: 1 },
+    ];
+    const rows = mapPayrollRows(jobs);
+    const lines = buildPayrollCsv(rows, summary).slice(1).split('\r\n').filter(Boolean);
+    expect(lines.length - 1).toBe(statsCompletedTotal(summary));
+    expect(lines.length - 1).toBe(rows.length);
+  });
+
+  it('localizes headers', () => {
+    const csv = buildPayrollCsv(mapPayrollRows(jobs), [{ technicianId: 't1', fullName: 'Al Smith', completed: 1 }], {
+      locale: 'es',
+      includeSummary: true,
+    });
+    const lines = csv.slice(1).split('\r\n');
+    expect(lines[0]).toBe('Técnico,Fecha,Cliente,Dirección,Hora de finalización');
+    expect(lines).toContain('Técnico,Piscinas completadas');
+    expect(payrollLocale('es-MX')).toBe('es');
+    expect(payrollLocale(null)).toBe('en');
   });
 
   it('validates dates', () => {

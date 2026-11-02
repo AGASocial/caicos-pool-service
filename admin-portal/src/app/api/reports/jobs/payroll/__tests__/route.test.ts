@@ -51,5 +51,20 @@ describe('GET /api/reports/jobs/payroll', () => {
     expect(text).toContain('Tech,2026-10-01,Cust,1 A St,2026-10-01 10:00');
     expect(jobs.eq).toHaveBeenCalledWith('company_id', 'c1');
     expect(rpc).toHaveBeenCalledWith('get_job_report_stats', { p_company_id: 'c1', p_date_from: '2026-10-01', p_date_to: '2026-10-07' });
+    // Row count matches the Reports "completed" figure; no trailing totals block.
+    expect(res.headers.get('x-payroll-rows')).toBe('1');
+    expect(res.headers.get('x-payroll-completed')).toBe('1');
+    expect(text.trim().split('\r\n')).toHaveLength(2);
+  });
+
+  it('localizes CSV headers for es', async () => {
+    const profile = chain({ data: { company_id: 'c1', role: 'admin' }, error: null });
+    const jobs = chain({ data: [], error: null });
+    const from = jest.fn((t: string) => (t === 'cadenza_profiles' ? profile : jobs));
+    const rpc = jest.fn().mockResolvedValue({ data: { byTechnician: [] }, error: null });
+    mockCreate.mockResolvedValue({ supabase: { from, rpc }, user: { id: 'u' } });
+    const res = await GET(new NextRequest('http://x/api/reports/jobs/payroll?date_from=2026-10-01&date_to=2026-10-07&locale=es'));
+    const text = await res.text();
+    expect(text).toContain('Técnico,Fecha,Cliente,Dirección,Hora de finalización');
   });
 });
