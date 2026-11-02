@@ -31,6 +31,7 @@ import {
   PaymentGatewayError,
 } from './types';
 import { isPaidSubscriptionEffective } from './subscription-utils';
+import { STRIPE_LOOKUP_KEYS } from './stripe-lookup-keys';
 
 export class BillingService {
   constructor(
@@ -613,7 +614,18 @@ export class BillingService {
     let stripePriceId: string | undefined;
     if (planId) {
       const plan = await this.getPlan(planId);
-      stripePriceId = plan.providerPriceMap?.stripe;
+      // Prefer the Stripe lookup key (same resolution as Checkout) so plan changes use the
+      // current price even when provider_price_map is stale or missing (e.g. Pro).
+      const lookupKey = STRIPE_LOOKUP_KEYS[planId];
+      const gw = this.gateway as PaymentGateway & { resolvePriceByLookupKey?: (k: string) => Promise<string> };
+      if (lookupKey && this.gateway.getName() === 'stripe' && typeof gw.resolvePriceByLookupKey === 'function') {
+        try {
+          stripePriceId = await gw.resolvePriceByLookupKey(lookupKey);
+        } catch (error) {
+          console.warn('Lookup key resolution failed, falling back to provider_price_map:', error);
+        }
+      }
+      stripePriceId = stripePriceId ?? plan.providerPriceMap?.stripe;
       if (!stripePriceId) {
         throw new BillingError('Stripe price ID not configured for this plan', 'PRICE_ID_NOT_FOUND');
       }
@@ -626,6 +638,7 @@ export class BillingService {
         planId: stripePriceId,
         quantity,
         cancelAtPeriodEnd,
+        ...(planId ? { metadata: { plan_id: planId } } : {}),
       });
     } catch (error) {
       // If we are trying to change plans, we can't bypass the gateway
@@ -1005,6 +1018,7 @@ export class BillingService {
       interval: data.interval as PlanDefinition['interval'],
       features: data.features as PlanDefinition['features'],
       providerPriceMap: data.provider_price_map as PlanDefinition['providerPriceMap'],
+      pricingModel: (data.pricing_model as PlanDefinition['pricingModel']) ?? 'flat',
     };
   }
 

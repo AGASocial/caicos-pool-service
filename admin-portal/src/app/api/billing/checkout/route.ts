@@ -68,7 +68,10 @@ export async function POST(request: NextRequest) {
     const stripeAdapter = new StripeAdapter(process.env.STRIPE_SECRET_KEY!);
 
     // Build success/cancel URLs from NEXT_PUBLIC_APP_URL with allowlisted locale
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    // Fall back to the deployment's own URL (set by Vercel, not client-controlled) on previews
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
     if (!appUrl) {
       return errorResponse('Application URL not configured', 500);
     }
@@ -89,10 +92,7 @@ export async function POST(request: NextRequest) {
 
     // Map plan IDs to Stripe lookup keys
     // This allows dynamic price resolution without hardcoding Stripe price IDs
-    const lookupKeyMap: Record<string, string> = {
-      plan_necessary_month: 'cadenza_standard_monthly',
-      plan_pro_month: 'cadenza_pro_monthly',
-    };
+    const { STRIPE_LOOKUP_KEYS: lookupKeyMap } = await import('@/lib/billing/stripe-lookup-keys');
 
     const checkoutSession = await stripeAdapter.createCheckoutSession({
       customer,

@@ -29,6 +29,8 @@ export interface PlanDefinition {
   interval: BillingInterval;
   features: PlanFeatures;
   providerPriceMap?: Partial<Record<PaymentProvider, string>>;
+  /** 'flat' (amount is total) or 'per_technician' (amount x quantity seats) */
+  pricingModel?: 'flat' | 'per_technician';
 }
 
 /**

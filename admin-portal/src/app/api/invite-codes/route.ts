@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       
       if (subscription) {
         const plan = await billingService.getPlan(subscription.planId);
-        const pricingModel = (plan as unknown as { pricing_model?: string }).pricing_model;
+        const pricingModel = plan.pricingModel;
         
         if (pricingModel === 'per_technician') {
           // Per-seat plan: limit is subscription.quantity

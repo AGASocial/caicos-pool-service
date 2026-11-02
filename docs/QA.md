@@ -332,3 +332,20 @@ appId: com.cadenza.technician
   - [KAN-66](https://your-jira.atlassian.net/browse/KAN-66) — Admin + tech user flows
   - [KAN-67](https://your-jira.atlassian.net/browse/KAN-67) — CI/CD integration
   - [KAN-68](https://your-jira.atlassian.net/browse/KAN-68) — Maestro native flows (future)
+
+## Billing E2E (Stripe test mode)
+
+`admin-portal/e2e/billing-stripe.spec.ts` runs in the same CI job as the full-flow spec.
+Each run creates a throwaway tenant (`qa-billing-<run>@cadenzaops.com`, company `QA Billing <run>`,
+3 `qa-billing-<run>-techN@` technicians, random per-run password never logged) and covers:
+Free signup, Free 3-tech limit, webhook signature rejection, declined card (4000 0000 0000 0341),
+Checkout upgrade to Standard (4242…), per-seat limit + seat increase, Standard→Pro, Pro→Standard,
+cancel at period end and immediate cancel (verified after the Stripe webhook).
+
+Safety: the spec aborts unless the app returns a `cs_test_` Checkout session. Stripe webhooks are
+delivered to admin.cadenzaops.com / admin-test.cadenzaops.com, which write to the same Supabase DB.
+Cleanup: spec `afterAll` plus `npm run qa:billing-cleanup` (only `qa-billing-*@cadenzaops.com` users and
+`QA Billing *` companies whose members are all QA users).
+
+### Stripe test-customer cleanup
+`npm run qa:billing-cleanup` (and the billing spec's afterAll) also deletes Stripe **test-mode** customers whose email matches `qa-billing-*@cadenzaops.com`, cancelling their subscriptions first. It reads `STRIPE_TEST_SECRET_KEY` (fallback `STRIPE_SECRET_KEY`), aborts if the key is not `sk_test_`, and is skipped when no key is set. Add the `STRIPE_TEST_SECRET_KEY` repo secret to enable it in CI.
