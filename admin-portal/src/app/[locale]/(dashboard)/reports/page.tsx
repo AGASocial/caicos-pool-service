@@ -1,6 +1,7 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { lastNDaysRange } from '@/lib/date-week';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,13 +36,14 @@ type ReportsStats = {
 export default function ReportsPage() {
   const t = useTranslations();
 
-  const today = new Date().toISOString().slice(0, 10);
-  const firstOfMonth = today.slice(0, 7) + '-01';
+  const locale = useLocale();
+  // Default: last 7 days (local dates, not UTC).
+  const [defaultRange] = useState(() => lastNDaysRange(7));
 
-  const [dateFrom, setDateFrom] = useState(today);
-  const [dateTo, setDateTo] = useState(today);
-  const [appliedFrom, setAppliedFrom] = useState(today);
-  const [appliedTo, setAppliedTo] = useState(today);
+  const [dateFrom, setDateFrom] = useState(defaultRange.from);
+  const [dateTo, setDateTo] = useState(defaultRange.to);
+  const [appliedFrom, setAppliedFrom] = useState(defaultRange.from);
+  const [appliedTo, setAppliedTo] = useState(defaultRange.to);
 
   const [stats, setStats] = useState<ReportsStats | null>(null);
   const [loading, setLoading] = useState(false);
@@ -127,6 +129,7 @@ export default function ReportsPage() {
                   date_from: dateFrom,
                   date_to: dateTo,
                   format: 'csv',
+                  locale,
                   tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Chicago',
                 }).toString()}`}
                 download

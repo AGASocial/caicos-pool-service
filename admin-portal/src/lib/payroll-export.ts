@@ -91,16 +91,44 @@ export function csvEscape(value: unknown): string {
   return s;
 }
 
-export const PAYROLL_CSV_HEADER = ['Technician', 'Date', 'Customer', 'Address', 'Completed Time'];
+export type PayrollLocale = 'en' | 'es';
+
+const CSV_LABELS: Record<PayrollLocale, { header: string[]; summary: string[] }> = {
+  en: {
+    header: ['Technician', 'Date', 'Customer', 'Address', 'Completed Time'],
+    summary: ['Technician', 'Completed Pools'],
+  },
+  es: {
+    header: ['Técnico', 'Fecha', 'Cliente', 'Dirección', 'Hora de finalización'],
+    summary: ['Técnico', 'Piscinas completadas'],
+  },
+};
+
+export function payrollLocale(value: string | null | undefined): PayrollLocale {
+  return value && value.toLowerCase().startsWith('es') ? 'es' : 'en';
+}
+
+export const PAYROLL_CSV_HEADER = CSV_LABELS.en.header;
 export const UTF8_BOM = '\uFEFF';
 
-/** Excel-compatible CSV (UTF-8 BOM + CRLF). Detail rows, then a per-tech totals block. */
+export type PayrollCsvOptions = {
+  timeZone?: string;
+  locale?: PayrollLocale;
+  /** Append a blank line + per-technician totals block. Off by default so that
+   *  the number of data rows equals the "completed" count on the Reports screen. */
+  includeSummary?: boolean;
+};
+
+/** Excel-compatible CSV (UTF-8 BOM + CRLF): header + one row per completed job. */
 export function buildPayrollCsv(
   rows: PayrollRow[],
   summary: PayrollTechSummary[],
-  timeZone = 'America/Chicago',
+  opts: PayrollCsvOptions | string = {},
 ): string {
-  const lines: string[] = [PAYROLL_CSV_HEADER.map(csvEscape).join(',')];
+  const o: PayrollCsvOptions = typeof opts === 'string' ? { timeZone: opts } : opts;
+  const timeZone = o.timeZone ?? 'America/Chicago';
+  const labels = CSV_LABELS[o.locale ?? 'en'];
+  const lines: string[] = [labels.header.map(csvEscape).join(',')];
   for (const r of rows) {
     lines.push(
       [r.technicianName, r.date, r.customer, r.address, formatCompletedTime(r.completedAt, timeZone)]
@@ -108,12 +136,17 @@ export function buildPayrollCsv(
         .join(','),
     );
   }
-  if (summary.length) {
+  if (o.includeSummary && summary.length) {
     lines.push('');
-    lines.push(['Technician', 'Completed Pools'].map(csvEscape).join(','));
+    lines.push(labels.summary.map(csvEscape).join(','));
     for (const s of summary) lines.push([s.fullName, s.completed].map(csvEscape).join(','));
   }
   return UTF8_BOM + lines.join('\r\n') + '\r\n';
+}
+
+/** Count of completed, technician-assigned jobs according to get_job_report_stats. */
+export function statsCompletedTotal(byTechnician: { completed: number }[] | null | undefined): number {
+  return (byTechnician ?? []).reduce((n, t) => n + (t.completed || 0), 0);
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;

@@ -23,7 +23,7 @@ export async function GET(
     const client = supabase as unknown as CadenzaSupabaseClient;
     const { data: photo, error: photoError } = await client
       .from('cadenza_report_photos')
-      .select('id, company_id, storage_tier, file_path, archive_key')
+      .select('id, company_id, storage_tier, storage_path, archive_key')
       .eq('id', photoId)
       .single();
 
@@ -42,11 +42,11 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    if (photo.storage_tier === 'hot') {
+    if (photo.storage_tier !== 'archive' && photo.storage_path) {
       // Photo is in Supabase Storage - get public URL or presigned URL
       const { data } = await supabase.storage
         .from('report-photos')
-        .createSignedUrl(photo.file_path, 3600); // 1 hour
+        .createSignedUrl(photo.storage_path, 3600); // 1 hour
 
       if (data?.signedUrl) {
         return NextResponse.json({

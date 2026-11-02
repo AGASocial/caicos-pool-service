@@ -497,5 +497,12 @@
   "photoArchived": "Archivada",
   "photoUnavailable": "Foto no disponible",
   "loadMore": "Cargar más",
-  "visitNoPhotos": "Sin fotos en esta visita"
+  "visitNoPhotos": "Sin fotos en esta visita",
+  "stops": "paradas",
+  "status_en_route": "En camino",
+  "noMembersWithRole": "Aún no hay miembros con este rol.",
+  "teamRoleDescription_admin": "Acceso completo a configuración, facturación y equipo.",
+  "teamRoleDescription_operations": "Despacho, rutas, trabajos y reportes.",
+  "teamRoleDescription_technician": "Técnicos de campo que dan servicio a las piscinas.",
+  "googleSignInComingSoon": "Inicio con Google (próximamente)"
 }

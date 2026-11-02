@@ -93,3 +93,19 @@ Example: [`docs/demo-sample.csv`](demo-sample.csv)
 customer_name,address,city,zip,gate_code,pool_type,tech_name,route_name,visit_day,notes
 "Martinez, Ana",3208 S University Dr,Davie,33328,4521,residential,Carlos Rivera,Davie North,Mon|Thu,Dog in yard
 ```
+
+## Daily live board (`--today`) and Spanish texts (`--refresh-texts`)
+
+```bash
+# once, after upgrading the seed: translate existing demo notes/follow-ups/reasons and route day names
+SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npm run demo:seed -- --refresh-texts
+# every demo day (incl. Saturday) — morning of, and again just before presenting
+SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npm run demo:seed -- --today
+```
+
+`--today` only touches the demo company: it creates/reuses today's jobs (America/New_York) from the
+weekday's routes (Sat → Friday's routes, Sun → Monday's), moves them forward to a deterministic mix of
+completed / in_progress / en_route / pending (never backwards), adds reports + reused photos for
+completed stops, and closes earlier days' leftover en_route/in_progress jobs. Safe to re-run.
+The nightly cron (`/api/cron/generate-route-jobs`) only creates `pending` jobs Mon–Fri for the demo
+routes and never sets live statuses, so it can't replace this.

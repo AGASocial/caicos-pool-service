@@ -1,3 +1,4 @@
+import { fetchCompanyCounts } from '@/lib/company-counts';
 import { createRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 import { buildPaginatedResponse } from '@/lib/pagination';
@@ -100,17 +101,7 @@ export async function fetchDashboardServerData() {
       totalProperties: technicianScope.propertyIds.length,
     };
   } else {
-    const { data: statsRow } = await client
-      .from('cadenza_company_stats')
-      .select('total_jobs, total_routes, total_team_members, total_properties')
-      .eq('company_id', profile.company_id)
-      .maybeSingle();
-    stats = {
-      totalJobs: statsRow?.total_jobs ?? 0,
-      totalRoutes: statsRow?.total_routes ?? 0,
-      totalTeamMembers: statsRow?.total_team_members ?? 0,
-      totalProperties: statsRow?.total_properties ?? 0,
-    };
+    stats = await fetchCompanyCounts(client, profile.company_id as string);
   }
 
   const jobSelect = `

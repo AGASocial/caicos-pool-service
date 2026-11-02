@@ -5,6 +5,7 @@ import Image from 'next/image';
 
 // Curated collection of pool-related images for Cadenza pool service platform
 // Using Unsplash images - beautiful, high-quality pool and water photos
+// Every URL must resolve (2026-11-02: removed two that Unsplash now 404s).
 const IMAGE_SOURCES = [
   // Resort & luxury pools
   'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=1200&h=1600&fit=crop&q=80', // Blue pool, clear water
@@ -13,7 +14,6 @@ const IMAGE_SOURCES = [
   'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&h=1600&fit=crop&q=80', // Pool resort
 
   // Pool views & architecture
-  'https://images.unsplash.com/photo-1572891086295-6c65f5352b0f?w=1200&h=1600&fit=crop&q=80', // Pool deck
   'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1200&h=1600&fit=crop&q=80', // Beach pool
   'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&h=1600&fit=crop&q=80', // Resort pool
   'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=1200&h=1600&fit=crop&q=80', // Pool view
@@ -21,7 +21,6 @@ const IMAGE_SOURCES = [
   // Water & maintenance vibes
   'https://images.unsplash.com/photo-1576610616656-d3aa5d1f4534?w=1200&h=1600&fit=crop&q=80', // Pool water
   'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1200&h=1600&fit=crop&q=80', // Pool summer
-  'https://images.unsplash.com/photo-1580121441575-41bcb5c42b37?w=1200&h=1600&fit=crop&q=80', // Swimming pool
   'https://images.unsplash.com/photo-1567521464027-f127ff144326?w=1200&h=1600&fit=crop&q=80', // Pool blue water
 ];
 

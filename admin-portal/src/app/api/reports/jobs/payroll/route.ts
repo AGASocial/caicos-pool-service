@@ -14,6 +14,8 @@ import {
   buildPayrollCsv,
   isValidDate,
   mapPayrollRows,
+  payrollLocale,
+  statsCompletedTotal,
   type PayrollTechSummary,
 } from '@/lib/payroll-export';
 
@@ -98,6 +100,10 @@ export async function GET(request: NextRequest) {
     }
 
     const rows = mapPayrollRows(jobs as Parameters<typeof mapPayrollRows>[0]);
+    const statsCompleted = statsCompletedTotal((stats as { byTechnician?: StatsTech[] })?.byTechnician);
+    if (rows.length !== statsCompleted) {
+      console.warn('payroll: row count differs from stats', { rows: rows.length, statsCompleted });
+    }
     const tz = searchParams.get('tz') || 'America/Chicago';
     let safeTz = 'America/Chicago';
     try {
@@ -108,15 +114,21 @@ export async function GET(request: NextRequest) {
     }
 
     if (format === 'json') {
-      return NextResponse.json({ dateFrom, dateTo, rows, summary });
+      return NextResponse.json({ dateFrom, dateTo, rows, summary, completed: statsCompleted });
     }
-    const csv = buildPayrollCsv(rows, summary, safeTz);
+    const csv = buildPayrollCsv(rows, summary, {
+      timeZone: safeTz,
+      locale: payrollLocale(searchParams.get('locale')),
+      includeSummary: searchParams.get('summary') === '1',
+    });
     return new NextResponse(csv, {
       status: 200,
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': `attachment; filename="payroll_${dateFrom}_${dateTo}.csv"`,
         'Cache-Control': 'no-store',
+        'X-Payroll-Rows': String(rows.length),
+        'X-Payroll-Completed': String(statsCompleted),
       },
     });
   });

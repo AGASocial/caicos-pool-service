@@ -30,6 +30,14 @@
  *   --no-photos            Skip photo upload / photo rows
  *   --accounts-out <file>  Where to save demo logins (default /workspace/secrets/demo_accounts.json)
  *   --seed <n>             RNG seed for deterministic data (default 20261102)
+ *
+ * DAILY / MAINTENANCE MODES (no users, photos upload or plan generation; demo company only)
+ *   --today                Create/refresh TODAY's jobs (America/New_York) so the live status board
+ *                          shows a mix of en_route / in_progress / completed / pending. Idempotent:
+ *                          re-runs never duplicate and only move a job forward. Sat/Sun reuse the
+ *                          Friday/Monday routes. Also closes yesterday's leftover en_route/in_progress.
+ *   --refresh-texts        Rewrite existing demo notes / follow-ups / can't-service labels / route
+ *                          day names from the English seed text to Spanish (exact-match, demo only).
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { randomBytes } from 'crypto';
@@ -42,7 +50,9 @@ const DEMO_COMPANY_NAME = 'Demo Caicos (demo)';
 const DEMO_ADMIN_EMAIL = 'demo-admin@cadenzaops.com';
 const TZ = 'America/New_York';
 const BUCKET = 'report-photos';
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+/** Legacy (English) day names used by earlier runs; kept to match/rename existing routes. */
+const DAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 if ((DEMO_COMPANY_ID as string) === QA_COMPANY_ID) throw new Error('DEMO_COMPANY_ID must not be the QA company');
 
@@ -50,10 +60,12 @@ if ((DEMO_COMPANY_ID as string) === QA_COMPANY_ID) throw new Error('DEMO_COMPANY
 interface Opts {
   dryRun: boolean; csv?: string; techs: number; pools: number; weeks: number;
   photosDir?: string; noPhotos: boolean; accountsOut: string; seed: number;
+  today: boolean; refreshTexts: boolean;
 }
 function parseArgs(argv: string[]): Opts {
   const o: Opts = { dryRun: false, techs: 30, pools: 900, weeks: 4, noPhotos: false,
-    accountsOut: '/workspace/secrets/demo_accounts.json', seed: 20261102 };
+    accountsOut: '/workspace/secrets/demo_accounts.json', seed: 20261102,
+    today: false, refreshTexts: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i], v = () => { const x = argv[++i]; if (!x) throw new Error(`${a} needs a value`); return x; };
     switch (a) {
@@ -66,6 +78,8 @@ function parseArgs(argv: string[]): Opts {
       case '--no-photos': o.noPhotos = true; break;
       case '--accounts-out': o.accountsOut = v(); break;
       case '--seed': o.seed = parseInt(v(), 10); break;
+      case '--today': o.today = true; break;
+      case '--refresh-texts': o.refreshTexts = true; break;
       case '-h': case '--help': console.log('See header of scripts/demo-seed.ts and docs/DEMO.md'); process.exit(0);
       default: throw new Error(`Unknown argument: ${a}`);
     }
@@ -101,22 +115,54 @@ const AREAS: { city: string; zips: string[]; streets: string[]; weight: number }
   { city: 'Fort Lauderdale', weight: 10, zips: ['33301', '33312', '33315', '33316'],
     streets: ['SW 4th Ave', 'SE 9th St', 'SW 17th St', 'Riverland Rd', 'SW 11th Ct', 'SE 15th St'] },
 ];
-const EQUIP = ['Pentair SuperFlo pump, cartridge filter', 'Hayward MaxFlo pump, sand filter', 'Jandy variable-speed pump, DE filter', 'Pentair IntelliFlo VSF, salt cell', 'Hayward Super Pump, cartridge filter, gas heater', 'Polaris cleaner, Pentair Clean & Clear filter'];
-const NOTES = ['Dog in yard — close gate', 'Call before arrival', 'Screen enclosure door sticks', 'Side gate on the left', 'Customer prefers mornings', 'Salt system — check cell monthly', '', '', '', ''];
-const TECH_NOTES = ['Brushed walls and steps, emptied baskets.', 'Vacuumed, balanced chemicals.', 'Cleaned filter, water clear.', 'Skimmed debris after storm.', 'Added chlorine tabs, checked pump pressure.'];
+// Seed text is Spanish (demo audience). *_EN arrays are what earlier runs wrote; same order → used by --refresh-texts.
+const EQUIP_EN = ['Pentair SuperFlo pump, cartridge filter', 'Hayward MaxFlo pump, sand filter', 'Jandy variable-speed pump, DE filter', 'Pentair IntelliFlo VSF, salt cell', 'Hayward Super Pump, cartridge filter, gas heater', 'Polaris cleaner, Pentair Clean & Clear filter'];
+const EQUIP = ['Bomba Pentair SuperFlo, filtro de cartucho', 'Bomba Hayward MaxFlo, filtro de arena', 'Bomba Jandy de velocidad variable, filtro DE', 'Pentair IntelliFlo VSF, celda de sal', 'Bomba Hayward Super Pump, filtro de cartucho, calentador a gas', 'Limpiafondos Polaris, filtro Pentair Clean & Clear'];
+const NOTES_EN = ['Dog in yard — close gate', 'Call before arrival', 'Screen enclosure door sticks', 'Side gate on the left', 'Customer prefers mornings', 'Salt system — check cell monthly'];
+const NOTES = ['Perro en el patio — cerrar la reja', 'Llamar antes de llegar', 'La puerta del screen se traba', 'Entrada lateral a la izquierda', 'El cliente prefiere mañanas', 'Sistema de sal — revisar la celda cada mes', '', '', '', ''];
+const TECH_NOTES_EN = ['Brushed walls and steps, emptied baskets.', 'Vacuumed, balanced chemicals.', 'Cleaned filter, water clear.', 'Skimmed debris after storm.', 'Added chlorine tabs, checked pump pressure.'];
+const TECH_NOTES = ['Cepillé paredes y escalones, vacié canastas.', 'Aspiré y balanceé químicos.', 'Limpié el filtro, agua cristalina.', 'Retiré hojas y basura después de la tormenta.', 'Agregué pastillas de cloro, revisé la presión de la bomba.'];
+const FOLLOW_UPS_EN = ['Pump motor noisy — recommend inspection.', 'Filter pressure high — cartridge replacement suggested.', 'Timer not keeping time — needs reset/replacement.', 'Persistent algae — shock treatment recommended next visit.', 'Weak return flow — check for clog.'];
 const FOLLOW_UPS: { cat: string; note: string }[] = [
-  { cat: 'motor', note: 'Pump motor noisy — recommend inspection.' },
-  { cat: 'filter', note: 'Filter pressure high — cartridge replacement suggested.' },
-  { cat: 'timer', note: 'Timer not keeping time — needs reset/replacement.' },
-  { cat: 'chemistry', note: 'Persistent algae — shock treatment recommended next visit.' },
-  { cat: 'circulation', note: 'Weak return flow — check for clog.' },
+  { cat: 'motor', note: 'Motor de la bomba ruidoso — se recomienda inspección.' },
+  { cat: 'filter', note: 'Presión alta en el filtro — se sugiere cambiar el cartucho.' },
+  { cat: 'timer', note: 'El timer no mantiene la hora — requiere ajuste o reemplazo.' },
+  { cat: 'chemistry', note: 'Alga persistente — tratamiento de choque en la próxima visita.' },
+  { cat: 'circulation', note: 'Retorno débil — revisar posible obstrucción.' },
 ];
+const SKIP_NOTE_EN = 'Could not service today.';
+const SKIP_NOTE = 'No se pudo dar servicio hoy.';
+const ACTION_NOTE_EN = 'Reviewed — scheduling a technician visit.';
+const ACTION_NOTE = 'Revisado — programando visita del técnico.';
+const ACTION_RESOLVED_EN = 'Issue fixed on follow-up visit.';
+const ACTION_RESOLVED = 'Problema resuelto en la visita de seguimiento.';
+const CANT_REASONS_EN = ['Gate locked', 'Dog in yard', 'Customer asked to skip', 'Weather'];
 const CANT_REASONS = [
-  { slug: 'gate_locked', label: 'Gate locked' },
-  { slug: 'dog_in_yard', label: 'Dog in yard' },
-  { slug: 'customer_request', label: 'Customer asked to skip' },
-  { slug: 'weather', label: 'Weather' },
+  { slug: 'gate_locked', label: 'Reja con candado' },
+  { slug: 'dog_in_yard', label: 'Perro en el patio' },
+  { slug: 'customer_request', label: 'El cliente pidió saltar la visita' },
+  { slug: 'weather', label: 'Clima' },
 ];
+
+/** [table, column, english, spanish] pairs for --refresh-texts (exact matches only). */
+export function textRefreshPairs(): [string, string, string, string][] {
+  const out: [string, string, string, string][] = [];
+  EQUIP_EN.forEach((en, i) => out.push(['cadenza_properties', 'equipment_notes', en, EQUIP[i]]));
+  NOTES_EN.forEach((en, i) => out.push(['cadenza_properties', 'notes', en, NOTES[i]]));
+  TECH_NOTES_EN.forEach((en, i) => out.push(['cadenza_service_reports', 'notes', en, TECH_NOTES[i]]));
+  out.push(['cadenza_service_reports', 'notes', SKIP_NOTE_EN, SKIP_NOTE]);
+  FOLLOW_UPS_EN.forEach((en, i) => out.push(['cadenza_service_reports', 'follow_up_notes', en, FOLLOW_UPS[i].note]));
+  out.push(['cadenza_job_follow_up_actions', 'body', ACTION_NOTE_EN, ACTION_NOTE]);
+  out.push(['cadenza_job_follow_up_actions', 'body', ACTION_RESOLVED_EN, ACTION_RESOLVED]);
+  CANT_REASONS_EN.forEach((en, i) => out.push(['cadenza_cant_service_reasons', 'label', en, CANT_REASONS[i].label]));
+  return out;
+}
+/** "Tech Name – Fri" → "Tech Name – Vie" (also "(Fri)" suffix of CSV routes); null when unchanged. */
+export function spanishRouteName(name: string): string | null {
+  const m = name.match(/^(.*)( – | \()(Sun|Mon|Tue|Wed|Thu|Fri|Sat)(\)?)$/);
+  if (!m) return null;
+  return `${m[1]}${m[2]}${DAYS[DAYS_EN.indexOf(m[3])]}${m[4] ?? ''}`;
+}
 
 // ---------------------------------------------------------------- plan types
 interface PlanTech { key: string; email: string; fullName: string }
@@ -400,7 +446,7 @@ async function seed(o: Opts, plan: Plan) {
   const exR = await fetchAll<{ id: string; name: string; technician_id: string; day_of_week: number | null; is_deleted: boolean }>((f, t) =>
     sb.from('cadenza_routes').select('id, name, technician_id, day_of_week, is_deleted').eq('company_id', C).order('id').range(f, t), 'routes');
   const routeId = new Map<string, string>();
-  for (const r of exR) routeId.set(`${r.technician_id}|${r.day_of_week}|${r.name}`, r.id);
+  for (const r of exR) routeId.set(`${r.technician_id}|${r.day_of_week}|${spanishRouteName(r.name) ?? r.name}`, r.id);
   const revive = exR.filter((r) => r.is_deleted).map((r) => r.id);
   for (const c of chunks(revive, 200)) await must(sb.from('cadenza_routes').update({ is_deleted: false, is_active: true }).in('id', c).eq('company_id', C), 'revive routes');
   const newRoutes = routes.filter((r) => !routeId.has(`${techId.get(r.techKey)}|${r.day}|${r.name}`));
@@ -459,7 +505,7 @@ async function seed(o: Opts, plan: Plan) {
     return { job_id: jobId.get(vk(v))!, company_id: C, technician_id: techId.get(v.route.techKey)!, arrival_time: v.arrival, departure_time: v.departure,
       ph_level: v.outcome === 'skipped' ? null : +(7.2 + r() * 0.6).toFixed(1), chlorine_level: v.outcome === 'skipped' ? null : +(1 + r() * 3).toFixed(1),
       alkalinity: v.outcome === 'skipped' ? null : 80 + Math.floor(r() * 40),
-      notes: v.outcome === 'skipped' ? 'Could not service today.' : pick(r, TECH_NOTES),
+      notes: v.outcome === 'skipped' ? SKIP_NOTE : pick(r, TECH_NOTES),
       follow_up_needed: !!fu, follow_up_notes: fu?.note ?? null, issue_categories: fu ? [fu.cat] : [],
       follow_up_status: resolved ? 'resolved' : 'open',
       cant_service_reasons: v.outcome === 'skipped' ? [pick(r, CANT_REASONS).slug] : [] };
@@ -503,13 +549,160 @@ async function seed(o: Opts, plan: Plan) {
     .eq('company_id', C).in('job_id', c), 'fu status') ?? []) repStatus.set(r.job_id, r.follow_up_status);
   const actions = fuVisits.filter((v) => !haveA.has(jobId.get(vk(v))!)).flatMap((v) => {
     const j = jobId.get(vk(v))!; const rep = repByJob.get(j)!;
-    const a = [{ company_id: C, job_id: j, report_id: rep, author_id: adminId, action_type: 'note', body: 'Reviewed — scheduling a technician visit.', metadata: {} }];
-    if (repStatus.get(j) === 'resolved') a.push({ company_id: C, job_id: j, report_id: rep, author_id: adminId, action_type: 'resolved', body: 'Issue fixed on follow-up visit.', metadata: {} });
+    const a = [{ company_id: C, job_id: j, report_id: rep, author_id: adminId, action_type: 'note', body: ACTION_NOTE, metadata: {} }];
+    if (repStatus.get(j) === 'resolved') a.push({ company_id: C, job_id: j, report_id: rep, author_id: adminId, action_type: 'resolved', body: ACTION_RESOLVED, metadata: {} });
     return a;
   });
   await insertBatches(sb, 'cadenza_job_follow_up_actions', actions);
   console.log(`  follow-up actions +${actions.length}`);
   console.log('✅ Demo seed complete. Logins are in the accounts file (not printed).');
+}
+
+// ---------------------------------------------------------------- --today / --refresh-texts
+function serviceClient(): SB {
+  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error('Missing SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) and/or SUPABASE_SERVICE_ROLE_KEY');
+  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+}
+
+export type TodayStatus = 'completed' | 'in_progress' | 'en_route' | 'pending';
+const RANK: Record<string, number> = { pending: 0, en_route: 1, in_progress: 2, completed: 3, skipped: 3, cancelled: 3 };
+
+/** Weekday whose routes are used for `dow` (weekend → Fri/Mon routes so Sat demos still have a live board). */
+export function sourceDayFor(dow: number): number { return dow === 6 ? 5 : dow === 0 ? 1 : dow; }
+
+/**
+ * Deterministic status for each stop of a route today: the first `done` stops completed, then one
+ * in_progress, one en_route, the rest pending. `done` grows with the local hour so the board looks
+ * live whenever it is run (≈25% at 8am → ≈90% by 5pm), and varies per route.
+ */
+export function todayStatuses(stopCount: number, routeKey: string, hour: number, seed = 20261102): TodayStatus[] {
+  const r = keyed(seed, `today|${routeKey}`);
+  const dayFrac = Math.min(0.9, Math.max(0.15, (hour - 7) / 11));
+  const frac = Math.min(0.95, Math.max(0.05, dayFrac + (r() - 0.5) * 0.3));
+  const done = Math.min(stopCount, Math.floor(stopCount * frac));
+  return Array.from({ length: stopCount }, (_, i) =>
+    i < done ? 'completed' : i === done ? 'in_progress' : i === done + 1 ? 'en_route' : 'pending');
+}
+
+function localHour(): number {
+  return parseInt(new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: 'numeric', hour12: false }).format(new Date()), 10) % 24;
+}
+
+async function seedToday(o: Opts) {
+  const sb = serviceClient(); const C = DEMO_COMPANY_ID;
+  const date = todayInTz(); const dow = new Date(`${date}T12:00:00Z`).getUTCDay(); const src = sourceDayFor(dow);
+  const hour = localHour(); const now = Date.now(); const iso = (ms: number) => new Date(ms).toISOString();
+  console.log(`📅 --today ${date} (${DAYS[dow]}), routes of ${DAYS[src]}, ${DEMO_COMPANY_NAME}`);
+
+  // 0. close leftovers from earlier days (en_route / in_progress → completed), demo only
+  const stale = await fetchAll<{ id: string; scheduled_date: string; status: string }>((f, t) => sb.from('cadenza_service_jobs')
+    .select('id, scheduled_date, status').eq('company_id', C).eq('is_deleted', false).lt('scheduled_date', date)
+    .in('status', ['en_route', 'in_progress']).order('id').range(f, t), 'stale jobs');
+  for (const c of chunks(stale.map((j) => j.id), 200)) {
+    await must(sb.from('cadenza_service_jobs').update({ status: 'completed' }).in('id', c).eq('company_id', C), 'close stale');
+    await must(sb.from('cadenza_service_reports').update({ departure_time: iso(now - 86400000) }).in('job_id', c)
+      .eq('company_id', C).is('departure_time', null), 'close stale reports');
+  }
+
+  // 1. routes + stops for the source weekday
+  const routes = await must(sb.from('cadenza_routes').select('id, technician_id').eq('company_id', C).eq('is_deleted', false)
+    .eq('day_of_week', src).order('name'), 'routes') ?? [];
+  if (!routes.length) throw new Error(`No demo routes for ${DAYS[src]} — run the full seed first`);
+  const stops: { id: string; route_id: string; property_id: string; stop_order: number }[] = [];
+  for (const c of chunks(routes.map((r) => r.id as string), 100)) stops.push(...await fetchAll<typeof stops[number]>((f, t) =>
+    sb.from('cadenza_route_stops').select('id, route_id, property_id, stop_order').in('route_id', c).eq('is_deleted', false)
+      .order('id').range(f, t), 'stops'));
+
+  // 2. existing jobs today (any source, incl. cron-generated pending ones)
+  const exJ = await fetchAll<{ id: string; property_id: string; route_id: string | null; status: string }>((f, t) => sb.from('cadenza_service_jobs')
+    .select('id, property_id, route_id, status').eq('company_id', C).eq('is_deleted', false).eq('scheduled_date', date).order('id').range(f, t), 'today jobs');
+  const jobBy = new Map(exJ.map((j) => [`${j.property_id}|${j.route_id}`, j]));
+  const lib = [...new Set((await must(sb.from('cadenza_report_photos').select('storage_path').eq('company_id', C).limit(200), 'photo lib') ?? [])
+    .map((p) => p.storage_path as string).filter(Boolean))];
+
+  type Want = { route: { id: string; technician_id: string }; stop: typeof stops[number]; status: TodayStatus; arrival: number; departure: number };
+  const wants: Want[] = [];
+  for (const route of routes as { id: string; technician_id: string }[]) {
+    const rs = stops.filter((s) => s.route_id === route.id).sort((a, b) => a.stop_order - b.stop_order);
+    const st = todayStatuses(rs.length, route.id, hour, o.seed);
+    const done = st.filter((x) => x === 'completed').length;
+    rs.forEach((stop, i) => {
+      // completed stops end before now, spaced ~35 min apart; the in_progress one arrived 5–20 min ago
+      const back = (done - i) * 35 * 60000;
+      const arrival = st[i] === 'completed' ? now - back - 25 * 60000 : now - (5 + (i % 4) * 5) * 60000;
+      wants.push({ route, stop, status: st[i], arrival, departure: now - back + 5 * 60000 });
+    });
+  }
+
+  // 3. insert missing jobs as pending, then move each job forward to its target (never backwards)
+  const missing = wants.filter((w) => !jobBy.has(`${w.stop.property_id}|${w.route.id}`));
+  const ins = await insertBatches(sb, 'cadenza_service_jobs', missing.map((w) => ({ company_id: C, property_id: w.stop.property_id,
+    technician_id: w.route.technician_id, route_id: w.route.id, scheduled_date: date, status: 'pending', route_order: w.stop.stop_order,
+    job_source: 'route', estimated_duration_min: 30 })), 'id, property_id, route_id, status');
+  for (const j of ins) jobBy.set(`${j.property_id}|${j.route_id}`, j as { id: string; property_id: string; route_id: string; status: string });
+
+  const reps = new Map<string, { id: string; departure_time: string | null }>();
+  const todayIds = [...jobBy.values()].map((j) => j.id);
+  for (const c of chunks(todayIds, 200)) for (const r of await fetchAll<{ id: string; job_id: string; departure_time: string | null }>((f, t) =>
+    sb.from('cadenza_service_reports').select('id, job_id, departure_time').eq('company_id', C).eq('is_deleted', false).in('job_id', c)
+      .order('id').range(f, t), 'today reports')) reps.set(r.job_id, r);
+
+  const counts: Record<string, number> = { completed: 0, in_progress: 0, en_route: 0, pending: 0 };
+  let moved = 0, newReports = 0, newPhotos = 0;
+  const newRepRows: Record<string, unknown>[] = [];
+  const byStatus = new Map<string, string[]>();
+  for (const w of wants) {
+    const job = jobBy.get(`${w.stop.property_id}|${w.route.id}`)!;
+    const target = RANK[job.status] >= RANK[w.status] ? job.status : w.status;
+    counts[target] = (counts[target] ?? 0) + 1;
+    if (target !== job.status) { moved++; (byStatus.get(target) ?? byStatus.set(target, []).get(target)!).push(job.id); }
+    if ((target === 'completed' || target === 'in_progress') && !reps.has(job.id)) {
+      const r = keyed(o.seed, `today|${job.id}`); const fin = target === 'completed';
+      newRepRows.push({ job_id: job.id, company_id: C, technician_id: w.route.technician_id, arrival_time: iso(w.arrival),
+        departure_time: fin ? iso(Math.min(w.departure, now - 60000)) : null,
+        ph_level: fin ? +(7.2 + r() * 0.6).toFixed(1) : null, chlorine_level: fin ? +(1 + r() * 3).toFixed(1) : null,
+        alkalinity: fin ? 80 + Math.floor(r() * 40) : null, notes: fin ? pick(r, TECH_NOTES) : null,
+        skimmed: fin, brushed: fin, emptied_baskets: fin, follow_up_needed: false, issue_categories: [], follow_up_status: 'open',
+        cant_service_reasons: [] });
+    } else if (target === 'completed' && reps.get(job.id)?.departure_time == null && reps.has(job.id)) {
+      await must(sb.from('cadenza_service_reports').update({ departure_time: iso(now - 60000) }).eq('id', reps.get(job.id)!.id).eq('company_id', C), 'finish report');
+    }
+  }
+  for (const [status, ids] of byStatus) for (const c of chunks(ids, 200)) {
+    const patch: Record<string, unknown> = { status };
+    if (status !== 'pending') patch.en_route_at = iso(now - 30 * 60000);
+    await must(sb.from('cadenza_service_jobs').update(patch).in('id', c).eq('company_id', C).eq('scheduled_date', date), `status ${status}`);
+  }
+  const insRep = await insertBatches(sb, 'cadenza_service_reports', newRepRows, 'id, job_id, departure_time');
+  newReports = insRep.length;
+  if (lib.length) {
+    const rows = insRep.filter((r) => r.departure_time).map((r) => ({ report_id: r.id, company_id: C,
+      storage_path: pick(keyed(o.seed, `photo|${r.id}`), lib), photo_type: 'after', caption: null, storage_tier: 'hot' }));
+    newPhotos = (await insertBatches(sb, 'cadenza_report_photos', rows)).length;
+  }
+  console.log(`  routes ${routes.length}, jobs today ${wants.length} (${ins.length} new, ${moved} advanced), reports +${newReports}, photos +${newPhotos}, closed stale ${stale.length}`);
+  console.log(`  board: ${JSON.stringify(counts)}`);
+  console.log('✅ --today done');
+}
+
+async function refreshTexts() {
+  const sb = serviceClient(); const C = DEMO_COMPANY_ID;
+  console.log(`🔤 --refresh-texts ${DEMO_COMPANY_NAME}`);
+  let total = 0;
+  for (const [table, col, en, es] of textRefreshPairs()) {
+    const data = await must(sb.from(table).update({ [col]: es }).eq('company_id', C).eq(col, en).select('id'), `${table}.${col}`);
+    const n = (data ?? []).length; total += n; if (n) console.log(`  ${table}.${col}: ${n} → "${es}"`);
+  }
+  const routes = await fetchAll<{ id: string; name: string }>((f, t) => sb.from('cadenza_routes').select('id, name').eq('company_id', C).order('id').range(f, t), 'routes');
+  let renamed = 0;
+  for (const r of routes) {
+    const es = spanishRouteName(r.name); if (!es || es === r.name) continue;
+    await must(sb.from('cadenza_routes').update({ name: es }).eq('id', r.id).eq('company_id', C), 'rename route'); renamed++;
+  }
+  console.log(`  routes renamed: ${renamed}`);
+  console.log(`✅ --refresh-texts done (${total + renamed} rows)`);
 }
 
 function listPhotos(dir?: string): string[] {
@@ -534,6 +727,13 @@ export function summarize(plan: Plan, weeks: number, seed: number) {
 async function main() {
   if (process.env.CI) { console.error('❌ demo-seed must never run in CI (CI is set).'); process.exit(1); }
   const o = parseArgs(process.argv.slice(2));
+  if ((DEMO_COMPANY_ID as string) === QA_COMPANY_ID) throw new Error('refusing QA company');
+  if (o.refreshTexts || o.today) {
+    if (o.dryRun) { console.log(JSON.stringify({ dryRun: true, mode: o.today ? 'today' : 'refresh-texts', date: todayInTz(), company: DEMO_COMPANY_ID })); return; }
+    if (o.refreshTexts) await refreshTexts();
+    if (o.today) await seedToday(o);
+    return;
+  }
   const plan = o.csv ? planFromCsv(o.csv) : generatePlan(o);
   if (o.dryRun) {
     if (!o.noPhotos && o.photosDir) console.log(`photo files: ${listPhotos(o.photosDir).length}`);

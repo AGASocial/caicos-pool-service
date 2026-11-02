@@ -207,8 +207,7 @@ export function AuthForm({ type, inviteCode }: AuthFormProps) {
         disabled={isLoading || true}
       >
         <Image src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width={20} height={20} className="w-5 h-5" />
-        {"Coming Soon"}
-        {/*{t("signInWithGoogle") || "Sign in with Google"} */}
+        {t("googleSignInComingSoon")}
       </Button>
 
       <button
