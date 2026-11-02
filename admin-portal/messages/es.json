@@ -490,5 +490,12 @@
   "timeMinutesAgo": "hace {minutes}m",
   "timeHoursAgo": "hace {hours}h",
   "upgradeForLiveStatus": "Actualiza a Standard o Pro para acceder al panel de estado en vivo",
-  "upgradeNow": "Actualizar Ahora"
+  "upgradeNow": "Actualizar Ahora",
+  "payrollExportCsv": "Exportar nómina (CSV)",
+  "photoHistory": "Historial de fotos",
+  "photoHistoryEmpty": "Aún no hay fotos de visitas.",
+  "photoArchived": "Archivada",
+  "photoUnavailable": "Foto no disponible",
+  "loadMore": "Cargar más",
+  "visitNoPhotos": "Sin fotos en esta visita"
 }

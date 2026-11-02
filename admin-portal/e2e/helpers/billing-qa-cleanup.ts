@@ -8,6 +8,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 const EMAIL_RE = /^qa-billing-[a-z0-9-]+@cadenzaops\.com$/i;
 const COMPANY_PREFIX = 'QA Billing ';
+/** Demo tenant (scripts/demo-seed.ts) — never touched by any QA cleanup. */
+export const PROTECTED_COMPANY_IDS = new Set([
+  'de300000-ca1c-4c05-8000-0000000000d0', // Demo Caicos (demo)
+]);
 
 export async function cleanupBillingQaUsers(
   admin: SupabaseClient,
@@ -27,10 +31,14 @@ export async function cleanupBillingQaUsers(
     if (data.users.length < 1000) break;
   }
   if (!users.length) return { users: 0, companies: 0 };
+  const { data: allProfiles } = await admin.from('cadenza_profiles').select('id, company_id').in('id', users.map((u) => u.id));
+  // Never touch users that belong to a protected (demo) company
+  const protectedUsers = new Set((allProfiles ?? []).filter((p) => PROTECTED_COMPANY_IDS.has(p.company_id as string)).map((p) => p.id as string));
+  users.splice(0, users.length, ...users.filter((u) => !protectedUsers.has(u.id)));
+  if (!users.length) return { users: 0, companies: 0 };
   const ids = users.map((u) => u.id);
-
-  const { data: profiles } = await admin.from('cadenza_profiles').select('id, company_id').in('id', ids);
-  const companyIds = [...new Set((profiles ?? []).map((p) => p.company_id as string).filter(Boolean))];
+  const profiles = (allProfiles ?? []).filter((p) => ids.includes(p.id as string));
+  const companyIds = [...new Set(profiles.map((p) => p.company_id as string).filter(Boolean))].filter((c) => !PROTECTED_COMPANY_IDS.has(c));
 
   // Only companies that are clearly QA billing tenants and contain only QA billing users
   const safeCompanies: string[] = [];
