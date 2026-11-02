@@ -20,6 +20,7 @@
  */
 import { test, expect, request as pwRequest, type APIRequestContext, type Page, type Browser } from '@playwright/test';
 import { cleanupBillingQaUsers } from './helpers/billing-qa-cleanup';
+import { cleanupStripeQaCustomers } from './helpers/stripe-qa-cleanup';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
@@ -95,17 +96,18 @@ async function createCheckout(api: APIRequestContext, planId: string, quantity: 
 async function payOnStripeCheckout(page: Page, url: string, card: string) {
   await page.goto(url, { waitUntil: 'domcontentloaded' });
   // Newer Checkout renders payment methods as an accordion
-  // (isVisible() does not wait, so explicitly wait for the form to render.)
+  // Checkout lists Card as an accordion row; its <button> is visually hidden
+  // (overlay), so wait for it to be *attached* and click it via JS.
   const cardNumber = page.locator('input#cardNumber');
-  const cardOption = page
-    .locator('[data-testid="card-accordion-item-button"], input#payment-method-accordion-item-title-card, [data-testid="card-accordion-item"] input[type="radio"]')
-    .or(page.getByRole('radio', { name: /^card$/i }))
-    .first();
-  await expect(cardNumber.or(cardOption).first()).toBeVisible({ timeout: 30_000 });
+  const cardButton = page.locator('[data-testid="card-accordion-item-button"]');
+  await expect(cardNumber.or(cardButton).first()).toBeAttached({ timeout: 30_000 });
   if (!(await cardNumber.isVisible())) {
-    await cardOption.click({ force: true });
-    if (!(await cardNumber.isVisible({ timeout: 3_000 }).catch(() => false))) {
-      await page.getByText(/^Card$/).first().click();
+    await cardButton.dispatchEvent('click').catch(() => {});
+    if (!(await cardNumber.isVisible().catch(() => false))) {
+      await page.waitForTimeout(1_500);
+      if (!(await cardNumber.isVisible())) {
+        await page.locator('[data-testid="card-accordion-item"]').getByText('Card', { exact: true }).first().click();
+      }
     }
   }
   await expect(cardNumber).toBeVisible({ timeout: 15_000 });
@@ -135,6 +137,7 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
   await api?.dispose();
   if (!admin) return;
+  await cleanupStripeQaCustomers({ emailPrefix: `qa-billing-${RUN_ID}` }).catch((e) => console.warn(String(e?.message ?? e)));
   await cleanupBillingQaUsers(admin, { emailPrefix: `qa-billing-${RUN_ID}` });
 });
 

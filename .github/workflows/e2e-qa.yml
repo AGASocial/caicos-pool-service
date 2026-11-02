@@ -150,6 +150,8 @@ jobs:
           # asserted from the cs_test_ checkout session prefix (no Stripe key needed in CI)
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Optional: sk_test_ key used ONLY to delete qa-billing-* Stripe test customers (aborts if not sk_test_)
+          STRIPE_TEST_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           QA_ADMIN_PASSWORD: ${{ secrets.QA_ADMIN_PASSWORD }}
           QA_TECH_PASSWORD: ${{ secrets.QA_TECH_PASSWORD }}
@@ -179,6 +181,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          STRIPE_TEST_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
 
       - name: Verify artifacts do not contain secrets
         if: always() && needs.wait-for-vercel.result == 'success'

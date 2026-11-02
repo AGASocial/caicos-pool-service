@@ -346,3 +346,6 @@ Safety: the spec aborts unless the app returns a `cs_test_` Checkout session. St
 delivered to admin.cadenzaops.com / admin-test.cadenzaops.com, which write to the same Supabase DB.
 Cleanup: spec `afterAll` plus `npm run qa:billing-cleanup` (only `qa-billing-*@cadenzaops.com` users and
 `QA Billing *` companies whose members are all QA users).
+
+### Stripe test-customer cleanup
+`npm run qa:billing-cleanup` (and the billing spec's afterAll) also deletes Stripe **test-mode** customers whose email matches `qa-billing-*@cadenzaops.com`, cancelling their subscriptions first. It reads `STRIPE_TEST_SECRET_KEY` (fallback `STRIPE_SECRET_KEY`), aborts if the key is not `sk_test_`, and is skipped when no key is set. Add the `STRIPE_TEST_SECRET_KEY` repo secret to enable it in CI.
