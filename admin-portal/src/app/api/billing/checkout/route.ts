@@ -68,7 +68,10 @@ export async function POST(request: NextRequest) {
     const stripeAdapter = new StripeAdapter(process.env.STRIPE_SECRET_KEY!);
 
     // Build success/cancel URLs from NEXT_PUBLIC_APP_URL with allowlisted locale
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    // Fall back to the deployment's own URL (set by Vercel, not client-controlled) on previews
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
     if (!appUrl) {
       return errorResponse('Application URL not configured', 500);
     }
