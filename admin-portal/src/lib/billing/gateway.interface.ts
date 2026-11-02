@@ -117,6 +117,7 @@ export interface PaymentGateway {
       planId?: string;
       quantity?: number;
       cancelAtPeriodEnd?: boolean;
+      metadata?: Record<string, string>;
     }
   ): Promise<SubscriptionResult>;
 

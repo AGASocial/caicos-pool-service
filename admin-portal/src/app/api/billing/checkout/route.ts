@@ -89,10 +89,7 @@ export async function POST(request: NextRequest) {
 
     // Map plan IDs to Stripe lookup keys
     // This allows dynamic price resolution without hardcoding Stripe price IDs
-    const lookupKeyMap: Record<string, string> = {
-      plan_necessary_month: 'cadenza_standard_monthly',
-      plan_pro_month: 'cadenza_pro_monthly',
-    };
+    const { STRIPE_LOOKUP_KEYS: lookupKeyMap } = await import('@/lib/billing/stripe-lookup-keys');
 
     const checkoutSession = await stripeAdapter.createCheckoutSession({
       customer,

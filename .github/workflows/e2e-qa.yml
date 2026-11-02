@@ -142,10 +142,14 @@ jobs:
 
       - name: Run E2E tests
         working-directory: ./admin-portal
-        run: npx playwright test e2e/full-flow.spec.ts
+        run: npx playwright test e2e/full-flow.spec.ts e2e/billing-stripe.spec.ts
         env:
           PLAYWRIGHT_TEST_BASE_URL: ${{ needs.wait-for-vercel.outputs.preview-url }}
           PLAYWRIGHT_TECH_BASE_URL: http://localhost:8081
+          # Billing spec: creates/cleans a throwaway qa-billing-* tenant; Stripe test mode is
+          # asserted from the cs_test_ checkout session prefix (no Stripe key needed in CI)
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           QA_ADMIN_PASSWORD: ${{ secrets.QA_ADMIN_PASSWORD }}
           QA_TECH_PASSWORD: ${{ secrets.QA_TECH_PASSWORD }}
@@ -165,6 +169,13 @@ jobs:
       - name: Run QA cleanup
         if: always() && needs.wait-for-vercel.result == 'success'
         run: npm run qa:cleanup
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Run billing QA cleanup (qa-billing-* tenants only)
+        if: always() && needs.wait-for-vercel.result == 'success'
+        run: npm run qa:billing-cleanup
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
