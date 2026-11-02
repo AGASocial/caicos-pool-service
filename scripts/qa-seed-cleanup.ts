@@ -21,6 +21,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 const QA_COMPANY_ID = '45173a02-9f30-4a07-89bb-16923bd043b5';
+// Demo tenant from scripts/demo-seed.ts — this script must never touch it.
+const DEMO_COMPANY_ID = 'de300000-ca1c-4c05-8000-0000000000d0';
+if ((QA_COMPANY_ID as string) === DEMO_COMPANY_ID) throw new Error('Refusing: QA_COMPANY_ID is the demo company');
 const QA_ADMIN_ID = '5257cbb7-0481-4278-b57f-18bc651e20bd';
 const QA_TECH_ID = '8bc9982d-6814-4d4c-9665-cac788be942e';
 
@@ -501,6 +504,11 @@ async function cleanupQAData() {
     const { data: users } = await supabase.auth.admin.listUsers();
     const user = users?.users?.find((u) => u.email === tech.email);
     if (user) {
+      const { data: prof } = await supabase.from('cadenza_profiles').select('company_id').eq('id', user.id).maybeSingle();
+      if (prof && prof.company_id !== QA_COMPANY_ID) {
+        console.warn(`    Skipping ${tech.email}: not in the QA company`);
+        continue;
+      }
       const { error } = await supabase.auth.admin.deleteUser(user.id);
       if (error) {
         console.warn(`    Warning: Could not delete ${tech.email}:`, error.message);

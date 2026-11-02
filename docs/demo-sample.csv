@@ -1,0 +1,4 @@
+customer_name,address,city,zip,gate_code,pool_type,tech_name,route_name,visit_day,notes
+"Martinez, Ana",3208 S University Dr,Davie,33328,4521,residential,Carlos Rivera,Davie North,Mon|Thu,Dog in yard
+"Lopez, Daniel",11820 SW 51st St,Cooper City,33330,,residential,Carlos Rivera,Davie North,Tue,
+Bonaventure Villas HOA,1500 Bonaventure Blvd,Weston,33326,7788,commercial,Laura Gomez,,Sat,Call office before arrival
