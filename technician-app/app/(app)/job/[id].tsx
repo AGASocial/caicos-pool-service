@@ -1,12 +1,12 @@
 import { useEffect, useState, useLayoutEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Switch, Image, Alert, Modal, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Switch, Image, Alert, Modal, Platform, useColorScheme } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
-import { getCachedUserId } from '@/lib/auth-session';
+import { resolveUserId } from '@/lib/auth-session';
 import { getSignedUrls } from '@/lib/signed-url-cache';
 import { getPhotoOverlayInfo, type PhotoOverlayInfo } from '@/lib/photoOverlay';
 import { PhotoWithOverlay } from '@/components/PhotoWithOverlay';
@@ -42,6 +42,16 @@ function haversineMeters(
   return R * cc;
 }
 
+/** Alert.alert is a no-op on Expo web — use window.alert there so errors are visible. */
+function showAppAlert(title: string, message?: string) {
+  const text = message ? `${title}\n\n${message}` : title;
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof window.alert === 'function') {
+    window.alert(text);
+    return;
+  }
+  Alert.alert(title, message);
+}
+
 export default function JobDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -49,6 +59,13 @@ export default function JobDetailScreen() {
   const theme = useColorScheme() ?? 'light';
   const themeColors = Colors[theme];
   const { t } = useI18n();
+  type JobProperty = {
+    customer_name: string;
+    address: string;
+    gate_code: string | null;
+    lat: number | null;
+    lng: number | null;
+  };
   const [job, setJob] = useState<{
     id: string;
     status: string;
@@ -56,7 +73,8 @@ export default function JobDetailScreen() {
     company_id: string;
     technician_id: string | null;
     scheduled_date?: string;
-    cadenza_properties?: { customer_name: string; address: string; gate_code: string | null; lat: number | null; lng: number | null } | null;
+    // Supabase nested select may return object or single-element array
+    cadenza_properties?: JobProperty | JobProperty[] | null;
   } | null>(null);
   const [started, setStarted] = useState(false);
   const [jobLoaded, setJobLoaded] = useState(false);
@@ -85,6 +103,7 @@ export default function JobDetailScreen() {
     overlay: PhotoOverlayInfo;
   } | null>(null);
   const [photoFullScreenIndex, setPhotoFullScreenIndex] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const styles = useMemo(
     () =>
@@ -550,13 +569,22 @@ export default function JobDetailScreen() {
 
   async function handleOnMyWay() {
     if (!id) return;
-    if (!getCachedUserId()) return;
+    setActionError(null);
+    const userId = await resolveUserId();
+    if (!userId) {
+      const msg = t('jobDetail.notAssigned');
+      setActionError(msg);
+      showAppAlert(t('jobDetail.couldNotStart'), msg);
+      return;
+    }
     const { error } = await supabase
       .from('cadenza_service_jobs')
       .update({ status: 'en_route', en_route_at: new Date().toISOString() })
       .eq('id', id);
     if (error) {
-      Alert.alert(t('jobDetail.couldNotStart'), error.message ?? t('jobDetail.notAssigned'));
+      const msg = error.message ?? t('jobDetail.notAssigned');
+      setActionError(msg);
+      showAppAlert(t('jobDetail.couldNotStart'), msg);
       return;
     }
     if (job) {
@@ -566,14 +594,26 @@ export default function JobDetailScreen() {
 
   async function handleStart() {
     if (!id) return;
-    if (!getCachedUserId()) return;
+    setActionError(null);
+    const userId = await resolveUserId();
+    if (!userId) {
+      const msg = t('jobDetail.notAssigned');
+      setActionError(msg);
+      showAppAlert(t('jobDetail.couldNotStart'), msg);
+      return;
+    }
     const { error } = await supabase
       .from('cadenza_service_jobs')
       .update({ status: 'in_progress' })
       .eq('id', id);
     if (error) {
-      Alert.alert(t('jobDetail.couldNotStart'), error.message ?? t('jobDetail.notAssigned'));
+      const msg = error.message ?? t('jobDetail.notAssigned');
+      setActionError(msg);
+      showAppAlert(t('jobDetail.couldNotStart'), msg);
       return;
+    }
+    if (job) {
+      setJob({ ...job, status: 'in_progress' });
     }
     setStarted(true);
   }
@@ -581,7 +621,7 @@ export default function JobDetailScreen() {
   async function takePhoto() {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(t('jobDetail.permissionNeeded'), t('jobDetail.cameraPermission'));
+      showAppAlert(t('jobDetail.permissionNeeded'), t('jobDetail.cameraPermission'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -600,7 +640,7 @@ export default function JobDetailScreen() {
   async function pickFromGallery() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(t('jobDetail.permissionNeeded'), t('jobDetail.galleryPermission'));
+      showAppAlert(t('jobDetail.permissionNeeded'), t('jobDetail.galleryPermission'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -627,7 +667,7 @@ export default function JobDetailScreen() {
         .eq('id', photo.id)
         .eq('is_deleted', false);
       if (error) {
-        Alert.alert(
+        showAppAlert(
           t('jobDetail.couldNotRemovePhoto'),
           error.message ?? t('jobDetail.deletePhotoFailed')
         );
@@ -636,6 +676,15 @@ export default function JobDetailScreen() {
   }
 
   function confirmRemovePhoto(index: number) {
+    if (Platform.OS === 'web') {
+      // window.confirm returns boolean; Alert.alert button callbacks don't work on web.
+      const ok =
+        typeof window !== 'undefined' &&
+        typeof window.confirm === 'function' &&
+        window.confirm(`${t('jobDetail.deletePhotoTitle')}\n\n${t('jobDetail.deletePhotoMessage')}`);
+      if (ok) void removePhoto(index);
+      return;
+    }
     Alert.alert(t('jobDetail.deletePhotoTitle'), t('jobDetail.deletePhotoMessage'), [
       { text: t('common.cancel'), style: 'cancel' },
       { text: t('common.delete'), style: 'destructive', onPress: () => removePhoto(index) },
@@ -644,12 +693,20 @@ export default function JobDetailScreen() {
 
   async function handleComplete() {
     if (!id || !job) return;
+    setActionError(null);
     if (photos.length === 0) {
-      Alert.alert(t('jobDetail.photoRequired'), t('jobDetail.photoRequiredMessage'));
+      const msg = t('jobDetail.photoRequiredMessage');
+      setActionError(msg);
+      showAppAlert(t('jobDetail.photoRequired'), msg);
       return;
     }
-    const userId = getCachedUserId();
-    if (!userId) return;
+    const userId = await resolveUserId();
+    if (!userId) {
+      const msg = t('jobDetail.notAssigned');
+      setActionError(msg);
+      showAppAlert(t('common.error'), msg);
+      return;
+    }
     const needsFollowUp = followUp || issueCategories.length > 0 || Boolean(extras.low_water);
     setSaving(true);
     try {
@@ -688,7 +745,9 @@ export default function JobDetailScreen() {
           .update(reportPayload)
           .eq('id', existingReportId);
         if (updateErr) {
-          Alert.alert(t('common.error'), updateErr.message ?? t('jobDetail.failedUpdateReport'));
+          const msg = updateErr.message ?? t('jobDetail.failedUpdateReport');
+          setActionError(msg);
+          showAppAlert(t('common.error'), msg);
           return;
         }
         reportId = existingReportId;
@@ -699,7 +758,9 @@ export default function JobDetailScreen() {
           .select('id')
           .single();
         if (reportErr) {
-          Alert.alert(t('common.error'), reportErr.message ?? t('jobDetail.failedSaveReport'));
+          const msg = reportErr.message ?? t('jobDetail.failedSaveReport');
+          setActionError(msg);
+          showAppAlert(t('common.error'), msg);
           return;
         }
         reportId = reportRow.id;
@@ -707,7 +768,9 @@ export default function JobDetailScreen() {
 
       const { error: updateJobErr } = await supabase.from('cadenza_service_jobs').update({ status: 'completed' }).eq('id', id);
       if (updateJobErr) {
-        Alert.alert(t('common.error'), updateJobErr.message ?? t('jobDetail.failedUpdateJobStatus'));
+        const msg = updateJobErr.message ?? t('jobDetail.failedUpdateJobStatus');
+        setActionError(msg);
+        showAppAlert(t('common.error'), msg);
         return;
       }
 
@@ -741,7 +804,7 @@ export default function JobDetailScreen() {
       }
 
       if (photoErrors > 0) {
-        Alert.alert(
+        showAppAlert(
           t('jobDetail.reportSaved'),
           t('jobDetail.photosUploadFailed', { count: photoErrors })
         );
@@ -749,7 +812,9 @@ export default function JobDetailScreen() {
       invalidateJobsList();
       router.back();
     } catch (err) {
-      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('jobDetail.failedSaveReport'));
+      const msg = err instanceof Error ? err.message : t('jobDetail.failedSaveReport');
+      setActionError(msg);
+      showAppAlert(t('common.error'), msg);
     } finally {
       setSaving(false);
     }
@@ -773,7 +838,7 @@ export default function JobDetailScreen() {
     if (!id) return;
     const { error } = await supabase.from('cadenza_service_jobs').update({ status: 'pending' }).eq('id', id);
     if (error) {
-      Alert.alert(t('common.error'), error.message ?? t('jobDetail.failedUpdateJob'));
+      showAppAlert(t('common.error'), error.message ?? t('jobDetail.failedUpdateJob'));
       return;
     }
     invalidateJobsList();
@@ -782,7 +847,7 @@ export default function JobDetailScreen() {
 
   if (!jobLoaded || !job) {
     return (
-      <View style={styles.center}>
+      <View style={styles.center} testID="tech-job-detail">
         <Text style={{ color: themeColors.text }}>{t('common.loadingJob')}</Text>
       </View>
     );
@@ -812,8 +877,15 @@ export default function JobDetailScreen() {
     : null;
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container} testID="tech-job-detail">
+    <ScrollView style={{ flex: 1 }}>
       <View style={styles.content}>
+        {actionError != null && (
+          <View style={styles.locationWarning} testID="job-action-error">
+            <Text style={styles.locationWarningText}>{actionError}</Text>
+          </View>
+        )}
+
         {/* Customer Info Card */}
         <View style={styles.customerCard}>
           <View style={styles.customerInfo}>
@@ -825,7 +897,9 @@ export default function JobDetailScreen() {
               </View>
             )}
             <Text style={styles.address}>{prop?.address ?? ''}</Text>
-            <Text style={styles.status}>{t('jobDetail.status', { status: job.status })}</Text>
+            <Text style={styles.status} testID="job-status">
+              {t('jobDetail.status', { status: job.status })}
+            </Text>
             <View style={styles.directionsBtn}>
               <Text style={styles.directionsBtnText}>{t('jobDetail.directions')}</Text>
             </View>
@@ -866,14 +940,32 @@ export default function JobDetailScreen() {
               </View>
             )}
             {job.status === 'pending' && (
-              <Pressable style={[styles.startButton, { backgroundColor: themeColors.onMyWayButton ?? themeColors.buttonPrimary }]} onPress={handleOnMyWay}>
+              <Pressable
+                style={[styles.startButton, { backgroundColor: themeColors.onMyWayButton ?? themeColors.buttonPrimary }]}
+                onPress={handleOnMyWay}
+                accessibilityRole="button"
+                accessibilityLabel={t('jobDetail.onMyWay')}
+                testID="job-on-my-way"
+              >
                 <Text style={styles.startButtonText}>{t('jobDetail.onMyWay')}</Text>
               </Pressable>
             )}
-            <Pressable style={styles.startButton} onPress={handleStart}>
+            <Pressable
+              style={styles.startButton}
+              onPress={handleStart}
+              accessibilityRole="button"
+              accessibilityLabel={t('jobDetail.startService')}
+              testID="job-start-service"
+            >
               <Text style={styles.startButtonText}>{t('jobDetail.startService')}</Text>
             </Pressable>
-            <Pressable style={styles.cantServiceButton} onPress={() => id && router.push(`/(app)/job/${id}/cant-service`)}>
+            <Pressable
+              style={styles.cantServiceButton}
+              onPress={() => id && router.push(`/(app)/job/${id}/cant-service`)}
+              accessibilityRole="button"
+              accessibilityLabel={t('jobDetail.cantService')}
+              testID="job-cant-service"
+            >
               <Text style={styles.cantServiceButtonText}>{t('jobDetail.cantService')}</Text>
             </Pressable>
           </>
@@ -895,10 +987,22 @@ export default function JobDetailScreen() {
               </View>
               <Text style={styles.photoHint}>{t('jobDetail.photoHint')}</Text>
               <View style={styles.photoActions}>
-                <Pressable style={styles.photoButton} onPress={takePhoto}>
+                <Pressable
+                  style={styles.photoButton}
+                  onPress={takePhoto}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('jobDetail.takePhoto')}
+                  testID="job-take-photo"
+                >
                   <Text style={styles.photoButtonText}>{t('jobDetail.takePhoto')}</Text>
                 </Pressable>
-                <Pressable style={styles.photoButton} onPress={pickFromGallery}>
+                <Pressable
+                  style={styles.photoButton}
+                  onPress={pickFromGallery}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('jobDetail.fromGallery')}
+                  testID="job-from-gallery"
+                >
                   <Text style={styles.photoButtonText}>{t('jobDetail.fromGallery')}</Text>
                 </Pressable>
               </View>
@@ -1039,6 +1143,7 @@ export default function JobDetailScreen() {
                 placeholder={t('jobDetail.officeNotesPlaceholder')}
                 placeholderTextColor={themeColors.placeholder}
                 multiline
+                testID="job-notes"
               />
             </View>
 
@@ -1075,7 +1180,11 @@ export default function JobDetailScreen() {
 
             {/* Chemical Readings (collapsible) */}
             <View style={styles.sectionCard}>
-              <Pressable style={styles.sectionHeader} onPress={() => setChemExpanded((v) => !v)}>
+              <Pressable
+                style={styles.sectionHeader}
+                onPress={() => setChemExpanded((v) => !v)}
+                testID="job-chem-toggle"
+              >
                 <View style={styles.sectionHeaderLeft}>
                   <View style={[styles.sectionIcon, { backgroundColor: themeColors.sectionIconBlueBg }]}>
                     <Text style={[styles.sectionIconText, { color: themeColors.sectionIconBlueText }]}>S</Text>
@@ -1100,6 +1209,7 @@ export default function JobDetailScreen() {
                         keyboardType="decimal-pad"
                         placeholder=""
                         placeholderTextColor={themeColors.placeholder}
+                        testID={`job-chem-${key}`}
                       />
                     </View>
                   ))}
@@ -1127,7 +1237,14 @@ export default function JobDetailScreen() {
               />
             )}
 
-            <Pressable style={styles.completeButton} onPress={handleComplete} disabled={saving}>
+            <Pressable
+              style={styles.completeButton}
+              onPress={handleComplete}
+              disabled={saving}
+              accessibilityRole="button"
+              accessibilityLabel={t('jobDetail.completeSave')}
+              testID="job-complete"
+            >
               <Text style={styles.completeButtonText}>
                 {saving ? t('common.saving') : t('jobDetail.completeSave')}
               </Text>
@@ -1136,5 +1253,6 @@ export default function JobDetailScreen() {
         )}
       </View>
     </ScrollView>
+    </View>
   );
 }

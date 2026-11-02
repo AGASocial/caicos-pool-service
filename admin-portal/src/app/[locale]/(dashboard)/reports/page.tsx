@@ -84,7 +84,7 @@ export default function ReportsPage() {
 
   return (
     <EntitlementGate resource="report" action="view">
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="admin-reports">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
           {t('reports')}
@@ -142,14 +142,16 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card data-testid="reports-completed">
               <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   {t('completed')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{stats.byStatus.completed}</p>
+                <p className="text-3xl font-bold" data-testid="reports-completed-count">
+                  {stats.byStatus.completed}
+                </p>
               </CardContent>
             </Card>
 

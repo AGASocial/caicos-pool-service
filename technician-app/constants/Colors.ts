@@ -39,6 +39,7 @@ export default {
     buttonPrimary: brass,             // Brass for primary CTAs (Start Service, Mark Complete)
     buttonPrimaryText: onBrass,       // Dark text on brass per brand button spec
     buttonPrimaryShadow: 'rgba(199, 168, 95, 0.25)',
+    onMyWayButton: info,              // En route / On my way CTA
     buttonSuccess: success,
     buttonSuccessText: '#ffffff',
     buttonSuccessShadow: 'rgba(62, 125, 90, 0.20)',
@@ -100,6 +101,7 @@ export default {
     buttonPrimary: brass,
     buttonPrimaryText: onBrass,
     buttonPrimaryShadow: 'rgba(199, 168, 95, 0.25)',
+    onMyWayButton: '#7FA3C2',          // En route / On my way CTA (dark)
     buttonSuccess: success,
     buttonSuccessText: '#ffffff',
     buttonSuccessShadow: 'rgba(62, 125, 90, 0.20)',

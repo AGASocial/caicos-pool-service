@@ -18,8 +18,12 @@ graphify-out
 /coverage
 *.lcov
 /test-results/
+**/test-results/
 /playwright-report/
+**/playwright-report/
 /playwright/.cache/
+admin-portal/playwright-report/
+admin-portal/test-results/
 
 # next.js
 .next/

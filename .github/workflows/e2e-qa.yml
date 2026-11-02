@@ -1,0 +1,468 @@
+name: E2E QA Tests
+
+on:
+  pull_request:
+    branches: [develop]
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [admin-portal, technician-app]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./${{ matrix.app }}
+        run: npm ci
+
+      - name: Lint
+        working-directory: ./${{ matrix.app }}
+        run: npm run lint
+        continue-on-error: ${{ matrix.app == 'technician-app' }}
+
+      - name: Type check
+        working-directory: ./${{ matrix.app }}
+        run: npx tsc --noEmit
+        continue-on-error: ${{ matrix.app == 'technician-app' }}
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: admin-portal/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./admin-portal
+        run: npm ci
+
+      - name: Run tests
+        working-directory: ./admin-portal
+        run: npm test -- --passWithNoTests
+        env:
+          CI: true
+
+  wait-for-vercel:
+    name: Wait for Vercel Preview
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    outputs:
+      preview-url: ${{ steps.wait.outputs.url }}
+    steps:
+      - name: Wait for Vercel Preview
+        id: wait
+        # v1.3.3 adds vercel_protection_bypass_header (not present in v1.3.1)
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          max_timeout: 300
+          check_interval: 10
+          vercel_protection_bypass_header: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      - name: Preview URL
+        run: |
+          echo "Preview URL: ${{ steps.wait.outputs.url }}"
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: wait-for-vercel
+    # Always run so this required check cannot be silently skipped
+    # (GitHub treats a skipped required job as passing).
+    if: always()
+    steps:
+      - name: Fail if prerequisites did not succeed
+        if: needs.wait-for-vercel.result != 'success'
+        run: |
+          echo "E2E Tests cannot run: Wait for Vercel Preview result was '${{ needs.wait-for-vercel.result }}'"
+          echo "This job must fail (not skip) so branch protection cannot treat a skipped E2E check as passing."
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install admin-portal dependencies
+        working-directory: ./admin-portal
+        run: npm ci
+
+      - name: Install technician-app dependencies
+        working-directory: ./technician-app
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: ./admin-portal
+        run: npx playwright install --with-deps chromium
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Run QA seed
+        run: npm run qa:seed
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          QA_ADMIN_PASSWORD: ${{ secrets.QA_ADMIN_PASSWORD }}
+          QA_TECH_PASSWORD: ${{ secrets.QA_TECH_PASSWORD }}
+
+      # Metro bundler export — does not run tsc; type errors won't fail this step
+      - name: Build Expo web
+        working-directory: ./technician-app
+        run: npx expo export --platform web --output-dir web-build
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+      - name: Serve Expo web in background
+        working-directory: ./technician-app
+        run: |
+          npx serve web-build -l 8081 &
+          echo $! > expo-server.pid
+          sleep 5
+
+      - name: Run E2E tests
+        working-directory: ./admin-portal
+        run: npx playwright test e2e/full-flow.spec.ts
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: ${{ needs.wait-for-vercel.outputs.preview-url }}
+          PLAYWRIGHT_TECH_BASE_URL: http://localhost:8081
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          QA_ADMIN_PASSWORD: ${{ secrets.QA_ADMIN_PASSWORD }}
+          QA_TECH_PASSWORD: ${{ secrets.QA_TECH_PASSWORD }}
+          CI: true
+          # Disables Playwright error-context.md page snapshots that can embed password field text
+          PLAYWRIGHT_NO_COPY_PROMPT: '1'
+
+      - name: Stop Expo server
+        if: always() && needs.wait-for-vercel.result == 'success'
+        working-directory: ./technician-app
+        run: |
+          if [ -f expo-server.pid ]; then
+            kill $(cat expo-server.pid) || true
+            rm expo-server.pid
+          fi
+
+      - name: Run QA cleanup
+        if: always() && needs.wait-for-vercel.result == 'success'
+        run: npm run qa:cleanup
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Verify artifacts do not contain secrets
+        if: always() && needs.wait-for-vercel.result == 'success'
+        env:
+          QA_ADMIN_PASSWORD: ${{ secrets.QA_ADMIN_PASSWORD }}
+          QA_TECH_PASSWORD: ${{ secrets.QA_TECH_PASSWORD }}
+        run: |
+          set +e
+          SCAN_ROOT="$RUNNER_TEMP/artifact-secret-scan"
+          rm -rf "$SCAN_ROOT"
+          mkdir -p "$SCAN_ROOT"
+
+          # Copy text artifacts and explode any .zip (trace.zip etc.) so binary
+          # archives are not skipped by grep -I.
+          for dir in admin-portal/test-results admin-portal/playwright-report; do
+            if [ -d "$dir" ]; then
+              cp -a "$dir" "$SCAN_ROOT/$(basename "$dir")"
+            fi
+          done
+          while IFS= read -r zip; do
+            dest="$SCAN_ROOT/unzipped/$(basename "$zip" .zip)-$(echo "$zip" | sha256sum | cut -c1-8)"
+            mkdir -p "$dest"
+            unzip -qq -o "$zip" -d "$dest" 2>/dev/null || true
+          done < <(find "$SCAN_ROOT" -type f -name '*.zip' 2>/dev/null)
+
+          # Playwright HTML reporter embeds a base64 zip (report data). Decode it
+          # and scan inside — plaintext grep of index.html misses Fill "<secret>" titles.
+          export SCAN_ROOT
+          python3 .github/scripts/decode-playwright-report-zips.py
+
+          leaked=0
+          for var in QA_ADMIN_PASSWORD QA_TECH_PASSWORD; do
+            secret="${!var}"
+            if [ -z "$secret" ] || [ "${#secret}" -lt 8 ]; then
+              continue
+            fi
+            # Search without printing the secret; only report which env var leaked.
+            # No -I: scan binary/extracted contents after unzip + HTML base64 decode.
+            if grep -R -F -a -l -- "$secret" "$SCAN_ROOT" \
+              2>/dev/null | head -1 | grep -q .; then
+              echo "::error::Secret from ${var} found in Playwright artifacts"
+              leaked=1
+            fi
+          done
+          rm -rf "$SCAN_ROOT"
+          if [ "$leaked" -ne 0 ]; then
+            echo "Artifact secret scan failed"
+            exit 1
+          fi
+          echo "Artifact secret scan passed"
+
+      - name: Upload test results
+        if: always() && needs.wait-for-vercel.result == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            admin-portal/playwright-report/
+            admin-portal/test-results/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Upload screenshots
+        if: always() && needs.wait-for-vercel.result == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: |
+            admin-portal/test-results/screenshots/
+            admin-portal/test-results/**/*.png
+          retention-days: 30
+          if-no-files-found: ignore
+
+  report-results:
+    name: Report Test Results
+    runs-on: ubuntu-latest
+    needs: e2e-tests
+    if: always()
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download test results
+        id: download
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-report
+          path: ./reports
+
+      # Key-step PNGs also live in the dedicated screenshots artifact
+      # (upload nests as screenshots/screenshots/*.png).
+      - name: Download screenshots artifact
+        id: download-screenshots
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: screenshots
+          path: ./screenshots-artifact
+
+      - name: Generate test summary
+        id: summary
+        run: |
+          COVERAGE_FILE="$RUNNER_TEMP/e2e-coverage.md"
+          SCREENSHOTS_FILE="$RUNNER_TEMP/e2e-screenshots.md"
+          : > "$COVERAGE_FILE"
+          : > "$SCREENSHOTS_FILE"
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          if [ "${{ steps.download.outcome }}" != "success" ]; then
+            echo "status=❌ FAILED (no report artifact)" >> $GITHUB_OUTPUT
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "skipped=0" >> $GITHUB_OUTPUT
+            echo "missing_artifact=true" >> $GITHUB_OUTPUT
+            echo "_No results available._" > "$COVERAGE_FILE"
+          elif [ -f reports/test-results/results.json ] || [ -f reports/admin-portal/test-results/results.json ]; then
+            RESULTS_FILE=reports/test-results/results.json
+            if [ ! -f "$RESULTS_FILE" ]; then
+              RESULTS_FILE=reports/admin-portal/test-results/results.json
+            fi
+            # Use Playwright top-level stats (nested describe suites break .suites[].specs[])
+            EXPECTED=$(jq '.stats.expected // 0' "$RESULTS_FILE")
+            UNEXPECTED=$(jq '.stats.unexpected // 0' "$RESULTS_FILE")
+            FLAKY=$(jq '.stats.flaky // 0' "$RESULTS_FILE")
+            SKIPPED=$(jq '.stats.skipped // 0' "$RESULTS_FILE")
+            TOTAL=$((EXPECTED + UNEXPECTED + FLAKY + SKIPPED))
+            PASSED=$EXPECTED
+            FAILED=$UNEXPECTED
+            
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "passed=$PASSED" >> $GITHUB_OUTPUT
+            echo "failed=$FAILED" >> $GITHUB_OUTPUT
+            echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+            echo "missing_artifact=false" >> $GITHUB_OUTPUT
+            
+            # Build coverage list from real nested suite results.
+            # Check skipped/status before .ok — Playwright marks skipped specs ok=true.
+            jq -r '
+              def status_icon($ok; $status):
+                if $status == "skipped" then "⏭️"
+                elif $status == "flaky" or $status == "interrupted" then "⚠️"
+                elif $ok == true or $status == "passed" or $status == "expected" then "✅"
+                else "❌" end;
+              def walk:
+                (.specs[]? |
+                  (
+                    (.tests[-1].status // empty) as $ts |
+                    (.tests[-1].results[-1].status // empty) as $rs |
+                    (if $ts == "skipped" or $rs == "skipped" then "skipped"
+                     elif $rs != "" then $rs
+                     elif .ok then "passed"
+                     else "failed" end)
+                  ) as $st |
+                  "- \(status_icon(.ok; $st)) \(.title) (\($st))"
+                ),
+                (.suites[]? | walk);
+              [.suites[] | walk] | if length == 0 then ["_No tests found in results.json_"] else . end | .[]
+            ' "$RESULTS_FILE" > "$COVERAGE_FILE"
+
+            # Key-step screenshots: captureStep → test-results/screenshots/<name>.png
+            # Dedicated artifact nests as screenshots-artifact/screenshots/*.png
+            {
+              echo "Screenshots artifact: [screenshots](${RUN_URL}) (workflow run → Artifacts → **screenshots**)"
+              echo ""
+              python3 .github/scripts/list-e2e-screenshots.py
+            } > "$SCREENSHOTS_FILE"
+            
+            if [ "$TOTAL" -eq 0 ]; then
+              echo "status=❌ FAILED (0 tests reported)" >> $GITHUB_OUTPUT
+            elif [ "$FAILED" -eq 0 ]; then
+              echo "status=✅ PASSED" >> $GITHUB_OUTPUT
+            else
+              echo "status=❌ FAILED" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "status=❌ FAILED (no results file)" >> $GITHUB_OUTPUT
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "skipped=0" >> $GITHUB_OUTPUT
+            echo "missing_artifact=true" >> $GITHUB_OUTPUT
+            echo "_No results available._" > "$COVERAGE_FILE"
+          fi
+
+          {
+            echo "coverage<<EOF"
+            cat "$COVERAGE_FILE"
+            echo "EOF"
+            echo "screenshots<<EOF"
+            cat "$SCREENSHOTS_FILE"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        env:
+          E2E_STATUS: ${{ steps.summary.outputs.status }}
+          E2E_TOTAL: ${{ steps.summary.outputs.total }}
+          E2E_PASSED: ${{ steps.summary.outputs.passed }}
+          E2E_FAILED: ${{ steps.summary.outputs.failed }}
+          E2E_SKIPPED: ${{ steps.summary.outputs.skipped }}
+          E2E_MISSING_ARTIFACT: ${{ steps.summary.outputs.missing_artifact }}
+          E2E_JOB_RESULT: ${{ needs.e2e-tests.result }}
+          E2E_COVERAGE: ${{ steps.summary.outputs.coverage }}
+          E2E_SCREENSHOTS: ${{ steps.summary.outputs.screenshots }}
+          E2E_RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const status = process.env.E2E_STATUS || '';
+            const total = process.env.E2E_TOTAL || '0';
+            const passed = process.env.E2E_PASSED || '0';
+            const failed = process.env.E2E_FAILED || '0';
+            const skipped = process.env.E2E_SKIPPED || '0';
+            const missingArtifact = process.env.E2E_MISSING_ARTIFACT === 'true';
+            const e2eResult = process.env.E2E_JOB_RESULT || '';
+            const coverage = process.env.E2E_COVERAGE || '_No coverage details_';
+            const screenshots = process.env.E2E_SCREENSHOTS || '_No screenshots_';
+            const runUrl = process.env.E2E_RUN_URL || '';
+            
+            let body;
+            if (missingArtifact) {
+              body = `## E2E QA Test Results ${status}
+
+            Playwright report artifact was not available (E2E job result: \`${e2eResult}\`).
+
+            This usually means upstream checks failed, the E2E job exited before uploading results, or the artifact upload was skipped.
+
+            **Workflow run:** [View details](${runUrl})
+
+            ---
+            *QA Company ID: \`45173a02-9f30-4a07-89bb-16923bd043b5\`*
+            `;
+            } else {
+              body = `## E2E QA Test Results ${status}
+
+            | Tests | Passed | Failed | Skipped |
+            |-------|--------|--------|---------|
+            | ${total} | ✅ ${passed} | ❌ ${failed} | ⏭️ ${skipped} |
+
+            ### Test Coverage
+            ${coverage}
+
+            ### Screenshots
+            ${screenshots}
+
+            **Artifacts:** [Workflow run](${runUrl}) → download **playwright-report** (HTML) and **screenshots** (key-step PNGs).
+
+            ---
+            *QA Company ID: \`45173a02-9f30-4a07-89bb-16923bd043b5\`*
+            `;
+            }
+            
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('E2E QA Test Results')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body,
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+
+  status-check:
+    name: E2E QA Status
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, unit-tests, e2e-tests]
+    if: always()
+    steps:
+      - name: Check status
+        run: |
+          if [ "${{ needs.e2e-tests.result }}" != "success" ]; then
+            echo "E2E tests failed"
+            exit 1
+          fi
+          echo "All checks passed!"
