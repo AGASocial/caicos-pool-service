@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EntitlementGate } from '@/components/EntitlementGate';
+import { Download } from 'lucide-react';
 
 type ByStatus = {
   pending: number;
@@ -119,6 +120,20 @@ export default function ReportsPage() {
             </div>
             <Button onClick={handleApply} disabled={loading}>
               {loading ? t('loading') : t('applyFilters')}
+            </Button>
+            <Button variant="outline" asChild data-testid="payroll-export-csv">
+              <a
+                href={`/api/reports/jobs/payroll?${new URLSearchParams({
+                  date_from: dateFrom,
+                  date_to: dateTo,
+                  format: 'csv',
+                  tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Chicago',
+                }).toString()}`}
+                download
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {t('payrollExportCsv')}
+              </a>
             </Button>
           </div>
           {error && <p className="mt-3 text-sm text-destructive">{error}</p>}

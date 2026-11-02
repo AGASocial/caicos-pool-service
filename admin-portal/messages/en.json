@@ -490,5 +490,12 @@
   "timeMinutesAgo": "{minutes}m ago",
   "timeHoursAgo": "{hours}h ago",
   "upgradeForLiveStatus": "Upgrade to Standard or Pro to access the live status board",
-  "upgradeNow": "Upgrade Now"
+  "upgradeNow": "Upgrade Now",
+  "payrollExportCsv": "Export payroll (CSV)",
+  "photoHistory": "Photo history",
+  "photoHistoryEmpty": "No visit photos yet.",
+  "photoArchived": "Archived",
+  "photoUnavailable": "Photo unavailable",
+  "loadMore": "Load more",
+  "visitNoPhotos": "No photos for this visit"
 }

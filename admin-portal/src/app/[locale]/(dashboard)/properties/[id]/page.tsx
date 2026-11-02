@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { LoadingState } from '@/components/ui/loading-state';
+import { PhotoHistory } from '@/components/properties/PhotoHistory';
 
 type Property = {
   id: string;
@@ -204,6 +205,8 @@ export default function PropertyDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      <PhotoHistory propertyId={id} />
     </div>
   );
 }
