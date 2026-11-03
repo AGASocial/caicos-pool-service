@@ -9,6 +9,7 @@ import { Link } from '@/i18n/navigation';
 import type { DashboardIssueJob, DashboardJob } from '@/lib/server-data';
 import { NoAssignedRoute } from '@/components/NoAssignedRoute';
 import { LiveStatusBoard } from '@/components/dashboard/LiveStatusBoard';
+import { TechnicianMap } from '@/components/dashboard/TechnicianMap';
 
 type DashboardStats = {
   totalJobs: number;
@@ -164,7 +165,8 @@ export default function DashboardClient({
       </div>
 
       {!isTechnicianView && (
-        <div className="animate-fade-in-up delay-400">
+        <div className="space-y-6 animate-fade-in-up delay-400">
+          <TechnicianMap />
           <LiveStatusBoard />
         </div>
       )}

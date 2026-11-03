@@ -504,5 +504,12 @@
   "teamRoleDescription_admin": "Full access to settings, billing and team.",
   "teamRoleDescription_operations": "Dispatch, routes, jobs and reports.",
   "teamRoleDescription_technician": "Field technicians who service pools.",
-  "googleSignInComingSoon": "Google sign-in (coming soon)"
+  "googleSignInComingSoon": "Google sign-in (coming soon)",
+  "techMapTitle": "Technician map",
+  "techMapDescription": "Live technician positions and today's stops",
+  "techMapLive": "Live",
+  "techMapIdle": "No jobs today",
+  "techMapUnknownTech": "Technician",
+  "techMapNoLocations": "No technician locations yet",
+  "techMapCount": "{techs} technicians · {jobs} stops"
 }

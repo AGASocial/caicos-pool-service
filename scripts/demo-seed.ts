@@ -38,11 +38,22 @@
  *                          Friday/Monday routes. Also closes yesterday's leftover en_route/in_progress.
  *   --refresh-texts        Rewrite existing demo notes / follow-ups / can't-service labels / route
  *                          day names from the English seed text to Spanish (exact-match, demo only).
+ *   --geocode              Give every demo property deterministic, realistic Davie-area lat/lng
+ *                          (clustered by ZIP). Idempotent: only rows whose coords differ are updated.
+ *   --simulate-gps         Long-running: drive today's technicians along their route order, upserting
+ *                          cadenza_technician_locations (is_simulated=true) every --interval seconds and
+ *                          advancing job statuses (en_route → in_progress → completed). Ctrl-C deletes
+ *                          the simulated location rows. Demo company only; refuses anything else.
+ *     --interval <s>       Tick length in seconds (default 3, min 1)
+ *     --speed <m/s>        Simulated driving speed (default 60 ≈ 4× real time, so legs take ~1 min)
+ *     --dwell <ticks>      Ticks spent on site per pool (default 6)
+ *     --company <uuid>     Optional guard; anything other than the demo company id aborts
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { randomBytes } from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { demoCoords, initTech, stepTech, type SimTech, type SimEvent } from './demo-gps';
 
 export const DEMO_COMPANY_ID = 'de300000-ca1c-4c05-8000-0000000000d0';
 const QA_COMPANY_ID = '45173a02-9f30-4a07-89bb-16923bd043b5';
@@ -61,11 +72,12 @@ interface Opts {
   dryRun: boolean; csv?: string; techs: number; pools: number; weeks: number;
   photosDir?: string; noPhotos: boolean; accountsOut: string; seed: number;
   today: boolean; refreshTexts: boolean;
+  geocode: boolean; simulateGps: boolean; interval: number; speed: number; dwell: number; company?: string;
 }
-function parseArgs(argv: string[]): Opts {
+export function parseArgs(argv: string[]): Opts {
   const o: Opts = { dryRun: false, techs: 30, pools: 900, weeks: 4, noPhotos: false,
     accountsOut: '/workspace/secrets/demo_accounts.json', seed: 20261102,
-    today: false, refreshTexts: false };
+    today: false, refreshTexts: false, geocode: false, simulateGps: false, interval: 3, speed: 60, dwell: 6 };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i], v = () => { const x = argv[++i]; if (!x) throw new Error(`${a} needs a value`); return x; };
     switch (a) {
@@ -80,6 +92,12 @@ function parseArgs(argv: string[]): Opts {
       case '--seed': o.seed = parseInt(v(), 10); break;
       case '--today': o.today = true; break;
       case '--refresh-texts': o.refreshTexts = true; break;
+      case '--geocode': o.geocode = true; break;
+      case '--simulate-gps': o.simulateGps = true; break;
+      case '--interval': o.interval = Math.max(1, Math.min(60, parseFloat(v()))); break;
+      case '--speed': o.speed = Math.max(1, Math.min(500, parseFloat(v()))); break;
+      case '--dwell': o.dwell = Math.max(1, Math.min(100, parseInt(v(), 10))); break;
+      case '--company': o.company = v(); break;
       case '-h': case '--help': console.log('See header of scripts/demo-seed.ts and docs/DEMO.md'); process.exit(0);
       default: throw new Error(`Unknown argument: ${a}`);
     }
@@ -705,6 +723,104 @@ async function refreshTexts() {
   console.log(`✅ --refresh-texts done (${total + renamed} rows)`);
 }
 
+// ---------------------------------------------------------------- --geocode / --simulate-gps
+/** Hard guard for the map modes: only the demo company, never QA / anything else. */
+export function assertDemoCompany(company: string | undefined): void {
+  if (company !== undefined && company !== DEMO_COMPANY_ID) {
+    throw new Error(`Refusing: --company ${company} is not the demo company (${DEMO_COMPANY_ID}). Map simulation is demo-only.`);
+  }
+  if ((DEMO_COMPANY_ID as string) === QA_COMPANY_ID) throw new Error('refusing QA company');
+}
+
+async function geocode(o: Opts) {
+  const sb = serviceClient(); const C = DEMO_COMPANY_ID;
+  console.log(`📍 --geocode ${DEMO_COMPANY_NAME}`);
+  const props = await fetchAll<{ id: string; address: string; city: string | null; zip: string | null; lat: number | null; lng: number | null }>((f, t) =>
+    sb.from('cadenza_properties').select('id, address, city, zip, lat, lng').eq('company_id', C).order('id').range(f, t), 'properties');
+  const todo = props.map((p) => ({ p, c: demoCoords(p, o.seed) })).filter(({ p, c }) => p.lat !== c.lat || p.lng !== c.lng);
+  let done = 0;
+  for (const batch of chunks(todo, 10)) {
+    await Promise.all(batch.map(({ p, c }) => must(sb.from('cadenza_properties').update({ lat: c.lat, lng: c.lng })
+      .eq('id', p.id).eq('company_id', C), `geocode ${p.id}`)));
+    done += batch.length;
+    if (done % 100 === 0 || done === todo.length) console.log(`  ${done}/${todo.length}`);
+  }
+  console.log(`✅ --geocode done: ${props.length} properties, ${todo.length} updated, ${props.length - todo.length} already set`);
+}
+
+async function simulateGps(o: Opts) {
+  const sb = serviceClient(); const C = DEMO_COMPANY_ID;
+  const date = todayInTz(); const iso = () => new Date().toISOString();
+  console.log(`🛰️  --simulate-gps ${DEMO_COMPANY_NAME} ${date}, every ${o.interval}s (Ctrl-C to stop and clean up)`);
+
+  const jobs = await fetchAll<{ id: string; status: string; technician_id: string | null; route_order: number | null;
+    property: { lat: number | null; lng: number | null } | { lat: number | null; lng: number | null }[] | null }>((f, t) =>
+    sb.from('cadenza_service_jobs').select('id, status, technician_id, route_order, property:cadenza_properties!cadenza_service_jobs_property_id_fkey(lat, lng)')
+      .eq('company_id', C).eq('scheduled_date', date).eq('is_deleted', false).order('id').range(f, t), 'today jobs');
+  if (!jobs.length) throw new Error('No demo jobs today — run `npm run demo:seed -- --today` first');
+  const at = (j: typeof jobs[number]) => (Array.isArray(j.property) ? j.property[0] : j.property) ?? null;
+  const missing = jobs.filter((j) => at(j)?.lat == null || at(j)?.lng == null).length;
+  if (missing) throw new Error(`${missing} of today's jobs have properties without lat/lng — run \`npm run demo:seed -- --geocode\` first`);
+
+  // every technician must be a demo-company profile
+  const techIds = [...new Set(jobs.map((j) => j.technician_id).filter((x): x is string => !!x))];
+  const profs = await must(sb.from('cadenza_profiles').select('id, company_id').in('id', techIds), 'tech profiles') ?? [];
+  const foreign = profs.filter((p) => p.company_id !== C);
+  if (foreign.length || profs.length !== techIds.length) throw new Error('Refusing: some technicians are not demo-company profiles');
+
+  let techs: SimTech[] = techIds.map((id) => initTech(id, jobs.filter((j) => j.technician_id === id).map((j) => ({
+    id: j.id, status: j.status, at: { lat: at(j)!.lat!, lng: at(j)!.lng! }, routeOrder: j.route_order ?? 0 })), o.seed));
+  console.log(`  technicians: ${techs.length}, jobs today: ${jobs.length}`);
+
+  let stopping = false;
+  const cleanup = async (sig: string) => {
+    if (stopping) return; stopping = true;
+    console.log(`\n${sig}: removing simulated locations…`);
+    try {
+      const del = await must(sb.from('cadenza_technician_locations').delete().eq('company_id', C).eq('is_simulated', true).select('technician_id'), 'cleanup');
+      console.log(`✅ removed ${(del ?? []).length} simulated location rows (job statuses keep their progress)`);
+      process.exit(0);
+    } catch (e) { console.error('❌ cleanup failed:', e instanceof Error ? e.message : e); process.exit(1); }
+  };
+  process.on('SIGINT', () => void cleanup('SIGINT'));
+  process.on('SIGTERM', () => void cleanup('SIGTERM'));
+
+  const applyEvents = async (events: SimEvent[]) => {
+    for (const e of events) {
+      const now = iso();
+      if (e.type === 'en_route') {
+        await must(sb.from('cadenza_service_jobs').update({ status: 'en_route', en_route_at: now }).eq('id', e.jobId).eq('company_id', C).eq('status', 'pending'), 'en_route');
+      } else if (e.type === 'arrived') {
+        await must(sb.from('cadenza_service_jobs').update({ status: 'in_progress' }).eq('id', e.jobId).eq('company_id', C).in('status', ['pending', 'en_route']), 'in_progress');
+        const rep = await must(sb.from('cadenza_service_reports').select('id').eq('job_id', e.jobId).eq('company_id', C).eq('is_deleted', false).limit(1), 'report lookup');
+        if (!rep?.length) await must(sb.from('cadenza_service_reports').insert({ job_id: e.jobId, company_id: C, technician_id: e.technicianId,
+          arrival_time: now, follow_up_needed: false, issue_categories: [], follow_up_status: 'open', cant_service_reasons: [] }), 'report insert');
+      } else {
+        const r = keyed(o.seed, `sim|${e.jobId}`);
+        await must(sb.from('cadenza_service_reports').update({ departure_time: now, ph_level: +(7.2 + r() * 0.6).toFixed(1),
+          chlorine_level: +(1 + r() * 3).toFixed(1), alkalinity: 80 + Math.floor(r() * 40), notes: pick(r, TECH_NOTES),
+          skimmed: true, brushed: true, emptied_baskets: true }).eq('job_id', e.jobId).eq('company_id', C).is('departure_time', null), 'report finish');
+        await must(sb.from('cadenza_service_jobs').update({ status: 'completed' }).eq('id', e.jobId).eq('company_id', C).in('status', ['en_route', 'in_progress']), 'completed');
+      }
+    }
+  };
+
+  for (let tick = 1; !stopping; tick++) {
+    const events: SimEvent[] = [];
+    techs = techs.map((s) => { const r = stepTech(s, { speedMps: o.speed, intervalS: o.interval, dwellTicks: o.dwell }); events.push(...r.events); return r.state; });
+    const now = iso();
+    const rows = techs.map((s) => ({ technician_id: s.technicianId, company_id: C, lat: +s.pos.lat.toFixed(6), lng: +s.pos.lng.toFixed(6),
+      heading: Math.round(s.heading), speed_mps: s.phase === 'driving' ? o.speed : 0, accuracy_m: 8,
+      current_job_id: s.jobs[s.idx]?.id ?? null, is_simulated: true, recorded_at: now, updated_at: now }));
+    await must(sb.from('cadenza_technician_locations').upsert(rows, { onConflict: 'technician_id' }), 'upsert locations');
+    await applyEvents(events);
+    const by = (p: string) => techs.filter((s) => s.phase === p).length;
+    if (tick === 1 || tick % 10 === 0 || events.length) console.log(`  tick ${tick}: driving ${by('driving')}, on site ${by('onsite')}, done ${by('done')}${events.length ? `, +${events.length} status changes` : ''}`);
+    if (techs.every((s) => s.phase === 'done')) console.log('  all routes finished — still publishing final positions (Ctrl-C to stop)');
+    await new Promise((res) => setTimeout(res, o.interval * 1000));
+  }
+}
+
 function listPhotos(dir?: string): string[] {
   if (!dir) throw new Error('--photos-dir <dir> is required (or pass --no-photos)');
   if (!fs.existsSync(dir)) throw new Error(`Photos dir not found: ${dir}`);
@@ -728,6 +844,13 @@ async function main() {
   if (process.env.CI) { console.error('❌ demo-seed must never run in CI (CI is set).'); process.exit(1); }
   const o = parseArgs(process.argv.slice(2));
   if ((DEMO_COMPANY_ID as string) === QA_COMPANY_ID) throw new Error('refusing QA company');
+  if (o.geocode || o.simulateGps || o.company !== undefined) assertDemoCompany(o.company);
+  if (o.geocode || o.simulateGps) {
+    if (o.dryRun) { console.log(JSON.stringify({ dryRun: true, mode: o.simulateGps ? 'simulate-gps' : 'geocode', date: todayInTz(), company: DEMO_COMPANY_ID, interval: o.interval })); return; }
+    if (o.geocode) await geocode(o);
+    if (o.simulateGps) await simulateGps(o);
+    return;
+  }
   if (o.refreshTexts || o.today) {
     if (o.dryRun) { console.log(JSON.stringify({ dryRun: true, mode: o.today ? 'today' : 'refresh-texts', date: todayInTz(), company: DEMO_COMPANY_ID })); return; }
     if (o.refreshTexts) await refreshTexts();
