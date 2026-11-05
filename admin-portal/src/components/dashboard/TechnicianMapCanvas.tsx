@@ -37,7 +37,10 @@ export function TechnicianMapCanvas({ lib, mapStyle, mapboxAccessToken, technici
     const map = mapRef.current;
     if (!map || (!force && fittedKey.current === key)) return;
     const b = boundsOf([...jobs, ...technicians]);
-    if (!b) return;
+    if (!b) {
+      try { map.resize?.(); } catch { /* map not ready */ }
+      return;
+    }
     fittedKey.current = key;
     try { map.resize?.(); map.fitBounds(b, { padding: 48, maxZoom: 14, duration: 0 }); } catch { /* map not ready */ }
   };
