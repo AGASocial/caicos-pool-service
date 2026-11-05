@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Radio, User, MapPin, Clock } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { createBrowserClient } from '@supabase/ssr';
+import { businessToday } from '@/lib/technician-map';
 
 type JobStatus = 'pending' | 'en_route' | 'in_progress' | 'completed' | 'skipped' | 'cancelled';
 
@@ -131,7 +132,7 @@ export function LiveStatusBoard() {
     if (hasAccess === null || !hasAccess) return;
 
     async function loadJobs() {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = businessToday();
       const { data, error } = await supabase
         .from('cadenza_service_jobs')
         .select(

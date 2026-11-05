@@ -504,5 +504,12 @@
   "teamRoleDescription_admin": "Acceso completo a configuración, facturación y equipo.",
   "teamRoleDescription_operations": "Despacho, rutas, trabajos y reportes.",
   "teamRoleDescription_technician": "Técnicos de campo que dan servicio a las piscinas.",
-  "googleSignInComingSoon": "Inicio con Google (próximamente)"
+  "googleSignInComingSoon": "Inicio con Google (próximamente)",
+  "techMapTitle": "Mapa de técnicos",
+  "techMapDescription": "Ubicación en vivo de los técnicos y paradas de hoy",
+  "techMapLive": "En vivo",
+  "techMapIdle": "Sin trabajos hoy",
+  "techMapUnknownTech": "Técnico",
+  "techMapNoLocations": "Aún no hay ubicaciones de técnicos",
+  "techMapCount": "{techs} técnicos · {jobs} paradas"
 }

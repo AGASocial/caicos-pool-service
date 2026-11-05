@@ -109,3 +109,34 @@ completed / in_progress / en_route / pending (never backwards), adds reports + r
 completed stops, and closes earlier days' leftover en_route/in_progress jobs. Safe to re-run.
 The nightly cron (`/api/cron/generate-route-jobs`) only creates `pending` jobs Mon–Fri for the demo
 routes and never sets live statuses, so it can't replace this.
+
+## Technician map (`--geocode`, `--simulate-gps`)
+
+The live dashboard shows a **Technician map** above the live status board (admins/operations only):
+one dot per technician (hover for the name; color = their current status: blue en route, amber on site,
+green finished, gray pending) and a pin for each of today's stops. It updates over Supabase Realtime
+(`cadenza_technician_locations` + `cadenza_service_jobs`, filtered by `company_id`, plus RLS).
+
+Tiles: **MapLibre + OpenFreeMap** by default (free, no key). If `NEXT_PUBLIC_MAPBOX_TOKEN` (a public
+`pk.` token, URL-restricted to the portal domains) is set, it switches to Mapbox GL / Streets.
+
+```bash
+# once: give the 900 demo properties deterministic Davie-area coordinates (idempotent)
+SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npm run demo:seed -- --geocode
+# demo day: refresh today's jobs, then keep the simulator running during the presentation
+SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npm run demo:seed -- --today
+SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npm run demo:seed -- --simulate-gps --interval 3
+# Ctrl-C stops it and deletes the simulated location rows
+```
+
+`--simulate-gps` drives each technician from their previous stop to the next unfinished one in
+`route_order` (grid-style L-shaped legs, `--speed` m/s, default 60 ≈ 4× real time), then:
+arrive → job `in_progress` + report with `arrival_time`; after `--dwell` ticks (default 6) →
+report gets `departure_time` + chemistry, job `completed`, next job `en_route`. Locations are upserted
+with `is_simulated = true` every `--interval` seconds (default 3).
+
+Safety: demo company only (`--company` with any other id aborts; the QA company is always refused),
+refuses `CI`, verifies every technician is a demo-company profile, never touches other companies'
+rows, and on Ctrl-C/SIGTERM deletes only `company_id = demo AND is_simulated = true` locations.
+Job progress made during the simulation is kept (re-run `--today` to reset the mix for a new day).
+`--dry-run` prints the plan without credentials.
