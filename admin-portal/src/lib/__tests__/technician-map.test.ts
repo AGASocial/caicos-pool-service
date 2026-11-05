@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
 import {
   resolveMapProvider, technicianStatus, upsertLocation, removeLocation, applyJobUpdate, isStale, boundsOf, one,
-  OPENFREEMAP_LIBERTY, STALE_AFTER_MS, type TechnicianLocation, type MapJob,
+  businessToday, OPENFREEMAP_LIBERTY, BUSINESS_TIME_ZONE, STALE_AFTER_MS, type TechnicianLocation, type MapJob,
 } from '../technician-map';
 
 const loc = (id: string, lat: number, extra: Partial<TechnicianLocation> = {}) =>
@@ -9,6 +9,12 @@ const loc = (id: string, lat: number, extra: Partial<TechnicianLocation> = {}) =
     current_job_id: null, is_simulated: true, recorded_at: '2026-11-02T12:00:00Z', updated_at: '2026-11-02T12:00:00Z', ...extra }) as TechnicianLocation;
 
 describe('technician-map helpers', () => {
+  it('returns the America/Chicago calendar date, including late UTC evening', () => {
+    expect(BUSINESS_TIME_ZONE).toBe('America/Chicago');
+    expect(businessToday(new Date('2026-11-03T02:35Z'))).toBe('2026-11-02');
+    expect(businessToday(new Date('2026-11-03T15:00Z'))).toBe('2026-11-03');
+  });
+
   it('uses MapLibre/OpenFreeMap without a token and Mapbox with a pk. token', () => {
     expect(resolveMapProvider(undefined)).toEqual({ kind: 'maplibre', style: OPENFREEMAP_LIBERTY });
     expect(resolveMapProvider('')).toMatchObject({ kind: 'maplibre' });

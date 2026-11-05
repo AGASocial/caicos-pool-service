@@ -95,9 +95,17 @@ export function boundsOf(points: { lat: number; lng: number }[]): [[number, numb
   return [[minLng, minLat], [maxLng, maxLat]];
 }
 
-/** Today's date (YYYY-MM-DD) in the browser's local zone. */
-export function localToday(d = new Date()): string {
-  return d.toLocaleDateString('en-CA');
+/** Company operating zone. Job `scheduled_date` values are calendar days in this zone. */
+export const BUSINESS_TIME_ZONE = 'America/Chicago';
+
+/** Calendar date (YYYY-MM-DD) in {@link BUSINESS_TIME_ZONE}. */
+export function businessToday(now = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: BUSINESS_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
 }
 
 /** Supabase embeds can come back as an object or a 1-element array. */

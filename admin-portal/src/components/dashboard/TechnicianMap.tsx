@@ -16,7 +16,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Map as MapIcon } from 'lucide-react';
 import {
-  STATUS_COLORS, applyJobUpdate, isStale, localToday, one, removeLocation, resolveMapProvider,
+  STATUS_COLORS, applyJobUpdate, isStale, businessToday, one, removeLocation, resolveMapProvider,
   technicianStatus, upsertLocation, type MapJob, type TechMapStatus, type TechnicianLocation,
 } from '@/lib/technician-map';
 import type { CanvasJob, CanvasTech, TechnicianMapCanvasProps } from './TechnicianMapCanvas';
@@ -76,7 +76,7 @@ export function TechnicianMap({ client }: { client?: SupabaseClient } = {}) {
           .select(`id, status, technician_id, route_order,
             technician:cadenza_profiles!cadenza_service_jobs_technician_id_fkey(id, full_name),
             property:cadenza_properties!cadenza_service_jobs_property_id_fkey(id, customer_name, address, lat, lng)`)
-          .eq('company_id', companyId!).eq('scheduled_date', localToday()).eq('is_deleted', false)
+          .eq('company_id', companyId!).eq('scheduled_date', businessToday()).eq('is_deleted', false)
           .order('route_order', { ascending: true }),
       ]);
       if (cancelled) return;
