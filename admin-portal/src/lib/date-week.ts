@@ -25,3 +25,9 @@ export function monthBoundsCalendar(ref: Date = new Date()): { from: string; to:
   const last = new Date(y, m + 1, 0);
   return { from: formatLocalYmd(first), to: formatLocalYmd(last) };
 }
+
+/** Inclusive local-date range covering the last `days` days ending on `ref` (default 7 → today and the 6 days before). */
+export function lastNDaysRange(days = 7, ref: Date = new Date()): { from: string; to: string } {
+  const start = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() - (Math.max(1, days) - 1));
+  return { from: formatLocalYmd(start), to: formatLocalYmd(ref) };
+}

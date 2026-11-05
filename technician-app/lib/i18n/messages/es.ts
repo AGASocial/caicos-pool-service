@@ -149,6 +149,7 @@ export const es = {
     currentPasswordIncorrect: 'La contraseña actual es incorrecta.',
   },
   jobDetail: {
+    onMyWay: 'Voy en camino',
     distanceMiles: 'millas',
     distanceFeet: 'pies',
     gate: 'Portón:',

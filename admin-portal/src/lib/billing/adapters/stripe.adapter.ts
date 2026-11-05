@@ -184,7 +184,7 @@ export class StripeAdapter implements PaymentGateway {
 
   async updateSubscription(
     providerSubscriptionId: string,
-    params: { planId?: string; quantity?: number; cancelAtPeriodEnd?: boolean }
+    params: { planId?: string; quantity?: number; cancelAtPeriodEnd?: boolean; metadata?: Record<string, string> }
   ): Promise<SubscriptionResult> {
     try {
       const updateParams: Stripe.SubscriptionUpdateParams = {};
@@ -201,6 +201,11 @@ export class StripeAdapter implements PaymentGateway {
         ];
       } else if (params.quantity != null && itemId) {
         updateParams.items = [{ id: itemId, quantity: params.quantity }];
+      }
+
+      // Keep subscription metadata (plan_id) in sync so webhooks don't revert plan changes
+      if (params.metadata) {
+        updateParams.metadata = { ...(existing.metadata ?? {}), ...params.metadata };
       }
 
       // Update cancel at period end if provided

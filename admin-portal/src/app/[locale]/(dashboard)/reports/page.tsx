@@ -1,6 +1,7 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { lastNDaysRange } from '@/lib/date-week';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EntitlementGate } from '@/components/EntitlementGate';
+import { Download } from 'lucide-react';
 
 type ByStatus = {
   pending: number;
@@ -34,13 +36,14 @@ type ReportsStats = {
 export default function ReportsPage() {
   const t = useTranslations();
 
-  const today = new Date().toISOString().slice(0, 10);
-  const firstOfMonth = today.slice(0, 7) + '-01';
+  const locale = useLocale();
+  // Default: last 7 days (local dates, not UTC).
+  const [defaultRange] = useState(() => lastNDaysRange(7));
 
-  const [dateFrom, setDateFrom] = useState(today);
-  const [dateTo, setDateTo] = useState(today);
-  const [appliedFrom, setAppliedFrom] = useState(today);
-  const [appliedTo, setAppliedTo] = useState(today);
+  const [dateFrom, setDateFrom] = useState(defaultRange.from);
+  const [dateTo, setDateTo] = useState(defaultRange.to);
+  const [appliedFrom, setAppliedFrom] = useState(defaultRange.from);
+  const [appliedTo, setAppliedTo] = useState(defaultRange.to);
 
   const [stats, setStats] = useState<ReportsStats | null>(null);
   const [loading, setLoading] = useState(false);
@@ -84,7 +87,7 @@ export default function ReportsPage() {
 
   return (
     <EntitlementGate resource="report" action="view">
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="admin-reports">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
           {t('reports')}
@@ -120,6 +123,21 @@ export default function ReportsPage() {
             <Button onClick={handleApply} disabled={loading}>
               {loading ? t('loading') : t('applyFilters')}
             </Button>
+            <Button variant="outline" asChild data-testid="payroll-export-csv">
+              <a
+                href={`/api/reports/jobs/payroll?${new URLSearchParams({
+                  date_from: dateFrom,
+                  date_to: dateTo,
+                  format: 'csv',
+                  locale,
+                  tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Chicago',
+                }).toString()}`}
+                download
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {t('payrollExportCsv')}
+              </a>
+            </Button>
           </div>
           {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
         </CardContent>
@@ -142,14 +160,16 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card data-testid="reports-completed">
               <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   {t('completed')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{stats.byStatus.completed}</p>
+                <p className="text-3xl font-bold" data-testid="reports-completed-count">
+                  {stats.byStatus.completed}
+                </p>
               </CardContent>
             </Card>
 
