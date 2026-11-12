@@ -110,12 +110,15 @@ export interface PaymentGateway {
 
   /**
    * Update a subscription (change plan, etc.)
+   * When `quantity` is set, `prorationBehavior` must be provided (Stripe requires an explicit choice).
    */
   updateSubscription(
     providerSubscriptionId: string,
     params: {
       planId?: string;
       quantity?: number;
+      /** Required when quantity is set. */
+      prorationBehavior?: 'create_prorations' | 'none' | 'always_invoice';
       cancelAtPeriodEnd?: boolean;
       metadata?: Record<string, string>;
     }

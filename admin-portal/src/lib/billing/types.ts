@@ -238,6 +238,8 @@ export interface UpdateSubscriptionRequest {
   subscriptionId: string;
   planId?: string;
   quantity?: number;
+  /** Required when quantity is set — passed through to Stripe as proration_behavior. */
+  prorationBehavior?: 'create_prorations' | 'none' | 'always_invoice';
   cancelAtPeriodEnd?: boolean;
 }
 

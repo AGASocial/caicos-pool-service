@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
-import { UserPlus, Users, Copy, Check, Link2 } from 'lucide-react';
+import { UserPlus, Users, Copy, Check, Link2, AlertTriangle } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { useTeam, useSetTeamMemberActive, type TeamMember } from '@/lib/team';
+import { useTeam, useSetTeamMemberActive, useSeats, type TeamMember } from '@/lib/team';
 import { usePendingInvites, buildInviteRegisterUrl, type InviteCode } from '@/lib/invite-codes';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
@@ -109,11 +110,13 @@ function PendingInvitationsCard({ invites }: { invites: InviteCode[] }) {
 
 export default function TeamPage() {
   const t = useTranslations();
+  const locale = useLocale();
   const { user } = useAuth();
   const isAdmin = user?.profile?.role === 'admin' || user?.profile?.role === 'owner';
   const canInvite = hasEntitlement(user?.profile?.role, 'team', 'create');
   const { data: teamMembers = [], isLoading: loading, error: queryError } = useTeam();
   const { data: pendingInvites = [] } = usePendingInvites();
+  const { data: seats } = useSeats({ enabled: isAdmin });
   const setActive = useSetTeamMemberActive();
   const error = queryError ? (queryError as Error).message : null;
   const byRole = groupByRole(teamMembers);
@@ -122,12 +125,25 @@ export default function TeamPage() {
     setActive.mutate(
       { id: member.id, is_active: nextActive },
       {
-        onError: () => {
-          // Error toast could go here; list will refetch and revert
+        onSuccess: (result) => {
+          if (result.notice || result.seatAdded) {
+            toast.success(result.notice ?? t('seatAddedProrationNotice'));
+          } else if (result.pending && result.scheduled_deactivation_at) {
+            toast.info(
+              t('deactivationScheduledNotice', {
+                date: new Date(result.scheduled_deactivation_at).toLocaleDateString(locale),
+              })
+            );
+          }
+        },
+        onError: (err) => {
+          toast.error(err instanceof Error ? err.message : t('billingError'));
         },
       }
     );
   };
+
+  const dateFmt = (iso: string) => new Date(iso).toLocaleDateString(locale);
 
   return (
     <EntitlementGate resource="team" action="view">
@@ -146,6 +162,37 @@ export default function TeamPage() {
           </Button>
         )}
       </div>
+
+      {seats?.isOverLimit && !seats.isFree && (
+        <div
+          role="status"
+          className="flex gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:text-amber-100"
+        >
+          <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p>
+            {t('seatsOverLimitWarning', {
+              active: seats.active,
+              subscribed: seats.subscribed,
+            })}
+          </p>
+        </div>
+      )}
+
+      {seats?.pendingDeactivations && seats.pendingDeactivations.length > 0 && (
+        <div className="rounded-md border border-border px-4 py-3 text-sm space-y-2">
+          <p className="font-medium">{t('pendingDeactivationsTitle')}</p>
+          <ul className="space-y-1 text-muted-foreground">
+            {seats.pendingDeactivations.map((p) => (
+              <li key={p.id}>
+                {t('pendingDeactivationUntil', {
+                  name: p.full_name,
+                  date: dateFmt(p.scheduled_deactivation_at),
+                })}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {loading && <LoadingState size="sm" padded={false} className="py-8" />}
       {error && <p className="text-sm text-destructive">{error}</p>}
@@ -180,6 +227,10 @@ export default function TeamPage() {
                       {list.map((member) => {
                         const isCurrentUser = user?.id === member.id;
                         const isActive = member.is_active !== false;
+                        const pendingUntil = member.scheduled_deactivation_at ?? null;
+                        const isPendingDeactivation = Boolean(pendingUntil);
+                        // Switch off while pending (access continues until date); on cancels pending.
+                        const switchChecked = isActive && !isPendingDeactivation;
                         const isToggling = setActive.isPending && setActive.variables?.id === member.id;
                         return (
                           <li
@@ -199,6 +250,11 @@ export default function TeamPage() {
                               {!isActive && !isCurrentUser && (
                                 <span className="text-muted-foreground text-sm ml-2">({t('inactive', { defaultValue: 'inactive' })})</span>
                               )}
+                              {isPendingDeactivation && pendingUntil && (
+                                <span className="text-amber-700 dark:text-amber-500 text-sm ml-2">
+                                  ({t('pendingDeactivationShort', { date: dateFmt(pendingUntil) })})
+                                </span>
+                              )}
                               {member.email_confirmed === false && (
                                 <span className="text-amber-700 dark:text-amber-500 text-sm ml-2">
                                   ({t('emailNotConfirmed', { defaultValue: 'email not confirmed' })})
@@ -207,14 +263,18 @@ export default function TeamPage() {
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <span className="text-xs text-muted-foreground tabular-nums">
-                                {isActive ? t('active', { defaultValue: 'Active' }) : t('inactive', { defaultValue: 'Inactive' })}
+                                {isPendingDeactivation
+                                  ? t('pending', { defaultValue: 'Pending' })
+                                  : isActive
+                                    ? t('active', { defaultValue: 'Active' })
+                                    : t('inactive', { defaultValue: 'Inactive' })}
                               </span>
                               {isAdmin && (
                                 <Switch
-                                  checked={isActive}
+                                  checked={switchChecked}
                                   disabled={isToggling}
                                   onCheckedChange={(checked) => handleToggleActive(member, checked)}
-                                  aria-label={isActive ? t('deactivateUser', { defaultValue: 'Deactivate user' }) : t('activateUser', { defaultValue: 'Activate user' })}
+                                  aria-label={switchChecked ? t('deactivateUser', { defaultValue: 'Deactivate user' }) : t('activateUser', { defaultValue: 'Activate user' })}
                                 />
                               )}
                             </div>

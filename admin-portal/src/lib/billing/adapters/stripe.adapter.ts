@@ -189,8 +189,20 @@ export class StripeAdapter implements PaymentGateway {
 
   async updateSubscription(
     providerSubscriptionId: string,
-    params: { planId?: string; quantity?: number; cancelAtPeriodEnd?: boolean; metadata?: Record<string, string> }
+    params: {
+      planId?: string;
+      quantity?: number;
+      prorationBehavior?: 'create_prorations' | 'none' | 'always_invoice';
+      cancelAtPeriodEnd?: boolean;
+      metadata?: Record<string, string>;
+    }
   ): Promise<SubscriptionResult> {
+    if (params.quantity != null && !params.prorationBehavior) {
+      throw new Error(
+        'prorationBehavior is required when updating subscription quantity (create_prorations | none | always_invoice)'
+      );
+    }
+
     try {
       const updateParams: Stripe.SubscriptionUpdateParams = {};
       const existing = await this.stripe.subscriptions.retrieve(providerSubscriptionId);
@@ -206,6 +218,10 @@ export class StripeAdapter implements PaymentGateway {
         ];
       } else if (params.quantity != null && itemId) {
         updateParams.items = [{ id: itemId, quantity: params.quantity }];
+      }
+
+      if (params.quantity != null && params.prorationBehavior) {
+        updateParams.proration_behavior = params.prorationBehavior;
       }
 
       // Keep subscription metadata (plan_id) in sync so webhooks don't revert plan changes

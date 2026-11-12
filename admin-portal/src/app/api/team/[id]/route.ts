@@ -3,6 +3,10 @@ import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 import { entitlementError, hasEntitlement } from '@/lib/entitlements';
+import {
+  activateTechnician,
+  scheduleTechnicianDeactivation,
+} from '@/lib/seat-management';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -10,6 +14,9 @@ type RouteContext = { params: Promise<{ id: string }> };
  * PATCH /api/team/[id] — Set is_active for a team member.
  * Body: { is_active: boolean }
  * Caller must be same company; only admin/owner can change others.
+ *
+ * Paid per-seat: deactivation is scheduled until current_period_end (tech stays
+ * active); activation may auto-increase Stripe quantity with proration.
  */
 export async function PATCH(request: Request, context: RouteContext) {
   const { supabase, user } = await createAuthenticatedRouteClient();
@@ -35,6 +42,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const client = supabase as unknown as CadenzaSupabaseClient;
+  const adminClient = supabaseAdmin as unknown as CadenzaSupabaseClient;
 
   // Current user's profile (company + role)
   const { data: callerProfile, error: callerError } = await client
@@ -52,7 +60,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   // Target must be in same company
   const { data: targetProfile, error: targetError } = await client
     .from('cadenza_profiles')
-    .select('id, company_id')
+    .select('id, company_id, role')
     .eq('id', targetId)
     .single();
 
@@ -69,15 +77,37 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json(entitlementError('team', 'edit'), { status: 403 });
   }
 
-  const { error: updateError } = await (supabaseAdmin as unknown as CadenzaSupabaseClient)
-    .from('cadenza_profiles')
-    .update({ is_active: body.is_active })
-    .eq('id', targetId);
-
-  if (updateError) {
-    console.error('Team member is_active update error:', updateError);
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
+  // Seat sync + deferred deactivation use service role for column updates
+  if (body.is_active) {
+    const result = await activateTechnician(adminClient as never, user.id, targetId);
+    if (!result.ok) {
+      return NextResponse.json(
+        { error: result.error ?? 'Failed to activate team member', code: 'ACTIVATE_FAILED' },
+        { status: 403 }
+      );
+    }
+    return NextResponse.json({
+      ok: true,
+      is_active: true,
+      scheduled_deactivation_at: null,
+      seatAdded: result.seatAdded ?? false,
+      notice: result.notice,
+    });
   }
 
-  return NextResponse.json({ ok: true, is_active: body.is_active });
+  const result = await scheduleTechnicianDeactivation(adminClient as never, user.id, targetId);
+  if (!result.ok) {
+    return NextResponse.json(
+      { error: result.error ?? 'Failed to deactivate team member' },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({
+    ok: true,
+    is_active: result.is_active,
+    pending: result.pending ?? false,
+    scheduled_deactivation_at: result.scheduled_deactivation_at ?? null,
+    quantity: result.quantity,
+  });
 }

@@ -33,6 +33,8 @@ CREATE TABLE cadenza_profiles (
   phone TEXT,
   avatar_url TEXT, -- assets bucket path e.g. {user_id}/avatar.jpg, or external OAuth URL
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  -- Pending end-of-period deactivation (paid per-seat); access continues until this time
+  scheduled_deactivation_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -11,6 +11,41 @@ export interface TeamMember {
   is_active?: boolean;
   /** From denormalized cadenza_profiles.email_confirmed_at. */
   email_confirmed?: boolean;
+  /** Pending end-of-period deactivation (paid per-seat). */
+  scheduled_deactivation_at?: string | null;
+}
+
+export interface SeatInfoClient {
+  subscribed: number;
+  active: number;
+  available: number;
+  isOverLimit: boolean;
+  isFree?: boolean;
+  currentPeriodEnd?: string | null;
+  pendingDeactivations?: Array<{
+    id: string;
+    full_name: string;
+    scheduled_deactivation_at: string;
+  }>;
+}
+
+async function fetchSeats(): Promise<SeatInfoClient> {
+  const res = await apiFetch('/api/billing/seats');
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error ?? 'Failed to fetch seat information');
+  }
+  const json = await res.json();
+  return json as SeatInfoClient;
+}
+
+export function useSeats(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.billing.seats,
+    queryFn: fetchSeats,
+    staleTime: 60 * 1000,
+    enabled: options?.enabled ?? true,
+  });
 }
 
 async function fetchTeam(): Promise<TeamMember[]> {
@@ -38,7 +73,16 @@ export function useTeam(options?: { enabled?: boolean }) {
 
 export type SetActivePayload = { id: string; is_active: boolean };
 
-async function setTeamMemberActive({ id, is_active }: SetActivePayload): Promise<{ ok: boolean; is_active: boolean }> {
+export type SetActiveResult = {
+  ok: boolean;
+  is_active: boolean;
+  pending?: boolean;
+  scheduled_deactivation_at?: string | null;
+  seatAdded?: boolean;
+  notice?: string;
+};
+
+async function setTeamMemberActive({ id, is_active }: SetActivePayload): Promise<SetActiveResult> {
   const res = await apiFetch(`/api/team/${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -58,6 +102,7 @@ export function useSetTeamMemberActive() {
     mutationFn: setTeamMemberActive,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.team.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.billing.seats });
     },
   });
 }

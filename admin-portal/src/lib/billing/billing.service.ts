@@ -598,6 +598,7 @@ export class BillingService {
    */
   async updateSubscription(request: UpdateSubscriptionRequest): Promise<void> {
     const { subscriptionId, planId, quantity, cancelAtPeriodEnd } = request;
+    let { prorationBehavior } = request;
 
     // Get existing subscription
     const { data: subscription, error: fetchError } = await this.supabase
@@ -608,6 +609,12 @@ export class BillingService {
 
     if (fetchError || !subscription) {
       throw new SubscriptionNotFoundError(subscriptionId);
+    }
+
+    // Explicit proration when changing quantity (Stripe adapter requires it).
+    if (quantity != null && !prorationBehavior) {
+      const currentQty = (subscription.quantity as number | null) ?? 1;
+      prorationBehavior = quantity > currentQty ? 'create_prorations' : 'none';
     }
 
     // Get Stripe price ID if changing plan
@@ -652,6 +659,7 @@ export class BillingService {
       result = await this.gateway.updateSubscription(subscription.provider_subscription_id, {
         planId: stripePriceId,
         quantity,
+        prorationBehavior,
         cancelAtPeriodEnd,
         ...(planId ? { metadata: { plan_id: planId } } : {}),
       });
@@ -981,6 +989,14 @@ export class BillingService {
         console.error('No user found for customer:', data.customerId);
         return;
       }
+    }
+
+    // Renewal boundary: apply any technician deactivations that reached period end.
+    try {
+      const { processDueTechnicianDeactivations } = await import('@/lib/seat-management');
+      await processDueTechnicianDeactivations(this.supabase);
+    } catch (e) {
+      console.warn('processDueTechnicianDeactivations on invoice.paid failed:', e);
     }
 
     let subscriptionId: string | undefined;

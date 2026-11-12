@@ -21,6 +21,10 @@ jest.mock('@/lib/rate-limit', () => ({
   ),
   RATE_LIMITS: { auth: { limit: 20, windowMs: 60_000 } },
 }));
+jest.mock('@/lib/seat-management', () => ({
+  canAddTechnician: jest.fn().mockResolvedValue({ canAdd: true }),
+  ensureSeatForNewTechnician: jest.fn().mockResolvedValue({ ok: true }),
+}));
 
 import { createRouteClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -87,15 +91,21 @@ describe('POST /api/auth/register', () => {
       data: { company_id: '11111111-1111-1111-1111-111111111111', role: 'technician' },
       error: null,
     });
+    const ownerChain: Record<string, unknown> = {};
+    ownerChain.eq = jest.fn(() => ownerChain);
+    ownerChain.order = jest.fn(() => ownerChain);
+    ownerChain.limit = jest.fn(() => ownerChain);
+    ownerChain.maybeSingle = jest.fn().mockResolvedValue({
+      data: { id: '22222222-2222-2222-2222-222222222222' },
+      error: null,
+    });
+    ownerChain.is = jest.fn(() => ({
+      gt: jest.fn(() => ({ single: mockSingle })),
+    }));
+
     (supabaseAdmin.from as jest.Mock).mockReturnValue({
       select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          is: jest.fn().mockReturnValue({
-            gt: jest.fn().mockReturnValue({
-              single: mockSingle,
-            }),
-          }),
-        }),
+        eq: jest.fn(() => ownerChain),
       }),
       update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({}) }),
     });
