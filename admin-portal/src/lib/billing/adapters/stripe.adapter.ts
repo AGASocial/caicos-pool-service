@@ -16,6 +16,12 @@ import type {
   PaymentMethodToken,
   PaymentProvider,
 } from '../types';
+import { getStripeLookupKey } from '../stripe-lookup-keys';
+import {
+  getCachedLookupKey,
+  getCachedPriceId,
+  setCachedPriceMapping,
+} from '../stripe-price-cache';
 
 export class StripeAdapter implements PaymentGateway {
   private stripe: Stripe;
@@ -129,8 +135,7 @@ export class StripeAdapter implements PaymentGateway {
     try {
       const { customer, plan, paymentMethod, trialDays, quantity = 1, metadata } = params;
 
-      // Get price ID from plan's provider price map
-      const priceId = plan.providerPriceMap?.stripe;
+      const priceId = await this.resolveStripePriceId(plan.id, plan.providerPriceMap?.stripe);
       if (!priceId) {
         throw new Error('Stripe price ID not configured for this plan');
       }
@@ -365,29 +370,77 @@ export class StripeAdapter implements PaymentGateway {
   }
 
   /**
-   * Resolve Stripe price ID by lookup key
-   * This allows dynamic price resolution without hardcoding price IDs
+   * Resolve Stripe price ID by lookup key (active prices only), with in-memory cache.
+   * Returns null when no active price exists for the key (caller may fall back to a stored id).
    */
-  async resolvePriceByLookupKey(lookupKey: string): Promise<string> {
+  async resolvePriceByLookupKey(lookupKey: string): Promise<string | null> {
+    const cached = getCachedPriceId(lookupKey);
+    if (cached) {
+      return cached;
+    }
+
     try {
       const prices = await this.stripe.prices.list({
         lookup_keys: [lookupKey],
+        active: true,
         limit: 1,
       });
 
       if (prices.data.length === 0) {
-        throw new Error(`No Stripe price found with lookup key: ${lookupKey}`);
+        return null;
       }
 
-      return prices.data[0].id;
+      const priceId = prices.data[0].id;
+      setCachedPriceMapping(lookupKey, priceId);
+      return priceId;
     } catch (error) {
       throw this.handleStripeError(error, 'Failed to resolve price by lookup key');
     }
   }
 
+  /**
+   * Retrieve the lookup_key for a Stripe price id (cached). Used to map webhook
+   * price ids back to internal plan ids.
+   */
+  async getLookupKeyForPriceId(priceId: string): Promise<string | null> {
+    const cached = getCachedLookupKey(priceId);
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      const price = await this.stripe.prices.retrieve(priceId);
+      const lookupKey = price.lookup_key ?? null;
+      if (lookupKey) {
+        setCachedPriceMapping(lookupKey, priceId);
+      }
+      return lookupKey;
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to retrieve price lookup key');
+    }
+  }
+
+  /**
+   * Prefer lookup_key resolution; fall back to a stored Stripe price id (test mode).
+   */
+  async resolveStripePriceId(
+    planId: string,
+    storedPriceId?: string | null,
+    explicitLookupKey?: string
+  ): Promise<string | null> {
+    const lookupKey = explicitLookupKey ?? getStripeLookupKey(planId);
+    if (lookupKey) {
+      const resolved = await this.resolvePriceByLookupKey(lookupKey);
+      if (resolved) {
+        return resolved;
+      }
+    }
+    return storedPriceId || null;
+  }
+
   async createCheckoutSession(params: {
     customer?: CustomerRef;
-    plan: { providerPriceMap?: Partial<Record<PaymentProvider, string>> };
+    plan: { id?: string; providerPriceMap?: Partial<Record<PaymentProvider, string>> };
     successUrl: string;
     cancelUrl: string;
     quantity?: number;
@@ -402,15 +455,13 @@ export class StripeAdapter implements PaymentGateway {
     try {
       const { customer, plan, successUrl, cancelUrl, quantity = 1, metadata, lookupKey } = params;
 
-      // Resolve price ID: use lookup key if provided, otherwise fall back to plan's provider price map
-      let priceId: string;
-      if (lookupKey) {
-        priceId = await this.resolvePriceByLookupKey(lookupKey);
-      } else {
-        priceId = plan.providerPriceMap?.stripe || '';
-        if (!priceId) {
-          throw new Error('Stripe price ID not configured for this plan and no lookup key provided');
-        }
+      const priceId = await this.resolveStripePriceId(
+        plan.id ?? '',
+        plan.providerPriceMap?.stripe,
+        lookupKey
+      );
+      if (!priceId) {
+        throw new Error('Stripe price ID not configured for this plan and no lookup key resolved');
       }
 
       const sessionParams: Stripe.Checkout.SessionCreateParams = {

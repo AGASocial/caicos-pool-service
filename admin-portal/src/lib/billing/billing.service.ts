@@ -31,7 +31,7 @@ import {
   PaymentGatewayError,
 } from './types';
 import { isPaidSubscriptionEffective } from './subscription-utils';
-import { STRIPE_LOOKUP_KEYS } from './stripe-lookup-keys';
+import { getStripeLookupKey, planIdFromStripeLookupKey } from './stripe-lookup-keys';
 
 export class BillingService {
   constructor(
@@ -614,15 +614,30 @@ export class BillingService {
     let stripePriceId: string | undefined;
     if (planId) {
       const plan = await this.getPlan(planId);
-      // Prefer the Stripe lookup key (same resolution as Checkout) so plan changes use the
-      // current price even when provider_price_map is stale or missing (e.g. Pro).
-      const lookupKey = STRIPE_LOOKUP_KEYS[planId];
-      const gw = this.gateway as PaymentGateway & { resolvePriceByLookupKey?: (k: string) => Promise<string> };
-      if (lookupKey && this.gateway.getName() === 'stripe' && typeof gw.resolvePriceByLookupKey === 'function') {
+      // Prefer Stripe lookup_key (same as Checkout); fall back to stored provider_price_map.
+      const gw = this.gateway as PaymentGateway & {
+        resolveStripePriceId?: (
+          planId: string,
+          storedPriceId?: string | null,
+          explicitLookupKey?: string
+        ) => Promise<string | null>;
+        resolvePriceByLookupKey?: (k: string) => Promise<string | null>;
+      };
+      if (this.gateway.getName() === 'stripe') {
         try {
-          stripePriceId = await gw.resolvePriceByLookupKey(lookupKey);
+          if (typeof gw.resolveStripePriceId === 'function') {
+            stripePriceId =
+              (await gw.resolveStripePriceId(planId, plan.providerPriceMap?.stripe)) ?? undefined;
+          } else if (typeof gw.resolvePriceByLookupKey === 'function') {
+            const lookupKey = getStripeLookupKey(planId);
+            if (lookupKey) {
+              stripePriceId = (await gw.resolvePriceByLookupKey(lookupKey)) ?? undefined;
+            }
+            stripePriceId = stripePriceId ?? plan.providerPriceMap?.stripe;
+          }
         } catch (error) {
           console.warn('Lookup key resolution failed, falling back to provider_price_map:', error);
+          stripePriceId = plan.providerPriceMap?.stripe;
         }
       }
       stripePriceId = stripePriceId ?? plan.providerPriceMap?.stripe;
@@ -842,6 +857,25 @@ export class BillingService {
   }
 
   private async resolvePlanIdFromStripePrice(stripePriceId: string): Promise<string | undefined> {
+    // Prefer mapping via the Stripe price's lookup_key (stable across price rotations).
+    const gw = this.gateway as PaymentGateway & {
+      getLookupKeyForPriceId?: (priceId: string) => Promise<string | null>;
+    };
+    if (typeof gw.getLookupKeyForPriceId === 'function') {
+      try {
+        const lookupKey = await gw.getLookupKeyForPriceId(stripePriceId);
+        if (lookupKey) {
+          const planId = planIdFromStripeLookupKey(lookupKey);
+          if (planId) {
+            return planId;
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to resolve plan via Stripe lookup_key:', error);
+      }
+    }
+
+    // Fall back to stored provider_price_map (useful in test mode without lookup keys).
     const { data: plans } = await this.supabase
       .from('cadenza_billing_plans')
       .select('id, provider_price_map');
