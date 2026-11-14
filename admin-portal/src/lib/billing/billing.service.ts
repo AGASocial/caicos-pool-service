@@ -32,6 +32,7 @@ import {
 } from './types';
 import { isPaidSubscriptionEffective } from './subscription-utils';
 import { getStripeLookupKey, planIdFromStripeLookupKey } from './stripe-lookup-keys';
+import { mapPlanToTier, type SubscriptionTier } from './subscription-tier';
 
 export class BillingService {
   constructor(
@@ -921,7 +922,47 @@ export class BillingService {
   }
 
   /**
+   * Sync cadenza_companies.subscription_tier from a billing plan id.
+   * Used by checkout / subscription webhooks and Free onboarding helpers.
+   */
+  async syncCompanySubscriptionTier(
+    userId: string,
+    planId: string,
+    tierOverride?: SubscriptionTier,
+  ): Promise<void> {
+    const tier = tierOverride ?? mapPlanToTier(planId);
+    if (!tier) {
+      console.warn('No subscription_tier mapping for plan:', planId);
+      return;
+    }
+
+    const { data: profile, error: profileError } = await this.supabase
+      .from('cadenza_profiles')
+      .select('company_id')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (profileError || !profile?.company_id) {
+      console.warn('Cannot sync subscription_tier: no company for user', userId);
+      return;
+    }
+
+    const { error } = await this.supabase
+      .from('cadenza_companies')
+      .update({
+        subscription_tier: tier,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', profile.company_id);
+
+    if (error) {
+      console.error('Failed to sync company subscription_tier:', error.message);
+    }
+  }
+
+  /**
    * Handle subscription created/updated events
+   * (checkout.session.completed → subscription.created; customer.subscription.updated)
    */
   private async handleSubscriptionEvent(data: SubscriptionEventData): Promise<void> {
     let userId = data.userId;
@@ -962,10 +1003,14 @@ export class BillingService {
       console.error('Failed to upsert subscription from webhook:', error.message);
       throw new BillingError('Failed to upsert subscription', 'WEBHOOK_SUBSCRIPTION_FAILED');
     }
+
+    if (planId) {
+      await this.syncCompanySubscriptionTier(userId, planId);
+    }
   }
 
   /**
-   * Handle subscription canceled event
+   * Handle subscription canceled event (customer.subscription.deleted → free)
    */
   private async handleSubscriptionCanceled(data: SubscriptionEventData): Promise<void> {
     await this.supabase
@@ -975,6 +1020,22 @@ export class BillingService {
         canceled_at: data.canceledAt || new Date().toISOString(),
       })
       .eq('provider_subscription_id', data.subscriptionId);
+
+    let userId = data.userId;
+    if (!userId) {
+      userId = (await this.resolveUserIdFromCustomer(data.customerId)) ?? undefined;
+    }
+    if (!userId) {
+      const { data: sub } = await this.supabase
+        .from('cadenza_billing_subscriptions')
+        .select('user_id')
+        .eq('provider_subscription_id', data.subscriptionId)
+        .maybeSingle();
+      userId = (sub?.user_id as string | undefined) ?? undefined;
+    }
+    if (userId) {
+      await this.syncCompanySubscriptionTier(userId, 'plan_free', 'free');
+    }
   }
 
   /**
