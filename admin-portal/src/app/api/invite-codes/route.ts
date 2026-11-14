@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
-import { getBillingService } from '@/lib/billing/server';
 import { entitlementError, hasEntitlement } from '@/lib/entitlements';
+import { validateTechnicianInvite } from '@/lib/seat-management';
 
 const DEFAULT_EXPIRES_DAYS = 7;
 const CODE_LENGTH = 12;
@@ -90,47 +90,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Enforce technician limit from plan when inviting a technician
+    // Shared Free/flat hard-cap check (paid per-seat allows invite; seat bumps on activation)
     if (role === 'technician') {
-      const billingService = await getBillingService();
-      const subscription = await billingService.getUserSubscription(user.id);
-      
-      // For free plan, check max_technicians feature limit
-      // For paid plans (per_technician pricing), check subscription.quantity
-      let maxTechnicians = 3; // Free plan default
-      let isPerSeatPlan = false;
-      
-      if (subscription) {
-        const plan = await billingService.getPlan(subscription.planId);
-        const pricingModel = plan.pricingModel;
-        
-        if (pricingModel === 'per_technician') {
-          // Per-seat plan: limit is subscription.quantity
-          maxTechnicians = subscription.quantity || 1;
-          isPerSeatPlan = true;
-        } else {
-          // Flat plan: limit is from plan features
-          maxTechnicians = (plan.features as { max_technicians?: number })?.max_technicians ?? 3;
-        }
-      }
-
-      // Count active technicians in company
-      const { count, error: countError } = await (supabase as unknown as CadenzaSupabaseClient)
-        .from('cadenza_profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('company_id', profile.company_id)
-        .eq('role', 'technician')
-        .eq('is_active', true);
-
-      if (!countError && maxTechnicians !== -1 && (count ?? 0) >= maxTechnicians) {
+      const gate = await validateTechnicianInvite(supabase, user.id, role);
+      if (!gate.valid) {
         return NextResponse.json(
           {
-            error: isPerSeatPlan
-              ? `Technician seat limit reached. You have ${maxTechnicians} seat(s). Please upgrade to add more technicians.`
-              : `Technician limit reached for your plan (${maxTechnicians} max).`,
-            code: 'TECHNICIAN_LIMIT_REACHED',
-            max: maxTechnicians,
-            isPerSeat: isPerSeatPlan,
+            error: gate.error,
+            code: gate.code ?? 'TECHNICIAN_LIMIT_REACHED',
+            max: gate.max,
+            isPerSeat: gate.isPerSeat ?? false,
           },
           { status: 403 }
         );

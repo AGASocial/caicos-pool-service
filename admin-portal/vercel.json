@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/generate-route-jobs",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/process-scheduled-deactivations",
+      "schedule": "15 * * * *"
     }
   ]
 }

@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
+import {
+  canAddTechnician,
+  ensureSeatForNewTechnician,
+} from '@/lib/seat-management';
 
 function getAppOrigin(request: NextRequest): string {
   const origin = request.headers.get('origin');
@@ -82,6 +86,32 @@ export async function POST(request: NextRequest) {
 
       userMetadata.company_id = companyId;
       userMetadata.role = role;
+
+      // Free/flat hard cap before creating the auth user (technician invites only)
+      if (role === 'technician') {
+        const { data: owner } = await supabaseAdmin
+          .from('cadenza_profiles')
+          .select('id')
+          .eq('company_id', companyId)
+          .eq('role', 'owner')
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (owner?.id) {
+          const gate = await canAddTechnician(supabaseAdmin as never, owner.id as string);
+          if (!gate.canAdd && !gate.willIncreaseSeat) {
+            return NextResponse.json(
+              {
+                error: gate.reason ?? 'Technician limit reached for your plan.',
+                code: gate.code ?? 'TECHNICIAN_LIMIT_REACHED',
+                max: gate.max,
+              },
+              { status: 403 }
+            );
+          }
+        }
+      }
     } else if (typeof companyName === 'string' && companyName.trim()) {
       userMetadata.company_name = companyName.trim();
     } else {
@@ -111,6 +141,26 @@ export async function POST(request: NextRequest) {
         .from('cadenza_invite_codes')
         .update({ used_at: new Date().toISOString() })
         .eq('code', inviteCode.trim());
+
+      // Paid per-seat: bump Stripe quantity if the new active tech exceeds seats
+      if (userMetadata.role === 'technician' && userMetadata.company_id) {
+        const { data: owner } = await supabaseAdmin
+          .from('cadenza_profiles')
+          .select('id')
+          .eq('company_id', userMetadata.company_id)
+          .eq('role', 'owner')
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (owner?.id) {
+          try {
+            await ensureSeatForNewTechnician(supabaseAdmin as never, owner.id as string);
+          } catch (seatErr) {
+            console.error('ensureSeatForNewTechnician after register failed:', seatErr);
+          }
+        }
+      }
     }
 
     return NextResponse.json({ success: true });

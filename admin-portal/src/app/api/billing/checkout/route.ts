@@ -67,15 +67,17 @@ export async function POST(request: NextRequest) {
     const { StripeAdapter } = await import('@/lib/billing/adapters');
     const stripeAdapter = new StripeAdapter(process.env.STRIPE_SECRET_KEY!);
 
-    // Build success/cancel URLs from NEXT_PUBLIC_APP_URL with allowlisted locale
-    // Fall back to the deployment's own URL (set by Vercel, not client-controlled) on previews
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
-    if (!appUrl) {
+    const { resolveAppUrl } = await import('@/lib/app-url');
+    let appUrl: string;
+    try {
+      appUrl = resolveAppUrl({
+        headers: request.headers,
+        requestOrigin: request.headers.get('origin'),
+      });
+    } catch {
       return errorResponse('Application URL not configured', 500);
     }
-    
+
     // Allowlist locales to prevent open redirects
     const allowedLocales = ['en', 'es'];
     const requestedLocale = request.headers.get('x-locale') || 'en';
@@ -90,9 +92,7 @@ export async function POST(request: NextRequest) {
         ? `${appUrl}/${locale}/onboarding`
         : `${appUrl}/${locale}/billing/plans`;
 
-    // Map plan IDs to Stripe lookup keys
-    // This allows dynamic price resolution without hardcoding Stripe price IDs
-    const { STRIPE_LOOKUP_KEYS: lookupKeyMap } = await import('@/lib/billing/stripe-lookup-keys');
+    const { getStripeLookupKey } = await import('@/lib/billing/stripe-lookup-keys');
 
     const checkoutSession = await stripeAdapter.createCheckoutSession({
       customer,
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       quantity: parsedQuantity,
       successUrl,
       cancelUrl,
-      lookupKey: lookupKeyMap[planId], // Use lookup key if available
+      lookupKey: getStripeLookupKey(planId),
       metadata: {
         user_id: userId,
         plan_id: planId,

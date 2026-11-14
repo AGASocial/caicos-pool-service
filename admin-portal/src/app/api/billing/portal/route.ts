@@ -42,9 +42,21 @@ export async function POST(request: NextRequest) {
     const { StripeAdapter } = await import('@/lib/billing/adapters');
     const stripeAdapter = new StripeAdapter(process.env.STRIPE_SECRET_KEY!);
 
-    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || '';
-    const locale = request.headers.get('x-locale') || 'en';
-    const returnUrl = `${origin}/${locale}/billing`;
+    const { resolveAppUrl } = await import('@/lib/app-url');
+    let appUrl: string;
+    try {
+      appUrl = resolveAppUrl({
+        headers: request.headers,
+        requestOrigin: request.headers.get('origin'),
+      });
+    } catch {
+      return errorResponse('Application URL not configured', 500);
+    }
+
+    const allowedLocales = ['en', 'es'];
+    const requestedLocale = request.headers.get('x-locale') || 'en';
+    const locale = allowedLocales.includes(requestedLocale) ? requestedLocale : 'en';
+    const returnUrl = `${appUrl}/${locale}/billing`;
 
     const portalSession = await stripeAdapter.createPortalSession({
       customer,

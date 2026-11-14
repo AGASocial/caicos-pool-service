@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import type { Subscription, PlanDefinition, CheckoutSessionDetails } from '@/lib/billing/types';
 import { LoadingState } from '@/components/ui/loading-state';
 
-const PAYMENT_GATEWAY = process.env.NEXT_PUBLIC_PAYMENT_GATEWAY || 'payu';
+const PAYMENT_GATEWAY = process.env.NEXT_PUBLIC_PAYMENT_GATEWAY || 'stripe';
 
 interface PlanFeatures {
   admin_users: number;
