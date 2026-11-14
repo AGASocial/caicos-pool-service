@@ -6,11 +6,11 @@
  *  2. Free plan blocks the 4th technician invite (max 3)
  *  3. Webhook endpoint rejects unsigned / badly signed requests
  *  4. Declined card (4000 0000 0000 0341) in Stripe Checkout -> stays on Free
- *  5. Upgrade to Standard x3 seats via Stripe Checkout (4242...) -> webhook -> Standard
- *  6. Per-seat limit: 3 seats + 3 techs blocks invite; +1 seat allows it
- *  7. Upgrade Standard -> Pro (and plan survives the subscription.updated webhook)
- *  8. Downgrade Pro -> Standard
- *  9. Cancel at period end, then cancel immediately -> back to Free
+ *  5. Upgrade to Standard x3 seats via Stripe Checkout (4242...) -> webhook -> Standard (+ company tier)
+ *  6. Per-seat: 3 seats + 3 techs; adding a 4th auto-increases quantity (create_prorations) + notice
+ *  7. Upgrade Standard -> Pro (and plan survives the subscription.updated webhook) (+ company tier)
+ *  8. Downgrade Pro -> Standard (+ company tier)
+ *  9. Cancel at period end, then cancel immediately -> back to Free (+ company tier)
  *
  * Safety:
  *  - Aborts if the deployed app hands out a live Checkout session (cs_live_).
@@ -73,6 +73,20 @@ async function waitForSub(api: APIRequestContext, pred: (s: Sub) => boolean, lab
     }, { message: `waiting for: ${label}`, timeout: timeoutMs, intervals: [2_000, 3_000, 5_000] })
     .toBe(true);
   return last!;
+}
+
+/** Poll cadenza_companies.subscription_tier after plan changes (webhook / sync). */
+async function waitForCompanyTier(tier: string, label: string, timeoutMs = 90_000) {
+  await expect
+    .poll(async () => {
+      const { data } = await admin
+        .from('cadenza_companies')
+        .select('subscription_tier')
+        .eq('id', companyId)
+        .single();
+      return data?.subscription_tier as string | undefined;
+    }, { message: `waiting for company tier: ${label}`, timeout: timeoutMs, intervals: [2_000, 3_000, 5_000] })
+    .toBe(tier);
 }
 
 async function inviteTech(api: APIRequestContext) {
@@ -220,26 +234,62 @@ test('5. upgrade Free -> Standard (3 seats) via Stripe Checkout with 4242', asyn
   await page.waitForURL(/session_id=cs_test_/, { timeout: 60_000, waitUntil: 'commit' });
   const sub = await waitForSub(api, (s) => s.planId === STANDARD && s.status === 'active', 'Standard active via webhook');
   expect(sub.quantity).toBe(3);
+  await waitForCompanyTier('standard', 'standard after Standard upgrade');
 
   // Duplicate paid checkout must be refused
   const dup = await api.post('/api/billing/checkout', { data: { planId: PRO, quantity: 3 } });
   expect(dup.status()).toBe(400);
 });
 
-test('6. Standard seat limit: 3 seats blocks the 4th tech, adding a seat allows it', async () => {
+test('6. Standard per-seat: adding a 4th tech auto-increases quantity with proration notice', async () => {
   test.setTimeout(120_000);
-  const blocked = await inviteTech(api);
-  expect(blocked.status, JSON.stringify(blocked.body)).toBe(403);
-  expect(blocked.body.isPerSeat).toBe(true);
-  expect(blocked.body.max).toBe(3);
+  // Paid per-seat: invite beyond seats is allowed (seat bumps on activate, not invite)
+  const invite = await inviteTech(api);
+  expect(invite.status, JSON.stringify(invite.body)).toBe(200);
 
-  const sub = await getSub(api);
-  const patch = await api.patch('/api/billing/subscriptions', { data: { subscriptionId: sub.id, quantity: 4 } });
-  expect(patch.status()).toBe(200);
-  await waitForSub(api, (s) => s.quantity === 4, 'quantity 4');
+  // Create inactive 4th tech, then activate via team API (returns seatAdded + notice)
+  const { data, error } = await admin.auth.admin.createUser({
+    email: `qa-billing-${RUN_ID}-tech4@cadenzaops.com`,
+    password: `Qa!${crypto.randomBytes(18).toString('base64url')}`,
+    email_confirm: true,
+    user_metadata: { full_name: 'QA Billing Tech 4', company_id: companyId, role: 'technician' },
+  });
+  expect(error, error?.message).toBeNull();
+  const tech4Id = data.user!.id;
+  createdUserIds.push(tech4Id);
+  const { error: deactErr } = await admin
+    .from('cadenza_profiles')
+    .update({ is_active: false })
+    .eq('id', tech4Id);
+  expect(deactErr, deactErr?.message).toBeNull();
 
-  const allowed = await inviteTech(api);
-  expect(allowed.status, JSON.stringify(allowed.body)).toBe(200);
+  const { count: activeBefore } = await admin
+    .from('cadenza_profiles').select('id', { count: 'exact', head: true })
+    .eq('company_id', companyId).eq('role', 'technician').eq('is_active', true);
+  expect(activeBefore).toBe(3);
+  expect((await getSub(api)).quantity).toBe(3);
+
+  const activate = await api.patch(`/api/team/${tech4Id}`, { data: { is_active: true } });
+  const activateBody = await activate.json().catch(() => ({}));
+  expect(activate.status(), JSON.stringify(activateBody)).toBe(200);
+  expect(activateBody.seatAdded).toBe(true);
+  expect(activateBody.notice).toBe('Se agregó un asiento; se cobrará prorrateado');
+
+  await waitForSub(api, (s) => s.quantity === 4, 'quantity 4 after seat auto-increase');
+  await expect
+    .poll(async () => {
+      const { data: row } = await admin
+        .from('cadenza_billing_subscriptions')
+        .select('quantity, status')
+        .eq('user_id', ownerId)
+        .eq('provider', 'stripe')
+        .neq('status', 'canceled')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return row?.quantity as number | undefined;
+    }, { message: 'cadenza_billing_subscriptions.quantity === 4', timeout: 90_000, intervals: [2_000, 3_000, 5_000] })
+    .toBe(4);
 });
 
 test('7. upgrade Standard -> Pro (survives the subscription.updated webhook)', async () => {
@@ -248,11 +298,13 @@ test('7. upgrade Standard -> Pro (survives the subscription.updated webhook)', a
   const res = await api.patch('/api/billing/subscriptions', { data: { subscriptionId: sub.id, planId: PRO } });
   expect(res.status(), JSON.stringify(await res.json().catch(() => ({})))).toBe(200);
   await waitForSub(api, (s) => s.planId === PRO, 'Pro');
+  await waitForCompanyTier('pro', 'pro after Pro upgrade');
   // Webhook from Stripe arrives a few seconds later; plan must not revert
   await new Promise((r) => setTimeout(r, 20_000));
   const after = await getSub(api);
   expect(after.planId).toBe(PRO);
   expect(after.status).toBe('active');
+  await waitForCompanyTier('pro', 'pro still after webhook');
 });
 
 test('8. downgrade Pro -> Standard', async () => {
@@ -261,8 +313,10 @@ test('8. downgrade Pro -> Standard', async () => {
   const res = await api.patch('/api/billing/subscriptions', { data: { subscriptionId: sub.id, planId: STANDARD } });
   expect(res.status(), JSON.stringify(await res.json().catch(() => ({})))).toBe(200);
   await waitForSub(api, (s) => s.planId === STANDARD, 'Standard');
+  await waitForCompanyTier('standard', 'standard after downgrade');
   await new Promise((r) => setTimeout(r, 20_000));
   expect((await getSub(api)).planId).toBe(STANDARD);
+  await waitForCompanyTier('standard', 'standard still after webhook');
 });
 
 test('9. cancel at period end, then cancel now -> back to Free after webhook', async () => {
@@ -276,6 +330,7 @@ test('9. cancel at period end, then cancel now -> back to Free after webhook', a
   const now = await api.delete(`/api/billing/subscriptions?subscriptionId=${sub.id}&atPeriodEnd=false`);
   expect(now.status()).toBe(200);
   await waitForSub(api, (s) => s.planId === FREE, 'back to Free');
+  await waitForCompanyTier('free', 'free after cancel');
 
   // After customer.subscription.deleted webhook, the DB row must be canceled (not resurrected)
   await new Promise((r) => setTimeout(r, 20_000));
@@ -284,4 +339,5 @@ test('9. cancel at period end, then cancel now -> back to Free after webhook', a
   expect(rows?.length ?? 0).toBeGreaterThan(0);
   for (const r of rows ?? []) expect(r.status).toBe('canceled');
   expect((await getSub(api)).planId).toBe(FREE);
+  await waitForCompanyTier('free', 'free still after webhook');
 });

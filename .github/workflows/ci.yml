@@ -9,7 +9,7 @@ on:
 jobs:
   admin-portal:
     name: Admin Portal CI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: ./admin-portal
@@ -40,7 +40,7 @@ jobs:
 
   technician-app:
     name: Technician App CI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: ./technician-app
@@ -74,7 +74,7 @@ jobs:
 
   status-check:
     name: All Checks Passed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [admin-portal, technician-app]
     if: always()
     steps:
