@@ -50,10 +50,39 @@ const bypassHeaders: Record<string, string> = process.env.VERCEL_AUTOMATION_BYPA
   ? { 'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET, 'x-vercel-set-bypass-cookie': 'true' }
   : {};
 
+const RECORD_VIDEO = process.env.PLAYWRIGHT_VIDEO === 'on';
+const VIDEO_DIR = 'test-results/billing-video';
+
 async function ownerPage(browser: Browser): Promise<Page> {
-  const ctx = await browser.newContext({ storageState: await api.storageState() });
+  const ctx = await browser.newContext({
+    storageState: await api.storageState(),
+    ...(RECORD_VIDEO ? { recordVideo: { dir: VIDEO_DIR, size: { width: 1280, height: 800 } }, viewport: { width: 1280, height: 800 } } : {}),
+  });
   return ctx.newPage(); // no extra headers: Stripe Checkout must not receive the Vercel bypass header
 }
+
+// Video-only: after each step, show the real UI state (billing + team pages) so the
+// PR recording documents the result. Never runs in CI (PLAYWRIGHT_VIDEO is off there).
+const SHOWCASE: Record<string, string[]> = {
+  '1.': ['/en/billing', '/en/billing/plans'],
+  '2.': ['/en/team'],
+  '5.': ['/en/billing'],
+  '6.': ['/en/team', '/en/billing'],
+  '7.': ['/en/billing'],
+  '8.': ['/en/billing'],
+  '9.': ['/en/billing'],
+};
+test.afterEach(async ({ browser }, testInfo) => {
+  if (!RECORD_VIDEO || testInfo.status !== 'passed' || !api) return;
+  const key = Object.keys(SHOWCASE).find((k) => testInfo.title.startsWith(k));
+  if (!key) return;
+  const page = await ownerPage(browser);
+  for (const path of SHOWCASE[key]) {
+    await page.goto(`${BASE_URL}${path}`, { waitUntil: 'networkidle' }).catch(() => {});
+    await page.waitForTimeout(3_000);
+  }
+  await page.context().close();
+});
 
 type Sub = { id: string; planId: string; quantity: number; status: string; cancelAtPeriodEnd?: boolean };
 
