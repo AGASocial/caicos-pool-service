@@ -97,6 +97,7 @@ export default function JobsPage() {
   // Apply follow-up filter from URL param (one-time initialization)
   useEffect(() => {
     if (followUpFromUrl) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       setNeedsFollowUpFilter(true);
       setMoreFiltersOpen(true);
       setAppliedFilters((prev) => ({ ...prev, needsFollowUpFilter: true }));
