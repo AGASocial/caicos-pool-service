@@ -31,7 +31,8 @@ import {
   PaymentGatewayError,
 } from './types';
 import { isPaidSubscriptionEffective } from './subscription-utils';
-import { STRIPE_LOOKUP_KEYS } from './stripe-lookup-keys';
+import { getStripeLookupKey, planIdFromStripeLookupKey } from './stripe-lookup-keys';
+import { mapPlanToTier, type SubscriptionTier } from './subscription-tier';
 
 export class BillingService {
   constructor(
@@ -598,6 +599,7 @@ export class BillingService {
    */
   async updateSubscription(request: UpdateSubscriptionRequest): Promise<void> {
     const { subscriptionId, planId, quantity, cancelAtPeriodEnd } = request;
+    let { prorationBehavior } = request;
 
     // Get existing subscription
     const { data: subscription, error: fetchError } = await this.supabase
@@ -610,19 +612,40 @@ export class BillingService {
       throw new SubscriptionNotFoundError(subscriptionId);
     }
 
+    // Explicit proration when changing quantity (Stripe adapter requires it).
+    if (quantity != null && !prorationBehavior) {
+      const currentQty = (subscription.quantity as number | null) ?? 1;
+      prorationBehavior = quantity > currentQty ? 'create_prorations' : 'none';
+    }
+
     // Get Stripe price ID if changing plan
     let stripePriceId: string | undefined;
     if (planId) {
       const plan = await this.getPlan(planId);
-      // Prefer the Stripe lookup key (same resolution as Checkout) so plan changes use the
-      // current price even when provider_price_map is stale or missing (e.g. Pro).
-      const lookupKey = STRIPE_LOOKUP_KEYS[planId];
-      const gw = this.gateway as PaymentGateway & { resolvePriceByLookupKey?: (k: string) => Promise<string> };
-      if (lookupKey && this.gateway.getName() === 'stripe' && typeof gw.resolvePriceByLookupKey === 'function') {
+      // Prefer Stripe lookup_key (same as Checkout); fall back to stored provider_price_map.
+      const gw = this.gateway as PaymentGateway & {
+        resolveStripePriceId?: (
+          planId: string,
+          storedPriceId?: string | null,
+          explicitLookupKey?: string
+        ) => Promise<string | null>;
+        resolvePriceByLookupKey?: (k: string) => Promise<string | null>;
+      };
+      if (this.gateway.getName() === 'stripe') {
         try {
-          stripePriceId = await gw.resolvePriceByLookupKey(lookupKey);
+          if (typeof gw.resolveStripePriceId === 'function') {
+            stripePriceId =
+              (await gw.resolveStripePriceId(planId, plan.providerPriceMap?.stripe)) ?? undefined;
+          } else if (typeof gw.resolvePriceByLookupKey === 'function') {
+            const lookupKey = getStripeLookupKey(planId);
+            if (lookupKey) {
+              stripePriceId = (await gw.resolvePriceByLookupKey(lookupKey)) ?? undefined;
+            }
+            stripePriceId = stripePriceId ?? plan.providerPriceMap?.stripe;
+          }
         } catch (error) {
           console.warn('Lookup key resolution failed, falling back to provider_price_map:', error);
+          stripePriceId = plan.providerPriceMap?.stripe;
         }
       }
       stripePriceId = stripePriceId ?? plan.providerPriceMap?.stripe;
@@ -637,6 +660,7 @@ export class BillingService {
       result = await this.gateway.updateSubscription(subscription.provider_subscription_id, {
         planId: stripePriceId,
         quantity,
+        prorationBehavior,
         cancelAtPeriodEnd,
         ...(planId ? { metadata: { plan_id: planId } } : {}),
       });
@@ -842,6 +866,25 @@ export class BillingService {
   }
 
   private async resolvePlanIdFromStripePrice(stripePriceId: string): Promise<string | undefined> {
+    // Prefer mapping via the Stripe price's lookup_key (stable across price rotations).
+    const gw = this.gateway as PaymentGateway & {
+      getLookupKeyForPriceId?: (priceId: string) => Promise<string | null>;
+    };
+    if (typeof gw.getLookupKeyForPriceId === 'function') {
+      try {
+        const lookupKey = await gw.getLookupKeyForPriceId(stripePriceId);
+        if (lookupKey) {
+          const planId = planIdFromStripeLookupKey(lookupKey);
+          if (planId) {
+            return planId;
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to resolve plan via Stripe lookup_key:', error);
+      }
+    }
+
+    // Fall back to stored provider_price_map (useful in test mode without lookup keys).
     const { data: plans } = await this.supabase
       .from('cadenza_billing_plans')
       .select('id, provider_price_map');
@@ -879,7 +922,47 @@ export class BillingService {
   }
 
   /**
+   * Sync cadenza_companies.subscription_tier from a billing plan id.
+   * Used by checkout / subscription webhooks and Free onboarding helpers.
+   */
+  async syncCompanySubscriptionTier(
+    userId: string,
+    planId: string,
+    tierOverride?: SubscriptionTier,
+  ): Promise<void> {
+    const tier = tierOverride ?? mapPlanToTier(planId);
+    if (!tier) {
+      console.warn('No subscription_tier mapping for plan:', planId);
+      return;
+    }
+
+    const { data: profile, error: profileError } = await this.supabase
+      .from('cadenza_profiles')
+      .select('company_id')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (profileError || !profile?.company_id) {
+      console.warn('Cannot sync subscription_tier: no company for user', userId);
+      return;
+    }
+
+    const { error } = await this.supabase
+      .from('cadenza_companies')
+      .update({
+        subscription_tier: tier,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', profile.company_id);
+
+    if (error) {
+      console.error('Failed to sync company subscription_tier:', error.message);
+    }
+  }
+
+  /**
    * Handle subscription created/updated events
+   * (checkout.session.completed → subscription.created; customer.subscription.updated)
    */
   private async handleSubscriptionEvent(data: SubscriptionEventData): Promise<void> {
     let userId = data.userId;
@@ -920,10 +1003,14 @@ export class BillingService {
       console.error('Failed to upsert subscription from webhook:', error.message);
       throw new BillingError('Failed to upsert subscription', 'WEBHOOK_SUBSCRIPTION_FAILED');
     }
+
+    if (planId) {
+      await this.syncCompanySubscriptionTier(userId, planId);
+    }
   }
 
   /**
-   * Handle subscription canceled event
+   * Handle subscription canceled event (customer.subscription.deleted → free)
    */
   private async handleSubscriptionCanceled(data: SubscriptionEventData): Promise<void> {
     await this.supabase
@@ -933,6 +1020,22 @@ export class BillingService {
         canceled_at: data.canceledAt || new Date().toISOString(),
       })
       .eq('provider_subscription_id', data.subscriptionId);
+
+    let userId = data.userId;
+    if (!userId) {
+      userId = (await this.resolveUserIdFromCustomer(data.customerId)) ?? undefined;
+    }
+    if (!userId) {
+      const { data: sub } = await this.supabase
+        .from('cadenza_billing_subscriptions')
+        .select('user_id')
+        .eq('provider_subscription_id', data.subscriptionId)
+        .maybeSingle();
+      userId = (sub?.user_id as string | undefined) ?? undefined;
+    }
+    if (userId) {
+      await this.syncCompanySubscriptionTier(userId, 'plan_free', 'free');
+    }
   }
 
   /**
@@ -947,6 +1050,14 @@ export class BillingService {
         console.error('No user found for customer:', data.customerId);
         return;
       }
+    }
+
+    // Renewal boundary: apply any technician deactivations that reached period end.
+    try {
+      const { processDueTechnicianDeactivations } = await import('@/lib/seat-management');
+      await processDueTechnicianDeactivations(this.supabase);
+    } catch (e) {
+      console.warn('processDueTechnicianDeactivations on invoice.paid failed:', e);
     }
 
     let subscriptionId: string | undefined;

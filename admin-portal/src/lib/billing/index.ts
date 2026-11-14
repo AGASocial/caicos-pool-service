@@ -13,5 +13,7 @@ export * from './webhook-normalizer.interface';
 // Export services
 export * from './billing.service';
 
+export * from './subscription-tier';
+
 // Export adapters
 export * from './adapters';

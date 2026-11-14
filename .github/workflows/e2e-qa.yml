@@ -7,7 +7,7 @@ on:
 jobs:
   lint-and-typecheck:
     name: Lint & Type Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         app: [admin-portal, technician-app]
@@ -37,7 +37,7 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: lint-and-typecheck
     steps:
       - uses: actions/checkout@v4
@@ -61,7 +61,7 @@ jobs:
 
   wait-for-vercel:
     name: Wait for Vercel Preview
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: unit-tests
     outputs:
       preview-url: ${{ steps.wait.outputs.url }}
@@ -82,7 +82,7 @@ jobs:
 
   e2e-tests:
     name: E2E Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: wait-for-vercel
     # Always run so this required check cannot be silently skipped
     # (GitHub treats a skipped required job as passing).
@@ -257,7 +257,7 @@ jobs:
 
   report-results:
     name: Report Test Results
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: e2e-tests
     if: always()
     permissions:
@@ -469,7 +469,7 @@ jobs:
 
   status-check:
     name: E2E QA Status
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [lint-and-typecheck, unit-tests, e2e-tests]
     if: always()
     steps:

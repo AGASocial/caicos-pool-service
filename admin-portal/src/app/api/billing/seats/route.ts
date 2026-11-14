@@ -1,22 +1,29 @@
 /**
  * Seat Management API
- * GET /api/billing/seats - Get seat information
+ * GET /api/billing/seats - Get seat information (incl. pending deactivations)
  */
 
-import { NextRequest } from 'next/server';
 import {
   getAuthenticatedUserId,
   errorResponse,
   successResponse,
 } from '@/lib/billing/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
-import { getSeatInfo } from '@/lib/seat-management';
+import { getSeatInfo, processDueTechnicianDeactivations } from '@/lib/seat-management';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const userId = await getAuthenticatedUserId();
     if (!userId) {
       return errorResponse('Unauthorized', 401);
+    }
+
+    // Opportunistically apply due deactivations (cron is primary).
+    try {
+      await processDueTechnicianDeactivations(supabaseAdmin as never);
+    } catch (e) {
+      console.warn('processDueTechnicianDeactivations (seats GET) failed:', e);
     }
 
     const { supabase } = await createAuthenticatedRouteClient();

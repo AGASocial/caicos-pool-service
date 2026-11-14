@@ -28,7 +28,7 @@ export async function GET() {
 
   const { data, error } = await client
     .from('cadenza_profiles')
-    .select('id, full_name, role, is_active, email_confirmed_at')
+    .select('id, full_name, role, is_active, email_confirmed_at, scheduled_deactivation_at')
     .order('full_name', { ascending: true });
 
   if (error) {
@@ -42,6 +42,7 @@ export async function GET() {
     role: row.role,
     is_active: row.is_active,
     email_confirmed: row.email_confirmed_at != null,
+    scheduled_deactivation_at: row.scheduled_deactivation_at ?? null,
   }));
 
   return NextResponse.json(enriched);

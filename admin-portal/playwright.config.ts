@@ -43,7 +43,8 @@ export default defineConfig({
         },
     // Failure screenshots on; key-step shots taken explicitly with password mask in the spec
     screenshot: 'only-on-failure',
-    video: 'off',
+    // Off by default (CI); set PLAYWRIGHT_VIDEO=on to record
+    video: process.env.PLAYWRIGHT_VIDEO === 'on' ? 'on' : 'off',
     // Vercel Deployment Protection bypass (CI preview URLs)
     extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET
       ? {

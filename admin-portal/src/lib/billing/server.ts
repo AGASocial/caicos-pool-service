@@ -8,12 +8,15 @@ import { BillingService } from './billing.service';
 import { StripeAdapter, PayUAdapter } from './adapters';
 import type { PaymentGateway } from './gateway.interface';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
+import { getConfiguredPaymentGatewayName } from './payment-gateway-name';
+
+export { getConfiguredPaymentGatewayName } from './payment-gateway-name';
 
 /**
  * Get the configured payment gateway based on environment
  */
 export function getPaymentGateway(): PaymentGateway {
-  const gateway = process.env.NEXT_PUBLIC_PAYMENT_GATEWAY || "payu";
+  const gateway = getConfiguredPaymentGatewayName();
 
   switch (gateway) {
     case 'stripe': {
