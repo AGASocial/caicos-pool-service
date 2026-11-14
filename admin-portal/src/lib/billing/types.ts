@@ -6,7 +6,7 @@
 // Core billing types
 export type BillingInterval = 'month' | 'year';
 export type Currency = 'USD' | 'COP' | 'EUR';
-export type PaymentProvider = 'stripe' | 'paypal' | 'wompi' | 'payu';
+export type PaymentProvider = 'stripe' | 'paypal' | 'wompi' | 'payu' | 'none';
 
 export type SubscriptionStatus =
   | 'active'

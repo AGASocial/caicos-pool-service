@@ -109,6 +109,8 @@
   "filterByTeamMember": "Team member",
   "freeForever": "Free forever",
   "freePlan": "Free Plan",
+  "freePlanExpiredReadOnly": "Your free plan has expired; the account is read-only. Upgrade your plan.",
+  "readOnlyAccount": "Read-only account",
   "frequency_monthly": "Monthly",
   "frequency_weekly": "Weekly",
   "fullName": "Full Name",

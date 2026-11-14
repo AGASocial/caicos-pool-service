@@ -103,7 +103,8 @@ export class BillingService {
   }
 
   /**
-   * Get user's active subscription
+   * Get user's active subscription (includes Free plan rows).
+   * Expired paid subscriptions are canceled and treated as absent.
    */
   async getUserSubscription(userId: string): Promise<Subscription | null> {
     const { data, error } = await this.supabase
@@ -122,6 +123,12 @@ export class BillingService {
     if (!data) return null;
 
     const mapped = this.mapSubscriptionFromDb(data);
+
+    // Free plan rows are first-class — do not cancel them when "not paid-effective".
+    if (mapped.planId === 'plan_free') {
+      return mapped;
+    }
+
     if (!isPaidSubscriptionEffective(mapped)) {
       await this.supabase
         .from('cadenza_billing_subscriptions')
@@ -131,6 +138,92 @@ export class BillingService {
     }
 
     return mapped;
+  }
+
+  /**
+   * Idempotently create an active Free subscription for onboarding/signup.
+   * current_period_end = now + plan_free.features.plan_duration_days.
+   * No-ops (returns existing) if a Free or paid-effective subscription already exists.
+   */
+  async ensureFreeSubscription(userId: string): Promise<Subscription> {
+    const existing = await this.getUserSubscription(userId);
+    if (existing?.planId === 'plan_free') {
+      return existing;
+    }
+    if (existing && isPaidSubscriptionEffective(existing)) {
+      return existing;
+    }
+
+    const providerSubscriptionId = `free_${userId}`;
+    const { data: byProviderId } = await this.supabase
+      .from('cadenza_billing_subscriptions')
+      .select('*')
+      .eq('provider_subscription_id', providerSubscriptionId)
+      .maybeSingle();
+
+    const plan = await this.getPlan('plan_free');
+    const features = plan.features as Record<string, unknown>;
+    const durationDays =
+      typeof features.plan_duration_days === 'number' && features.plan_duration_days > 0
+        ? features.plan_duration_days
+        : 30;
+
+    const now = new Date();
+    const periodEnd = new Date(now);
+    periodEnd.setUTCDate(periodEnd.getUTCDate() + durationDays);
+
+    if (byProviderId) {
+      const mapped = this.mapSubscriptionFromDb(byProviderId);
+      if (mapped.status === 'active' && mapped.planId === 'plan_free') {
+        return mapped;
+      }
+      // Reactivate canceled free_* row with a fresh period (e.g. after paid cancel).
+      const { data: reactivated, error: reactivateError } = await this.supabase
+        .from('cadenza_billing_subscriptions')
+        .update({
+          status: 'active',
+          plan_id: 'plan_free',
+          canceled_at: null,
+          current_period_start: now.toISOString(),
+          current_period_end: periodEnd.toISOString(),
+          updated_at: now.toISOString(),
+        })
+        .eq('id', mapped.id)
+        .select()
+        .single();
+      if (reactivateError || !reactivated) {
+        throw new BillingError('Failed to reactivate free subscription', 'SAVE_SUBSCRIPTION_FAILED');
+      }
+      await this.syncCompanySubscriptionTier(userId, 'plan_free', 'free');
+      return this.mapSubscriptionFromDb(reactivated);
+    }
+
+    const { data: inserted, error: insertError } = await this.supabase
+      .from('cadenza_billing_subscriptions')
+      .insert({
+        user_id: userId,
+        plan_id: 'plan_free',
+        quantity: 1,
+        status: 'active',
+        provider: 'none',
+        provider_subscription_id: providerSubscriptionId,
+        current_period_start: now.toISOString(),
+        current_period_end: periodEnd.toISOString(),
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      // Race: another request inserted the same free_* id
+      if (insertError.code === '23505') {
+        const again = await this.getUserSubscription(userId);
+        if (again) return again;
+      }
+      throw new BillingError('Failed to save free subscription', 'SAVE_SUBSCRIPTION_FAILED');
+    }
+
+    await this.syncCompanySubscriptionTier(userId, 'plan_free', 'free');
+    return this.mapSubscriptionFromDb(inserted);
   }
 
   /**
@@ -1006,6 +1099,19 @@ export class BillingService {
 
     if (planId) {
       await this.syncCompanySubscriptionTier(userId, planId);
+      // Drop any lingering Free rows so getUserSubscription resolves the paid plan.
+      if (planId !== 'plan_free') {
+        await this.supabase
+          .from('cadenza_billing_subscriptions')
+          .update({
+            status: 'canceled',
+            canceled_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', userId)
+          .eq('plan_id', 'plan_free')
+          .in('status', ['active', 'trialing', 'past_due', 'incomplete']);
+      }
     }
   }
 
@@ -1035,6 +1141,8 @@ export class BillingService {
     }
     if (userId) {
       await this.syncCompanySubscriptionTier(userId, 'plan_free', 'free');
+      // Start a fresh Free period so post-cancel accounts are not immediately read-only.
+      await this.ensureFreeSubscription(userId);
     }
   }
 

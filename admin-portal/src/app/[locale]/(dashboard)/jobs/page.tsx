@@ -18,6 +18,7 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { useAuth } from '@/lib/auth';
 import { hasEntitlement, isOfficeRole } from '@/lib/entitlements';
 import { NoAssignedRoute } from '@/components/NoAssignedRoute';
+import { useIsReadOnly } from '@/lib/company-access-queries';
 
 type PropertyRef = { id: string; customer_name: string; address?: string };
 type TechnicianRef = { id: string; full_name: string };
@@ -68,7 +69,8 @@ export default function JobsPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const isOffice = isOfficeRole(user?.profile?.role);
-  const canCreateJob = hasEntitlement(user?.profile?.role, 'job', 'create');
+  const isReadOnly = useIsReadOnly();
+  const canCreateJob = hasEntitlement(user?.profile?.role, 'job', 'create') && !isReadOnly;
   const noAssignedRoute = user?.technicianScope?.hasAssignedRoutes === false;
   const week = weekBoundsMonday();
   const followUpFromUrl = searchParams.get('needs_follow_up') === '1';
@@ -95,7 +97,6 @@ export default function JobsPage() {
   // Apply follow-up filter from URL param (one-time initialization)
   useEffect(() => {
     if (followUpFromUrl) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       setNeedsFollowUpFilter(true);
       setMoreFiltersOpen(true);
       setAppliedFilters((prev) => ({ ...prev, needsFollowUpFilter: true }));

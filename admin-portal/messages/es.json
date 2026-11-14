@@ -109,6 +109,8 @@
   "filterByTeamMember": "Miembro del equipo",
   "freeForever": "Gratis para siempre",
   "freePlan": "Plan Gratuito",
+  "freePlanExpiredReadOnly": "Tu plan gratuito venció; la cuenta está en solo lectura. Actualiza tu plan.",
+  "readOnlyAccount": "Cuenta en solo lectura",
   "frequency_monthly": "Mensual",
   "frequency_weekly": "Semanal",
   "fullName": "Nombre completo",
