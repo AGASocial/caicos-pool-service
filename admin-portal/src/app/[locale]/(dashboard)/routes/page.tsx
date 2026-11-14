@@ -7,6 +7,7 @@ import { Link } from '@/i18n/navigation';
 import { Plus, Route, ChevronRight } from 'lucide-react';
 import { useRoutes } from '@/lib/data-queries';
 import { LoadingState } from '@/components/ui/loading-state';
+import { useIsReadOnly } from '@/lib/company-access-queries';
 
 type RouteRow = {
   id: string;
@@ -18,6 +19,7 @@ type RouteRow = {
 
 export default function RoutesPage() {
   const t = useTranslations();
+  const isReadOnly = useIsReadOnly();
   const { data: result, isLoading, error } = useRoutes();
   const routes = (result?.data ?? []) as RouteRow[];
   const errorMessage = error instanceof Error ? error.message : null;
@@ -29,12 +31,14 @@ export default function RoutesPage() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('routes')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('routesDescription')}</p>
         </div>
-        <Button asChild className="w-fit shrink-0">
-          <Link href="/routes/new">
-            <Plus className="mr-2 h-4 w-4" />
-            {t('createRoute')}
-          </Link>
-        </Button>
+        {!isReadOnly && (
+          <Button asChild className="w-fit shrink-0">
+            <Link href="/routes/new">
+              <Plus className="mr-2 h-4 w-4" />
+              {t('createRoute')}
+            </Link>
+          </Button>
+        )}
       </div>
 
       <Card>

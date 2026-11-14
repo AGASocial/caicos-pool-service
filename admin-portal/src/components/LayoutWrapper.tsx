@@ -24,6 +24,7 @@ import { User, LogOut, Languages, ChevronUp, CreditCard } from "lucide-react";
 import { Link, useRouter, usePathname } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth';
 import { SessionBillingPrefetch } from '@/lib/billing-queries';
+import { FreePlanExpiredBanner } from '@/components/billing/FreePlanExpiredBanner';
 import { APP_VERSION } from '@/lib/app-version';
 
 function getFirstName(user: {
@@ -295,6 +296,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         sidebarCollapsed ? "md:pl-20" : "md:pl-72"
       )}>
         <Navbar onMenuClick={() => setSidebarOpen(true)} />
+        <FreePlanExpiredBanner />
         <div className="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full">
           {children}
         </div>

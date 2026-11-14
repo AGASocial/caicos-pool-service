@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
+import { useCompanyAccess } from "@/lib/company-access-queries";
 
 export const billingPlansQueryKey = ["billing", "plans"] as const;
 
@@ -121,5 +122,6 @@ export function SessionBillingPrefetch() {
   const enabled = !!user?.id && !loading;
   useFreePlan({ enabled });
   useBillingSubscription({ userId: user?.id, enabled });
+  useCompanyAccess({ enabled });
   return null;
 }

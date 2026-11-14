@@ -18,6 +18,7 @@ import {
 } from '@/lib/billing-queries';
 import { queryKeys } from '@/lib/query-keys';
 import { EntitlementGate } from '@/components/EntitlementGate';
+import { useIsReadOnly } from '@/lib/company-access-queries';
 
 type CreatedInvite = { code: string; role: string; expires_at: string };
 type InviteRole = 'technician' | 'admin' | 'operations';
@@ -26,6 +27,7 @@ export default function InviteTeamMemberPage() {
   const t = useTranslations();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const isReadOnly = useIsReadOnly();
   const { data: teamMembers = [] } = useTeam();
   const isOwner = user?.profile?.role === 'owner';
   const [role, setRole] = useState<InviteRole>('technician');
@@ -163,9 +165,17 @@ export default function InviteTeamMemberPage() {
                   </div>
                 </div>
               )}
+              {isReadOnly && (
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  {t('freePlanExpiredReadOnly')}{' '}
+                  <Link href="/billing/plans" className="underline underline-offset-2">
+                    {t('upgradeNow')}
+                  </Link>
+                </p>
+              )}
               {error && !isTechnicianLimitReached && <p className="text-sm text-destructive">{error}</p>}
               <div className="flex gap-2">
-                <Button type="submit" disabled={loading || isTechnicianLimitReached}>
+                <Button type="submit" disabled={loading || isTechnicianLimitReached || isReadOnly}>
                   {loading ? t('loading', { defaultValue: 'Loading…' }) : t('generateInviteCode')}
                 </Button>
                 <Button type="button" variant="outline" asChild>

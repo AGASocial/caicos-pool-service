@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EntitlementGate } from '@/components/EntitlementGate';
 import { hasEntitlement } from '@/lib/entitlements';
+import { useIsReadOnly } from '@/lib/company-access-queries';
 
 /** Roles that can appear as team cards. Matches invite/API roles. */
 type RoleKey = 'technician' | 'admin' | 'operations';
@@ -113,7 +114,8 @@ export default function TeamPage() {
   const locale = useLocale();
   const { user } = useAuth();
   const isAdmin = user?.profile?.role === 'admin' || user?.profile?.role === 'owner';
-  const canInvite = hasEntitlement(user?.profile?.role, 'team', 'create');
+  const isReadOnly = useIsReadOnly();
+  const canInvite = hasEntitlement(user?.profile?.role, 'team', 'create') && !isReadOnly;
   const { data: teamMembers = [], isLoading: loading, error: queryError } = useTeam();
   const { data: pendingInvites = [] } = usePendingInvites();
   const { data: seats } = useSeats({ enabled: isAdmin });

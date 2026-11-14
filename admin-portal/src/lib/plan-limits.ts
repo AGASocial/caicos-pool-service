@@ -5,6 +5,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getBillingService } from './billing/server';
+import { evaluateFreePlanExpiry } from './billing/free-plan-expiry';
 
 export interface PlanLimits {
   admin_users: number;
@@ -40,33 +41,25 @@ export async function getUserPlanLimits(
   let isExpired = false;
 
   if (subscription) {
-    // Check if subscription is expired
-    if (subscription.currentPeriodEnd && subscription.currentPeriodEnd < new Date()) {
-      isExpired = true;
-    }
-    
-    // Check free plan duration expiry
-    if (!isExpired && subscription.planId === 'plan_free') {
+    if (subscription.planId === 'plan_free') {
+      const plan = await billingService.getPlan('plan_free');
+      const features = plan.features as Record<string, unknown>;
+      const durationDays = features.plan_duration_days as number | null;
       const { data: subRecord } = await supabase
         .from('cadenza_billing_subscriptions')
         .select('created_at')
         .eq('id', subscription.id)
-        .single();
+        .maybeSingle();
 
-      if (subRecord?.created_at) {
-        const createdAt = new Date(subRecord.created_at as string);
-        const plan = await billingService.getPlan('plan_free');
-        const features = plan.features as Record<string, unknown>;
-        const durationDays = features.plan_duration_days as number | null;
-        
-        if (durationDays && durationDays > 0) {
-          const expiryDate = new Date(createdAt);
-          expiryDate.setDate(expiryDate.getDate() + durationDays);
-          if (new Date() > expiryDate) {
-            isExpired = true;
-          }
-        }
-      }
+      const freeExpiry = evaluateFreePlanExpiry({
+        planId: 'plan_free',
+        currentPeriodEnd: subscription.currentPeriodEnd ?? null,
+        createdAt: (subRecord?.created_at as string | undefined) ?? subscription.createdAt ?? null,
+        planDurationDays: durationDays,
+      });
+      isExpired = freeExpiry.expired;
+    } else if (subscription.currentPeriodEnd && subscription.currentPeriodEnd < new Date()) {
+      isExpired = true;
     }
 
     if (!isExpired) {
@@ -202,7 +195,8 @@ export async function getReportHistoryCutoff(
 }
 
 /**
- * Check if free plan is expired and user needs to upgrade
+ * Check if free plan is expired and user needs to upgrade.
+ * Prefers subscription.currentPeriodEnd (set at Free onboarding).
  */
 export async function isFreePlanExpired(
   supabase: SupabaseClient,
@@ -215,31 +209,24 @@ export async function isFreePlanExpired(
     return { expired: false };
   }
 
-  const { data: subRecord } = await supabase
-    .from('cadenza_billing_subscriptions')
-    .select('created_at')
-    .eq('id', subscription.id)
-    .single();
-
-  if (!subRecord?.created_at) {
-    return { expired: false };
-  }
-
   const plan = await billingService.getPlan('plan_free');
   const features = plan.features as Record<string, unknown>;
   const durationDays = features.plan_duration_days as number | null;
 
-  if (!durationDays || durationDays <= 0) {
-    return { expired: false }; // No expiry
+  let createdAt: string | Date | null = subscription.createdAt ?? null;
+  if (!subscription.currentPeriodEnd) {
+    const { data: subRecord } = await supabase
+      .from('cadenza_billing_subscriptions')
+      .select('created_at')
+      .eq('id', subscription.id)
+      .maybeSingle();
+    createdAt = (subRecord?.created_at as string | undefined) ?? createdAt;
   }
 
-  const createdAt = new Date(subRecord.created_at as string);
-  const expiryDate = new Date(createdAt);
-  expiryDate.setDate(expiryDate.getDate() + durationDays);
-
-  const now = new Date();
-  const expired = now > expiryDate;
-  const daysRemaining = expired ? 0 : Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-  return { expired, expiryDate, daysRemaining };
+  return evaluateFreePlanExpiry({
+    planId: 'plan_free',
+    currentPeriodEnd: subscription.currentPeriodEnd ?? null,
+    createdAt,
+    planDurationDays: durationDays,
+  });
 }
