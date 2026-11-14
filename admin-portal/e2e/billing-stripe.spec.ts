@@ -109,30 +109,60 @@ async function createCheckout(api: APIRequestContext, planId: string, quantity: 
 
 async function payOnStripeCheckout(page: Page, url: string, card: string) {
   await page.goto(url, { waitUntil: 'domcontentloaded' });
-  // Newer Checkout renders payment methods as an accordion
-  // Checkout lists Card as an accordion row; its <button> is visually hidden
-  // (overlay), so wait for it to be *attached* and click it via JS.
-  const cardNumber = page.locator('input#cardNumber');
-  // Stripe Checkout has shipped several layouts: accordion button, testid row,
-  // or (Nov 2026) a radio list "Card / Cash App Pay / Klarna / Bank".
+  // Stripe Checkout ships two layouts:
+  //  - classic: fields on the page (input#cardNumber, hosted-payment-submit-button)
+  //  - Nov 2026 ("guacamole"): a Payment Element iframe (elements-inner-*) with a
+  //    Card radio row, payment-*Input fields and payment-form-submit-button.
+  const classicCard = page.locator('input#cardNumber');
+  const peFrame = page.frameLocator('iframe[src*="elements-inner-habanero"], iframe[src*="elements-inner-payment"]').first();
+  const peCardLabel = peFrame.getByText('Card', { exact: true }).first();
+  await expect(classicCard.or(page.locator('[data-testid="card-accordion-item-button"]')).first()
+    .or(page.locator('iframe[src*="elements-inner-habanero"], iframe[src*="elements-inner-payment"]')).first())
+    .toBeAttached({ timeout: 30_000 });
+
+  const isPaymentElement = !(await classicCard.count()) &&
+    (await page.locator('iframe[src*="elements-inner-habanero"], iframe[src*="elements-inner-payment"]').count()) > 0;
+
+  if (isPaymentElement) {
+    const number = peFrame.locator('input[name="number"]');
+    if (!(await number.isVisible().catch(() => false))) {
+      await expect(peCardLabel).toBeVisible({ timeout: 30_000 });
+      await peCardLabel.click();
+    }
+    await expect(number).toBeVisible({ timeout: 15_000 });
+    await number.fill(card);
+    await peFrame.locator('input[name="expiry"]').fill('12 / 34');
+    await peFrame.locator('input[name="cvc"]').fill('123');
+    const peName = peFrame.locator('input[name="name"]');
+    if (await peName.isVisible().catch(() => false)) await peName.fill('QA Billing');
+    const peCountry = peFrame.locator('select[name="country"]');
+    if (await peCountry.isVisible().catch(() => false)) await peCountry.selectOption('US');
+    const peZip = peFrame.locator('input[name="postalCode"]');
+    if (await peZip.isVisible().catch(() => false)) await peZip.fill('78701');
+    // Don't enrol QA data into Link
+    const optIn = peFrame.locator('input[name="linkOptIn"]');
+    if (await optIn.isVisible().catch(() => false) && (await optIn.isChecked())) await optIn.uncheck({ force: true });
+    await peFrame.locator('[data-testid="payment-form-submit-button"]').click();
+    return;
+  }
+
+  // Classic layout (accordion button is visually hidden; click via JS)
   const cardButton = page.locator('[data-testid="card-accordion-item-button"]');
-  const cardRadio = page.getByRole('radio', { name: /^card$/i });
-  const cardRow = page.locator('[data-testid="card-accordion-item"], [data-testid*="card"]').getByText('Card', { exact: true });
-  const cardLabel = page.getByText('Card', { exact: true });
-  await expect(cardNumber.or(cardButton).or(cardRadio).or(cardLabel).first()).toBeAttached({ timeout: 30_000 });
-  if (!(await cardNumber.isVisible().catch(() => false))) {
-    for (const target of [cardRadio, cardButton, cardRow, cardLabel]) {
-      if ((await target.count().catch(() => 0)) === 0) continue;
-      await target.first().click({ force: true, timeout: 5_000 }).catch(() => target.first().dispatchEvent('click').catch(() => {}));
-      if (await cardNumber.waitFor({ state: 'visible', timeout: 4_000 }).then(() => true).catch(() => false)) break;
+  if (!(await classicCard.isVisible().catch(() => false))) {
+    await cardButton.dispatchEvent('click').catch(() => {});
+    if (!(await classicCard.isVisible().catch(() => false))) {
+      await page.waitForTimeout(1_500);
+      if (!(await classicCard.isVisible())) {
+        await page.locator('[data-testid="card-accordion-item"]').getByText('Card', { exact: true }).first().click();
+      }
     }
   }
-  await expect(cardNumber).toBeVisible({ timeout: 15_000 });
+  await expect(classicCard).toBeVisible({ timeout: 15_000 });
   const email = page.locator('input#email');
   if (await email.isVisible({ timeout: 2_000 }).catch(() => false) && (await email.isEditable())) {
     if (!(await email.inputValue())) await email.fill(OWNER_EMAIL);
   }
-  await page.locator('input#cardNumber').fill(card);
+  await classicCard.fill(card);
   await page.locator('input#cardExpiry').fill('12 / 34');
   await page.locator('input#cardCvc').fill('123');
   const name = page.locator('input#billingName');
@@ -141,7 +171,6 @@ async function payOnStripeCheckout(page: Page, url: string, card: string) {
   if (await country.isVisible().catch(() => false)) await country.selectOption('US');
   const zip = page.locator('input#billingPostalCode');
   if (await zip.isVisible().catch(() => false)) await zip.fill('78701');
-  // Don't enrol QA data into Link
   const link = page.locator('input#enableStripePass');
   if (await link.isVisible().catch(() => false) && (await link.isChecked())) await link.uncheck();
   await page.locator('button[data-testid="hosted-payment-submit-button"], button.SubmitButton').first().click();
@@ -221,7 +250,17 @@ test('4. declined card (4000 0000 0000 0341) keeps the account on Free', async (
   const page = await ownerPage(browser);
   const { url } = await createCheckout(api, STANDARD, 3);
   await payOnStripeCheckout(page, url, '4000000000000341');
-  await expect(page.getByText(/declined|was not successful|could not be processed/i).first()).toBeVisible({ timeout: 45_000 });
+  // The decline message renders on the page (classic) or inside the Payment Element iframe.
+  const declineRe = /declined|was not successful|could not be processed/i;
+  const declineFrame = page.frameLocator('iframe[src*="elements-inner-habanero"], iframe[src*="elements-inner-payment"]').first();
+  await expect
+    .poll(
+      async () =>
+        (await page.getByText(declineRe).first().isVisible().catch(() => false)) ||
+        (await declineFrame.getByText(declineRe).first().isVisible().catch(() => false)),
+      { timeout: 45_000 },
+    )
+    .toBe(true);
   expect(page.url()).toContain('checkout.stripe.com');
   // Give any stray webhook time to land, then confirm still Free
   await page.waitForTimeout(8_000);
