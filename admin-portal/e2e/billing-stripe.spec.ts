@@ -113,15 +113,18 @@ async function payOnStripeCheckout(page: Page, url: string, card: string) {
   // Checkout lists Card as an accordion row; its <button> is visually hidden
   // (overlay), so wait for it to be *attached* and click it via JS.
   const cardNumber = page.locator('input#cardNumber');
+  // Stripe Checkout has shipped several layouts: accordion button, testid row,
+  // or (Nov 2026) a radio list "Card / Cash App Pay / Klarna / Bank".
   const cardButton = page.locator('[data-testid="card-accordion-item-button"]');
-  await expect(cardNumber.or(cardButton).first()).toBeAttached({ timeout: 30_000 });
-  if (!(await cardNumber.isVisible())) {
-    await cardButton.dispatchEvent('click').catch(() => {});
-    if (!(await cardNumber.isVisible().catch(() => false))) {
-      await page.waitForTimeout(1_500);
-      if (!(await cardNumber.isVisible())) {
-        await page.locator('[data-testid="card-accordion-item"]').getByText('Card', { exact: true }).first().click();
-      }
+  const cardRadio = page.getByRole('radio', { name: /^card$/i });
+  const cardRow = page.locator('[data-testid="card-accordion-item"], [data-testid*="card"]').getByText('Card', { exact: true });
+  const cardLabel = page.getByText('Card', { exact: true });
+  await expect(cardNumber.or(cardButton).or(cardRadio).or(cardLabel).first()).toBeAttached({ timeout: 30_000 });
+  if (!(await cardNumber.isVisible().catch(() => false))) {
+    for (const target of [cardRadio, cardButton, cardRow, cardLabel]) {
+      if ((await target.count().catch(() => 0)) === 0) continue;
+      await target.first().click({ force: true, timeout: 5_000 }).catch(() => target.first().dispatchEvent('click').catch(() => {}));
+      if (await cardNumber.waitFor({ state: 'visible', timeout: 4_000 }).then(() => true).catch(() => false)) break;
     }
   }
   await expect(cardNumber).toBeVisible({ timeout: 15_000 });
