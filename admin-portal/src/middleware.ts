@@ -3,13 +3,19 @@ import { routing } from './i18n/routing';
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { enforceApiWriteAccess } from '@/lib/company-access';
 
 const intlMiddleware = createMiddleware(routing);
 
 // function name changed to middleware for Next.js convention
 export async function middleware(request: NextRequest) {
-  // First, run next-intl middleware for locale negotiation
-  const intlResponse = await intlMiddleware(request);
+  const pathname = request.nextUrl.pathname;
+  const isApiPath = pathname.startsWith('/api/');
+
+  // API write guard (Free plan expired → 402). Runs before intl (API is outside locale).
+  // Covered: all POST/PUT/PATCH/DELETE under /api/* except allowlist
+  // (/api/billing/*, /api/webhooks/*, /api/auth/*, /api/cron/*, /api/subscription/*).
+  let apiUserId: string | null = null;
 
   let supabaseResponse = NextResponse.next({
     request,
@@ -43,10 +49,19 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  apiUserId = user?.id ?? null;
+
+  if (isApiPath) {
+    const blocked = await enforceApiWriteAccess(request, apiUserId);
+    if (blocked) return blocked;
+    return supabaseResponse;
+  }
+
+  // First, run next-intl middleware for locale negotiation
+  const intlResponse = await intlMiddleware(request);
 
   // If user is not signed in and the current path is not /auth/*,
   // redirect the user to /{locale}/auth/login
-  const pathname = request.nextUrl.pathname;
 
   // Get the locale from the URL path or default
   const defaultLocale = routing.defaultLocale;
@@ -97,5 +112,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  // Include /api so Free-plan read-only write guard can run centrally.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 } 

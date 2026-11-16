@@ -8,6 +8,7 @@ import { Plus, Building2, ChevronRight } from 'lucide-react';
 import { NoAssignedRoute } from '@/components/NoAssignedRoute';
 import { hasEntitlement } from '@/lib/entitlements';
 import { useAuth } from '@/lib/auth';
+import { useIsReadOnly } from '@/lib/company-access-queries';
 
 type Property = {
   id: string;
@@ -27,7 +28,8 @@ export default function PropertiesClient({
 }) {
   const t = useTranslations();
   const { user } = useAuth();
-  const canCreateProperty = hasEntitlement(user?.profile?.role, 'property', 'create');
+  const isReadOnly = useIsReadOnly();
+  const canCreateProperty = hasEntitlement(user?.profile?.role, 'property', 'create') && !isReadOnly;
 
   if (noAssignedRoute) {
     return (
