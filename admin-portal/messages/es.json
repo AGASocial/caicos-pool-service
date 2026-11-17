@@ -110,6 +110,8 @@
   "freeForever": "Gratis para siempre",
   "freePlan": "Plan Gratuito",
   "freePlanExpiredReadOnly": "Tu plan gratuito venció; la cuenta está en solo lectura. Actualiza tu plan.",
+  "paymentFailedGraceBanner": "Tu pago falló. Tienes hasta {date} para actualizar tu método de pago.",
+  "updatePaymentMethod": "Actualizar método de pago",
   "readOnlyAccount": "Cuenta en solo lectura",
   "frequency_monthly": "Mensual",
   "frequency_weekly": "Semanal",

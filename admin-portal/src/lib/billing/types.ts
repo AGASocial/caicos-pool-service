@@ -82,6 +82,10 @@ export interface Subscription {
   currentPeriodEnd?: Date;
   cancelAtPeriodEnd: boolean;
   canceledAt?: Date;
+  /** First payment failure timestamp (grace start); not overwritten on later failures */
+  paymentFailedAt?: Date;
+  /** End of 14-day full-access grace; never extended */
+  gracePeriodEndsAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -143,6 +147,7 @@ export type NormalizedEventType =
   | 'subscription.created'
   | 'subscription.updated'
   | 'subscription.canceled'
+  | 'subscription.trial_will_end'
   | 'invoice.paid'
   | 'invoice.payment_failed'
   | 'payment_method.attached'
@@ -191,6 +196,9 @@ export interface InvoiceEventData {
   userId?: string;
   planId?: string;
   rawStatus?: string;
+  /** Line-item / invoice billing period (for renewing DB period on invoice.paid) */
+  periodStart?: string;
+  periodEnd?: string;
 }
 
 export interface PaymentMethodEventData {

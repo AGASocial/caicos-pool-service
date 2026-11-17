@@ -66,6 +66,7 @@ describe('API write allowlist / methods', () => {
     expect(isApiWriteAllowlisted('/api/webhooks/stripe')).toBe(true);
     expect(isApiWriteAllowlisted('/api/auth/login')).toBe(true);
     expect(isApiWriteAllowlisted('/api/cron/generate-route-jobs')).toBe(true);
+    expect(isApiWriteAllowlisted('/api/cron/process-grace-expirations')).toBe(true);
     expect(isApiWriteAllowlisted('/api/subscription/status')).toBe(true);
   });
 
