@@ -48,6 +48,8 @@ interface Subscription {
   quantity?: number;
   currentPeriodEnd?: Date;
   cancelAtPeriodEnd: boolean;
+  paymentFailedAt?: Date | string;
+  gracePeriodEndsAt?: Date | string;
   plan: {
     name: string;
     amountCents: number;
@@ -256,6 +258,14 @@ export default function BillingPage() {
   );
   const isFreePlan = !subscription || subscription.planId === 'plan_free' || isPeriodExpired;
   const effectivePlan = isPeriodExpired && freePlanOverride ? freePlanOverride : subscription?.plan;
+  const graceEndsAt = subscription?.gracePeriodEndsAt
+    ? new Date(subscription.gracePeriodEndsAt)
+    : null;
+  const showGraceBanner =
+    subscription?.status === 'past_due' &&
+    graceEndsAt != null &&
+    !Number.isNaN(graceEndsAt.getTime()) &&
+    graceEndsAt > new Date();
 
   return (
     <div className="container mx-auto py-10 space-y-8 px-2">
@@ -263,6 +273,31 @@ export default function BillingPage() {
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('billingDashboard')}</h1>
         <p className="text-muted-foreground">{t('manageBilling')}</p>
       </div>
+
+      {showGraceBanner && graceEndsAt && (
+        <div
+          role="alert"
+          data-testid="payment-failed-grace-banner"
+          className="flex flex-col gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:text-amber-100 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>
+              {t('paymentFailedGraceBanner', { date: format(graceEndsAt, 'PPP') })}
+            </span>
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0 border-amber-600/50 bg-background/60"
+            disabled={openingPortal}
+            onClick={handleOpenCustomerPortal}
+          >
+            {t('updatePaymentMethod')}
+          </Button>
+        </div>
+      )}
 
       {/* Subscription Details */}
       <Card className="glass-panel overflow-hidden border-border/50 shadow-xl">
@@ -274,7 +309,7 @@ export default function BillingPage() {
               {t('subscriptionDetails')}
             </span>
             <span className={`text-xs px-3 py-1 rounded-full uppercase tracking-wider font-bold ${getStatusColor(subscription?.status?.toString() || '')} bg-muted`}>
-              {isFreePlan ? t('freePlan') : t(`subscription${(subscription?.status?.charAt(0).toUpperCase() || '') + (subscription?.status?.slice(1) || '')}`)}
+              {isFreePlan ? t('freePlan') : t(`subscription${(subscription?.status ?? '').split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`)}
             </span>
           </CardTitle>
         </CardHeader>

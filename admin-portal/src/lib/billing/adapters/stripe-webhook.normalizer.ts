@@ -96,6 +96,7 @@ export class StripeWebhookNormalizer implements WebhookNormalizer {
       'customer.subscription.created',
       'customer.subscription.updated',
       'customer.subscription.deleted',
+      'customer.subscription.trial_will_end',
       'invoice.paid',
       'invoice.payment_failed',
       'payment_method.attached',
@@ -123,6 +124,7 @@ export class StripeWebhookNormalizer implements WebhookNormalizer {
       'customer.subscription.created': 'subscription.created',
       'customer.subscription.updated': 'subscription.updated',
       'customer.subscription.deleted': 'subscription.canceled',
+      'customer.subscription.trial_will_end': 'subscription.trial_will_end',
       'invoice.paid': 'invoice.paid',
       'invoice.payment_failed': 'invoice.payment_failed',
       'payment_method.attached': 'payment_method.attached',
@@ -145,6 +147,7 @@ export class StripeWebhookNormalizer implements WebhookNormalizer {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
+      case 'customer.subscription.trial_will_end':
         return this.extractSubscriptionData(event.data.object as Stripe.Subscription);
 
       case 'invoice.paid':
@@ -235,10 +238,28 @@ export class StripeWebhookNormalizer implements WebhookNormalizer {
     // Access properties as any since Stripe webhook data might use snake_case
     const invData = invoice as unknown as Record<string, unknown>;
     const subscription = invData.subscription;
-    const subscriptionId = typeof subscription === 'string'
+    let subscriptionId = typeof subscription === 'string'
       ? subscription
       : ((subscription as Record<string, unknown> | undefined)?.id as string | undefined);
+
+    // API 2025+: subscription may live under parent.subscription_details
+    if (!subscriptionId) {
+      const parent = (invData.parent || (invoice as { parent?: unknown }).parent) as
+        | Record<string, unknown>
+        | undefined;
+      const subDetails = (parent?.subscription_details || parent?.subscriptionDetails) as
+        | Record<string, unknown>
+        | undefined;
+      const parentSub = subDetails?.subscription;
+      subscriptionId =
+        typeof parentSub === 'string'
+          ? parentSub
+          : ((parentSub as Record<string, unknown> | undefined)?.id as string | undefined);
+    }
+
     const statusTransitions = (invData.status_transitions || invData.statusTransitions) as Record<string, unknown> | undefined;
+
+    const { periodStart, periodEnd } = this.extractInvoicePeriod(invData, invoice);
 
     return {
       invoiceId: invoice.id,
@@ -251,6 +272,37 @@ export class StripeWebhookNormalizer implements WebhookNormalizer {
       paidAt: statusTransitions?.paid_at
         ? new Date((statusTransitions.paid_at as number) * 1000).toISOString()
         : (statusTransitions?.paidAt ? new Date((statusTransitions.paidAt as number) * 1000).toISOString() : undefined),
+      periodStart,
+      periodEnd,
+    };
+  }
+
+  private extractInvoicePeriod(
+    invData: Record<string, unknown>,
+    invoice: Stripe.Invoice,
+  ): { periodStart?: string; periodEnd?: string } {
+    const lines = (invData.lines || invoice.lines) as
+      | { data?: Array<Record<string, unknown>> }
+      | undefined;
+    const firstLine = lines?.data?.[0];
+    const linePeriod = firstLine?.period as { start?: number; end?: number } | undefined;
+
+    const startUnix =
+      linePeriod?.start ??
+      (invData.period_start as number | undefined) ??
+      (invData.periodStart as number | undefined);
+    const endUnix =
+      linePeriod?.end ??
+      (invData.period_end as number | undefined) ??
+      (invData.periodEnd as number | undefined);
+
+    return {
+      periodStart:
+        typeof startUnix === 'number'
+          ? new Date(startUnix * 1000).toISOString()
+          : undefined,
+      periodEnd:
+        typeof endUnix === 'number' ? new Date(endUnix * 1000).toISOString() : undefined,
     };
   }
 
