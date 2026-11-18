@@ -142,7 +142,7 @@ jobs:
 
       - name: Run E2E tests
         working-directory: ./admin-portal
-        run: npx playwright test e2e/full-flow.spec.ts e2e/billing-stripe.spec.ts
+        run: npx playwright test e2e/full-flow.spec.ts e2e/billing-stripe.spec.ts e2e/billing-free-readonly.spec.ts e2e/billing-dunning.spec.ts
         env:
           PLAYWRIGHT_TEST_BASE_URL: ${{ needs.wait-for-vercel.outputs.preview-url }}
           PLAYWRIGHT_TECH_BASE_URL: http://localhost:8081
@@ -151,7 +151,10 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           # Optional: sk_test_ key used ONLY to delete qa-billing-* Stripe test customers (aborts if not sk_test_)
+          # Also required for billing-dunning.spec.ts (attach declining card + pay invoice in test mode)
           STRIPE_TEST_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+          # Optional: enables grace-expiry cron step in billing-dunning.spec.ts
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           QA_ADMIN_PASSWORD: ${{ secrets.QA_ADMIN_PASSWORD }}
           QA_TECH_PASSWORD: ${{ secrets.QA_TECH_PASSWORD }}

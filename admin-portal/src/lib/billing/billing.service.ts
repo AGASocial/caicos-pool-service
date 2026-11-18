@@ -33,6 +33,14 @@ import {
 import { isPaidSubscriptionEffective } from './subscription-utils';
 import { getStripeLookupKey, planIdFromStripeLookupKey } from './stripe-lookup-keys';
 import { mapPlanToTier, type SubscriptionTier } from './subscription-tier';
+import {
+  sendPaymentFailedEmail,
+  sendSubscriptionCanceledEmail,
+  sendTrialEndingEmail,
+} from '@/lib/email/billing-mailer';
+
+/** Full-access grace after first payment failure (owner decision: 14 days, never extended). */
+export const BILLING_GRACE_PERIOD_DAYS = 14;
 
 export class BillingService {
   constructor(
@@ -103,7 +111,8 @@ export class BillingService {
   }
 
   /**
-   * Get user's active subscription
+   * Get user's active subscription (includes Free plan rows).
+   * Expired paid subscriptions are canceled and treated as absent.
    */
   async getUserSubscription(userId: string): Promise<Subscription | null> {
     const { data, error } = await this.supabase
@@ -122,6 +131,12 @@ export class BillingService {
     if (!data) return null;
 
     const mapped = this.mapSubscriptionFromDb(data);
+
+    // Free plan rows are first-class — do not cancel them when "not paid-effective".
+    if (mapped.planId === 'plan_free') {
+      return mapped;
+    }
+
     if (!isPaidSubscriptionEffective(mapped)) {
       await this.supabase
         .from('cadenza_billing_subscriptions')
@@ -131,6 +146,92 @@ export class BillingService {
     }
 
     return mapped;
+  }
+
+  /**
+   * Idempotently create an active Free subscription for onboarding/signup.
+   * current_period_end = now + plan_free.features.plan_duration_days.
+   * No-ops (returns existing) if a Free or paid-effective subscription already exists.
+   */
+  async ensureFreeSubscription(userId: string): Promise<Subscription> {
+    const existing = await this.getUserSubscription(userId);
+    if (existing?.planId === 'plan_free') {
+      return existing;
+    }
+    if (existing && isPaidSubscriptionEffective(existing)) {
+      return existing;
+    }
+
+    const providerSubscriptionId = `free_${userId}`;
+    const { data: byProviderId } = await this.supabase
+      .from('cadenza_billing_subscriptions')
+      .select('*')
+      .eq('provider_subscription_id', providerSubscriptionId)
+      .maybeSingle();
+
+    const plan = await this.getPlan('plan_free');
+    const features = plan.features as Record<string, unknown>;
+    const durationDays =
+      typeof features.plan_duration_days === 'number' && features.plan_duration_days > 0
+        ? features.plan_duration_days
+        : 30;
+
+    const now = new Date();
+    const periodEnd = new Date(now);
+    periodEnd.setUTCDate(periodEnd.getUTCDate() + durationDays);
+
+    if (byProviderId) {
+      const mapped = this.mapSubscriptionFromDb(byProviderId);
+      if (mapped.status === 'active' && mapped.planId === 'plan_free') {
+        return mapped;
+      }
+      // Reactivate canceled free_* row with a fresh period (e.g. after paid cancel).
+      const { data: reactivated, error: reactivateError } = await this.supabase
+        .from('cadenza_billing_subscriptions')
+        .update({
+          status: 'active',
+          plan_id: 'plan_free',
+          canceled_at: null,
+          current_period_start: now.toISOString(),
+          current_period_end: periodEnd.toISOString(),
+          updated_at: now.toISOString(),
+        })
+        .eq('id', mapped.id)
+        .select()
+        .single();
+      if (reactivateError || !reactivated) {
+        throw new BillingError('Failed to reactivate free subscription', 'SAVE_SUBSCRIPTION_FAILED');
+      }
+      await this.syncCompanySubscriptionTier(userId, 'plan_free', 'free');
+      return this.mapSubscriptionFromDb(reactivated);
+    }
+
+    const { data: inserted, error: insertError } = await this.supabase
+      .from('cadenza_billing_subscriptions')
+      .insert({
+        user_id: userId,
+        plan_id: 'plan_free',
+        quantity: 1,
+        status: 'active',
+        provider: 'none',
+        provider_subscription_id: providerSubscriptionId,
+        current_period_start: now.toISOString(),
+        current_period_end: periodEnd.toISOString(),
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      // Race: another request inserted the same free_* id
+      if (insertError.code === '23505') {
+        const again = await this.getUserSubscription(userId);
+        if (again) return again;
+      }
+      throw new BillingError('Failed to save free subscription', 'SAVE_SUBSCRIPTION_FAILED');
+    }
+
+    await this.syncCompanySubscriptionTier(userId, 'plan_free', 'free');
+    return this.mapSubscriptionFromDb(inserted);
   }
 
   /**
@@ -803,13 +904,16 @@ export class BillingService {
         await this.handleSubscriptionEvent(event.data as SubscriptionEventData);
         break;
       case 'subscription.canceled':
-        await this.handleSubscriptionCanceled(event.data as SubscriptionEventData);
+        await this.handleSubscriptionCanceled(event.data as SubscriptionEventData, event.id);
+        break;
+      case 'subscription.trial_will_end':
+        await this.handleTrialWillEnd(event.data as SubscriptionEventData, event.id);
         break;
       case 'invoice.paid':
         await this.handleInvoicePaid(event.data as InvoiceEventData);
         break;
       case 'invoice.payment_failed':
-        await this.handleInvoicePaymentFailed(event.data as InvoiceEventData);
+        await this.handleInvoicePaymentFailed(event.data as InvoiceEventData, event.id);
         break;
       case 'payment_method.attached':
         await this.handlePaymentMethodAttached(event.data as PaymentMethodEventData);
@@ -817,6 +921,87 @@ export class BillingService {
       default:
         console.log(`Unhandled webhook event type: ${event.type}`);
     }
+  }
+
+  /**
+   * Cancel past_due subscriptions whose grace window has ended.
+   * Idempotent: Stripe cancel then DB cancel + free tier; safe to re-run if DB lagged.
+   */
+  async processExpiredGracePeriods(): Promise<{
+    processed: number;
+    skipped: number;
+    errors: string[];
+  }> {
+    const nowIso = new Date().toISOString();
+    const { data: expired, error } = await this.supabase
+      .from('cadenza_billing_subscriptions')
+      .select(
+        'id, user_id, provider, provider_subscription_id, status, grace_period_ends_at',
+      )
+      .eq('status', 'past_due')
+      .not('grace_period_ends_at', 'is', null)
+      .lt('grace_period_ends_at', nowIso);
+
+    if (error) {
+      throw new BillingError(
+        'Failed to query expired grace subscriptions',
+        'GRACE_EXPIRY_QUERY_FAILED',
+      );
+    }
+
+    let processed = 0;
+    const errors: string[] = [];
+
+    for (const sub of expired ?? []) {
+      const userId = sub.user_id as string;
+      const providerSubId = sub.provider_subscription_id as string | null;
+
+      try {
+        if (
+          providerSubId &&
+          sub.provider === this.gateway.getName() &&
+          !String(providerSubId).startsWith('free_')
+        ) {
+          try {
+            await this.gateway.cancelSubscription(providerSubId, false);
+          } catch (cancelErr) {
+            // Already canceled in Stripe is OK — continue so DB stays consistent.
+            console.warn(
+              'Grace expiry: gateway cancel (continuing):',
+              cancelErr instanceof Error ? cancelErr.message : cancelErr,
+            );
+          }
+        }
+
+        const { data: updated, error: updErr } = await this.supabase
+          .from('cadenza_billing_subscriptions')
+          .update({
+            status: 'canceled',
+            canceled_at: nowIso,
+            updated_at: nowIso,
+          })
+          .eq('id', sub.id)
+          .eq('status', 'past_due')
+          .select('id')
+          .maybeSingle();
+
+        if (updErr) {
+          errors.push(`${sub.id}: ${updErr.message}`);
+          continue;
+        }
+
+        // Row already canceled by a concurrent run — still ensure free tier
+        await this.syncCompanySubscriptionTier(userId, 'plan_free', 'free');
+        await this.ensureFreeSubscription(userId);
+        if (updated) processed += 1;
+      } catch (e) {
+        errors.push(
+          `${sub.id}: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
+    }
+
+    return { processed, skipped: 0, errors };
   }
 
   /**
@@ -1006,18 +1191,37 @@ export class BillingService {
 
     if (planId) {
       await this.syncCompanySubscriptionTier(userId, planId);
+      // Drop any lingering Free rows so getUserSubscription resolves the paid plan.
+      if (planId !== 'plan_free') {
+        await this.supabase
+          .from('cadenza_billing_subscriptions')
+          .update({
+            status: 'canceled',
+            canceled_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', userId)
+          .eq('plan_id', 'plan_free')
+          .in('status', ['active', 'trialing', 'past_due', 'incomplete']);
+      }
     }
   }
 
   /**
    * Handle subscription canceled event (customer.subscription.deleted → free)
    */
-  private async handleSubscriptionCanceled(data: SubscriptionEventData): Promise<void> {
+  private async handleSubscriptionCanceled(
+    data: SubscriptionEventData,
+    eventId?: string,
+  ): Promise<void> {
     await this.supabase
       .from('cadenza_billing_subscriptions')
       .update({
         status: 'canceled',
         canceled_at: data.canceledAt || new Date().toISOString(),
+        payment_failed_at: null,
+        grace_period_ends_at: null,
+        updated_at: new Date().toISOString(),
       })
       .eq('provider_subscription_id', data.subscriptionId);
 
@@ -1035,7 +1239,40 @@ export class BillingService {
     }
     if (userId) {
       await this.syncCompanySubscriptionTier(userId, 'plan_free', 'free');
+      // Start a fresh Free period so post-cancel accounts are not immediately read-only.
+      await this.ensureFreeSubscription(userId);
+      await this.sendBillingEmailToPayer(userId, (to, locale) =>
+        sendSubscriptionCanceledEmail({
+          to,
+          locale,
+          idempotencyKey: `billing/subscription-canceled/${data.subscriptionId}`,
+          eventId,
+        }),
+      );
     }
+  }
+
+  /**
+   * customer.subscription.trial_will_end — notify payer
+   */
+  private async handleTrialWillEnd(
+    data: SubscriptionEventData,
+    eventId?: string,
+  ): Promise<void> {
+    let userId = data.userId;
+    if (!userId) {
+      userId = (await this.resolveUserIdFromCustomer(data.customerId)) ?? undefined;
+    }
+    if (!userId) return;
+
+    await this.sendBillingEmailToPayer(userId, (to, locale) =>
+      sendTrialEndingEmail({
+        to,
+        locale,
+        trialEndsAt: data.currentPeriodEnd ?? null,
+        eventId,
+      }),
+    );
   }
 
   /**
@@ -1046,10 +1283,15 @@ export class BillingService {
 
     if (!userId) {
       userId = (await this.resolveUserIdFromCustomer(data.customerId)) ?? undefined;
-      if (!userId) {
-        console.error('No user found for customer:', data.customerId);
-        return;
-      }
+    }
+    // Stripe invoice payloads have no user metadata — fall back via subscription row
+    if (!userId && data.subscriptionId) {
+      const { data: sub } = await this.supabase
+        .from('cadenza_billing_subscriptions')
+        .select('user_id')
+        .eq('provider_subscription_id', data.subscriptionId)
+        .maybeSingle();
+      userId = (sub?.user_id as string | undefined) ?? undefined;
     }
 
     // Renewal boundary: apply any technician deactivations that reached period end.
@@ -1069,6 +1311,26 @@ export class BillingService {
         .maybeSingle();
 
       subscriptionId = subscription?.id;
+
+      // Clear grace / past_due and renew period from invoice lines (don't rely only on subscription.updated)
+      const periodUpdate: Record<string, unknown> = {
+        status: 'active',
+        payment_failed_at: null,
+        grace_period_ends_at: null,
+        updated_at: new Date().toISOString(),
+      };
+      if (data.periodStart) periodUpdate.current_period_start = data.periodStart;
+      if (data.periodEnd) periodUpdate.current_period_end = data.periodEnd;
+
+      await this.supabase
+        .from('cadenza_billing_subscriptions')
+        .update(periodUpdate)
+        .eq('provider_subscription_id', data.subscriptionId);
+    }
+
+    if (!userId) {
+      console.error('No user found for customer:', data.customerId);
+      return;
     }
 
     const { error } = await this.supabase.from('cadenza_billing_invoices').upsert(
@@ -1093,19 +1355,125 @@ export class BillingService {
   }
 
   /**
-   * Handle invoice payment failed event
+   * Handle invoice payment failed — start 14-day grace once (never extend).
    */
-  private async handleInvoicePaymentFailed(data: InvoiceEventData): Promise<void> {
-    // Update subscription status to past_due
-    if (data.subscriptionId) {
-      await this.supabase
-        .from('cadenza_billing_subscriptions')
-        .update({ status: 'past_due' })
-        .eq('provider_subscription_id', data.subscriptionId);
+  private async handleInvoicePaymentFailed(
+    data: InvoiceEventData,
+    eventId?: string,
+  ): Promise<void> {
+    if (!data.subscriptionId) {
+      console.log('Payment failed for invoice without subscription:', data.invoiceId);
+      return;
     }
 
-    // TODO: Send notification email to user
-    console.log('Payment failed for invoice:', data.invoiceId);
+    const { data: existing } = await this.supabase
+      .from('cadenza_billing_subscriptions')
+      .select('id, user_id, payment_failed_at, grace_period_ends_at')
+      .eq('provider_subscription_id', data.subscriptionId)
+      .maybeSingle();
+
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const graceEnds =
+      (existing?.grace_period_ends_at as string | null) ??
+      new Date(
+        now.getTime() + BILLING_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000,
+      ).toISOString();
+
+    const updates: Record<string, unknown> = {
+      status: 'past_due',
+      updated_at: nowIso,
+    };
+    // Only set on first failure — later failures must not extend grace
+    if (!existing?.payment_failed_at) {
+      updates.payment_failed_at = nowIso;
+    }
+    if (!existing?.grace_period_ends_at) {
+      updates.grace_period_ends_at = graceEnds;
+    }
+
+    await this.supabase
+      .from('cadenza_billing_subscriptions')
+      .update(updates)
+      .eq('provider_subscription_id', data.subscriptionId);
+
+    const userId =
+      (existing?.user_id as string | undefined) ||
+      data.userId ||
+      (await this.resolveUserIdFromCustomer(data.customerId)) ||
+      undefined;
+
+    if (userId) {
+      const effectiveGrace =
+        (existing?.grace_period_ends_at as string | null) || graceEnds;
+      await this.sendBillingEmailToPayer(userId, (to, locale) =>
+        sendPaymentFailedEmail({
+          to,
+          locale,
+          gracePeriodEndsAt: effectiveGrace,
+          eventId,
+        }),
+      );
+    }
+  }
+
+  /**
+   * Resolve company owner/payer email (+ locale if present) and send.
+   */
+  private async sendBillingEmailToPayer(
+    userId: string,
+    send: (to: string, locale: string) => Promise<boolean>,
+  ): Promise<void> {
+    try {
+      const { data: profile } = await this.supabase
+        .from('cadenza_profiles')
+        .select('company_id, email')
+        .eq('id', userId)
+        .maybeSingle();
+
+      let payerId = userId;
+      let email = (profile?.email as string | undefined) || undefined;
+
+      if (profile?.company_id) {
+        const { data: owner } = await this.supabase
+          .from('cadenza_profiles')
+          .select('id, email')
+          .eq('company_id', profile.company_id)
+          .eq('role', 'owner')
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (owner?.id) {
+          payerId = owner.id as string;
+          email = (owner.email as string | undefined) || email;
+        }
+      }
+
+      if (!email) {
+        const info = await this.getUserEmailAndName(payerId);
+        email = info.email;
+      }
+
+      let locale = 'en';
+      try {
+        const { data: authUser } = await this.supabase.auth.admin.getUserById(payerId);
+        const metaLocale =
+          (authUser?.user?.user_metadata?.locale as string | undefined) ||
+          (authUser?.user?.user_metadata?.preferred_locale as string | undefined);
+        if (metaLocale) locale = metaLocale;
+      } catch {
+        // ignore — default en
+      }
+
+      if (email) {
+        await send(email, locale);
+      }
+    } catch (e) {
+      console.error(
+        'Failed to send billing email:',
+        e instanceof Error ? e.message : e,
+      );
+    }
   }
 
   /**
@@ -1150,6 +1518,12 @@ export class BillingService {
       currentPeriodEnd: data.current_period_end ? new Date(data.current_period_end as string) : undefined,
       cancelAtPeriodEnd: data.cancel_at_period_end as boolean,
       canceledAt: data.canceled_at ? new Date(data.canceled_at as string) : undefined,
+      paymentFailedAt: data.payment_failed_at
+        ? new Date(data.payment_failed_at as string)
+        : undefined,
+      gracePeriodEndsAt: data.grace_period_ends_at
+        ? new Date(data.grace_period_ends_at as string)
+        : undefined,
       createdAt: new Date(data.created_at as string),
       updatedAt: new Date(data.updated_at as string),
     };

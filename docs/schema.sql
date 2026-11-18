@@ -603,3 +603,13 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON cadenza_properties FOR EACH ROW E
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON cadenza_routes FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON cadenza_service_jobs FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON cadenza_service_reports FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================
+-- BILLING (subscriptions — see supabase/migrations for full billing schema)
+-- ============================================
+
+-- Grace / dunning columns on cadenza_billing_subscriptions (KAN-148):
+-- payment_failed_at TIMESTAMPTZ NULL  — first invoice.payment_failed timestamp
+-- grace_period_ends_at TIMESTAMPTZ NULL — now+14d on first failure; never extended
+-- Full CREATE lives in 20251029000000_create_billing_tables.sql;
+-- columns added in 20261112140000_billing_grace_period_columns.sql (record-only).

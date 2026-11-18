@@ -45,6 +45,12 @@ describe('Plan Limits', () => {
                       error: null,
                     })
                   ),
+                  maybeSingle: jest.fn(() =>
+                    Promise.resolve({
+                      data: { created_at: createdAt.toISOString() },
+                      error: null,
+                    })
+                  ),
                 })),
               })),
             };
@@ -57,6 +63,7 @@ describe('Plan Limits', () => {
         getUserSubscription: jest.fn().mockResolvedValue({
           id: 'sub-123',
           planId: 'plan_free',
+          currentPeriodEnd: new Date(Date.now() + 86400000 * 60),
         }),
         getPlan: jest.fn().mockResolvedValue({
           features: {
@@ -97,6 +104,12 @@ describe('Plan Limits', () => {
                       error: null,
                     })
                   ),
+                  maybeSingle: jest.fn(() =>
+                    Promise.resolve({
+                      data: { created_at: createdAt.toISOString() },
+                      error: null,
+                    })
+                  ),
                 })),
               })),
             };
@@ -109,6 +122,7 @@ describe('Plan Limits', () => {
         getUserSubscription: jest.fn().mockResolvedValue({
           id: 'sub-123',
           planId: 'plan_free',
+          currentPeriodEnd: new Date(Date.now() + 86400000 * 60),
         }),
         getPlan: jest.fn().mockResolvedValue({
           features: {
@@ -171,6 +185,12 @@ describe('Plan Limits', () => {
                   error: null,
                 })
               ),
+              maybeSingle: jest.fn(() =>
+                Promise.resolve({
+                  data: { created_at: createdAt.toISOString() },
+                  error: null,
+                })
+              ),
             })),
           })),
         })),
@@ -180,6 +200,7 @@ describe('Plan Limits', () => {
         getUserSubscription: jest.fn().mockResolvedValue({
           id: 'sub-123',
           planId: 'plan_free',
+          currentPeriodEnd: new Date(Date.now() + 86400000 * 60),
         }),
         getPlan: jest.fn().mockResolvedValue({
           features: {
@@ -249,7 +270,31 @@ describe('Plan Limits', () => {
   });
 
   describe('isFreePlanExpired', () => {
-    it('should detect expired free plan after 90 days', async () => {
+    it('should detect expired free plan via currentPeriodEnd', async () => {
+      const mockSupabase = {} as never;
+
+      const mockBillingService = {
+        getUserSubscription: jest.fn().mockResolvedValue({
+          id: 'sub-123',
+          planId: 'plan_free',
+          currentPeriodEnd: new Date(Date.now() - 86400000),
+        }),
+        getPlan: jest.fn().mockResolvedValue({
+          features: {
+            plan_duration_days: 30,
+          },
+        }),
+      };
+
+      mockGetBillingService.mockResolvedValue(mockBillingService as never);
+
+      const result = await isFreePlanExpired(mockSupabase, 'user-123');
+
+      expect(result.expired).toBe(true);
+      expect(result.daysRemaining).toBe(0);
+    });
+
+    it('should detect expired free plan via created_at + duration fallback', async () => {
       const createdAt = new Date();
       createdAt.setDate(createdAt.getDate() - 100);
 
@@ -258,6 +303,10 @@ describe('Plan Limits', () => {
           select: jest.fn(() => ({
             eq: jest.fn(() => ({
               single: jest.fn(() => Promise.resolve({
+                data: { created_at: createdAt.toISOString() },
+                error: null,
+              })),
+              maybeSingle: jest.fn(() => Promise.resolve({
                 data: { created_at: createdAt.toISOString() },
                 error: null,
               })),

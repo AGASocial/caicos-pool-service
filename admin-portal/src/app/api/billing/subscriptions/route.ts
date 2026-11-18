@@ -18,6 +18,7 @@ import type {
   UpdateSubscriptionRequest,
   CancelSubscriptionRequest,
 } from '@/lib/billing';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET() {
   try {
@@ -27,32 +28,41 @@ export async function GET() {
     }
 
     const billingService = await getBillingService();
-    const subscription = await billingService.getUserSubscription(userId);
+    let subscription = await billingService.getUserSubscription(userId);
 
-    // If no subscription, return the Free plan
+    // Lazily ensure a real Free row for company owners only (not invitees).
     if (!subscription) {
-      const freePlan = await billingService.getPlan('plan_free');
-      return successResponse({
-        subscription: {
-          id: 'free',
-          userId,
-          planId: 'plan_free',
-          quantity: 1,
-          status: 'active',
-          currentPeriodStart: new Date(),
-          currentPeriodEnd: null, // Free plan never expires
-          cancelAtPeriodEnd: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          plan: freePlan,
-        },
-        config: {
-          provider: billingService.getProviderName(),
-        },
-      });
+      const { data: profile } = await supabaseAdmin
+        .from('cadenza_profiles')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profile?.role === 'owner') {
+        subscription = await billingService.ensureFreeSubscription(userId);
+      } else {
+        const freePlan = await billingService.getPlan('plan_free');
+        return successResponse({
+          subscription: {
+            id: 'free',
+            userId,
+            planId: 'plan_free',
+            quantity: 1,
+            status: 'active',
+            currentPeriodStart: new Date(),
+            currentPeriodEnd: null,
+            cancelAtPeriodEnd: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            plan: freePlan,
+          },
+          config: {
+            provider: billingService.getProviderName(),
+          },
+        });
+      }
     }
 
-    // Fetch the plan details for paid subscription
     const plan = await billingService.getPlan(subscription.planId);
 
     return successResponse({

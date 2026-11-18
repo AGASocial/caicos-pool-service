@@ -82,6 +82,8 @@ export type Database = {
           current_period_end: string | null
           cancel_at_period_end: boolean
           canceled_at: string | null
+          payment_failed_at: string | null
+          grace_period_ends_at: string | null
           created_at: string
           updated_at: string
         }
@@ -97,6 +99,8 @@ export type Database = {
           current_period_end?: string | null
           cancel_at_period_end?: boolean
           canceled_at?: string | null
+          payment_failed_at?: string | null
+          grace_period_ends_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -112,6 +116,8 @@ export type Database = {
           current_period_end?: string | null
           cancel_at_period_end?: boolean
           canceled_at?: string | null
+          payment_failed_at?: string | null
+          grace_period_ends_at?: string | null
           created_at?: string
           updated_at?: string
         }

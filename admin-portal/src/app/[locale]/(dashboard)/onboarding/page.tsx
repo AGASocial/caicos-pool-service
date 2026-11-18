@@ -63,8 +63,16 @@ export default function OnboardingPage() {
     try {
       const plan = plans.find(p => p.id === planId);
 
-      // Free plan - skip to dashboard
-      if (plan?.amountCents === 0) {
+      // Free plan — create subscription row (idempotent), then dashboard
+      if (plan?.amountCents === 0 || planId === 'plan_free') {
+        const freeRes = await fetch('/api/billing/subscriptions/free', {
+          method: 'POST',
+          credentials: 'include',
+        });
+        if (!freeRes.ok) {
+          const error = await freeRes.json().catch(() => ({}));
+          throw new Error(error.error || 'Failed to start Free plan');
+        }
         router.push('/dashboard');
         return;
       }
@@ -261,7 +269,24 @@ export default function OnboardingPage() {
       <div className="text-center mt-8">
         <Button
           variant="link"
-          onClick={() => router.push('/dashboard')}
+          onClick={async () => {
+            setSubscribing('skip');
+            try {
+              const freeRes = await fetch('/api/billing/subscriptions/free', {
+                method: 'POST',
+                credentials: 'include',
+              });
+              if (!freeRes.ok) {
+                const error = await freeRes.json().catch(() => ({}));
+                throw new Error(error.error || 'Failed to start Free plan');
+              }
+              router.push('/dashboard');
+            } catch (error) {
+              console.error('Error starting Free plan:', error);
+              toast.error(error instanceof Error ? error.message : t('billingError'));
+              setSubscribing(null);
+            }
+          }}
           disabled={subscribing !== null}
         >
           {t('skipForNow')}

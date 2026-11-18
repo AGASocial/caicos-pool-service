@@ -130,6 +130,7 @@ Replace `price_xxx` with actual Stripe Price IDs.
    - `customer.subscription.created`
    - `customer.subscription.updated`
    - `customer.subscription.deleted`
+   - `customer.subscription.trial_will_end`
    - `invoice.paid`
    - `invoice.payment_failed`
    - `payment_method.attached`
