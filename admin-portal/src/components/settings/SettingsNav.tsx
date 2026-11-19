@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
-import { User, Settings, Trash2, Mail } from 'lucide-react';
+import { User, Settings, Trash2, Mail, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
@@ -34,6 +34,11 @@ export function SettingsNav({ className, ...props }: SettingsNavProps) {
                       title: t('messageTemplates'),
                       href: '/settings/templates',
                       icon: Mail,
+                  },
+                  {
+                      title: t('customerReports'),
+                      href: '/settings/customer-reports',
+                      icon: FileText,
                   },
                   {
                       title: t('trash'),

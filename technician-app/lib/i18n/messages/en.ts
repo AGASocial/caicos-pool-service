@@ -242,6 +242,8 @@ export const en = {
     },
     extras: {
       cleaned_filter: 'Filter serviced',
+      filter_change: 'Filter change',
+      o_ring_replacement: 'O-ring replacement',
       vacuumed: 'Extra vacuum',
       low_water: 'Low water',
       salt_chemicals: 'Salt / chemicals added',

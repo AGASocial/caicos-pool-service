@@ -42,6 +42,7 @@ export type ServiceReport = {
   cyanuric_acid: number | null;
   salt_level: number | null;
   water_temp_f: number | null;
+  service_event_types: string[] | null;
 };
 
 export const REPORT_SELECT = `
@@ -66,7 +67,8 @@ export const REPORT_SELECT = `
   calcium_hardness,
   cyanuric_acid,
   salt_level,
-  water_temp_f
+  water_temp_f,
+  service_event_types
 `;
 
 /** Report row plus nested photos — one PostgREST round trip. */
@@ -93,6 +95,7 @@ export const REPORT_WITH_PHOTOS_SELECT = `
   cyanuric_acid,
   salt_level,
   water_temp_f,
+  service_event_types,
   report_photos:cadenza_report_photos (
     id,
     storage_path,
@@ -138,6 +141,9 @@ export function mapReportRow(row: Record<string, unknown>): ServiceReport {
     cyanuric_acid: row.cyanuric_acid != null ? Number(row.cyanuric_acid) : null,
     salt_level: row.salt_level != null ? Number(row.salt_level) : null,
     water_temp_f: row.water_temp_f != null ? Number(row.water_temp_f) : null,
+    service_event_types: Array.isArray(row.service_event_types)
+      ? (row.service_event_types as unknown[]).filter((v): v is string => typeof v === 'string')
+      : null,
   };
 }
 
