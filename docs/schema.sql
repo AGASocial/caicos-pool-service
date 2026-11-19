@@ -168,6 +168,8 @@ CREATE TABLE cadenza_service_jobs (
   notes TEXT,
   job_source TEXT NOT NULL DEFAULT 'route' CHECK (job_source IN ('route', 'ad_hoc')),
   visit_kind_id UUID REFERENCES cadenza_visit_reasons(id) ON DELETE SET NULL,
+  has_paid_extras BOOLEAN NOT NULL DEFAULT FALSE,
+  send_paid_extra_report BOOLEAN NOT NULL DEFAULT FALSE,
   is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -211,9 +213,34 @@ CREATE TABLE cadenza_service_reports (
   follow_up_status TEXT NOT NULL DEFAULT 'open' CHECK (follow_up_status IN ('open', 'resolved')),
   issue_categories TEXT[] NOT NULL DEFAULT '{}',
   cant_service_reasons TEXT[] NOT NULL DEFAULT '{}',
+  service_event_types TEXT[] NOT NULL DEFAULT '{}',
   is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Per-company auto-send event types for customer visit reports
+CREATE TABLE cadenza_customer_report_settings (
+  company_id UUID PRIMARY KEY REFERENCES cadenza_companies(id) ON DELETE CASCADE,
+  auto_send_event_types TEXT[] NOT NULL DEFAULT ARRAY[
+    'filter_change',
+    'o_ring_replacement',
+    'filter_cleaning',
+    'low_water_level'
+  ]::TEXT[],
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Automatic customer report send attempts (delivery log UI comes later)
+CREATE TABLE customer_report_deliveries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES cadenza_companies(id) ON DELETE CASCADE,
+  job_id UUID NOT NULL REFERENCES cadenza_service_jobs(id) ON DELETE CASCADE,
+  recipient TEXT,
+  status TEXT NOT NULL CHECK (status IN ('queued', 'sent', 'failed', 'skipped')),
+  reason TEXT,
+  provider_message_id TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Message templates (email / SMS) with {{merge_tags}}; issue_categories maps one template → many issues
@@ -286,6 +313,10 @@ CREATE INDEX idx_cadenza_message_templates_company_channel ON cadenza_message_te
 CREATE UNIQUE INDEX cadenza_message_templates_one_default_per_channel_locale
   ON cadenza_message_templates(company_id, channel, locale) WHERE is_default IS TRUE;
 CREATE INDEX idx_cadenza_report_photos_report ON cadenza_report_photos(report_id);
+CREATE INDEX idx_customer_report_deliveries_company_created
+  ON customer_report_deliveries(company_id, created_at DESC);
+CREATE INDEX idx_customer_report_deliveries_job
+  ON customer_report_deliveries(job_id, created_at DESC);
 
 -- ============================================
 -- ROW LEVEL SECURITY
@@ -484,6 +515,30 @@ CREATE POLICY "Office staff can manage message templates"
   ON cadenza_message_templates FOR ALL
   USING (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin', 'operations'))
   WITH CHECK (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin', 'operations'));
+
+ALTER TABLE cadenza_customer_report_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Company users can view customer report settings"
+  ON cadenza_customer_report_settings FOR SELECT
+  USING (company_id = get_my_company_id());
+
+CREATE POLICY "Office staff can manage customer report settings"
+  ON cadenza_customer_report_settings FOR ALL
+  USING (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin', 'operations'))
+  WITH CHECK (company_id = get_my_company_id() AND get_my_role() IN ('owner', 'admin', 'operations'));
+
+ALTER TABLE customer_report_deliveries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Company users can view customer report deliveries"
+  ON customer_report_deliveries FOR SELECT
+  USING (company_id = get_my_company_id());
+
+CREATE POLICY "Office staff can insert customer report deliveries"
+  ON customer_report_deliveries FOR INSERT
+  WITH CHECK (
+    company_id = get_my_company_id()
+    AND get_my_role() IN ('owner', 'admin', 'operations')
+  );
 
 -- Report photos: follow report access
 CREATE POLICY "Users can view company photos"

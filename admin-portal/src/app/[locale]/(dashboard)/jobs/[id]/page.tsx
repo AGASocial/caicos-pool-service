@@ -24,6 +24,7 @@ import { useTeam } from '@/lib/team';
 import { ServiceReportCard } from '@/components/jobs/ServiceReportCard';
 import { FollowUpActionsCard } from '@/components/jobs/FollowUpActionsCard';
 import { LoadingState } from '@/components/ui/loading-state';
+import { Switch } from '@/components/ui/switch';
 import type { ServiceReport } from '@/lib/service-report';
 
 const STATUSES = ['pending', 'in_progress', 'completed', 'skipped', 'cancelled'] as const;
@@ -52,6 +53,8 @@ type JobDetail = {
   notes: string | null;
   job_source?: string;
   visit_kind_id?: string | null;
+  has_paid_extras?: boolean;
+  send_paid_extra_report?: boolean;
   created_at: string;
   updated_at: string;
   property?: PropertyRef;
@@ -84,6 +87,8 @@ export default function JobDetailPage() {
     status: 'pending',
     notes: '',
     estimated_duration_min: 30,
+    has_paid_extras: false,
+    send_paid_extra_report: false,
   });
 
   useEffect(() => {
@@ -108,6 +113,8 @@ export default function JobDetailPage() {
             status: data.status ?? 'pending',
             notes: data.notes ?? '',
             estimated_duration_min: data.estimated_duration_min ?? 30,
+            has_paid_extras: Boolean(data.has_paid_extras),
+            send_paid_extra_report: Boolean(data.send_paid_extra_report),
           });
         }
       } catch (e) {
@@ -134,6 +141,10 @@ export default function JobDetailPage() {
           status: edit.status,
           notes: edit.notes || null,
           estimated_duration_min: edit.estimated_duration_min,
+          has_paid_extras: edit.has_paid_extras,
+          send_paid_extra_report: edit.has_paid_extras
+            ? edit.send_paid_extra_report
+            : false,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -143,6 +154,13 @@ export default function JobDetailPage() {
         return;
       }
       setJob((prev) => (prev ? { ...prev, ...data } : null));
+      setEdit((p) => ({
+        ...p,
+        has_paid_extras: Boolean(data.has_paid_extras ?? p.has_paid_extras),
+        send_paid_extra_report: Boolean(
+          data.send_paid_extra_report ?? p.send_paid_extra_report,
+        ),
+      }));
       setSaving(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
@@ -396,6 +414,42 @@ export default function JobDetailPage() {
               value={edit.notes}
               onChange={(e) => setEdit((p) => ({ ...p, notes: e.target.value }))}
             />
+          </div>
+          <div className="space-y-3 rounded-md border border-border p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="has-paid-extras">{t('hasPaidExtras')}</Label>
+                <p className="text-xs text-muted-foreground mt-1">{t('hasPaidExtrasHint')}</p>
+              </div>
+              <Switch
+                id="has-paid-extras"
+                checked={edit.has_paid_extras}
+                onCheckedChange={(on) =>
+                  setEdit((p) => ({
+                    ...p,
+                    has_paid_extras: on,
+                    send_paid_extra_report: on ? p.send_paid_extra_report : false,
+                  }))
+                }
+                data-testid="has-paid-extras"
+              />
+            </div>
+            {edit.has_paid_extras && (
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <Label htmlFor="send-paid-extra-report">{t('sendPaidExtraReport')}</Label>
+                  <p className="text-xs text-muted-foreground mt-1">{t('sendPaidExtraReportHint')}</p>
+                </div>
+                <Switch
+                  id="send-paid-extra-report"
+                  checked={edit.send_paid_extra_report}
+                  onCheckedChange={(on) =>
+                    setEdit((p) => ({ ...p, send_paid_extra_report: on }))
+                  }
+                  data-testid="send-paid-extra-report"
+                />
+              </div>
+            )}
           </div>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? t('loading', { defaultValue: 'Loading…' }) : t('save')}
