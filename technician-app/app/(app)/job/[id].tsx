@@ -19,6 +19,7 @@ import {
   EQUIPMENT,
   ISSUE_CATEGORY_OPTIONS,
   VISIT_EXTRAS,
+  serviceEventTypesFromExtras,
   type IssueCategoryKey,
 } from '@/lib/visitForm';
 
@@ -430,7 +431,7 @@ export default function JobDetailScreen() {
           .single(),
         supabase
           .from('cadenza_service_reports')
-          .select('id, ph_level, chlorine_level, alkalinity, calcium_hardness, cyanuric_acid, salt_level, water_temp_f, skimmed, vacuumed, brushed, emptied_baskets, backwashed, cleaned_filter, pump_ok, filter_ok, heater_ok, cleaner_ok, notes, follow_up_needed, follow_up_notes, issue_categories, other_chemicals')
+          .select('id, ph_level, chlorine_level, alkalinity, calcium_hardness, cyanuric_acid, salt_level, water_temp_f, skimmed, vacuumed, brushed, emptied_baskets, backwashed, cleaned_filter, pump_ok, filter_ok, heater_ok, cleaner_ok, notes, follow_up_needed, follow_up_notes, issue_categories, other_chemicals, service_event_types')
           .eq('job_id', id)
           .order('created_at', { ascending: false })
           .limit(1)
@@ -467,12 +468,20 @@ export default function JobDetailScreen() {
         salt_level: r.salt_level != null ? String(r.salt_level) : '',
         water_temp_f: r.water_temp_f != null ? String(r.water_temp_f) : '',
       });
-      setExtras({
-        cleaned_filter: Boolean(r.cleaned_filter),
-        vacuumed: Boolean(r.vacuumed),
-        salt_chemicals: Boolean(r.other_chemicals),
-        low_water: false,
-      });
+      {
+        const eventTypes = Array.isArray(r.service_event_types)
+          ? (r.service_event_types as string[])
+          : [];
+        const nextExtras: Record<string, boolean> = {
+          cleaned_filter: Boolean(r.cleaned_filter) || eventTypes.includes('filter_cleaning'),
+          vacuumed: Boolean(r.vacuumed),
+          salt_chemicals: Boolean(r.other_chemicals) || eventTypes.includes('salt_addition'),
+          low_water: eventTypes.includes('low_water_level'),
+          filter_change: eventTypes.includes('filter_change'),
+          o_ring_replacement: eventTypes.includes('o_ring_replacement'),
+        };
+        setExtras(nextExtras);
+      }
       const loadedIssues = Array.isArray(r.issue_categories)
         ? (r.issue_categories as string[]).filter((k): k is IssueCategoryKey =>
             ISSUE_CATEGORY_OPTIONS.some((o) => o.key === k)
@@ -733,6 +742,7 @@ export default function JobDetailScreen() {
         cleaner_ok: equipment.cleaner_ok ?? true,
         issue_categories: issueCategories,
         other_chemicals: extras.salt_chemicals && otherChemicals.trim() ? otherChemicals.trim() : null,
+        service_event_types: serviceEventTypesFromExtras(extras),
         notes: notes || null,
         follow_up_needed: needsFollowUp,
         follow_up_notes: needsFollowUp ? followUpNotes || null : null,
