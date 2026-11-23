@@ -12,8 +12,13 @@ jest.mock('@/lib/supabase-server', () => ({
   createAuthenticatedRouteClient: jest.fn(),
 }));
 
+jest.mock('@/lib/customer-reports/process', () => ({
+  processCustomerReportForJob: jest.fn().mockResolvedValue({ status: 'skipped', reason: 'mocked' }),
+}));
+
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import { softDeleteByIdForUser } from '@/lib/soft-delete';
+import { processCustomerReportForJob } from '@/lib/customer-reports/process';
 
 const mockCreateClient = createAuthenticatedRouteClient as jest.Mock;
 const mockSoftDeleteByIdForUser = softDeleteByIdForUser as jest.Mock;
@@ -176,6 +181,7 @@ describe('PATCH /api/jobs/[id]', () => {
       update: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       select: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: { status: 'pending' }, error: null }),
       single: jest.fn().mockResolvedValue({ data: mockUpdatedJob, error: null }),
     };
     const mockSupabase = { from: jest.fn().mockReturnValue(mockQuery) };
@@ -188,6 +194,10 @@ describe('PATCH /api/jobs/[id]', () => {
     const body = await res.json();
     expect(body.id).toBe(TEST_ID);
     expect(body.status).toBe('completed');
+    expect(processCustomerReportForJob).toHaveBeenCalledWith(
+      TEST_ID,
+      expect.objectContaining({ client: mockSupabase }),
+    );
   });
 });
 

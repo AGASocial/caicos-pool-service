@@ -60,6 +60,13 @@ export async function cleanupBillingQaUsers(
   await del('cadenza_billing_subscriptions', 'user_id', ids);
   await del('cadenza_invite_codes', 'company_id', safeCompanies);
 
+  // KAN-151 customer auto-reports (and domain rows that FK to profiles)
+  await del('customer_report_deliveries', 'company_id', safeCompanies);
+  await del('cadenza_service_reports', 'company_id', safeCompanies);
+  await del('cadenza_service_jobs', 'company_id', safeCompanies);
+  await del('cadenza_properties', 'company_id', safeCompanies);
+  await del('cadenza_customer_report_settings', 'company_id', safeCompanies);
+
   for (const u of users) {
     const { error } = await admin.auth.admin.deleteUser(u.id);
     if (error) console.warn(`deleteUser ${u.email}: ${error.message}`);

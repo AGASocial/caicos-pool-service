@@ -247,6 +247,8 @@ export const es = {
     },
     extras: {
       cleaned_filter: 'Filtro atendido',
+      filter_change: 'Cambio de filtro',
+      o_ring_replacement: 'Reemplazo de o-ring',
       vacuumed: 'Aspirado extra',
       low_water: 'Agua baja',
       salt_chemicals: 'Sal / químicos agregados',

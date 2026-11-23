@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { softDeleteByIdForUser } from '@/lib/soft-delete';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
@@ -9,6 +10,7 @@ import {
   mapReportRow,
 } from '@/lib/service-report';
 import { jobMatchesTechnicianScope, resolveTechnicianScope } from '@/lib/technician-scope';
+import { processCustomerReportForJob } from '@/lib/customer-reports/process';
 
 export async function GET(
   _request: NextRequest,
@@ -38,9 +40,11 @@ export async function GET(
       notes,
       job_source,
       visit_kind_id,
+      has_paid_extras,
+      send_paid_extra_report,
       created_at,
       updated_at,
-      property:cadenza_properties!property_id(id, customer_name, address, customer_phone, city),
+      property:cadenza_properties!property_id(id, customer_name, address, customer_phone, city, customer_email),
       technician:cadenza_profiles!technician_id(id, full_name),
       route:cadenza_routes!route_id(id, name),
       visit_kind:cadenza_visit_reasons!visit_kind_id(id, slug, label)
@@ -131,6 +135,10 @@ export async function PATCH(
     if (body.notes !== undefined) updates.notes = body.notes ? String(body.notes).trim() : null;
     if (body.estimated_duration_min !== undefined) updates.estimated_duration_min = Number(body.estimated_duration_min);
     if (body.route_id !== undefined) updates.route_id = body.route_id || null;
+    if (body.has_paid_extras !== undefined) updates.has_paid_extras = Boolean(body.has_paid_extras);
+    if (body.send_paid_extra_report !== undefined) {
+      updates.send_paid_extra_report = Boolean(body.send_paid_extra_report);
+    }
     if (body.job_source !== undefined) {
       if (body.job_source !== 'route' && body.job_source !== 'ad_hoc') {
         return NextResponse.json({ error: 'job_source must be route or ad_hoc' }, { status: 400 });
@@ -171,16 +179,43 @@ export async function PATCH(
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }
 
+    let previousStatus: string | null = null;
+    if (updates.status === 'completed') {
+      const { data: before } = await client
+        .from('cadenza_service_jobs')
+        .select('status')
+        .eq('id', id)
+        .maybeSingle();
+      previousStatus = (before?.status as string | undefined) ?? null;
+    }
+
     const { data, error } = await client
       .from('cadenza_service_jobs')
       .update(updates)
       .eq('id', id)
-      .select('id, property_id, technician_id, scheduled_date, scheduled_time, status, updated_at')
+      .select(
+        'id, property_id, technician_id, scheduled_date, scheduled_time, status, has_paid_extras, send_paid_extra_report, updated_at',
+      )
       .single();
 
     if (error) {
       console.error('Supabase error updating job:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (
+      data?.status === 'completed' &&
+      previousStatus != null &&
+      previousStatus !== 'completed'
+    ) {
+      try {
+        await processCustomerReportForJob(id, { client: client as unknown as SupabaseClient });
+      } catch (reportErr) {
+        console.error(
+          'customer-reports: process after job complete failed:',
+          reportErr instanceof Error ? reportErr.message : reportErr,
+        );
+      }
     }
 
     return NextResponse.json(data);

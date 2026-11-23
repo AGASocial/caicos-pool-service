@@ -22,6 +22,13 @@ export const VISIT_EXTRAS: {
   key: string;
   label: string;
   reportField?: 'cleaned_filter' | 'vacuumed';
+  /** Maps to cadenza_service_reports.service_event_types for auto customer reports. */
+  serviceEventType?:
+    | 'filter_change'
+    | 'o_ring_replacement'
+    | 'filter_cleaning'
+    | 'low_water_level'
+    | 'salt_addition';
   promptsFollowUp?: boolean;
   promptsChemicalNote?: boolean;
 }[] = [
@@ -29,6 +36,17 @@ export const VISIT_EXTRAS: {
     key: 'cleaned_filter',
     label: 'Filter serviced',
     reportField: 'cleaned_filter',
+    serviceEventType: 'filter_cleaning',
+  },
+  {
+    key: 'filter_change',
+    label: 'Filter change',
+    serviceEventType: 'filter_change',
+  },
+  {
+    key: 'o_ring_replacement',
+    label: 'O-ring replacement',
+    serviceEventType: 'o_ring_replacement',
   },
   {
     key: 'vacuumed',
@@ -39,13 +57,28 @@ export const VISIT_EXTRAS: {
     key: 'low_water',
     label: 'Low water',
     promptsFollowUp: true,
+    serviceEventType: 'low_water_level',
   },
   {
     key: 'salt_chemicals',
     label: 'Salt / chemicals added',
     promptsChemicalNote: true,
+    serviceEventType: 'salt_addition',
   },
 ];
+
+/** Build service_event_types from visit extra toggles (chemical tags are stored but never emailed). */
+export function serviceEventTypesFromExtras(
+  extras: Record<string, boolean>,
+): string[] {
+  const out: string[] = [];
+  for (const item of VISIT_EXTRAS) {
+    if (item.serviceEventType && extras[item.key]) {
+      out.push(item.serviceEventType);
+    }
+  }
+  return out;
+}
 
 export const CHEMICAL_READINGS = [
   { key: 'ph_level', label: 'pH', ideal: '7.2-7.6', unit: 'pH' },
