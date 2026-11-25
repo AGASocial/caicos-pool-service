@@ -7,6 +7,7 @@ import { useAppColors } from '@/lib/theme';
 import { isBiometricLoginEnabled } from '@/lib/biometric-auth';
 import { useI18n } from '@/lib/i18n';
 import { supabase } from '@/lib/supabase';
+import { startVoiceNoteQueueSync } from '@/lib/voiceNoteQueue';
 
 export default function AppLayout() {
   const router = useRouter();
@@ -23,6 +24,10 @@ export default function AppLayout() {
   useEffect(() => {
     refreshBiometricSetting();
   }, [refreshBiometricSetting]);
+
+  useEffect(() => {
+    return startVoiceNoteQueueSync();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {

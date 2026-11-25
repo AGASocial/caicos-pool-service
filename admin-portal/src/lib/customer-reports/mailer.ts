@@ -7,6 +7,7 @@
  */
 
 import type { RoutineAutoSendEventType } from './types';
+import { assertNoVoiceNotesInCustomerReport } from '@/lib/voice-notes/customer-report-guard';
 
 export type CustomerReportMailLocale = 'en' | 'es';
 
@@ -69,6 +70,11 @@ function formatEventList(
 export async function sendCustomerReportEmail(
   params: SendCustomerReportEmailParams,
 ): Promise<SendCustomerReportEmailResult> {
+  // AC-13: voice notes / transcripts are internal-only and must never email.
+  assertNoVoiceNotesInCustomerReport(
+    params as unknown as Record<string, unknown>,
+  );
+
   const locale = normalizeLocale(params.locale);
   const lines = formatEventList(
     params.eventsToReport,

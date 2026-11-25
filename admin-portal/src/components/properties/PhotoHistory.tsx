@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 import { Archive, ImageOff } from 'lucide-react';
 import type { HistoryVisit } from '@/lib/photo-history';
+import { VoiceNotes } from '@/components/jobs/VoiceNotes';
 
 type Resp = { visits: HistoryVisit[]; hasMore: boolean; page: number; total: number };
 
@@ -65,6 +66,9 @@ export function PhotoHistory({ propertyId }: { propertyId: string }) {
                 <span className="text-xs text-muted-foreground">{t(`status_${v.status}`)}</span>
               </div>
               {v.notes && <p className="mt-1 text-sm text-muted-foreground">{v.notes}</p>}
+              <div className="mt-3">
+                <VoiceNotes jobId={v.jobId} propertyId={propertyId} />
+              </div>
               {v.photos.length === 0 ? (
                 <p className="mt-2 text-xs text-muted-foreground">{t('visitNoPhotos')}</p>
               ) : (
