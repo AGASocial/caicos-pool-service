@@ -108,8 +108,8 @@ CREATE POLICY "Technicians and office can insert voice notes"
         AND EXISTS (
           SELECT 1
           FROM public.cadenza_service_jobs j
-          WHERE j.id = job_id
-            AND j.company_id = company_id
+          WHERE j.id = cadenza_job_voice_notes.job_id
+            AND j.company_id = cadenza_job_voice_notes.company_id
             AND j.technician_id = auth.uid()
             AND COALESCE(j.is_deleted, false) = false
         )
