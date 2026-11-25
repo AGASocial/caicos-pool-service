@@ -21,7 +21,7 @@ export async function transcribeVoiceNoteAudio(
 ): Promise<TranscriptionResult> {
   if (isVoiceNotesFakeProvider()) {
     return {
-      text: 'Stub transcript: filter looked fine, no issues.',
+      text: 'Stub transcript: filter looked fine, all clear.',
       language: 'en',
       durationInSeconds: 12,
       modelId: 'fake-transcription',

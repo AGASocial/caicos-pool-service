@@ -60,4 +60,38 @@ describe('voice-notes classifier', () => {
       }),
     ).toThrow();
   });
+
+  it('fake provider classifies the stub transcription as routine', async () => {
+    const prev = process.env.VOICE_NOTES_FAKE_PROVIDER;
+    process.env.VOICE_NOTES_FAKE_PROVIDER = '1';
+    try {
+      const result = await classifyTranscript(
+        'Stub transcript: filter looked fine, all clear.',
+      );
+      expect(result).toMatchObject({
+        category: 'routine',
+        urgency: null,
+        modelId: 'fake-classifier',
+      });
+    } finally {
+      if (prev === undefined) delete process.env.VOICE_NOTES_FAKE_PROVIDER;
+      else process.env.VOICE_NOTES_FAKE_PROVIDER = prev;
+    }
+  });
+
+  it('fake provider flags problem keywords', async () => {
+    const prev = process.env.VOICE_NOTES_FAKE_PROVIDER;
+    process.env.VOICE_NOTES_FAKE_PROVIDER = '1';
+    try {
+      const result = await classifyTranscript('Pump is broken and leaking.');
+      expect(result).toMatchObject({
+        category: 'problem',
+        urgency: 'medium',
+        modelId: 'fake-classifier',
+      });
+    } finally {
+      if (prev === undefined) delete process.env.VOICE_NOTES_FAKE_PROVIDER;
+      else process.env.VOICE_NOTES_FAKE_PROVIDER = prev;
+    }
+  });
 });

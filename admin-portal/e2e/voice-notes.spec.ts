@@ -197,7 +197,7 @@ test.beforeAll(async () => {
       .from('cadenza_job_voice_notes')
       .update({
         status: 'done',
-        transcript: 'Stub transcript: filter looked fine, no issues.',
+        transcript: 'Stub transcript: filter looked fine, all clear.',
         language: 'en',
         category: 'routine',
         urgency: null,
