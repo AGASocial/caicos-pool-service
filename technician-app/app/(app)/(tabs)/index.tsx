@@ -8,6 +8,7 @@ import type { ServiceJob } from '@/lib/database.types';
 import { useI18n } from '@/lib/i18n';
 import { JobCardFooter } from '@/components/JobCardFooter';
 import { useAppColors } from '@/lib/theme';
+import { carryForwardCountsByJob, fetchOpenIssuesForProperties } from '@/lib/carryForward';
 
 /** Today in local time as YYYY-MM-DD (avoids UTC date being wrong in Americas etc.) */
 function getLocalDateString(d: Date): string {
@@ -24,6 +25,8 @@ type JobWithProperty = ServiceJob & { cadenza_properties?: { customer_name: stri
 export default function JobsScreen() {
   const [jobs, setJobs] = useState<JobWithProperty[]>([]);
   const [overdueJobs, setOverdueJobs] = useState<JobWithProperty[]>([]);
+  /** KAN-153: count of prior open issues per job id (same property, recorded on another job). */
+  const [priorIssueCounts, setPriorIssueCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const lastFetchedAt = useRef<number>(0);
@@ -40,22 +43,34 @@ export default function JobsScreen() {
     const [todayRes, overdueRes] = await Promise.all([
       supabase
         .from('cadenza_service_jobs')
-        .select('id, status, scheduled_date, scheduled_time, route_order, estimated_duration_min, cadenza_properties(customer_name, address)')
+        .select('id, status, property_id, scheduled_date, scheduled_time, route_order, estimated_duration_min, cadenza_properties(customer_name, address)')
         .eq('scheduled_date', today)
         .eq('technician_id', userId)
         .order('route_order', { nullsFirst: false }),
       supabase
         .from('cadenza_service_jobs')
-        .select('id, status, scheduled_date, scheduled_time, route_order, estimated_duration_min, cadenza_properties(customer_name, address)')
+        .select('id, status, property_id, scheduled_date, scheduled_time, route_order, estimated_duration_min, cadenza_properties(customer_name, address)')
         .lt('scheduled_date', today)
         .eq('technician_id', userId)
         .in('status', ['pending', 'in_progress'])
         .order('scheduled_date', { ascending: false })
         .order('route_order', { nullsFirst: false }),
     ]);
-    setJobs((todayRes.data ?? []) as unknown as JobWithProperty[]);
-    setOverdueJobs((overdueRes.data ?? []) as unknown as JobWithProperty[]);
+    const todayJobs = (todayRes.data ?? []) as unknown as JobWithProperty[];
+    const overdue = (overdueRes.data ?? []) as unknown as JobWithProperty[];
+    setJobs(todayJobs);
+    setOverdueJobs(overdue);
     lastFetchedAt.current = Date.now();
+
+    // Badge data is best-effort: a failure here must not hide the job list.
+    try {
+      const listed = [...todayJobs, ...overdue];
+      const issues = await fetchOpenIssuesForProperties(listed.map((job) => job.property_id));
+      setPriorIssueCounts(carryForwardCountsByJob(issues, listed));
+    } catch (e) {
+      console.warn('[carry-forward] could not load prior open issues', e);
+      setPriorIssueCounts({});
+    }
   }, [today]);
 
   useEffect(() => {
@@ -191,6 +206,17 @@ export default function JobsScreen() {
           borderColor: c.tint,
         },
         startServiceText: { fontSize: 14, fontWeight: '600', color: c.tint },
+        priorIssueBadge: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          alignSelf: 'flex-start',
+          gap: 6,
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderRadius: 8,
+          backgroundColor: c.warningBorder,
+        },
+        priorIssueBadgeText: { fontSize: 12, fontWeight: '700', color: '#fff' },
         statusBadge: {
           paddingHorizontal: 10,
           paddingVertical: 4,
@@ -334,6 +360,13 @@ export default function JobsScreen() {
                         <Text style={styles.overdueDateText}>{overdueDateLabel}</Text>
                       </View>
                     </View>
+                    {priorIssueCounts[item.id] ? (
+                      <View style={styles.priorIssueBadge} testID="tech-job-prior-issues">
+                        <Text style={styles.priorIssueBadgeText}>
+                          {t('jobs.priorIssuesBadge', { count: priorIssueCounts[item.id] })}
+                        </Text>
+                      </View>
+                    ) : null}
                     <View style={styles.cardFooter}>
                       <JobCardFooter status={item.status} />
                     </View>
@@ -359,6 +392,13 @@ export default function JobsScreen() {
                   <Text style={styles.cardAddress}>{prop?.address ?? ''}</Text>
                 </View>
               </View>
+              {priorIssueCounts[item.id] ? (
+                <View style={styles.priorIssueBadge} testID="tech-job-prior-issues">
+                  <Text style={styles.priorIssueBadgeText}>
+                    {t('jobs.priorIssuesBadge', { count: priorIssueCounts[item.id] })}
+                  </Text>
+                </View>
+              ) : null}
               <View style={styles.cardFooter}>
                 <JobCardFooter status={item.status} />
               </View>

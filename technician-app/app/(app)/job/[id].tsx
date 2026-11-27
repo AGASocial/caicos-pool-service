@@ -14,6 +14,18 @@ import { VoiceNoteRecorder } from '@/components/voice-notes/VoiceNoteRecorder';
 import { getUploadBodyFromUri } from '@/lib/uploadPhoto';
 import { invalidateJobsList } from '@/lib/jobs-list-invalidation';
 import { useI18n } from '@/lib/i18n';
+import {
+  allCarryForwardAnswered,
+  carryForwardKey,
+  daysOpen,
+  fetchOpenIssuesForProperties,
+  initialAnswers,
+  issuesForJob,
+  reviewOpenIssue,
+  unansweredCarryForward,
+  type CarryForwardAnswers,
+  type CarryForwardIssue,
+} from '@/lib/carryForward';
 import Colors from '@/constants/Colors';
 import {
   CHEMICAL_READINGS,
@@ -106,6 +118,11 @@ export default function JobDetailScreen() {
   } | null>(null);
   const [photoFullScreenIndex, setPhotoFullScreenIndex] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  // KAN-153: open issues from earlier visits at this property, each answered Resolved? Yes/No.
+  const [carryForward, setCarryForward] = useState<CarryForwardIssue[]>([]);
+  const [carryAnswers, setCarryAnswers] = useState<CarryForwardAnswers>({});
+  const [carrySaving, setCarrySaving] = useState<string | null>(null);
+  const [carryError, setCarryError] = useState<string | null>(null);
 
   const styles = useMemo(
     () =>
@@ -398,6 +415,44 @@ export default function JobDetailScreen() {
           color: themeColors.text,
           textAlignVertical: 'top',
         },
+        // Previous open issues (carry-forward)
+        priorCard: {
+          backgroundColor: themeColors.card,
+          borderRadius: 12,
+          padding: 16,
+          gap: 12,
+          borderWidth: 1,
+          borderColor: themeColors.warningBorder,
+        },
+        priorTitle: { fontSize: 16, fontWeight: '700', color: themeColors.text },
+        priorHint: { fontSize: 13, color: themeColors.muted },
+        priorItem: {
+          gap: 8,
+          paddingTop: 12,
+          borderTopWidth: 1,
+          borderTopColor: themeColors.borderSubtle,
+        },
+        priorMeta: { fontSize: 12, fontWeight: '600', color: themeColors.muted },
+        priorSummary: { fontSize: 15, color: themeColors.text },
+        priorAnswerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+        priorQuestion: { fontSize: 14, fontWeight: '600', color: themeColors.text, marginRight: 4 },
+        priorAnswerBtn: {
+          minWidth: 64,
+          minHeight: 44,
+          paddingHorizontal: 16,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: themeColors.border,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        priorAnswerBtnActive: {
+          backgroundColor: themeColors.buttonPrimary,
+          borderColor: themeColors.buttonPrimary,
+        },
+        priorAnswerText: { fontSize: 15, fontWeight: '700', color: themeColors.text },
+        priorAnswerTextActive: { color: themeColors.buttonPrimaryText },
+        priorError: { fontSize: 13, color: '#dc2626' },
         // Complete button
         completeButton: {
           backgroundColor: themeColors.buttonPrimary,
@@ -527,6 +582,50 @@ export default function JobDetailScreen() {
 
     return () => { cancelled = true; };
   }, [id]);
+
+  const propertyId = job?.property_id ?? null;
+  useEffect(() => {
+    if (!id || !propertyId) {
+      setCarryForward([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const issues = issuesForJob(await fetchOpenIssuesForProperties([propertyId]), {
+          id,
+          property_id: propertyId,
+        });
+        if (cancelled) return;
+        setCarryForward(issues);
+        setCarryAnswers(initialAnswers(issues, id));
+        setCarryError(null);
+      } catch (e) {
+        console.warn('[carry-forward] could not load previous open issues', e);
+        if (!cancelled) setCarryError(t('jobDetail.priorIssuesLoadError'));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, propertyId]);
+
+  async function answerCarryForward(issue: CarryForwardIssue, resolved: boolean) {
+    if (!id) return;
+    const key = carryForwardKey(issue);
+    setCarrySaving(key);
+    setCarryError(null);
+    try {
+      await reviewOpenIssue({ source: issue.source, id: issue.id, reviewJobId: id, resolved });
+      setCarryAnswers((prev) => ({ ...prev, [key]: resolved }));
+    } catch (e) {
+      console.warn('[carry-forward] review failed', e);
+      setCarryError(t('jobDetail.priorIssuesSaveError'));
+    } finally {
+      setCarrySaving(null);
+    }
+  }
 
   useLayoutEffect(() => {
     if (!started) {
@@ -704,6 +803,15 @@ export default function JobDetailScreen() {
   async function handleComplete() {
     if (!id || !job) return;
     setActionError(null);
+    // AC-7: every visible previous open issue needs Yes or No; unanswered items stay open.
+    if (!allCarryForwardAnswered(carryForward, carryAnswers)) {
+      const msg = t('jobDetail.priorIssuesRequiredMessage', {
+        count: unansweredCarryForward(carryForward, carryAnswers).length,
+      });
+      setActionError(msg);
+      showAppAlert(t('jobDetail.priorIssuesRequiredTitle'), msg);
+      return;
+    }
     if (photos.length === 0) {
       const msg = t('jobDetail.photoRequiredMessage');
       setActionError(msg);
@@ -932,6 +1040,59 @@ export default function JobDetailScreen() {
             </Pressable>
           </Pressable>
         </Modal>
+
+        {carryForward.length > 0 || carryError ? (
+          <View style={styles.priorCard} testID="job-prior-issues">
+            <Text style={styles.priorTitle}>{t('jobDetail.priorIssuesTitle')}</Text>
+            {carryForward.length > 0 ? <Text style={styles.priorHint}>{t('jobDetail.priorIssuesHint')}</Text> : null}
+            {carryError ? <Text style={styles.priorError}>{carryError}</Text> : null}
+            {carryForward.map((issue) => {
+              const key = carryForwardKey(issue);
+              const answer = carryAnswers[key];
+              const busy = carrySaving === key;
+              const categoryLabels = issue.issue_categories
+                .map((category) => ISSUE_CATEGORY_OPTIONS.find((o) => o.key === category)?.label ?? category)
+                .join(', ');
+              return (
+                <View key={key} style={styles.priorItem} testID={`job-prior-issue-${issue.source}`}>
+                  <Text style={styles.priorMeta}>
+                    {issue.source === 'voice_note'
+                      ? t('jobDetail.priorIssuesSourceVoiceNote')
+                      : t('jobDetail.priorIssuesSourceReport')}
+                    {' · '}
+                    {t('jobDetail.priorIssuesDaysOpen', { days: daysOpen(issue.created_at) })}
+                  </Text>
+                  <Text style={styles.priorSummary}>{issue.summary ?? categoryLabels}</Text>
+                  <View style={styles.priorAnswerRow}>
+                    <Text style={styles.priorQuestion}>{t('jobDetail.priorIssuesQuestion')}</Text>
+                    <Pressable
+                      style={[styles.priorAnswerBtn, answer === true && styles.priorAnswerBtnActive]}
+                      disabled={busy}
+                      onPress={() => answerCarryForward(issue, true)}
+                      accessibilityRole="button"
+                      testID="job-prior-issue-yes"
+                    >
+                      <Text style={[styles.priorAnswerText, answer === true && styles.priorAnswerTextActive]}>
+                        {t('jobDetail.priorIssuesYes')}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.priorAnswerBtn, answer === false && styles.priorAnswerBtnActive]}
+                      disabled={busy}
+                      onPress={() => answerCarryForward(issue, false)}
+                      accessibilityRole="button"
+                      testID="job-prior-issue-no"
+                    >
+                      <Text style={[styles.priorAnswerText, answer === false && styles.priorAnswerTextActive]}>
+                        {t('jobDetail.priorIssuesNo')}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
 
         {!started ? (
           <>
