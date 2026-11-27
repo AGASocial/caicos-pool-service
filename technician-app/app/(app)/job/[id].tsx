@@ -10,6 +10,7 @@ import { resolveUserId } from '@/lib/auth-session';
 import { getSignedUrls } from '@/lib/signed-url-cache';
 import { getPhotoOverlayInfo, type PhotoOverlayInfo } from '@/lib/photoOverlay';
 import { PhotoWithOverlay } from '@/components/PhotoWithOverlay';
+import { VoiceNoteRecorder } from '@/components/voice-notes/VoiceNoteRecorder';
 import { getUploadBodyFromUri } from '@/lib/uploadPhoto';
 import { invalidateJobsList } from '@/lib/jobs-list-invalidation';
 import { useI18n } from '@/lib/i18n';
@@ -1047,6 +1048,13 @@ export default function JobDetailScreen() {
                 </ScrollView>
               )}
             </View>
+
+            <VoiceNoteRecorder
+              jobId={job.id}
+              companyId={job.company_id}
+              propertyId={job.property_id}
+              createdBy={job.technician_id ?? ''}
+            />
 
             <Modal visible={photoFullScreenIndex !== null} transparent animationType="fade">
               <View style={styles.photoFullScreenBackdrop}>
