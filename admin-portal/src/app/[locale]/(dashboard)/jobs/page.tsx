@@ -363,7 +363,7 @@ export default function JobsPage() {
           {!isLoading && !errorMessage && jobs.length > 0 && (
             <ul className="divide-y divide-border">
               {jobs.map((job) => (
-                <li key={job.id}>
+                <li key={job.id} data-testid="job-row" data-job-id={job.id}>
                   <Link
                     href={`/jobs/${job.id}`}
                     className="flex items-center gap-3 py-3 px-1 rounded-lg hover:bg-muted/50 transition-colors"

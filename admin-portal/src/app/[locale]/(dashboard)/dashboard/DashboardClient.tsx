@@ -60,7 +60,7 @@ function IssueJobRow({ job }: { job: DashboardIssueJob }) {
   const routeName = job.route?.name;
 
   return (
-    <li>
+    <li data-testid="issue-job-row" data-job-id={job.id}>
       <Link href={`/jobs/${job.id}`} className="flex items-start gap-3 py-3 px-1 rounded-lg hover:bg-muted/50 transition-colors">
         <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0 space-y-1.5">

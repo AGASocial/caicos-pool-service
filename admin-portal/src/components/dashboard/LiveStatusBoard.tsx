@@ -147,7 +147,7 @@ export function LiveStatusBoard() {
           technician:cadenza_profiles!cadenza_service_jobs_technician_id_fkey(id, full_name),
           route:cadenza_routes!cadenza_service_jobs_route_id_fkey(id, name),
           property:cadenza_properties!cadenza_service_jobs_property_id_fkey(id, customer_name, address),
-          cadenza_service_reports(arrival_time, departure_time)
+          cadenza_service_reports!job_id(arrival_time, departure_time)
         `
         )
         .eq('scheduled_date', today)

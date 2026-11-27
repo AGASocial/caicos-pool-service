@@ -27,7 +27,7 @@ const PAYROLL_SELECT = `
   id, scheduled_date, updated_at, technician_id,
   technician:cadenza_profiles!technician_id ( full_name ),
   property:cadenza_properties ( customer_name, address, city, state, zip ),
-  reports:cadenza_service_reports ( departure_time, is_deleted )
+  reports:cadenza_service_reports!job_id ( departure_time, is_deleted )
 `;
 
 type StatsTech = { technicianId: string; fullName: string; total: number; completed: number };
