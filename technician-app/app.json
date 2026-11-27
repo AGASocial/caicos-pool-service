@@ -19,7 +19,8 @@
         "NSFaceIDUsageDescription": "Cadenza uses Face ID to sign you in quickly and lock the app when you switch away.",
         "NSCameraUsageDescription": "Cadenza uses the camera to capture pool service photos for job reports.",
         "NSPhotoLibraryUsageDescription": "Cadenza lets you attach existing photos to service reports.",
-        "NSLocationWhenInUseUsageDescription": "Cadenza uses your location to verify on-site service and stamp photos with address."
+        "NSLocationWhenInUseUsageDescription": "Cadenza uses your location to verify on-site service and stamp photos with address.",
+        "NSMicrophoneUsageDescription": "Cadenza uses the microphone to record voice notes on service jobs for the office."
       }
     },
     "android": {
@@ -67,7 +68,8 @@
         {
           "locationWhenInUsePermission": "Cadenza uses your location to verify on-site service and stamp photos with address."
         }
-      ]
+      ],
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true,

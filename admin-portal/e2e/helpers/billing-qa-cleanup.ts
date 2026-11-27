@@ -62,6 +62,7 @@ export async function cleanupBillingQaUsers(
 
   // KAN-151 customer auto-reports (and domain rows that FK to profiles)
   await del('customer_report_deliveries', 'company_id', safeCompanies);
+  await del('cadenza_job_voice_notes', 'company_id', safeCompanies); // KAN-165
   await del('cadenza_service_reports', 'company_id', safeCompanies);
   await del('cadenza_service_jobs', 'company_id', safeCompanies);
   await del('cadenza_properties', 'company_id', safeCompanies);

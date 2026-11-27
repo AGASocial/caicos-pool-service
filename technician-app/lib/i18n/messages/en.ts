@@ -270,6 +270,22 @@ export const en = {
     unlockPrompt: 'Unlock Cadenza with {label}',
     verificationCancelled: '{label} verification was cancelled.',
   },
+  voiceNotes: {
+    title: 'Voice note',
+    hint: 'Hold the mic to record (up to 2 minutes). Slide left to cancel.',
+    holdToRecord: 'Hold to record',
+    recording: 'Recording… {seconds}s',
+    slideToCancel: 'Slide left to cancel',
+    releaseToCancel: 'Release to cancel',
+    previewReady: 'Preview ready ({seconds}s)',
+    play: 'Play',
+    discard: 'Discard',
+    rerecord: 'Re-record',
+    save: 'Save note',
+    micPermission: 'Microphone permission is required to record voice notes.',
+    recordFailed: 'Could not start recording.',
+    saveFailed: 'Could not save the voice note.',
+  },
 } as const;
 
 export type MessageTree = typeof en;

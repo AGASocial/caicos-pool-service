@@ -23,6 +23,7 @@ import { SOFT_DELETE_ROLES } from '@/lib/soft-delete';
 import { useTeam } from '@/lib/team';
 import { ServiceReportCard } from '@/components/jobs/ServiceReportCard';
 import { FollowUpActionsCard } from '@/components/jobs/FollowUpActionsCard';
+import { VoiceNotes } from '@/components/jobs/VoiceNotes';
 import { LoadingState } from '@/components/ui/loading-state';
 import { Switch } from '@/components/ui/switch';
 import type { ServiceReport } from '@/lib/service-report';
@@ -294,6 +295,8 @@ export default function JobDetailPage() {
           }}
         />
       )}
+
+      <VoiceNotes jobId={job.id} />
 
       <Card>
         <CardHeader>

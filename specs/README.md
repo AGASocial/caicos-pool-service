@@ -41,4 +41,5 @@ Copy from `specs/_template/` when starting a ticket.
 |--------|--------|-------|--------|
 | [KAN-147](https://agasocial.atlassian.net/browse/KAN-147) | [`KAN-147-free-plan-readonly/`](./KAN-147-free-plan-readonly/) | Free plan expiry → company read-only | Built |
 | [KAN-148](https://agasocial.atlassian.net/browse/KAN-148) | [`KAN-148-billing-dunning/`](./KAN-148-billing-dunning/) | Billing dunning & payment-failure grace | Built |
-| [KAN-151](https://agasocial.atlassian.net/browse/KAN-151) | [`KAN-151-customer-auto-reports/`](./KAN-151-customer-auto-reports/) | Automatic customer visit report emails | In progress |
+| [KAN-151](https://agasocial.atlassian.net/browse/KAN-151) | [`KAN-151-customer-auto-reports/`](./KAN-151-customer-auto-reports/) | Automatic customer visit report emails | Built |
+| [KAN-165](https://agasocial.atlassian.net/browse/KAN-165) | [`KAN-165-voice-notes/`](./KAN-165-voice-notes/) | Voice notes on jobs, with transcription and classification | Built |
