@@ -24,6 +24,7 @@ import { useTeam } from '@/lib/team';
 import { ServiceReportCard } from '@/components/jobs/ServiceReportCard';
 import { FollowUpActionsCard } from '@/components/jobs/FollowUpActionsCard';
 import { VoiceNotes } from '@/components/jobs/VoiceNotes';
+import { LatestDeliveryIndicator } from '@/components/reports/LatestDeliveryIndicator';
 import { LoadingState } from '@/components/ui/loading-state';
 import { Switch } from '@/components/ui/switch';
 import type { ServiceReport } from '@/lib/service-report';
@@ -338,6 +339,8 @@ export default function JobDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      <LatestDeliveryIndicator jobId={id} />
 
       <Card>
         <CardHeader>

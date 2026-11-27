@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EntitlementGate } from '@/components/EntitlementGate';
-import { Download } from 'lucide-react';
+import { Download, Mail } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 
 type ByStatus = {
   pending: number;
@@ -93,6 +94,12 @@ export default function ReportsPage() {
           {t('reports')}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">{t('reportsDescription')}</p>
+        <Button variant="outline" size="sm" asChild className="mt-3" data-testid="report-delivery-log-link">
+          <Link href="/reports/deliveries">
+            <Mail className="mr-2 h-4 w-4" />
+            {t('reportDeliveries_viewLog')}
+          </Link>
+        </Button>
       </div>
 
       {/* Date range filter */}
