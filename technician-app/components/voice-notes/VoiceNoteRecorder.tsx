@@ -2,6 +2,7 @@
  * Hold-to-record voice note (WhatsApp-style). AAC/m4a mono ~48 kbps, 120 s hard stop.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   PanResponder,
   Pressable,
@@ -14,7 +15,6 @@ import {
   AudioQuality,
   IOSOutputFormat,
   requestRecordingPermissionsAsync,
-  setAudioModeAsync,
   useAudioPlayer,
   useAudioRecorder,
   useAudioRecorderState,
@@ -23,6 +23,7 @@ import {
 import * as FileSystem from 'expo-file-system/legacy';
 import { useI18n } from '@/lib/i18n';
 import { useAppColors } from '@/lib/theme';
+import { setPlaybackAudioMode, setRecordingAudioMode } from '@/lib/voiceNoteAudioMode';
 import { enqueueVoiceNote } from '@/lib/voiceNoteQueue';
 
 const MAX_MS = 120_000;
@@ -124,6 +125,12 @@ export function VoiceNoteRecorder({
         setPreviewDurationMs(duration);
       } catch (err) {
         setError(err instanceof Error ? err.message : t('voiceNotes.recordFailed'));
+      } finally {
+        try {
+          await setPlaybackAudioMode();
+        } catch {
+          /* ignore */
+        }
       }
     },
     [recorder, recorderState.durationMillis, t],
@@ -143,10 +150,7 @@ export function VoiceNoteRecorder({
     }
 
     try {
-      await setAudioModeAsync({
-        allowsRecording: true,
-        playsInSilentMode: true,
-      });
+      await setRecordingAudioMode();
       await recorder.prepareToRecordAsync();
       recorder.record();
       setRecording(true);
@@ -156,11 +160,21 @@ export function VoiceNoteRecorder({
     } catch (err) {
       setError(err instanceof Error ? err.message : t('voiceNotes.recordFailed'));
       setRecording(false);
+      try {
+        await setPlaybackAudioMode();
+      } catch {
+        /* ignore */
+      }
     }
   }, [recorder, stopAndFinalize, t]);
 
   useEffect(() => {
-    return () => clearHardStop();
+    return () => {
+      clearHardStop();
+      void setPlaybackAudioMode().catch(() => {
+        /* ignore */
+      });
+    };
   }, []);
 
   const panResponder = useMemo(
@@ -271,11 +285,14 @@ export function VoiceNoteRecorder({
             <Pressable
               style={[styles.btn, { backgroundColor: colors.photoButtonBg }]}
               onPress={() => {
-                try {
-                  player.play();
-                } catch {
-                  /* ignore */
-                }
+                void (async () => {
+                  try {
+                    await setPlaybackAudioMode();
+                    player.play();
+                  } catch {
+                    /* ignore */
+                  }
+                })();
               }}
               testID="voice-note-play-preview"
             >
@@ -311,30 +328,6 @@ export function VoiceNoteRecorder({
         </View>
       ) : (
         <View style={styles.recordRow}>
-          <View
-            {...panResponder.panHandlers}
-            style={[
-              styles.micHit,
-              {
-                backgroundColor: recording
-                  ? cancelled
-                    ? colors.mutedSecondary
-                    : colors.buttonDanger
-                  : colors.buttonPrimary,
-              },
-            ]}
-            testID="voice-note-hold"
-            accessibilityLabel={t('voiceNotes.holdToRecord')}
-          >
-            <Text
-              style={[
-                styles.micText,
-                { color: recording ? colors.buttonDangerText : colors.buttonPrimaryText },
-              ]}
-            >
-              {recording ? 'REC' : 'MIC'}
-            </Text>
-          </View>
           <View style={styles.recordMeta}>
             {recording ? (
               <>
@@ -352,6 +345,28 @@ export function VoiceNoteRecorder({
                 {t('voiceNotes.holdToRecord')}
               </Text>
             )}
+          </View>
+          <View
+            {...panResponder.panHandlers}
+            style={[
+              styles.micHit,
+              {
+                backgroundColor: recording
+                  ? cancelled
+                    ? colors.mutedSecondary
+                    : colors.buttonDanger
+                  : colors.buttonPrimary,
+              },
+            ]}
+            testID="voice-note-hold"
+            accessibilityRole="button"
+            accessibilityLabel={recording ? t('voiceNotes.stopRecording') : t('voiceNotes.holdToRecord')}
+          >
+            <Ionicons
+              name={recording ? 'stop' : 'mic'}
+              size={26}
+              color={recording ? colors.buttonDangerText : colors.buttonPrimaryText}
+            />
           </View>
         </View>
       )}
@@ -378,7 +393,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  micText: { fontSize: 22, color: '#fff' },
   recordMeta: { flex: 1 },
   recordingText: { fontSize: 15, fontWeight: '600' },
   slideHint: { fontSize: 12, marginTop: 2 },

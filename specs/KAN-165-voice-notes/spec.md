@@ -85,3 +85,13 @@ Storage: private bucket `job-voice-notes`, path `{company_id}/{job_id}/{note_id}
 - AI layer: Vercel AI SDK (`ai` + `@ai-sdk/groq`), default `whisper-large-v3-turbo` + `openai/gpt-oss-20b`, `$5/mo` per-company cap, `VOICE_NOTES_AI_ENABLED` off by default.
 - Cron: `GET /api/cron/process-voice-notes` (`* * * * *` in `admin-portal/vercel.json`, Bearer `CRON_SECRET`).
 - Verification: `admin-portal` lint/tsc/jest (49 suites, 239 tests), `technician-app` tsc, Playwright E2E (`e2e/voice-notes.spec.ts`) with recording on `e2e-media`.
+
+## Follow-up (TestFlight feedback, Nov 27, 2026)
+Technician feedback from TestFlight 1.0.2 (6):
+- The record button looked ugly and used the word "MIC" instead of an icon.
+- Playback came out of the earpiece instead of the loudspeaker.
+
+### Acceptance criteria
+- AC-14. The hold-to-record button is right-aligned in the recorder row, with the status/hint text on the left, and uses an Ionicons microphone icon (idle) and a stop icon (recording). It does not display the words "MIC" or "REC".
+- AC-15. Playing a voice note (preview or otherwise) routes audio to the device loudspeaker, like WhatsApp, not the earpiece.
+- AC-16. Recording audio mode (`allowsRecording: true`) is enabled only while a recording is in progress. When recording stops, is cancelled, fails, or the component unmounts, and before playback starts, the app switches back to playback mode (`allowsRecording: false`, `playsInSilentMode: true`).
