@@ -104,7 +104,7 @@ Response row: `id`, `status` (`sent`\|`failed`\|`pending`\|`skipped`), `recipien
 
 ## AC → test traceability
 
-Unit paths are under `admin-portal/`. AC-9 … AC-13 are covered by the Playwright spec, which skips without a service-role QA environment with the migration applied; AC-11 also has a Jest component test. Those boxes stay open until the E2E has been run.
+Unit paths are under `admin-portal/`. AC-9 … AC-13 are covered by the Playwright spec, which skips without a service-role QA environment with the migration applied; AC-11 also has a Jest component test. Playwright E2E was run locally against Development (9/9) before merge; recording is on `e2e-media`.
 
 | AC | Test file / name |
 |----|------------------|
@@ -124,9 +124,8 @@ Unit paths are under `admin-portal/`. AC-9 … AC-13 are covered by the Playwrig
 
 ## As built
 
-<!-- Fill on close. -->
-
-- **What shipped:** _(pending)_
-- **PR:** _(pending)_
-- **Jira:** https://agasocial.atlassian.net/browse/KAN-152
-- **Notes / deltas from this spec:** _(pending)_
+- PR: [#39](https://github.com/AGASocial/caicos-pool-service/pull/39) (develop)
+- Jira: [KAN-152](https://agasocial.atlassian.net/browse/KAN-152)
+- Migration: `supabase/migrations/20261127120000_report_delivery_log.sql` (applied; rollback in `supabase/migrations/rollback/20261127120000_report_delivery_log_rollback.sql`)
+- Portal: Unsent-first delivery log at `/reports/deliveries`, job/property status indicators, `GET /api/report-deliveries` and `POST /api/report-deliveries/[id]/retry`.
+- Verification: `admin-portal` lint/tsc/jest (55 suites, 318 tests); Playwright E2E (`e2e/report-delivery-log.spec.ts`) 9/9 against Development, recording on `e2e-media`.
