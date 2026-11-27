@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { LoadingState } from '@/components/ui/loading-state';
 import { PhotoHistory } from '@/components/properties/PhotoHistory';
+import { LatestDeliveryIndicator } from '@/components/reports/LatestDeliveryIndicator';
 
 type Property = {
   id: string;
@@ -164,6 +165,8 @@ export default function PropertyDetailPage() {
             )}
           </CardContent>
         </Card>
+
+        <LatestDeliveryIndicator propertyId={id} />
 
         {/* Pool info */}
         <Card>

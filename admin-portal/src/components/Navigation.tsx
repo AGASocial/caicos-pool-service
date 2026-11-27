@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
-import { LayoutDashboard, Briefcase, Building2, Route, Users, FileText } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Building2, Route, Users, FileText, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 import { hasEntitlement, type Resource } from '@/lib/entitlements';
@@ -16,6 +16,7 @@ export default function Navigation({ closeSidebar, collapsed }: { closeSidebar?:
   const navItems: Array<{ href: string; label: string; icon: typeof LayoutDashboard; resource: Resource }> = [
     { href: '/dashboard', label: t('dashboard'), icon: LayoutDashboard, resource: 'dashboard' },
     { href: '/reports', label: t('reports'), icon: FileText, resource: 'report' },
+    { href: '/reports/deliveries', label: t('reportDeliveries_navLabel'), icon: Mail, resource: 'report' },
     { href: '/jobs', label: t('jobs'), icon: Briefcase, resource: 'job' },
     { href: '/routes', label: t('routes'), icon: Route, resource: 'route' },
     { href: '/team', label: t('team'), icon: Users, resource: 'team' },
@@ -30,7 +31,10 @@ export default function Navigation({ closeSidebar, collapsed }: { closeSidebar?:
     <nav className="space-y-6">
       <ul className="space-y-1">
         {visibleNavItems.map((item) => {
-          const isActive = pathname?.includes(item.href);
+          // /reports also matches /reports/deliveries; keep only the more specific item active there.
+          const onDeliveries = pathname?.includes('/reports/deliveries') ?? false;
+          const isActive =
+            item.href === '/reports' ? Boolean(pathname?.includes('/reports')) && !onDeliveries : pathname?.includes(item.href);
           return (
             <li key={item.href}>
               <Link

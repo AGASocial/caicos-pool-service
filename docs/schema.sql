@@ -231,7 +231,7 @@ CREATE TABLE cadenza_customer_report_settings (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Automatic customer report send attempts (delivery log UI comes later)
+-- Customer report send attempts / delivery log (KAN-151, KAN-152). One row per job; retries update in place.
 CREATE TABLE customer_report_deliveries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id UUID NOT NULL REFERENCES cadenza_companies(id) ON DELETE CASCADE,
@@ -240,7 +240,13 @@ CREATE TABLE customer_report_deliveries (
   status TEXT NOT NULL CHECK (status IN ('queued', 'sent', 'failed', 'skipped')),
   reason TEXT,
   provider_message_id TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  -- KAN-152
+  property_id UUID REFERENCES cadenza_properties(id) ON DELETE SET NULL,
+  trigger_source TEXT NOT NULL DEFAULT 'auto' CHECK (trigger_source IN ('auto', 'manual', 'retry')),
+  triggered_by UUID REFERENCES cadenza_profiles(id) ON DELETE SET NULL,
+  attempt_count INTEGER NOT NULL DEFAULT 1 CHECK (attempt_count >= 1),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Message templates (email / SMS) with {{merge_tags}}; issue_categories maps one template → many issues
@@ -317,6 +323,10 @@ CREATE INDEX idx_customer_report_deliveries_company_created
   ON customer_report_deliveries(company_id, created_at DESC);
 CREATE INDEX idx_customer_report_deliveries_job
   ON customer_report_deliveries(job_id, created_at DESC);
+CREATE INDEX idx_customer_report_deliveries_company_status_created
+  ON customer_report_deliveries(company_id, status, created_at DESC);
+CREATE INDEX idx_customer_report_deliveries_property
+  ON customer_report_deliveries(property_id, created_at DESC) WHERE property_id IS NOT NULL;
 
 -- ============================================
 -- ROW LEVEL SECURITY
