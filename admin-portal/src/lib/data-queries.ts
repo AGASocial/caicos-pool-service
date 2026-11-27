@@ -14,6 +14,8 @@ export type JobFilters = {
   route_id?: string;
   day_of_week?: string;
   needs_follow_up?: boolean;
+  /** Only with needs_follow_up: keep jobs whose oldest open issue is at least this many days old. */
+  min_days?: number;
   cursor?: string;
   limit?: number;
 };
@@ -38,6 +40,9 @@ function buildJobsQuery(filters: JobFilters): string {
     params.set("day_of_week", filters.day_of_week);
   }
   if (filters.needs_follow_up) params.set("needs_follow_up", "true");
+  if (filters.needs_follow_up && filters.min_days && filters.min_days > 0) {
+    params.set("min_days", String(filters.min_days));
+  }
   if (filters.cursor) params.set("cursor", filters.cursor);
   if (filters.limit) params.set("limit", String(filters.limit));
   return params.toString();

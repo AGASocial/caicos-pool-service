@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 import {
   buildPaginatedResponse,
   decodeCursor,
   parsePaginationParams,
 } from '@/lib/pagination';
-import { reportNeedsFollowUp, uniqueJobIdsFromReports } from '@/lib/follow-up-jobs';
+import { parseMinDays } from '@/lib/follow-up-jobs';
+import {
+  buildJobQueue,
+  fetchOpenIssues,
+  OpenIssuesSchemaPendingError,
+} from '@/lib/open-issues';
 import { resolveTechnicianScope, technicianJobsOrFilter } from '@/lib/technician-scope';
 
 /** Local YYYY-MM-DD without UTC drift. */
@@ -65,6 +71,8 @@ const JOB_DETAIL_SELECT = `
 /**
  * List jobs for the current user's company.
  * Query: date_from, date_to, technician_id, status, day_of_week, limit, cursor
+ * With needs_follow_up=true (KAN-153): jobs with an open issue (report or problem voice note),
+ * each row gets `days_open` (oldest issue), optional `min_days` filter, sorted oldest-first.
  */
 export async function GET(request: NextRequest) {
   const { supabase, user } = await createAuthenticatedRouteClient();
@@ -82,6 +90,7 @@ export async function GET(request: NextRequest) {
   const routeId = searchParams.get('route_id');
   const dayOfWeekParam = searchParams.get('day_of_week');
   const needsFollowUp = searchParams.get('needs_follow_up') === 'true';
+  const minDays = parseMinDays(searchParams.get('min_days'));
   const fieldsParam = searchParams.get('fields');
   const { limit, cursor } = parsePaginationParams(searchParams);
 
@@ -90,7 +99,7 @@ export async function GET(request: NextRequest) {
 
   const { data: profile } = await client
     .from('cadenza_profiles')
-    .select('role')
+    .select('role, company_id')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -107,31 +116,37 @@ export async function GET(request: NextRequest) {
     : null;
 
   if (needsFollowUp) {
-    const { data: flaggedReports, error: reportErr } = await client
-      .from('cadenza_service_reports')
-      .select('job_id, follow_up_needed, issue_categories, follow_up_status')
-      .eq('follow_up_status', 'open')
-      .or('follow_up_needed.eq.true,issue_categories.neq.{}');
-
-    if (reportErr) {
-      console.error('Supabase error fetching follow-up reports:', reportErr);
-      return NextResponse.json({ error: reportErr.message }, { status: 500 });
+    if (!profile?.company_id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const followUpJobIds = uniqueJobIdsFromReports(
-      (flaggedReports ?? []) as Parameters<typeof uniqueJobIdsFromReports>[0],
-    );
+    let queue: ReturnType<typeof buildJobQueue>;
+    try {
+      const issues = await fetchOpenIssues(
+        supabase as unknown as SupabaseClient,
+        String(profile.company_id),
+      );
+      queue = buildJobQueue(issues, minDays);
+    } catch (error) {
+      if (error instanceof OpenIssuesSchemaPendingError) {
+        return NextResponse.json({ error: error.message, code: 'SCHEMA_PENDING' }, { status: 503 });
+      }
+      console.error('Error fetching open issues:', error instanceof Error ? error.message : error);
+      return NextResponse.json({ error: 'Failed to load open issues' }, { status: 500 });
+    }
 
-    if (followUpJobIds.length === 0) {
+    if (queue.length === 0) {
       return NextResponse.json(buildPaginatedResponse([], limit, jobSortKey));
     }
+
+    const daysByJob = new Map(queue.map((entry) => [entry.job_id, entry.days_open]));
 
     let query = useDetailFields
       ? client.from('cadenza_service_jobs').select(JOB_DETAIL_SELECT)
       : client.from('cadenza_service_jobs').select(JOB_LIST_SELECT);
 
     query = query
-      .in('id', followUpJobIds)
+      .in('id', [...daysByJob.keys()])
       .order('scheduled_date', { ascending: true })
       .order('scheduled_time', { ascending: true, nullsFirst: false })
       .order('id', { ascending: true });
@@ -155,25 +170,27 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (cursor) {
-      const decoded = decodeCursor(cursor);
-      if (decoded) {
-        const [cursorDate, , cursorId] = decoded.sortKey.split('|');
-        const id = cursorId || decoded.id;
-        query = query.or(
-          `scheduled_date.gt.${cursorDate},and(scheduled_date.eq.${cursorDate},id.gt.${id})`,
-        );
-      }
-    }
-
-    query = query.limit(limit + 1);
     const { data, error } = await query;
     if (error) {
       console.error('Supabase error fetching follow-up jobs:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    const rows = (data ?? []) as unknown as JobRow[];
-    return NextResponse.json(buildPaginatedResponse(rows, limit, jobSortKey));
+
+    // Oldest issue first; the DB order (date, time, id) is the stable tie-break.
+    const sorted = ((data ?? []) as unknown as JobRow[])
+      .map((row) => ({ ...row, days_open: daysByJob.get(row.id) ?? 0 }))
+      .sort((a, b) => b.days_open - a.days_open);
+
+    let startIndex = 0;
+    if (cursor) {
+      const decoded = decodeCursor(cursor);
+      const at = decoded ? sorted.findIndex((row) => row.id === decoded.id) : -1;
+      if (at >= 0) startIndex = at + 1;
+    }
+
+    return NextResponse.json(
+      buildPaginatedResponse(sorted.slice(startIndex, startIndex + limit + 1), limit, jobSortKey),
+    );
   }
 
   let query = useDetailFields

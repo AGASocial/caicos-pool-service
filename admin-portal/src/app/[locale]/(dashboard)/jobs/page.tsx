@@ -12,6 +12,7 @@ import { Link } from '@/i18n/navigation';
 import { Briefcase, ChevronRight, Radio, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { useTeam } from '@/lib/team';
 import { useJobs, useRoutes } from '@/lib/data-queries';
+import { MIN_DAYS_OPTIONS, parseMinDays } from '@/lib/follow-up-jobs';
 import { monthBoundsCalendar, weekBoundsMonday } from '@/lib/date-week';
 import { cn } from '@/lib/utils';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -33,6 +34,7 @@ type JobRow = {
   technician_id: string | null;
   route_id: string | null;
   job_source?: string;
+  days_open?: number;
   property?: PropertyRef;
   technician?: TechnicianRef | null;
   route?: RouteRef;
@@ -74,6 +76,7 @@ export default function JobsPage() {
   const noAssignedRoute = user?.technicianScope?.hasAssignedRoutes === false;
   const week = weekBoundsMonday();
   const followUpFromUrl = searchParams.get('needs_follow_up') === '1';
+  const minDaysFromUrl = parseMinDays(searchParams.get('min_days'));
   const [dateFrom, setDateFrom] = useState(week.to);
   const [dateTo, setDateTo] = useState(week.to);
   const [teamMemberId, setTeamMemberId] = useState('');
@@ -92,6 +95,7 @@ export default function JobsPage() {
     routeFilter: '',
     dayOfWeekFilter: '',
     needsFollowUpFilter: followUpFromUrl,
+    minDays: minDaysFromUrl,
   });
 
   // Apply follow-up filter from URL param (one-time initialization)
@@ -121,6 +125,7 @@ export default function JobsPage() {
       route_id: appliedFilters.routeFilter || undefined,
       day_of_week: appliedFilters.dayOfWeekFilter,
       needs_follow_up: appliedFilters.needsFollowUpFilter || undefined,
+      min_days: appliedFilters.needsFollowUpFilter ? appliedFilters.minDays : undefined,
     }),
     [appliedFilters],
   );
@@ -139,7 +144,12 @@ export default function JobsPage() {
       routeFilter,
       dayOfWeekFilter,
       needsFollowUpFilter,
+      minDays: appliedFilters.minDays,
     });
+  }
+
+  function selectMinDays(minDays: number) {
+    setAppliedFilters((prev) => ({ ...prev, minDays }));
   }
 
   function setToday() {
@@ -315,6 +325,25 @@ export default function JobsPage() {
                 />
                 {t('filterNeedsFollowUp')}
               </label>
+              {appliedFilters.needsFollowUpFilter && (
+                <div className="space-y-1">
+                  <Label className="text-xs">{t('openIssues_minDaysLabel')}</Label>
+                  <div className="flex gap-1" role="group" aria-label={t('openIssues_minDaysLabel')}>
+                    {MIN_DAYS_OPTIONS.map((days) => (
+                      <Button
+                        key={days}
+                        type="button"
+                        size="sm"
+                        variant={appliedFilters.minDays === days ? 'default' : 'outline'}
+                        aria-pressed={appliedFilters.minDays === days}
+                        onClick={() => selectMinDays(days)}
+                      >
+                        {days === 0 ? t('openIssues_minDaysAll') : t('openIssues_minDaysOption', { days })}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -363,6 +392,18 @@ export default function JobsPage() {
                           <>
                             <span className="text-muted-foreground/70" aria-hidden>·</span>
                             <span className="text-foreground/80">{t('jobSource_ad_hoc')}</span>
+                          </>
+                        )}
+                        {appliedFilters.needsFollowUpFilter && job.days_open != null && (
+                          <>
+                            <span className="text-muted-foreground/70" aria-hidden>·</span>
+                            <Badge
+                              variant="outline"
+                              data-testid="job-days-open"
+                              className="border-warning/40 bg-warning/10 text-warning-foreground"
+                            >
+                              {t('openIssues_daysOpen', { count: job.days_open })}
+                            </Badge>
                           </>
                         )}
                         {job.visit_kind?.label && (

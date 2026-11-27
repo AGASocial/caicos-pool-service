@@ -64,7 +64,16 @@ function IssueJobRow({ job }: { job: DashboardIssueJob }) {
       <Link href={`/jobs/${job.id}`} className="flex items-start gap-3 py-3 px-1 rounded-lg hover:bg-muted/50 transition-colors">
         <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0 space-y-1.5">
-          <div className="font-medium text-foreground truncate">{propertyName}</div>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-medium text-foreground truncate">{propertyName}</span>
+            <Badge
+              variant="outline"
+              data-testid="issue-days-open"
+              className="shrink-0 border-warning/40 bg-warning/10 text-warning-foreground text-xs"
+            >
+              {t('openIssues_daysOpen', { count: job.days_open })}
+            </Badge>
+          </div>
           <div className="text-sm text-muted-foreground truncate">
             {address && <span>{address}</span>}
             {address && technicianName && <span className="mx-1.5 opacity-60">·</span>}
@@ -73,6 +82,11 @@ function IssueJobRow({ job }: { job: DashboardIssueJob }) {
               <span>{job.scheduled_date}</span>
             )}
           </div>
+          {job.has_voice_note_problem && (
+            <Badge variant="outline" className="text-xs">
+              {t('openIssues_sourceVoiceNote')}
+            </Badge>
+          )}
           {job.issue_categories.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {job.issue_categories.map((key) => (
@@ -108,12 +122,14 @@ export default function DashboardClient({
   pendingJobsToday,
   isTechnicianView = false,
   noAssignedRoute = false,
+  issuesSchemaPending = false,
 }: {
   stats: DashboardStats;
   issueJobs: DashboardIssueJob[];
   pendingJobsToday: DashboardJob[];
   isTechnicianView?: boolean;
   noAssignedRoute?: boolean;
+  issuesSchemaPending?: boolean;
 }) {
   const t = useTranslations();
 
@@ -186,6 +202,9 @@ export default function DashboardClient({
             </Link>
           </CardHeader>
           <CardContent>
+            {issuesSchemaPending && (
+              <p className="text-xs text-destructive pb-2">{t('openIssues_schemaPending')}</p>
+            )}
             {issueJobs.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4">{t('noJobsWithIssues')}</p>
             ) : (

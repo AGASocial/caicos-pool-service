@@ -12,6 +12,7 @@ import {
   billedAudioSeconds,
   roundUsd,
 } from './cost';
+import { markVoiceNoteProblemOpen } from './open-problems';
 import { isVoiceNotesAiEnabled, isVoiceNotesFakeProvider } from './models';
 import { transcribeVoiceNoteAudio } from './transcribe';
 import {
@@ -136,6 +137,10 @@ export async function processVoiceNote(
         last_error: null,
       })
       .eq('id', note.id);
+
+    if (classification.category === 'problem') {
+      await markVoiceNoteProblemOpen(note.id);
+    }
 
     return { status: 'done' };
   } catch (err) {
