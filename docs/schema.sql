@@ -216,7 +216,11 @@ CREATE TABLE cadenza_service_reports (
   service_event_types TEXT[] NOT NULL DEFAULT '{}',
   is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  -- KAN-153: carry-forward review of open issues on a later visit
+  last_reviewed_at TIMESTAMPTZ,
+  last_reviewed_job_id UUID REFERENCES cadenza_service_jobs(id) ON DELETE SET NULL,
+  last_reviewed_by UUID REFERENCES cadenza_profiles(id) ON DELETE SET NULL
 );
 
 -- Per-company auto-send event types for customer visit reports
@@ -271,7 +275,7 @@ CREATE TABLE cadenza_job_follow_up_actions (
   job_id UUID NOT NULL REFERENCES cadenza_service_jobs(id) ON DELETE CASCADE,
   report_id UUID REFERENCES cadenza_service_reports(id) ON DELETE SET NULL,
   author_id UUID NOT NULL REFERENCES cadenza_profiles(id) ON DELETE CASCADE,
-  action_type TEXT NOT NULL CHECK (action_type IN ('note', 'email_sent', 'resolved', 'call')),
+  action_type TEXT NOT NULL CHECK (action_type IN ('note', 'email_sent', 'resolved', 'call', 'still_open')),
   body TEXT,
   metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
   is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
