@@ -1,7 +1,7 @@
 # KAN-165 — Voice notes on jobs, with transcription and classification
 
 - Jira: [KAN-165](https://agasocial.atlassian.net/browse/KAN-165) (customer details stay in Jira)
-- Status: Ready for implementation (provider and cap decisions approved Nov 23, 2026; spec written before code)
+- Status: Built (provider and cap decisions approved Nov 23, 2026; spec written before code)
 - Apps: technician-app (Expo), admin-portal (Next.js), Supabase
 - Related: KAN-153 (open-issue carry-forward), KAN-154 (Monday digest)
 
@@ -77,3 +77,11 @@ Storage: private bucket `job-voice-notes`, path `{company_id}/{job_id}/{note_id}
 - A job deleted after the note: the note cascades with the job, and the storage object is removed by the cleanup job.
 - A duplicate upload after a retry: idempotent on the client-generated note id.
 - A cap reached in the middle of the month: the note gets `skipped_cap` and the admin can still listen.
+
+## As built
+- PR: [#37](https://github.com/AGASocial/caicos-pool-service/pull/37) (develop)
+- Jira: [KAN-165](https://agasocial.atlassian.net/browse/KAN-165)
+- Migration: `supabase/migrations/20261124120000_job_voice_notes.sql` (applied; rollback in `supabase/migrations/rollback/20261124120000_job_voice_notes_rollback.sql`)
+- AI layer: Vercel AI SDK (`ai` + `@ai-sdk/groq`), default `whisper-large-v3-turbo` + `openai/gpt-oss-20b`, `$5/mo` per-company cap, `VOICE_NOTES_AI_ENABLED` off by default.
+- Cron: `GET /api/cron/process-voice-notes` (`* * * * *` in `admin-portal/vercel.json`, Bearer `CRON_SECRET`).
+- Verification: `admin-portal` lint/tsc/jest (49 suites, 239 tests), `technician-app` tsc, Playwright E2E (`e2e/voice-notes.spec.ts`) with recording on `e2e-media`.
