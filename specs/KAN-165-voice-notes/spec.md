@@ -90,8 +90,10 @@ Storage: private bucket `job-voice-notes`, path `{company_id}/{job_id}/{note_id}
 Technician feedback from TestFlight 1.0.2 (6):
 - The record button looked ugly and used the word "MIC" instead of an icon.
 - Playback came out of the earpiece instead of the loudspeaker.
+- The preview actions (Play, Discard, Re-record, Save note) were four cramped text buttons that wrapped onto several lines, plus a redundant "Preview ready (Xs)" line.
 
 ### Acceptance criteria
 - AC-14. The hold-to-record button is right-aligned in the recorder row, with the status/hint text on the left, and uses an Ionicons microphone icon (idle) and a stop icon (recording). It does not display the words "MIC" or "REC".
 - AC-15. Playing a voice note (preview or otherwise) routes audio to the device loudspeaker, like WhatsApp, not the earpiece.
 - AC-16. Recording audio mode (`allowsRecording: true`) is enabled only while a recording is in progress. When recording stops, is cancelled, fails, or the component unmounts, and before playback starts, the app switches back to playback mode (`allowsRecording: false`, `playsInSilentMode: true`).
+- AC-17. After recording, the preview row shows a play/pause icon with an m:ss duration, icon-only Discard (trash-outline) and Re-record (refresh) buttons with accessibility labels, and a filled primary Save action. The four actions sit in one unwrapped row that fits a ~390pt-wide screen without crowding.
