@@ -274,6 +274,7 @@ export const en = {
     title: 'Voice note',
     hint: 'Hold the mic to record (up to 2 minutes). Slide left to cancel.',
     holdToRecord: 'Hold to record',
+    stopRecording: 'Stop recording',
     recording: 'Recording… {seconds}s',
     slideToCancel: 'Slide left to cancel',
     releaseToCancel: 'Release to cancel',

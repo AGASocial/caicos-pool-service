@@ -10,6 +10,9 @@
 - [x] T8. KAN-153/154 integration on the effective category (AC-7, AC-8)
 - [x] T9. Guard: notes excluded from customer reports and emails (AC-13)
 - [x] T10. Tests: jest, RLS, E2E with video. PR, release, As built
+- [x] T11. Technician app: right-aligned hold-to-record button with Ionicons mic/stop icons, accessibility labels (AC-14)
+- [x] T12. Technician app: audio-mode switching (recording only during a take, playback mode otherwise and before preview) (AC-15, AC-16)
+- [x] T13. Verification: `npx tsc --noEmit` in `technician-app` (AC-14, AC-15, AC-16)
 
 ## Traceability
 | AC | Test |
@@ -27,3 +30,6 @@
 | AC-11 | `admin-portal/src/lib/voice-notes/__tests__/process.test.ts` + retry route |
 | AC-12 | Migration RLS policies in `supabase/migrations/20261124120000_job_voice_notes.sql` |
 | AC-13 | `admin-portal/src/lib/voice-notes/__tests__/customer-report-guard.test.ts` |
+| AC-14 | `VoiceNoteRecorder.tsx` (row layout, Ionicons `mic`/`stop`) + manual device check; `npx tsc --noEmit` |
+| AC-15 | `technician-app/lib/voiceNoteAudioMode.ts` (`PLAYBACK_AUDIO_MODE`) + manual device check on iOS/Android |
+| AC-16 | `VoiceNoteRecorder.tsx` (`setRecordingAudioMode` only in `startRecording`; `setPlaybackAudioMode` on stop/cancel/fail/unmount/before play) |

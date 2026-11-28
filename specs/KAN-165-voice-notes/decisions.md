@@ -28,3 +28,8 @@
 ## ADR-6: Notes are internal
 - Status: Approved
 - Decision: notes and transcripts are never included in customer reports or emails (AC-13).
+
+## ADR-7: Audio-mode switching for recording vs playback
+- Status: Approved (Nov 27, 2026)
+- Context: with expo-audio on iOS, `allowsRecording: true` routes audio to the receiver/earpiece. Leaving that mode on after recording made preview playback come out of the earpiece.
+- Decision: use `setAudioModeAsync` from expo-audio. Playback mode: `{ allowsRecording: false, playsInSilentMode: true, shouldRouteThroughEarpiece: false }`. Recording mode: `{ allowsRecording: true, playsInSilentMode: true }`, applied only for the duration of a take. Helpers live in `technician-app/lib/voiceNoteAudioMode.ts`.
