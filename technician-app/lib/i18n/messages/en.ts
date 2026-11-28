@@ -297,7 +297,6 @@ export const en = {
     play: 'Play',
     pause: 'Pause',
     discard: 'Discard',
-    rerecord: 'Re-record',
     save: 'Save note',
     micPermission: 'Microphone permission is required to record voice notes.',
     recordFailed: 'Could not start recording.',
