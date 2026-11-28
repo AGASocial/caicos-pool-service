@@ -89,7 +89,13 @@ export async function POST(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  let body: { action_type?: string; body?: string; metadata?: Record<string, unknown> };
+  let body: {
+    action_type?: string;
+    body?: string;
+    metadata?: Record<string, unknown>;
+    /** KAN-153: resolve this job's problem voice note instead of its report. */
+    voice_note_id?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -117,6 +123,71 @@ export async function POST(
 
   if (!job) {
     return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+  }
+
+  const voiceNoteId =
+    typeof body.voice_note_id === 'string' && body.voice_note_id.trim()
+      ? body.voice_note_id.trim()
+      : null;
+
+  if (voiceNoteId && actionType !== 'resolved') {
+    return NextResponse.json({ error: 'voice_note_id is only valid for resolved' }, { status: 400 });
+  }
+
+  if (voiceNoteId) {
+    // Resolve one problem voice note on this job. The job's report is left untouched (KAN-153).
+    const { data: note } = await client
+      .from('cadenza_job_voice_notes')
+      .select('id, company_id, job_id, category, status, follow_up_status')
+      .eq('id', voiceNoteId)
+      .maybeSingle();
+
+    if (
+      !note ||
+      String(note.company_id) !== String(profile.company_id) ||
+      String(note.job_id) !== jobId
+    ) {
+      return NextResponse.json({ error: 'Voice note not found' }, { status: 404 });
+    }
+    if (note.category !== 'problem' || note.status !== 'done' || note.follow_up_status === 'resolved') {
+      return NextResponse.json({ error: 'Voice note is not an open problem' }, { status: 409 });
+    }
+
+    const { error: resolveNoteErr } = await client
+      .from('cadenza_job_voice_notes')
+      .update({
+        follow_up_status: 'resolved',
+        last_reviewed_at: new Date().toISOString(),
+        last_reviewed_job_id: jobId,
+        last_reviewed_by: user.id,
+      })
+      .eq('id', voiceNoteId)
+      .eq('company_id', profile.company_id);
+
+    if (resolveNoteErr) {
+      console.error('Failed to mark voice note resolved:', resolveNoteErr.message);
+      return NextResponse.json({ error: resolveNoteErr.message }, { status: 500 });
+    }
+
+    const { data: noteAction, error: noteActionErr } = await client
+      .from('cadenza_job_follow_up_actions')
+      .insert({
+        company_id: profile.company_id,
+        job_id: jobId,
+        report_id: null,
+        author_id: user.id,
+        action_type: 'resolved',
+        body: noteBody || null,
+        metadata: { source: 'voice_note', source_id: voiceNoteId, origin_job_id: jobId },
+      })
+      .select(ACTION_SELECT)
+      .single();
+
+    if (noteActionErr) {
+      console.error('POST follow-up action error:', noteActionErr);
+      return NextResponse.json({ error: noteActionErr.message }, { status: 500 });
+    }
+    return NextResponse.json(mapActionRow(noteAction as Record<string, unknown>), { status: 201 });
   }
 
   const { data: report } = await client

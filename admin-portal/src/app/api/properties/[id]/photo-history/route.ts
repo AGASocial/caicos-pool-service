@@ -14,7 +14,7 @@ const SIGNED_TTL = 3600;
 const HISTORY_SELECT = `
   id, scheduled_date, status,
   technician:cadenza_profiles!technician_id ( full_name ),
-  reports:cadenza_service_reports (
+  reports:cadenza_service_reports!job_id (
     id, departure_time, notes, is_deleted,
     photos:cadenza_report_photos ( id, storage_path, caption, photo_type, created_at, is_deleted, storage_tier, archived_at )
   )
