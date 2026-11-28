@@ -122,6 +122,8 @@
   "generateJobsForDateDescriptionPattern": "Creates jobs only for stops whose pattern matches that calendar date (weekday and weekly vs monthly). Skips properties that already have a route job that day.",
   "haveAnInviteCode": "Have an invite code?",
   "inactive": "Inactive",
+  "isShared": "Shared property",
+  "isSharedHelp": "Visited by more than one technician of your company. Technicians see a short summary of the last completed visit on the job.",
   "inviteCode": "Invite code",
   "inviteCodeCreated": "Invite code created",
   "inviteCodeDescription": "Create an invite link or code for a new team member.",

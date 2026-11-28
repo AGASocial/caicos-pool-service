@@ -26,6 +26,12 @@ import {
   type CarryForwardAnswers,
   type CarryForwardIssue,
 } from '@/lib/carryForward';
+import {
+  fetchLastService,
+  lastServiceFacts,
+  shouldShowLastService,
+  type LastService,
+} from '@/lib/lastService';
 import Colors from '@/constants/Colors';
 import {
   CHEMICAL_READINGS,
@@ -123,6 +129,8 @@ export default function JobDetailScreen() {
   const [carryAnswers, setCarryAnswers] = useState<CarryForwardAnswers>({});
   const [carrySaving, setCarrySaving] = useState<string | null>(null);
   const [carryError, setCarryError] = useState<string | null>(null);
+  // KAN-155: last completed visit at a shared property (same company), read-only summary.
+  const [lastService, setLastService] = useState<LastService | null>(null);
 
   const styles = useMemo(
     () =>
@@ -453,6 +461,18 @@ export default function JobDetailScreen() {
         priorAnswerText: { fontSize: 15, fontWeight: '700', color: themeColors.text },
         priorAnswerTextActive: { color: themeColors.buttonPrimaryText },
         priorError: { fontSize: 13, color: '#dc2626' },
+        // Last service (shared property)
+        lastServiceCard: {
+          backgroundColor: themeColors.card,
+          borderRadius: 12,
+          padding: 16,
+          gap: 6,
+          borderWidth: 1,
+          borderColor: themeColors.border,
+        },
+        lastServiceTitle: { fontSize: 16, fontWeight: '700', color: themeColors.text },
+        lastServiceMeta: { fontSize: 13, color: themeColors.muted },
+        lastServiceLine: { fontSize: 15, color: themeColors.text },
         // Complete button
         completeButton: {
           backgroundColor: themeColors.buttonPrimary,
@@ -610,6 +630,28 @@ export default function JobDetailScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, propertyId]);
+
+  // KAN-155: compact "Last service" card, only for shared properties with a prior completed visit.
+  const jobCompanyId = job?.company_id ?? null;
+  useEffect(() => {
+    if (!id || !propertyId || !jobCompanyId) {
+      setLastService(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const summary = await fetchLastService({ propertyId, companyId: jobCompanyId, currentJobId: id });
+        if (!cancelled) setLastService(summary);
+      } catch (e) {
+        console.warn('[last-service] could not load last service', e);
+        if (!cancelled) setLastService(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, propertyId, jobCompanyId]);
 
   async function answerCarryForward(issue: CarryForwardIssue, resolved: boolean) {
     if (!id) return;
@@ -1040,6 +1082,37 @@ export default function JobDetailScreen() {
             </Pressable>
           </Pressable>
         </Modal>
+
+        {shouldShowLastService(true, lastService) ? (
+          <View style={styles.lastServiceCard} testID="job-last-service">
+            <Text style={styles.lastServiceTitle}>{t('jobDetail.lastServiceTitle')}</Text>
+            <Text style={styles.lastServiceMeta}>
+              {lastService.scheduled_date}
+              {' · '}
+              {lastService.technician_name ?? t('jobDetail.lastServiceTechnicianFallback')}
+            </Text>
+            {(() => {
+              const facts = lastServiceFacts(lastService);
+              const yes = t('jobDetail.lastServiceYes');
+              const no = t('jobDetail.lastServiceNo');
+              return (
+                <>
+                  <Text style={styles.lastServiceLine}>
+                    {t('jobDetail.lastServiceFilter', { value: facts.cleanedFilter ? yes : no })}
+                  </Text>
+                  <Text style={styles.lastServiceLine}>
+                    {t('jobDetail.lastServiceBackwashed', { value: facts.backwashed ? yes : no })}
+                  </Text>
+                  <Text style={styles.lastServiceLine}>
+                    {facts.saltLevel != null
+                      ? t('jobDetail.lastServiceSalt', { value: facts.saltLevel })
+                      : t('jobDetail.lastServiceSaltMissing')}
+                  </Text>
+                </>
+              );
+            })()}
+          </View>
+        ) : null}
 
         {carryForward.length > 0 || carryError ? (
           <View style={styles.priorCard} testID="job-prior-issues">
