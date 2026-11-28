@@ -279,6 +279,7 @@ export const es = {
     title: 'Nota de voz',
     hint: 'Mantén el micrófono para grabar (hasta 2 minutos). Desliza a la izquierda para cancelar.',
     holdToRecord: 'Mantén para grabar',
+    stopRecording: 'Detener grabación',
     recording: 'Grabando… {seconds}s',
     slideToCancel: 'Desliza a la izquierda para cancelar',
     releaseToCancel: 'Suelta para cancelar',
