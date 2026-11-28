@@ -149,11 +149,11 @@ Dashboard server data uses the same open-issue definition and attaches `days_ope
 
 ## As built
 
-<!-- Fill on close. -->
-
-- **What shipped:** …
-- **PR:** …
-- **Release PR:** …
-- **Jira:** https://agasocial.atlassian.net/browse/KAN-153
-- **Vercel production deploy:** …
-- **Notes / deltas from this spec:** …
+- **What shipped:** Open issues (service-report follow-ups and voice-note problems) carry to the next visit. The technician job card shows each prior open issue with Resolved? Yes/No; answers update the office follow-up queue via `review_open_issue`. The admin dashboard and Jobs follow-up queue show computed days open, with 7+/14+/30+ age filters and oldest-first sort when the follow-up filter is on. New APIs: `GET /api/open-issues`, `GET /api/jobs/[id]/open-issues`, `POST /api/open-issues/review`.
+- **PR:** [#44](https://github.com/AGASocial/caicos-pool-service/pull/44) (develop), squash merge `af16c395c99c5414327398d7cb516a2857a813cf`
+- **Release PR:** [#46](https://github.com/AGASocial/caicos-pool-service/pull/46) (develop → main), merge `18989182405d10a3894ef8a8c596706480b050c1`
+- **Jira:** [KAN-153](https://agasocial.atlassian.net/browse/KAN-153)
+- **Vercel production deploy:** `dpl_BRDApcdS3NFtA91u19qqGWa7yeTD` (cadenza.app, READY) — https://vercel.com/agasocial/cadenza.app/BRDApcdS3NFtA91u19qqGWa7yeTD
+- **Migration:** `supabase/migrations/20261127180000_open_issue_carry_forward.sql` (applied as `open_issue_carry_forward`); rollback in `supabase/migrations/rollback/20261127180000_open_issue_carry_forward_rollback.sql`. Backup table `_backup_kan153_voice_note_problems` was created before the voice-note `follow_up_status` backfill (0 rows at apply time; left in place).
+- **Verification:** admin-portal lint/tsc/jest (65 suites, 424 tests); technician-app tsc; Playwright E2E (`e2e/carry-forward.spec.ts`) 8/8 against Development. Recording: [mp4](https://github.com/AGASocial/caicos-pool-service/raw/e2e-media/kan-153-carry-forward.mp4), [gif](https://raw.githubusercontent.com/AGASocial/caicos-pool-service/e2e-media/kan-153-carry-forward.gif). Production smoke: `/login` 200, `/api/billing/plans` 200, unauthenticated `GET /api/open-issues` 401.
+- **Notes / deltas from this spec:** Calendar-tab badge and can’t-service complete-visit guard were left out (job-card Complete is guarded). CI Preview E2E failures on #44 matched the known Stripe-webhook / live-status-board flake from earlier releases and were not treated as a KAN-153 regression.
