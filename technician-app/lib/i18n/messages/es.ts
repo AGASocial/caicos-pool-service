@@ -302,7 +302,6 @@ export const es = {
     play: 'Reproducir',
     pause: 'Pausar',
     discard: 'Descartar',
-    rerecord: 'Volver a grabar',
     save: 'Guardar nota',
     micPermission: 'Se necesita permiso de micrófono para grabar notas de voz.',
     recordFailed: 'No se pudo iniciar la grabación.',

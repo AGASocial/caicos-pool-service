@@ -96,4 +96,8 @@ Technician feedback from TestFlight 1.0.2 (6):
 - AC-14. The hold-to-record button is right-aligned in the recorder row, with the status/hint text on the left, and uses an Ionicons microphone icon (idle) and a stop icon (recording). It does not display the words "MIC" or "REC".
 - AC-15. Playing a voice note (preview or otherwise) routes audio to the device loudspeaker, like WhatsApp, not the earpiece.
 - AC-16. Recording audio mode (`allowsRecording: true`) is enabled only while a recording is in progress. When recording stops, is cancelled, fails, or the component unmounts, and before playback starts, the app switches back to playback mode (`allowsRecording: false`, `playsInSilentMode: true`).
-- AC-17. After recording, the preview row shows a play/pause icon with an m:ss duration, icon-only Discard (trash-outline) and Re-record (refresh) buttons with accessibility labels, and a filled primary Save action. The four actions sit in one unwrapped row that fits a ~390pt-wide screen without crowding.
+- AC-17. After recording, the preview row shows a play/pause icon with an m:ss duration, icon-only Discard (trash-outline) and Re-record (refresh) buttons with accessibility labels, and a filled primary Save action. The four actions sit in one unwrapped row that fits a ~390pt-wide screen without crowding. (The Re-record part is superseded by AC-18.)
+
+Later, Gabriel asked to drop Re-record from the preview (TestFlight 1.0.2 (8)): to re-record, discard and hold the mic again.
+
+- AC-18. The preview row has a play/pause control with an m:ss duration, an icon-only Discard (trash-outline) with an accessibility label, and a filled primary Save action. There is no Re-record button. After Discard, the hold-to-record mic is shown again and works.

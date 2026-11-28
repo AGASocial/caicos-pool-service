@@ -14,6 +14,7 @@
 - [x] T12. Technician app: audio-mode switching (recording only during a take, playback mode otherwise and before preview) (AC-15, AC-16)
 - [x] T13. Verification: `npx tsc --noEmit` in `technician-app` (AC-14, AC-15, AC-16)
 - [x] T14. Technician app: preview chrome — play/pause icon with m:ss duration, icon-only Discard/Re-record, filled Save, single unwrapped row; remove "Preview ready" line (AC-17)
+- [x] T15. Technician app: remove the Re-record button and `voiceNotes.rerecord` strings from the preview; Discard returns to the hold-to-record mic (AC-18)
 
 ## Traceability
 | AC | Test |
@@ -35,3 +36,4 @@
 | AC-15 | `technician-app/lib/voiceNoteAudioMode.ts` (`PLAYBACK_AUDIO_MODE`) + manual device check on iOS/Android |
 | AC-16 | `VoiceNoteRecorder.tsx` (`setRecordingAudioMode` only in `startRecording`; `setPlaybackAudioMode` on stop/cancel/fail/unmount/before play) |
 | AC-17 | `VoiceNoteRecorder.tsx` (`previewActions` row, `useAudioPlayerStatus`, Ionicons `play`/`pause`/`trash-outline`/`refresh`) + manual device check on a ~390pt screen; `npx tsc --noEmit` |
+| AC-18 | `VoiceNoteRecorder.tsx` (preview row: play/pause, `trash-outline` Discard, Save; no `voice-note-rerecord`; `discardPreview` clears `previewUri`) + manual device check; `npx tsc --noEmit` |
