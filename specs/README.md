@@ -44,3 +44,4 @@ Copy from `specs/_template/` when starting a ticket.
 | [KAN-151](https://agasocial.atlassian.net/browse/KAN-151) | [`KAN-151-customer-auto-reports/`](./KAN-151-customer-auto-reports/) | Automatic customer visit report emails | Built |
 | [KAN-152](https://agasocial.atlassian.net/browse/KAN-152) | [`KAN-152-report-delivery-log/`](./KAN-152-report-delivery-log/) | Customer report delivery log & unsent view | Built |
 | [KAN-165](https://agasocial.atlassian.net/browse/KAN-165) | [`KAN-165-voice-notes/`](./KAN-165-voice-notes/) | Voice notes on jobs, with transcription and classification | Built |
+| [KAN-153](https://agasocial.atlassian.net/browse/KAN-153) | [`KAN-153-carry-forward/`](./KAN-153-carry-forward/) | Open-issue carry-forward on the next visit | In progress |

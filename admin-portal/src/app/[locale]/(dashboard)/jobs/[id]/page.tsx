@@ -23,6 +23,7 @@ import { SOFT_DELETE_ROLES } from '@/lib/soft-delete';
 import { useTeam } from '@/lib/team';
 import { ServiceReportCard } from '@/components/jobs/ServiceReportCard';
 import { FollowUpActionsCard } from '@/components/jobs/FollowUpActionsCard';
+import { OpenIssuesCard } from '@/components/jobs/OpenIssuesCard';
 import { VoiceNotes } from '@/components/jobs/VoiceNotes';
 import { LatestDeliveryIndicator } from '@/components/reports/LatestDeliveryIndicator';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -75,6 +76,7 @@ export default function JobDetailPage() {
   const canDeleteJob = SOFT_DELETE_ROLES.has(user?.profile?.role ?? '');
   const id = params?.id as string;
   const [job, setJob] = useState<JobDetail | null>(null);
+  const [issuesVersion, setIssuesVersion] = useState(0);
   const [loading, setLoading] = useState(true);
   const { data: teamMembers = [] } = useTeam();
   const [saving, setSaving] = useState(false);
@@ -285,6 +287,7 @@ export default function JobDetailPage() {
           jobId={job.id}
           isResolved={job.service_report?.follow_up_status === 'resolved'}
           onResolved={() => {
+            setIssuesVersion((v) => v + 1);
             setJob((prev) =>
               prev?.service_report
                 ? {
@@ -296,6 +299,8 @@ export default function JobDetailPage() {
           }}
         />
       )}
+
+      <OpenIssuesCard jobId={job.id} refreshKey={issuesVersion} />
 
       <VoiceNotes jobId={job.id} />
 

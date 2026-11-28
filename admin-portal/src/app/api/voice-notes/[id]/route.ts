@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
 import { createVoiceNotesRouteClient } from '@/lib/voice-notes/auth';
+import { markVoiceNoteProblemOpen } from '@/lib/voice-notes/open-problems';
 
 const OFFICE_ROLES = new Set(['owner', 'admin', 'operations']);
 
@@ -87,6 +88,17 @@ export async function PATCH(
   if (updateErr) {
     console.error('PATCH voice-notes error:', updateErr.message);
     return NextResponse.json({ error: updateErr.message }, { status: 500 });
+  }
+
+  // KAN-153: a note corrected to "problem" joins the open-issue list; "routine" leaves it
+  // through the category filter, so no status change is needed there.
+  if (category === 'problem') {
+    await markVoiceNoteProblemOpen(noteId, supabase);
+    return NextResponse.json({
+      ...(updated as Record<string, unknown>),
+      follow_up_status:
+        (updated as { follow_up_status?: string | null }).follow_up_status ?? 'open',
+    });
   }
 
   return NextResponse.json(updated);
