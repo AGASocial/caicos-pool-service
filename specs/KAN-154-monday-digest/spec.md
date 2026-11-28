@@ -109,12 +109,11 @@ Rollback SQL drops the table and any indexes / policies.
 
 ## As built
 
-<!-- Fill on close. -->
-
-- **What shipped:** …
-- **PR:** …
-- **Release PR:** …
-- **Jira:** https://agasocial.atlassian.net/browse/KAN-154
-- **Vercel production deploy:** …
-- **Migration:** …
-- **Notes / deltas from this spec:** …
+- **What shipped:** Office open-issues screen at `/[locale]/open-issues` (grouped / filterable by technician, days open, property and issue identity). Monday cron `GET /api/cron/monday-digest` (`0 12 * * 1`) emails the same set to office-role users via Resend, but only when `MONDAY_DIGEST_ENABLED` is truthy. Production shipped with the flag unset, so the cron authenticates and returns early with no sends. Non-production sends are limited to `qa-billing-…@cadenzaops.com`.
+- **PR:** [#51](https://github.com/AGASocial/caicos-pool-service/pull/51) (develop), squash merge `ef576011fea1075a563cbfa52526d6262be848b2`
+- **Release PR:** [#52](https://github.com/AGASocial/caicos-pool-service/pull/52) (develop → main), merge `d5ece3662a0f68895ad8899e6dcf59d69624a827`
+- **Jira:** [KAN-154](https://agasocial.atlassian.net/browse/KAN-154)
+- **Vercel production deploy:** `dpl_G73kVLTHqtY3KL1qve61AwLs7An9` (cadenza.app, READY) — https://vercel.com/agasocial/cadenza.app/G73kVLTHqtY3KL1qve61AwLs7An9
+- **Migration:** `supabase/migrations/20261127200000_monday_open_issues_digest.sql` (applied as `monday_open_issues_digest`); rollback in `supabase/migrations/rollback/20261127200000_monday_open_issues_digest_rollback.sql`. New table `cadenza_monday_digest_sends` (RLS on, 0 rows at apply time; no backup table because nothing was backfilled).
+- **Verification:** admin-portal lint/tsc/jest (70 suites, 487 tests); Playwright E2E (`e2e/monday-digest.spec.ts`) 7/7 against Development. Recording: [mp4](https://github.com/AGASocial/caicos-pool-service/raw/e2e-media/kan-154-monday-digest.mp4), [gif](https://raw.githubusercontent.com/AGASocial/caicos-pool-service/e2e-media/kan-154-monday-digest.gif). Production smoke: `/login` 200, `/api/billing/plans` 200, unauthenticated `GET /api/cron/monday-digest` 401, unauthenticated `GET /api/open-issues` 401.
+- **Notes / deltas from this spec:** Jobs with no technician appear in an Unassigned bucket (no voice-note-author fallback). AC-4 send path is covered by mocked unit tests, not a live E2E send. `MONDAY_DIGEST_ENABLED` was not set on Vercel production.
