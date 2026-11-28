@@ -65,6 +65,7 @@ let p1ReportId = '';
 let p1NoteId = '';
 let p2NoteId = '';
 let p3NoteId = '';
+let p4ReportId = '';
 let foreignJobId = '';
 let foreignReportId = '';
 
@@ -289,6 +290,7 @@ test.beforeAll(async () => {
 
   const other = await createTenant(OTHER_EMAIL, OTHER_COMPANY_NAME, 'QA Carry Other Owner');
   otherCompanyId = other.companyId;
+  const otherOwnerId = other.userId;
 
   // P1: flagged report (15d) + problem voice note (20d) on the origin visit; later visit today.
   const p1 = await seedProperty(companyId, `QA Carry One ${RUN_ID}`, '101 Test Pool Lane');
@@ -313,13 +315,14 @@ test.beforeAll(async () => {
   // P4: flagged report only (9d).
   const p4 = await seedProperty(companyId, `QA Carry Four ${RUN_ID}`, '404 Sample Harbor Road');
   const p4Origin = await seedJob(companyId, p4, originTechId, 'completed', 9);
-  await seedReport(companyId, p4Origin, originTechId, 9, ['filter'], 'Filter pressure high');
+  p4ReportId = await seedReport(companyId, p4Origin, originTechId, 9, ['filter'], 'Filter pressure high');
   s.p4 = { propertyId: p4, originJobId: p4Origin, name: `QA Carry Four ${RUN_ID}` };
 
   // An open issue in another tenant that must never appear for the owner (AC-6).
   const foreignProperty = await seedProperty(otherCompanyId, `QA Carry Foreign ${RUN_ID}`, '999 Other Tenant Way');
-  foreignJobId = await seedJob(otherCompanyId, foreignProperty, null, 'completed', 40);
-  foreignReportId = await seedReport(otherCompanyId, foreignJobId, null, 40, ['other'], 'foreign tenant issue');
+  // Reports require a non-null technician_id; use the other tenant's owner on this fixture.
+  foreignJobId = await seedJob(otherCompanyId, foreignProperty, otherOwnerId, 'completed', 40);
+  foreignReportId = await seedReport(otherCompanyId, foreignJobId, otherOwnerId, 40, ['other'], 'foreign tenant issue');
 
   ownerApi = await loginApi(OWNER_EMAIL);
   lateTechApi = await loginApi(LATE_TECH_EMAIL);
@@ -520,7 +523,9 @@ test('AC-4: a problem voice note leaves the queue after correction to routine', 
 
 test('AC-3: min_days on the queue API', async () => {
   const ids = async (qs: string) => (await queue(ownerApi, qs)).map((i) => i.id);
-  expect(await ids('?min_days=7')).toEqual([p1NoteId]);
+  // After AC-2/AC-4: the 15d P1 report is resolved and the 3d P3 note is routine.
+  // Remaining >= 7 days: P1 voice note (20d) then P4 report (9d), oldest first.
+  expect(await ids('?min_days=7')).toEqual([p1NoteId, p4ReportId]);
   expect(await ids('?min_days=30')).toEqual([]);
   expect((await ids('')).length).toBeGreaterThanOrEqual(3);
 });
