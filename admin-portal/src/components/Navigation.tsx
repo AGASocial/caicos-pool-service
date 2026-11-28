@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
-import { LayoutDashboard, Briefcase, Building2, Route, Users, FileText, Mail } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Building2, Route, Users, FileText, Mail, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 import { hasEntitlement, type Resource } from '@/lib/entitlements';
@@ -18,6 +18,7 @@ export default function Navigation({ closeSidebar, collapsed }: { closeSidebar?:
     { href: '/reports', label: t('reports'), icon: FileText, resource: 'report' },
     { href: '/reports/deliveries', label: t('reportDeliveries_navLabel'), icon: Mail, resource: 'report' },
     { href: '/jobs', label: t('jobs'), icon: Briefcase, resource: 'job' },
+    { href: '/open-issues', label: t('openIssues_navLabel'), icon: AlertTriangle, resource: 'follow_up' },
     { href: '/routes', label: t('routes'), icon: Route, resource: 'route' },
     { href: '/team', label: t('team'), icon: Users, resource: 'team' },
     { href: '/properties', label: t('properties'), icon: Building2, resource: 'property' },

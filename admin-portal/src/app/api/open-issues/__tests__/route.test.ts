@@ -76,6 +76,29 @@ describe('GET /api/open-issues', () => {
     expect(b.sort()).toEqual(['note-company-b', 'report-company-b']);
   });
 
+  it('KAN-154: attaches the origin job technician (id + name); no technician = unassigned', async () => {
+    const db = signIn(IDS.officeA);
+    db.cadenza_service_jobs.find((j) => j.id === IDS.jobVoiceOnly)!.technician_id = null;
+    const { data } = await (await call()).json();
+    const byId = Object.fromEntries(
+      data.map((i: { id: string; technician_id: string | null; technician_name: string | null }) => [
+        i.id,
+        [i.technician_id, i.technician_name],
+      ]),
+    );
+    expect(byId['note-open']).toEqual([IDS.techOrigin, 'Tech Origin']);
+    expect(byId['report-open']).toEqual([IDS.techOrigin, 'Tech Origin']);
+    expect(byId['note-voice-only']).toEqual([null, null]);
+  });
+
+  it('KAN-154: never resolves a technician name from another company\'s profile', async () => {
+    const db = signIn(IDS.officeA);
+    db.cadenza_profiles.find((p) => p.id === IDS.techOrigin)!.company_id = 'co-b';
+    const { data } = await (await call()).json();
+    const issue = data.find((i: { id: string }) => i.id === 'report-open');
+    expect(issue.technician_name).toBeNull();
+  });
+
   it('supports job_id to list one job\'s issues', async () => {
     signIn(IDS.officeA);
     const { data } = await (await call(`?job_id=${IDS.jobOrigin}`)).json();
