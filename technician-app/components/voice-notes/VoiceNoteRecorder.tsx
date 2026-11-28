@@ -326,28 +326,15 @@ export function VoiceNoteRecorder({
                 {formatClock(displaySeconds)}
               </Text>
             </Pressable>
-            <View style={styles.iconGroup}>
-              <Pressable
-                style={[styles.iconBtn, { backgroundColor: colors.photoButtonBg }]}
-                onPress={() => void discardPreview()}
-                accessibilityRole="button"
-                accessibilityLabel={t('voiceNotes.discard')}
-                testID="voice-note-discard"
-              >
-                <Ionicons name="trash-outline" size={22} color={colors.text} />
-              </Pressable>
-              <Pressable
-                style={[styles.iconBtn, { backgroundColor: colors.photoButtonBg }]}
-                onPress={() => {
-                  void discardPreview().then(() => setPreviewUri(null));
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={t('voiceNotes.rerecord')}
-                testID="voice-note-rerecord"
-              >
-                <Ionicons name="refresh" size={22} color={colors.text} />
-              </Pressable>
-            </View>
+            <Pressable
+              style={[styles.iconBtn, { backgroundColor: colors.photoButtonBg }]}
+              onPress={() => void discardPreview()}
+              accessibilityRole="button"
+              accessibilityLabel={t('voiceNotes.discard')}
+              testID="voice-note-discard"
+            >
+              <Ionicons name="trash-outline" size={22} color={colors.text} />
+            </Pressable>
             <Pressable
               style={[styles.btnPrimary, { backgroundColor: colors.buttonPrimary }]}
               onPress={() => void saveNote()}
@@ -448,7 +435,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
   },
   playTime: { fontSize: 14, fontWeight: '600', fontVariant: ['tabular-nums'] },
-  iconGroup: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   iconBtn: {
     width: 44,
     height: 44,
