@@ -39,6 +39,7 @@ function rethrow(error: NonNullable<DbError>, label: string): never {
 type JobRef = {
   id: string;
   property_id: string | null;
+  technician_id?: string | null;
   is_deleted?: boolean | null;
 };
 
@@ -61,7 +62,7 @@ async function loadJobRefs(
     const chunk = jobIds.slice(i, i + JOB_ID_CHUNK);
     const { data, error } = await client
       .from('cadenza_service_jobs')
-      .select('id, property_id, is_deleted')
+      .select('id, property_id, technician_id, is_deleted')
       .eq('company_id', companyId)
       .in('id', chunk);
     if (error) rethrow(error, 'open-issues jobs');
@@ -69,6 +70,7 @@ async function loadJobRefs(
       refs.set(String(row.id), {
         id: String(row.id),
         property_id: row.property_id != null ? String(row.property_id) : null,
+        technician_id: row.technician_id != null ? String(row.technician_id) : null,
         is_deleted: row.is_deleted as boolean | null,
       });
     }
@@ -92,7 +94,7 @@ export async function fetchOpenIssues(
     .select(
       `id, job_id, follow_up_needed, issue_categories, follow_up_status, follow_up_notes,
        created_at, last_reviewed_at,
-       job:cadenza_service_jobs!job_id(id, property_id, is_deleted)`,
+       job:cadenza_service_jobs!job_id(id, property_id, technician_id, is_deleted)`,
     )
     .eq('company_id', companyId)
     .eq('follow_up_status', 'open')
@@ -102,10 +104,13 @@ export async function fetchOpenIssues(
   if (reportErr) rethrow(reportErr, 'open-issues reports');
 
   const liveReports: OpenIssueReportInput[] = [];
+  /** Origin job -> technician (KAN-154: the digest and office screen group by it). */
+  const technicianByJob = new Map<string, string | null>();
   for (const row of reportRows ?? []) {
     const record = row as Record<string, unknown>;
     const job = firstRelation(record.job as Relation<JobRef>);
     if (!job || job.is_deleted) continue;
+    technicianByJob.set(String(record.job_id), job.technician_id != null ? String(job.technician_id) : null);
     liveReports.push({
       id: String(record.id),
       job_id: String(record.job_id),
@@ -133,6 +138,7 @@ export async function fetchOpenIssues(
     .map((note) => {
       const job = jobRefs.get(note.job_id);
       if (!job || job.is_deleted) return null;
+      technicianByJob.set(note.job_id, job.technician_id ?? null);
       return {
         ...note,
         property_id: note.property_id ?? job.property_id,
@@ -141,7 +147,42 @@ export async function fetchOpenIssues(
     })
     .filter((n): n is NonNullable<typeof n> => n !== null);
 
-  return unionOpenIssues(liveReports, liveNotes, now);
+  const issues = unionOpenIssues(liveReports, liveNotes, now);
+  return attachTechnicians(client, companyId, issues, technicianByJob);
+}
+
+/**
+ * Adds origin-job technician id and display name to each issue. A job without a technician (or a
+ * technician whose profile cannot be read) leaves both fields null: the "unassigned" bucket.
+ */
+async function attachTechnicians(
+  client: SupabaseClient,
+  companyId: string,
+  issues: OpenIssue[],
+  technicianByJob: Map<string, string | null>,
+): Promise<OpenIssue[]> {
+  const technicianIds = [...new Set([...technicianByJob.values()].filter((id): id is string => !!id))];
+  const names = new Map<string, string>();
+  for (let i = 0; i < technicianIds.length; i += JOB_ID_CHUNK) {
+    const { data, error } = await client
+      .from('cadenza_profiles')
+      .select('id, full_name')
+      .eq('company_id', companyId)
+      .in('id', technicianIds.slice(i, i + JOB_ID_CHUNK));
+    if (error) rethrow(error, 'open-issues technicians');
+    for (const row of data ?? []) {
+      const name = typeof row.full_name === 'string' ? row.full_name.trim() : '';
+      if (name) names.set(String(row.id), name);
+    }
+  }
+  return issues.map((issue) => {
+    const technicianId = technicianByJob.get(issue.job_id) ?? null;
+    return {
+      ...issue,
+      technician_id: technicianId,
+      technician_name: technicianId ? (names.get(technicianId) ?? null) : null,
+    };
+  });
 }
 
 /** Issues to carry onto `job`: same property, origin job is a different job. */
@@ -180,4 +221,32 @@ export function buildJobQueue(issues: OpenIssue[], minDays = 0): OpenIssueQueueE
     issues: list,
   }));
   return filterByMinDays(entries, minDays).sort((a, b) => b.days_open - a.days_open);
+}
+
+export type PropertyIdentity = { id: string; customer_name: string; address: string };
+
+/** Property name / address for the issues' properties, scoped to the company. */
+export async function fetchPropertiesForIssues(
+  client: SupabaseClient,
+  companyId: string,
+  issues: Array<{ property_id: string | null }>,
+): Promise<Map<string, PropertyIdentity>> {
+  const properties = new Map<string, PropertyIdentity>();
+  const propertyIds = [...new Set(issues.map((i) => i.property_id).filter((id): id is string => !!id))];
+  for (let i = 0; i < propertyIds.length; i += JOB_ID_CHUNK) {
+    const { data: rows, error } = await client
+      .from('cadenza_properties')
+      .select('id, customer_name, address')
+      .eq('company_id', companyId)
+      .in('id', propertyIds.slice(i, i + JOB_ID_CHUNK));
+    if (error) rethrow(error, 'open-issues properties');
+    for (const row of rows ?? []) {
+      properties.set(String(row.id), {
+        id: String(row.id),
+        customer_name: String(row.customer_name),
+        address: String(row.address ?? ''),
+      });
+    }
+  }
+  return properties;
 }

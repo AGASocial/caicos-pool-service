@@ -66,6 +66,14 @@ export type OpenIssue = {
   urgency: 'low' | 'medium' | 'high' | null;
   last_reviewed_at: string | null;
   days_open: number;
+  /** KAN-154: technician assigned to the origin job (null / missing = unassigned). */
+  technician_id?: string | null;
+  technician_name?: string | null;
+  /**
+   * KAN-154: true when a voice note had no classification text and `summary` is a transcript
+   * excerpt. Internal audio text must stay out of broad emails; the office screen may show it.
+   */
+  summary_is_transcript?: boolean;
 };
 
 export type OpenIssueReportInput = FollowUpReportRow & {
@@ -164,18 +172,24 @@ export function openIssuesFromVoiceNotes(
 ): OpenIssue[] {
   return notes
     .filter((note) => note.follow_up_status !== 'resolved')
-    .map((note) => ({
-      source: 'voice_note' as const,
-      id: String(note.id),
-      job_id: String(note.job_id),
-      property_id: note.property_id ?? null,
-      created_at: note.created_at,
-      summary: truncateSummary(note.reason ?? note.explanation ?? note.transcript),
-      issue_categories: [],
-      urgency: note.urgency ?? null,
-      last_reviewed_at: note.last_reviewed_at ?? null,
-      days_open: daysOpen(note.created_at, now),
-    }));
+    .map((note) => {
+      const classification = truncateSummary(note.reason ?? note.explanation);
+      return {
+        source: 'voice_note' as const,
+        id: String(note.id),
+        job_id: String(note.job_id),
+        property_id: note.property_id ?? null,
+        created_at: note.created_at,
+        summary: classification ?? truncateSummary(note.transcript),
+        issue_categories: [],
+        urgency: note.urgency ?? null,
+        last_reviewed_at: note.last_reviewed_at ?? null,
+        days_open: daysOpen(note.created_at, now),
+        ...(classification == null && truncateSummary(note.transcript) != null
+          ? { summary_is_transcript: true }
+          : {}),
+      };
+    });
 }
 
 /** Union of both sources, oldest first. */
@@ -238,4 +252,43 @@ export function allCarryForwardAnswered(
 
 export function openIssueKey(issue: { source: OpenIssueSource; id: string }): string {
   return `${issue.source}:${issue.id}`;
+}
+
+// ---------------------------------------------------------------------------
+// KAN-154: grouping by technician (office screen and Monday digest)
+// ---------------------------------------------------------------------------
+
+export type TechnicianIssueGroup<T extends OpenIssue = OpenIssue> = {
+  /** null = issues whose origin job has no technician (the "unassigned" bucket). */
+  technician_id: string | null;
+  technician_name: string | null;
+  /** Oldest first. */
+  issues: T[];
+};
+
+/**
+ * Groups issues by origin-job technician. Issues inside a group are oldest first; groups are
+ * ordered by technician name, with the unassigned bucket last.
+ */
+export function groupIssuesByTechnician<T extends OpenIssue>(issues: T[]): TechnicianIssueGroup<T>[] {
+  const groups = new Map<string, TechnicianIssueGroup<T>>();
+  for (const issue of sortOldestFirst(issues)) {
+    const key = issue.technician_id ?? '';
+    const group = groups.get(key);
+    if (group) {
+      group.issues.push(issue);
+      if (!group.technician_name && issue.technician_name) group.technician_name = issue.technician_name;
+    } else {
+      groups.set(key, {
+        technician_id: issue.technician_id ?? null,
+        technician_name: issue.technician_name ?? null,
+        issues: [issue],
+      });
+    }
+  }
+  return [...groups.values()].sort((a, b) => {
+    if (!a.technician_id !== !b.technician_id) return a.technician_id ? -1 : 1;
+    const byName = (a.technician_name ?? '').localeCompare(b.technician_name ?? '');
+    return byName !== 0 ? byName : (a.technician_id ?? '').localeCompare(b.technician_id ?? '');
+  });
 }

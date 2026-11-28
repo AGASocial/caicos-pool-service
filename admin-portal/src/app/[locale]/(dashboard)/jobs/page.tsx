@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
-import { Briefcase, ChevronRight, Radio, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { AlertTriangle, Briefcase, ChevronRight, Radio, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { useTeam } from '@/lib/team';
 import { useJobs, useRoutes } from '@/lib/data-queries';
 import { MIN_DAYS_OPTIONS, parseMinDays } from '@/lib/follow-up-jobs';
@@ -198,14 +198,24 @@ export default function JobsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t('jobs')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('jobsDescription')}</p>
         </div>
-        {canCreateJob && (
-          <Button asChild className="w-fit shrink-0">
-            <Link href="/jobs/new?mode=dispatch">
-              <Radio className="mr-2 h-4 w-4" />
-              {t('adHocDispatch')}
-            </Link>
-          </Button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {hasEntitlement(user?.profile?.role, 'follow_up', 'view') && (
+            <Button asChild variant="outline" className="w-fit shrink-0" data-testid="open-issues-link">
+              <Link href="/open-issues">
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                {t('openIssues_viewAll')}
+              </Link>
+            </Button>
+          )}
+          {canCreateJob && (
+            <Button asChild className="w-fit shrink-0">
+              <Link href="/jobs/new?mode=dispatch">
+                <Radio className="mr-2 h-4 w-4" />
+                {t('adHocDispatch')}
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card>
