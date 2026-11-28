@@ -71,6 +71,7 @@ export default function EditPropertyPage() {
     equipment_notes: property.equipment_notes ?? '',
     notes: property.notes ?? '',
     is_active: property.is_active !== false,
+    is_shared: property.is_shared === true,
   };
 
   return (

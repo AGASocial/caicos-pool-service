@@ -27,6 +27,8 @@ export type PropertyFormValues = {
   equipment_notes: string;
   notes: string;
   is_active?: boolean;
+  /** KAN-155: visited by more than one technician of the same company. */
+  is_shared?: boolean;
 };
 
 const emptyForm: PropertyFormValues = {
@@ -84,6 +86,7 @@ export function PropertyForm({
     equipment_notes: initialValues?.equipment_notes ?? '',
     notes: initialValues?.notes ?? '',
     is_active: initialValues?.is_active ?? true,
+    is_shared: initialValues?.is_shared ?? false,
   }));
 
   function update(key: keyof PropertyFormValues, value: string | boolean) {
@@ -115,6 +118,7 @@ export function PropertyForm({
         equipment_notes: form.equipment_notes.trim() || undefined,
         notes: form.notes.trim() || undefined,
         ...(propertyId ? { is_active: form.is_active !== false } : {}),
+        is_shared: form.is_shared === true,
       };
       const res = await fetch(url, {
         method,
@@ -251,6 +255,17 @@ export function PropertyForm({
               <Label htmlFor="is_active">{t('active', { defaultValue: 'Active' })}</Label>
             </div>
           )}
+          <div className="flex items-start space-x-2">
+            <Switch
+              id="is_shared"
+              checked={form.is_shared === true}
+              onCheckedChange={(checked) => update('is_shared', checked)}
+            />
+            <div className="space-y-1">
+              <Label htmlFor="is_shared">{t('isShared')}</Label>
+              <p className="text-xs text-muted-foreground">{t('isSharedHelp')}</p>
+            </div>
+          </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex gap-2">
             <Button type="submit" disabled={loading}>

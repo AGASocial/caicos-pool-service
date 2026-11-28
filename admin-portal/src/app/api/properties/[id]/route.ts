@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import type { CadenzaSupabaseClient } from '@/lib/supabase-cadenza';
+import { parseIsSharedInput } from '@/lib/shared-property';
 
 export async function GET(
   _request: NextRequest,
@@ -45,7 +46,7 @@ export async function PUT(
 
   const { data: profile, error: profileError } = await (supabase as unknown as CadenzaSupabaseClient)
     .from('cadenza_profiles')
-    .select('company_id')
+    .select('company_id, role')
     .eq('id', user.id)
     .single();
 
@@ -81,6 +82,11 @@ export async function PUT(
       );
     }
 
+    const shared = parseIsSharedInput(body, profile.role as string | null);
+    if (!shared.ok) {
+      return NextResponse.json({ error: shared.error }, { status: shared.status });
+    }
+
     const client = supabase as unknown as CadenzaSupabaseClient;
     const { data, error } = await client
       .from('cadenza_properties')
@@ -98,11 +104,17 @@ export async function PUT(
         equipment_notes: equipment_notes ? String(equipment_notes).trim() : null,
         notes: notes ? String(notes).trim() : null,
         is_active: is_active !== false,
+        ...(shared.provided ? { is_shared: shared.value } : {}),
       })
       .eq('id', id)
       .eq('company_id', profile.company_id)
-      .select('id, customer_name, address, city, is_active, updated_at')
+      .select('id, customer_name, address, city, is_active, is_shared, updated_at')
       .single();
+
+    if (error?.code === 'PGRST116') {
+      // No row matched this id within the caller's company (missing or another company's).
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 });
+    }
 
     if (error) {
       console.error('Supabase error updating property:', error);

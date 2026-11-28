@@ -122,6 +122,8 @@
   "generateJobsForDateDescriptionPattern": "Crea trabajos solo para paradas cuyo patrón coincide con esa fecha (día de la semana y semanal vs mensual). Omite propiedades que ya tengan un trabajo de ruta ese día.",
   "haveAnInviteCode": "¿Tienes un código de invitación?",
   "inactive": "Inactivo",
+  "isShared": "Propiedad compartida",
+  "isSharedHelp": "Visitada por más de un técnico de tu empresa. Los técnicos ven un resumen corto de la última visita completada en el trabajo.",
   "inviteCode": "Código de invitación",
   "inviteCodeCreated": "Código de invitación creado",
   "inviteCodeDescription": "Crea un enlace o código de invitación para un nuevo miembro del equipo.",

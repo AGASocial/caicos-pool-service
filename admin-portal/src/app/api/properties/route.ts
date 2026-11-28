@@ -7,9 +7,11 @@ import {
   parsePaginationParams,
 } from '@/lib/pagination';
 import { resolveTechnicianScope } from '@/lib/technician-scope';
+import { isMissingColumnError } from '@/lib/customer-reports/delivery-log';
+import { parseIsSharedInput } from '@/lib/shared-property';
 
 const PROPERTY_BASE_FIELDS =
-  'id, customer_name, customer_email, customer_phone, address, city, state, zip, gate_code, pool_type, pool_surface, notes, is_active, created_at';
+  'id, customer_name, customer_email, customer_phone, address, city, state, zip, gate_code, pool_type, pool_surface, notes, is_active, is_shared, created_at';
 
 function attachRouteFromStopRow(row: Record<string, unknown>): Record<string, unknown> {
   const stops = row.cadenza_route_stops ?? row.stops;
@@ -75,47 +77,53 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(buildPaginatedResponse([], limit, propertySortKey));
   }
 
-  const select = includeRoute
-    ? `${PROPERTY_BASE_FIELDS}, stops:cadenza_route_stops!left(route_id, cadenza_routes(id, name))`
-    : unassignedOnly
-      ? `${PROPERTY_BASE_FIELDS}, stops:cadenza_route_stops!left(id)`
-      : PROPERTY_BASE_FIELDS;
+  if (technicianScope && technicianScope.propertyIds.length === 0) {
+    return NextResponse.json(buildPaginatedResponse([], limit, propertySortKey));
+  }
 
-  let query = client
-    .from('cadenza_properties')
-    .select(select)
-    .order('customer_name', { ascending: true })
-    .order('id', { ascending: true });
+  const decodedCursor = cursor ? decodeCursor(cursor) : null;
 
-  if (technicianScope) {
-    if (technicianScope.propertyIds.length === 0) {
-      return NextResponse.json(buildPaginatedResponse([], limit, propertySortKey));
+  const runQuery = (baseFields: string) => {
+    const select = includeRoute
+      ? `${baseFields}, stops:cadenza_route_stops!left(route_id, cadenza_routes(id, name))`
+      : unassignedOnly
+        ? `${baseFields}, stops:cadenza_route_stops!left(id)`
+        : baseFields;
+
+    let query = client
+      .from('cadenza_properties')
+      .select(select)
+      .order('customer_name', { ascending: true })
+      .order('id', { ascending: true });
+
+    if (technicianScope) {
+      query = query.in('id', technicianScope.propertyIds);
     }
-    query = query.in('id', technicianScope.propertyIds);
-  }
 
-  if (activeOnly) {
-    query = query.eq('is_active', true);
-  }
+    if (activeOnly) {
+      query = query.eq('is_active', true);
+    }
 
-  if (unassignedOnly) {
-    query = query.is('stops', null);
-  }
+    if (unassignedOnly) {
+      query = query.is('stops', null);
+    }
 
-  if (cursor) {
-    const decoded = decodeCursor(cursor);
-    if (decoded) {
-      const [cursorName, cursorId] = decoded.sortKey.split('|');
-      const id = cursorId || decoded.id;
+    if (decodedCursor) {
+      const [cursorName, cursorId] = decodedCursor.sortKey.split('|');
+      const id = cursorId || decodedCursor.id;
       query = query.or(
         `customer_name.gt.${cursorName},and(customer_name.eq.${cursorName},id.gt.${id})`,
       );
     }
+
+    return query.limit(limit + 1);
+  };
+
+  let { data, error } = await runQuery(PROPERTY_BASE_FIELDS);
+  if (error && isMissingColumnError(error)) {
+    // KAN-155 migration (is_shared) not applied yet: keep the list working without the flag.
+    ({ data, error } = await runQuery(PROPERTY_BASE_FIELDS.replace(' is_shared,', '')));
   }
-
-  query = query.limit(limit + 1);
-
-  const { data, error } = await query;
 
   if (error) {
     console.error('Supabase error fetching properties:', error);
@@ -148,7 +156,7 @@ export async function POST(request: NextRequest) {
 
   const { data: profile, error: profileError } = await (supabase as unknown as CadenzaSupabaseClient)
     .from('cadenza_profiles')
-    .select('company_id')
+    .select('company_id, role')
     .eq('id', user.id)
     .single();
 
@@ -184,6 +192,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const shared = parseIsSharedInput(body, profile.role as string | null);
+    if (!shared.ok) {
+      return NextResponse.json({ error: shared.error }, { status: shared.status });
+    }
+
     const { data, error } = await (supabase as unknown as CadenzaSupabaseClient)
       .from('cadenza_properties')
       .insert({
@@ -201,8 +214,9 @@ export async function POST(request: NextRequest) {
         equipment_notes: equipment_notes ? String(equipment_notes).trim() : null,
         notes: notes ? String(notes).trim() : null,
         is_active: is_active !== false,
+        ...(shared.provided ? { is_shared: shared.value } : {}),
       })
-      .select('id, customer_name, address, city, is_active, created_at')
+      .select('id, customer_name, address, city, is_active, is_shared, created_at')
       .single();
 
     if (error) {
