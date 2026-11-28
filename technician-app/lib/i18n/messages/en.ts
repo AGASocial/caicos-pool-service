@@ -295,6 +295,7 @@ export const en = {
     releaseToCancel: 'Release to cancel',
     previewReady: 'Preview ready ({seconds}s)',
     play: 'Play',
+    pause: 'Pause',
     discard: 'Discard',
     rerecord: 'Re-record',
     save: 'Save note',

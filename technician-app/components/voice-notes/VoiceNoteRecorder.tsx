@@ -16,6 +16,7 @@ import {
   IOSOutputFormat,
   requestRecordingPermissionsAsync,
   useAudioPlayer,
+  useAudioPlayerStatus,
   useAudioRecorder,
   useAudioRecorderState,
   type RecordingOptions,
@@ -59,6 +60,12 @@ type Props = {
   onQueued?: (noteId: string) => void;
 };
 
+function formatClock(totalSeconds: number): string {
+  const s = Math.max(0, Math.round(Number.isFinite(totalSeconds) ? totalSeconds : 0));
+  const m = Math.floor(s / 60);
+  return `${m}:${String(s % 60).padStart(2, '0')}`;
+}
+
 function newNoteId(): string {
   // RFC4122-ish UUID without pulling crypto polyfills
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -93,6 +100,7 @@ export function VoiceNoteRecorder({
   const cancelledRef = useRef(false);
 
   const player = useAudioPlayer(previewUri);
+  const playerStatus = useAudioPlayerStatus(player);
 
   const clearHardStop = () => {
     if (hardStopTimer.current) {
@@ -210,6 +218,11 @@ export function VoiceNoteRecorder({
   );
 
   const discardPreview = async () => {
+    try {
+      if (playerStatus.playing) player.pause();
+    } catch {
+      /* ignore */
+    }
     if (previewUri) {
       try {
         await FileSystem.deleteAsync(previewUri, { idempotent: true });
@@ -265,6 +278,30 @@ export function VoiceNoteRecorder({
     Math.floor((recorderState.durationMillis ?? 0) / 1000),
   );
 
+  const isPlaying = playerStatus.playing;
+  const clipSeconds =
+    playerStatus.duration > 0 ? playerStatus.duration : previewDurationMs / 1000;
+  const displaySeconds = isPlaying ? playerStatus.currentTime : clipSeconds;
+
+  const togglePreviewPlayback = async () => {
+    try {
+      if (playerStatus.playing) {
+        player.pause();
+        return;
+      }
+      await setPlaybackAudioMode();
+      const atEnd =
+        playerStatus.didJustFinish ||
+        (clipSeconds > 0 && playerStatus.currentTime >= clipSeconds - 0.1);
+      if (atEnd) {
+        await player.seekTo(0);
+      }
+      player.play();
+    } catch {
+      /* ignore */
+    }
+  };
+
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]} testID="voice-note-recorder">
       <Text style={[styles.title, { color: colors.text }]}>{t('voiceNotes.title')}</Text>
@@ -276,48 +313,46 @@ export function VoiceNoteRecorder({
 
       {previewUri ? (
         <View style={styles.preview}>
-          <Text style={[styles.previewMeta, { color: colors.muted }]}>
-            {t('voiceNotes.previewReady', {
-              seconds: Math.round(previewDurationMs / 1000),
-            })}
-          </Text>
           <View style={styles.previewActions}>
             <Pressable
-              style={[styles.btn, { backgroundColor: colors.photoButtonBg }]}
-              onPress={() => {
-                void (async () => {
-                  try {
-                    await setPlaybackAudioMode();
-                    player.play();
-                  } catch {
-                    /* ignore */
-                  }
-                })();
-              }}
+              style={[styles.playBtn, { backgroundColor: colors.photoButtonBg }]}
+              onPress={() => void togglePreviewPlayback()}
+              accessibilityRole="button"
+              accessibilityLabel={isPlaying ? t('voiceNotes.pause') : t('voiceNotes.play')}
               testID="voice-note-play-preview"
             >
-              <Text style={[styles.btnText, { color: colors.text }]}>{t('voiceNotes.play')}</Text>
+              <Ionicons name={isPlaying ? 'pause' : 'play'} size={22} color={colors.text} />
+              <Text style={[styles.playTime, { color: colors.text }]}>
+                {formatClock(displaySeconds)}
+              </Text>
             </Pressable>
-            <Pressable
-              style={[styles.btn, { backgroundColor: colors.photoButtonBg }]}
-              onPress={() => void discardPreview()}
-              testID="voice-note-discard"
-            >
-              <Text style={[styles.btnText, { color: colors.text }]}>{t('voiceNotes.discard')}</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.btn, { backgroundColor: colors.photoButtonBg }]}
-              onPress={() => {
-                void discardPreview().then(() => setPreviewUri(null));
-              }}
-              testID="voice-note-rerecord"
-            >
-              <Text style={[styles.btnText, { color: colors.text }]}>{t('voiceNotes.rerecord')}</Text>
-            </Pressable>
+            <View style={styles.iconGroup}>
+              <Pressable
+                style={[styles.iconBtn, { backgroundColor: colors.photoButtonBg }]}
+                onPress={() => void discardPreview()}
+                accessibilityRole="button"
+                accessibilityLabel={t('voiceNotes.discard')}
+                testID="voice-note-discard"
+              >
+                <Ionicons name="trash-outline" size={22} color={colors.text} />
+              </Pressable>
+              <Pressable
+                style={[styles.iconBtn, { backgroundColor: colors.photoButtonBg }]}
+                onPress={() => {
+                  void discardPreview().then(() => setPreviewUri(null));
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t('voiceNotes.rerecord')}
+                testID="voice-note-rerecord"
+              >
+                <Ionicons name="refresh" size={22} color={colors.text} />
+              </Pressable>
+            </View>
             <Pressable
               style={[styles.btnPrimary, { backgroundColor: colors.buttonPrimary }]}
               onPress={() => void saveNote()}
               disabled={busy}
+              accessibilityRole="button"
               testID="voice-note-save"
             >
               <Text style={[styles.btnPrimaryText, { color: colors.buttonPrimaryText }]}>
@@ -398,22 +433,35 @@ const styles = StyleSheet.create({
   slideHint: { fontSize: 12, marginTop: 2 },
   holdHint: { fontSize: 13 },
   preview: { gap: 10 },
-  previewMeta: { fontSize: 13 },
-  previewActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  btn: {
+  previewActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+  },
+  playBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
     minHeight: 44,
+    borderRadius: 22,
+  },
+  playTime: { fontSize: 14, fontWeight: '600', fontVariant: ['tabular-nums'] },
+  iconGroup: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  iconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  btnText: { fontSize: 13, fontWeight: '600' },
   btnPrimary: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 8,
     minHeight: 44,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   btnPrimaryText: { fontSize: 13, fontWeight: '700' },
 });
