@@ -46,3 +46,4 @@ Copy from `specs/_template/` when starting a ticket.
 | [KAN-165](https://agasocial.atlassian.net/browse/KAN-165) | [`KAN-165-voice-notes/`](./KAN-165-voice-notes/) | Voice notes on jobs, with transcription and classification | Built |
 | [KAN-153](https://agasocial.atlassian.net/browse/KAN-153) | [`KAN-153-carry-forward/`](./KAN-153-carry-forward/) | Open-issue carry-forward on the next visit | Built |
 | [KAN-154](https://agasocial.atlassian.net/browse/KAN-154) | [`KAN-154-monday-digest/`](./KAN-154-monday-digest/) | Monday digest of open issues | Built |
+| [KAN-155](https://agasocial.atlassian.net/browse/KAN-155) | [`KAN-155-shared-properties/`](./KAN-155-shared-properties/) | Shared properties and last-service summary | In progress |
