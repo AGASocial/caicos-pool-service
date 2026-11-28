@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createAuthenticatedRouteClient } from '@/lib/supabase-server';
 import { filterByMinDays, parseMinDays } from '@/lib/follow-up-jobs';
-import { fetchOpenIssues, OpenIssuesSchemaPendingError } from '@/lib/open-issues';
+import { fetchOpenIssues, fetchPropertiesForIssues, OpenIssuesSchemaPendingError } from '@/lib/open-issues';
 import { OFFICE_ROLES } from '@/lib/open-issues-review';
 
 /**
@@ -41,22 +41,7 @@ export async function GET(request: NextRequest) {
       minDays,
     );
 
-    const propertyIds = [...new Set(issues.map((i) => i.property_id).filter((id): id is string => !!id))];
-    const properties = new Map<string, { id: string; customer_name: string; address: string }>();
-    if (propertyIds.length > 0) {
-      const { data: rows } = await client
-        .from('cadenza_properties')
-        .select('id, customer_name, address')
-        .eq('company_id', companyId)
-        .in('id', propertyIds);
-      for (const row of rows ?? []) {
-        properties.set(String(row.id), {
-          id: String(row.id),
-          customer_name: String(row.customer_name),
-          address: String(row.address ?? ''),
-        });
-      }
-    }
+    const properties = await fetchPropertiesForIssues(client, companyId, issues);
 
     return NextResponse.json({
       data: issues.map((issue) => ({

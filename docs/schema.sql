@@ -253,6 +253,19 @@ CREATE TABLE customer_report_deliveries (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Monday open-issues digest send log (KAN-154). Service role writes; office roles read.
+CREATE TABLE cadenza_monday_digest_sends (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES cadenza_companies(id) ON DELETE CASCADE,
+  week_start DATE NOT NULL,
+  recipient_email TEXT NOT NULL,
+  sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  resend_message_id TEXT,
+  issue_count INTEGER NOT NULL CHECK (issue_count >= 0),
+  CONSTRAINT cadenza_monday_digest_sends_unique_recipient_week
+    UNIQUE (company_id, week_start, recipient_email)
+);
+
 -- Message templates (email / SMS) with {{merge_tags}}; issue_categories maps one template → many issues
 CREATE TABLE cadenza_message_templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -331,6 +344,8 @@ CREATE INDEX idx_customer_report_deliveries_company_status_created
   ON customer_report_deliveries(company_id, status, created_at DESC);
 CREATE INDEX idx_customer_report_deliveries_property
   ON customer_report_deliveries(property_id, created_at DESC) WHERE property_id IS NOT NULL;
+CREATE INDEX idx_cadenza_monday_digest_sends_company_sent
+  ON cadenza_monday_digest_sends(company_id, sent_at DESC);
 
 -- ============================================
 -- ROW LEVEL SECURITY
@@ -348,6 +363,7 @@ ALTER TABLE cadenza_cant_service_reasons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cadenza_service_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cadenza_service_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cadenza_report_photos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cadenza_monday_digest_sends ENABLE ROW LEVEL SECURITY;
 
 -- Helper function: get current user's company_id
 CREATE OR REPLACE FUNCTION get_my_company_id()
@@ -682,3 +698,12 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON cadenza_service_reports FOR EACH 
 -- grace_period_ends_at TIMESTAMPTZ NULL — now+14d on first failure; never extended
 -- Full CREATE lives in 20251029000000_create_billing_tables.sql;
 -- columns added in 20261112140000_billing_grace_period_columns.sql (record-only).
+
+-- Monday digest send log (KAN-154): office roles read their own company; no client writes.
+CREATE POLICY "Office staff can view monday digest sends"
+  ON cadenza_monday_digest_sends FOR SELECT
+  TO authenticated
+  USING (
+    cadenza_monday_digest_sends.company_id = get_my_company_id()
+    AND get_my_role() IN ('owner', 'admin', 'operations')
+  );

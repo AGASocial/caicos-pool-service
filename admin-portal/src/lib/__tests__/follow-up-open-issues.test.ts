@@ -295,3 +295,18 @@ describe('technician-app carry-forward core (shared by the Complete guard and li
     expect(techAllAnswered(items, answers)).toBe(false);
   });
 });
+
+describe('KAN-154: voice-note summary provenance', () => {
+  it('flags a transcript-only summary so broad emails can leave it out', () => {
+    const [classified] = openIssuesFromVoiceNotes([note({ id: 'n1', job_id: 'j1', reason: 'pump noise' })], NOW);
+    expect(classified.summary).toBe('pump noise');
+    expect(classified.summary_is_transcript).toBeUndefined();
+
+    const [transcriptOnly] = openIssuesFromVoiceNotes(
+      [note({ id: 'n2', job_id: 'j1', reason: null, explanation: null, transcript: 'raw audio text' })],
+      NOW,
+    );
+    expect(transcriptOnly.summary).toBe('raw audio text');
+    expect(transcriptOnly.summary_is_transcript).toBe(true);
+  });
+});
