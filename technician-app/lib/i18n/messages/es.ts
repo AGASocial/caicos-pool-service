@@ -300,6 +300,7 @@ export const es = {
     releaseToCancel: 'Suelta para cancelar',
     previewReady: 'Vista previa lista ({seconds}s)',
     play: 'Reproducir',
+    pause: 'Pausar',
     discard: 'Descartar',
     rerecord: 'Volver a grabar',
     save: 'Guardar nota',
