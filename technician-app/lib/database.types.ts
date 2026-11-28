@@ -16,6 +16,8 @@ export type Property = {
   gate_code: string | null;
   pool_type: string | null;
   pool_surface: string | null;
+  /** KAN-155: visited by more than one technician of the same company (not cross-tenant). */
+  is_shared: boolean;
 };
 
 export type ServiceJob = {

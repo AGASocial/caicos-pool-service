@@ -69,6 +69,8 @@ CREATE TABLE cadenza_properties (
   equipment_notes TEXT,
   notes TEXT,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  -- KAN-155: visited by more than one technician of the same company (not cross-tenant sharing).
+  is_shared BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -315,6 +317,7 @@ CREATE INDEX idx_cadenza_profiles_company ON cadenza_profiles(company_id);
 CREATE INDEX idx_cadenza_invite_codes_company ON cadenza_invite_codes(company_id);
 CREATE INDEX idx_cadenza_invite_codes_expires ON cadenza_invite_codes(expires_at) WHERE used_at IS NULL;
 CREATE INDEX idx_cadenza_properties_company ON cadenza_properties(company_id);
+CREATE INDEX idx_cadenza_properties_company_shared ON cadenza_properties(company_id) WHERE is_shared;
 CREATE INDEX idx_cadenza_routes_company ON cadenza_routes(company_id);
 CREATE INDEX idx_cadenza_routes_technician ON cadenza_routes(technician_id);
 CREATE INDEX idx_cadenza_route_stops_route ON cadenza_route_stops(route_id);
